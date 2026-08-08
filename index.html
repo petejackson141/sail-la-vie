@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sail la Vie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFF4F7; --bg-elevated:#FFFFFF; --bg-sunk:#E3EBF0;
+    --ink:#142B44; --ink-muted:#5C7A8F; --ink-faint:#93A9B8;
+    --navy:#16324F; --navy-deep:#0E2338; --navy-soft:#2C5F91;
+    --gold:#C9A24B; --water:#BFE0EA; --coral:#D65A4A; --coral-deep:#B8443A;
+    --border:#DAE4EA; --shadow: 0 10px 30px -12px rgba(20,43,68,0.25);
+    --radius-lg:26px; --radius-md:18px; --radius-sm:12px;
+    --font-display:'Space Grotesk',system-ui,sans-serif;
+    --font-body:'Inter',system-ui,sans-serif;
+  }
+  html[data-theme="dark"]{
+    --bg:#0A1622; --bg-elevated:#122236; --bg-sunk:#0E1B2A;
+    --ink:#E9F0F5; --ink-muted:#8FA8BC; --ink-faint:#5C7488;
+    --navy:#2C5F91; --navy-deep:#16324F; --navy-soft:#3E76AC;
+    --gold:#D9BB6E; --water:#1D3A4E; --coral:#E1725F; --coral-deep:#C85742;
+    --border:#1E3448; --shadow: 0 10px 30px -12px rgba(0,0,0,0.5);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased; overscroll-behavior:none;
+    transition:background .3s ease,color .3s ease;
+  }
+  #app{
+    max-width:480px; margin:0 auto; min-height:100vh; position:relative;
+    display:flex; flex-direction:column; background:var(--bg);
+  }
+  .screen{ display:none; flex:1; flex-direction:column; padding:20px 20px 100px; animation:fadeIn .25s ease; }
+  .screen.active{ display:flex; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+  @media (prefers-reduced-motion: reduce){ .screen{animation:none;} }
+
+  h1,h2,h3{ font-family:var(--font-display); margin:0; letter-spacing:-0.01em; color:var(--ink); }
+  .eyebrow{ font-family:var(--font-display); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-muted); }
+  p{ margin:0; color:var(--ink-muted); line-height:1.5; }
+
+  /* ---------- top bar ---------- */
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:6px 0 18px; }
+  .topbar .greet{ display:flex; align-items:center; gap:10px; }
+  .avatar{ width:40px; height:40px; border-radius:50%; object-fit:cover; background:var(--navy); border:2px solid var(--bg-elevated); box-shadow:var(--shadow); }
+  .avatar.sm{width:28px;height:28px;}
+  .iconbtn{ width:40px; height:40px; border-radius:50%; background:var(--bg-elevated); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:var(--shadow); color:var(--navy); }
+  .iconbtn svg{ width:19px; height:19px; }
+  .backrow{ display:flex; align-items:center; gap:12px; padding:6px 0 18px; }
+  .backrow h2{ font-size:19px; flex:1; }
+
+  /* ---------- buttons ---------- */
+  .btn{ font-family:var(--font-body); font-weight:600; font-size:15px; border:none; border-radius:999px;
+    padding:16px 22px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
+    width:100%; transition:transform .12s ease, box-shadow .12s ease; }
+  .btn:active{ transform:scale(0.98); }
+  .btn-primary{ background:linear-gradient(180deg,var(--navy-soft),var(--navy)); color:#fff; box-shadow:0 12px 24px -10px rgba(22,50,79,.55); }
+  .btn-outline{ background:var(--bg-elevated); color:var(--navy); border:1.5px solid var(--navy); }
+  html[data-theme="dark"] .btn-outline{ color:var(--ink); border-color:var(--navy-soft); }
+  .btn-danger{ background:linear-gradient(180deg,#E17B6C,var(--coral-deep)); color:#fff; box-shadow:0 12px 24px -10px rgba(182,68,58,.55); }
+  .btn-ghost{ background:transparent; color:var(--ink-muted); }
+  .btn-sm{ padding:10px 16px; font-size:13px; width:auto; }
+  .btn svg{ width:18px; height:18px; }
+
+  /* ---------- compass logo ---------- */
+  .compass-wrap{ display:flex; align-items:center; justify-content:center; margin:18px 0 28px; }
+  .compass-wrap svg{ filter:drop-shadow(0 14px 24px rgba(20,43,68,.28)); }
+  .pulse-ring{ animation:pulse 2.4s ease-out infinite; transform-origin:center; }
+  @keyframes pulse{ 0%{opacity:.55; transform:scale(0.97);} 70%{opacity:0;} 100%{opacity:0;} }
+
+  /* ---------- cards ---------- */
+  .card{ background:var(--bg-elevated); border-radius:var(--radius-lg); border:1px solid var(--border); box-shadow:var(--shadow); }
+  .stat-card{ background:var(--bg-elevated); border-radius:var(--radius-lg); border:1px solid var(--border); padding:20px; box-shadow:var(--shadow); }
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; }
+  .stat-grid .cell{ padding:6px 10px; }
+  .stat-grid .cell + .cell{ border-left:1px solid var(--border); }
+  .stat-label{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-muted); font-weight:600; }
+  .stat-value{ font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--navy); }
+  html[data-theme="dark"] .stat-value{ color:var(--gold); }
+  .stat-unit{ font-size:13px; font-weight:500; color:var(--ink-muted); }
+
+  /* ---------- quick links row ---------- */
+  .quicklinks{ display:flex; gap:12px; margin-top:8px; }
+  .quicklink{ flex:1; background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md);
+    padding:14px 10px; text-align:center; cursor:pointer; box-shadow:var(--shadow); }
+  .quicklink svg{ width:22px; height:22px; color:var(--navy); margin-bottom:6px; }
+  html[data-theme="dark"] .quicklink svg{ color:var(--gold); }
+  .quicklink span{ display:block; font-size:12px; font-weight:600; color:var(--ink); }
+
+  /* ---------- bottom nav ---------- */
+  .bottomnav{ position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:480px;
+    background:var(--bg-elevated); border-top:1px solid var(--border); display:flex; padding:10px 6px calc(10px + env(safe-area-inset-bottom));
+    z-index:50; }
+  .navitem{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; color:var(--ink-faint); padding:4px 0; }
+  .navitem svg{ width:22px; height:22px; }
+  .navitem span{ font-size:10.5px; font-weight:600; letter-spacing:.02em; }
+  .navitem.active{ color:var(--navy); }
+  html[data-theme="dark"] .navitem.active{ color:var(--gold); }
+
+  /* ---------- search / filters ---------- */
+  .search-input{ width:100%; background:var(--bg-elevated); border:1px solid var(--border); border-radius:999px;
+    padding:14px 18px; font-size:14px; color:var(--ink); font-family:var(--font-body); }
+  .search-input::placeholder{ color:var(--ink-faint); }
+  .chiprow{ display:flex; gap:8px; margin:14px 0 4px; flex-wrap:wrap; }
+  .chip{ padding:8px 14px; border-radius:999px; background:var(--bg-sunk); border:1px solid var(--border); font-size:12.5px;
+    font-weight:600; color:var(--ink-muted); cursor:pointer; }
+  .chip.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+
+  /* ---------- trip list cards ---------- */
+  .trip-card{ margin-top:16px; border-radius:var(--radius-lg); overflow:hidden; background:var(--bg-elevated);
+    border:1px solid var(--border); box-shadow:var(--shadow); cursor:pointer; }
+  .trip-cover{ width:100%; height:150px; object-fit:cover; display:block; background:var(--bg-sunk); }
+  .trip-cover.placeholder{ display:flex; align-items:center; justify-content:center; }
+  .trip-cover.placeholder svg{ width:36px; height:36px; color:var(--ink-faint); }
+  .trip-body{ padding:14px 16px 16px; }
+  .trip-title{ font-family:var(--font-display); font-weight:700; font-size:16px; margin-bottom:4px; }
+  .trip-meta{ font-size:12.5px; color:var(--ink-muted); display:flex; flex-wrap:wrap; gap:2px 10px; margin-top:6px; }
+  .trip-meta b{ color:var(--ink); }
+
+  /* ---------- empty state ---------- */
+  .empty{ text-align:center; padding:50px 20px; color:var(--ink-muted); }
+  .empty svg{ width:44px; height:44px; color:var(--ink-faint); margin-bottom:12px; }
+  .empty h3{ font-size:16px; margin-bottom:6px; }
+
+  /* ---------- form elements ---------- */
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-muted); margin-bottom:7px; text-transform:uppercase; letter-spacing:.05em; }
+  select,input[type=text],input[type=number],input[type=date],textarea{
+    width:100%; background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-sm);
+    padding:13px 14px; font-size:14.5px; font-family:var(--font-body); color:var(--ink); }
+  textarea{ resize:vertical; min-height:80px; }
+  input[type=range]{ width:100%; accent-color:var(--navy); }
+  html[data-theme="dark"] input[type=range]{ accent-color:var(--gold); }
+  .range-value{ font-size:13px; font-weight:600; color:var(--navy); margin-top:4px; display:block; }
+  html[data-theme="dark"] .range-value{ color:var(--gold); }
+  .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  /* ---------- photo strip ---------- */
+  .photo-strip{ display:flex; gap:10px; overflow-x:auto; padding:4px 0 6px; }
+  .photo-thumb{ position:relative; flex:0 0 auto; width:78px; height:78px; border-radius:14px; overflow:hidden; border:1px solid var(--border); }
+  .photo-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .photo-thumb .cover-badge{ position:absolute; bottom:3px; left:3px; background:var(--gold); color:var(--navy-deep); font-size:9px;
+    font-weight:700; padding:2px 6px; border-radius:8px; }
+  .photo-thumb .rm{ position:absolute; top:3px; right:3px; width:18px; height:18px; background:rgba(20,43,68,.75); border-radius:50%;
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; cursor:pointer; }
+  .add-photo-tile{ flex:0 0 auto; width:78px; height:78px; border-radius:14px; border:1.5px dashed var(--border);
+    display:flex; align-items:center; justify-content:center; color:var(--ink-faint); cursor:pointer; }
+
+  /* ---------- crew chips ---------- */
+  .crew-chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .crew-chip{ display:flex; align-items:center; gap:6px; padding:6px 12px 6px 6px; border-radius:999px; background:var(--bg-sunk);
+    border:1px solid var(--border); font-size:12.5px; font-weight:600; cursor:pointer; color:var(--ink-muted); }
+  .crew-chip img{ width:22px; height:22px; border-radius:50%; object-fit:cover; }
+  .crew-chip.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+
+  /* ---------- porthole map ---------- */
+  .porthole{ width:100%; aspect-ratio:1/1; max-width:280px; margin:6px auto; border-radius:50%; border:10px solid var(--navy);
+    box-shadow:var(--shadow); overflow:hidden; position:relative; background:var(--water); }
+  .porthole svg{ width:100%; height:100%; }
+
+  /* ---------- list rows (boats/crew) ---------- */
+  .row-card{ display:flex; align-items:center; gap:14px; background:var(--bg-elevated); border:1px solid var(--border);
+    border-radius:var(--radius-md); padding:12px 14px; margin-top:12px; box-shadow:var(--shadow); cursor:pointer; }
+  .row-photo{ width:52px; height:52px; border-radius:14px; object-fit:cover; background:var(--bg-sunk); flex:0 0 auto; }
+  .row-photo.round{ border-radius:50%; }
+  .row-info{ flex:1; min-width:0; }
+  .row-info .name{ font-weight:700; font-size:14.5px; }
+  .row-info .sub{ font-size:12.5px; color:var(--ink-muted); margin-top:2px; }
+
+  /* ---------- modal / sheet ---------- */
+  .overlay{ position:fixed; inset:0; background:rgba(10,22,34,.5); display:none; align-items:flex-end; justify-content:center; z-index:100; }
+  .overlay.active{ display:flex; }
+  .sheet{ background:var(--bg); width:100%; max-width:480px; border-radius:26px 26px 0 0; padding:22px 20px calc(24px + env(safe-area-inset-bottom));
+    max-height:88vh; overflow-y:auto; animation:slideUp .22s ease; }
+  @keyframes slideUp{ from{ transform:translateY(24px); opacity:.4; } to{ transform:translateY(0); opacity:1; } }
+  .sheet-handle{ width:38px; height:4px; background:var(--border); border-radius:4px; margin:0 auto 16px; }
+  .sheet h3{ font-size:18px; margin-bottom:16px; }
+
+  /* ---------- toggle switch (theme) ---------- */
+  .theme-toggle{ display:flex; align-items:center; justify-content:space-between; background:var(--bg-elevated); border:1px solid var(--border);
+    border-radius:var(--radius-md); padding:14px 16px; box-shadow:var(--shadow); }
+  .switch{ width:52px; height:30px; border-radius:999px; background:var(--navy-deep); position:relative; cursor:pointer; flex:0 0 auto; }
+  .switch .knob{ width:24px; height:24px; border-radius:50%; background:var(--gold); position:absolute; top:3px; left:3px; transition:left .2s ease;
+    display:flex; align-items:center; justify-content:center; font-size:13px; }
+  html[data-theme="dark"] .switch .knob{ left:25px; }
+
+  /* ---------- misc ---------- */
+  .divider{ height:1px; background:var(--border); margin:22px 0; }
+  .toast{ position:fixed; left:50%; bottom:100px; transform:translateX(-50%); background:var(--navy-deep); color:#fff; padding:12px 20px;
+    border-radius:999px; font-size:13.5px; font-weight:600; box-shadow:var(--shadow); z-index:200; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; }
+  .toast.show{ opacity:1; transform:translate(-50%,-6px); }
+  .section-title{ font-family:var(--font-display); font-weight:700; font-size:15px; margin:22px 0 12px; color:var(--ink); }
+  .link-plain{ color:var(--navy-soft); font-weight:600; font-size:13px; cursor:pointer; }
+  .certificate{ background:var(--bg-elevated); border:2px solid var(--gold); border-radius:20px; padding:28px 22px; text-align:center; margin-top:16px; }
+  .certificate .cert-title{ font-family:var(--font-display); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-muted); }
+  .certificate h2{ font-size:22px; margin:10px 0 4px; }
+  .certificate .cert-name{ font-family:var(--font-display); font-size:26px; color:var(--navy); margin:14px 0; }
+  html[data-theme="dark"] .certificate .cert-name{ color:var(--gold); }
+  .certificate .cert-stats{ display:flex; justify-content:center; gap:26px; margin:18px 0; }
+  .certificate .cert-stats div span{ display:block; font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--navy); }
+  html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
+  .certificate .cert-stats div small{ font-size:10.5px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em; }
+  .certificate .cert-foot{ font-size:11px; color:var(--ink-faint); margin-top:16px; }
+  #loadingScreen{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:var(--bg); z-index:999; flex-direction:column; gap:14px; }
+  .spinner{ width:34px; height:34px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--navy); animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @media print{
+    body *{ visibility:hidden; }
+    #printArea, #printArea *{ visibility:visible; }
+    #printArea{ position:absolute; top:0; left:0; width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loadingScreen"><div class="spinner"></div><p style="color:var(--ink-muted);font-size:13px;">Loading your logbook…</p></div>
+
+<div id="app" style="display:none;">
+
+  <!-- ============ HOME ============ -->
+  <section class="screen" id="screen-home">
+    <div class="topbar">
+      <div class="greet">
+        <img class="avatar" id="homeAvatar" src="" alt="">
+        <div><div class="eyebrow" id="homeGreeting">Ahoy</div><div style="font-weight:700;" id="homeName">Sailor</div></div>
+      </div>
+      <div class="iconbtn" onclick="nav('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
+      </div>
+    </div>
+
+    <h1 style="text-align:center;font-size:22px;letter-spacing:.06em;margin-top:6px;">SAIL LA VIE</h1>
+
+<div class="compass-wrap" style="width: 220px; height: 220px; border-radius: 50%; overflow: hidden; box-shadow: 0 14px 24px rgba(20,43,68,.28); margin: 20px auto 40px auto;">
+      <img src="images/Logo.png" alt="Sail la Vie Logo" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+    </div>
+
+    <button class="btn btn-primary" onclick="openStartJourneySheet()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18l9-15 9 15z"/><path d="M12 3v13"/></svg>
+      Start New Journey
+    </button>
+    <div style="height:12px;"></div>
+    <button class="btn btn-outline" onclick="nav('history')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+      View History
+    </button>
+
+    <div class="quicklinks">
+      <div class="quicklink" onclick="nav('boats')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 16l1.5 4h15L21 16"/><path d="M5 16l1-9h12l1 9"/><path d="M12 3v4"/></svg>
+        <span>Fleet</span>
+      </div>
+      <div class="quicklink" onclick="nav('crew')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.6.4 4.5 2.4 4.5 5.3"/></svg>
+        <span>Crew</span>
+      </div>
+      <div class="quicklink" onclick="nav('resume')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3h8l3 4v14H5V7z"/><path d="M8 3v4H5"/><path d="M9 13h6M9 17h6"/></svg>
+        <span>Resume</span>
+      </div>
+    </div>
+
+    <div id="homeStatsStrip" style="margin-top:22px;"></div>
+  </section>
+
+  <!-- ============ ACTIVE JOURNEY ============ -->
+  <section class="screen" id="screen-active">
+    <div class="backrow">
+      <div class="iconbtn" onclick="confirmLeaveActive()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2>Active Journey Log</h2>
+    </div>
+
+    <div class="stat-card" style="text-align:center;">
+      <div class="stat-label">Elapsed Time</div>
+      <div style="font-family:var(--font-display);font-size:42px;font-weight:700;color:var(--navy);letter-spacing:.02em;" id="elapsedDisplay">00:00:00</div>
+    </div>
+
+    <div class="stat-card stat-grid" style="margin-top:14px;">
+      <div class="cell"><div class="stat-label">Avg Speed</div><div class="stat-value" id="avgSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
+      <div class="cell"><div class="stat-label">Max Speed</div><div class="stat-value" id="maxSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">Distance</div><div class="stat-value" id="distDisplay">0.0<span class="stat-unit"> NM</span></div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">GPS</div><div class="stat-value" id="gpsStatus" style="font-size:15px;">—</div></div>
+    </div>
+
+    <div id="manualDistanceWrap" style="display:none;">
+      <div class="field" style="margin-top:16px;">
+        <label>Distance covered (manual entry — GPS unavailable)</label>
+        <input type="number" step="0.1" min="0" id="manualDistance" placeholder="Nautical miles">
+      </div>
+    </div>
+
+    <div class="section-title">Log Entry</div>
+    <div class="field">
+      <label>Boat</label>
+      <select id="activeBoatSelect"></select>
+    </div>
+    <div class="two-col">
+      <div class="field">
+        <label>Wind Direction</label>
+        <select id="windDir"><option>N</option><option>NE</option><option>E</option><option>SE</option><option>S</option><option>SW</option><option>W</option><option>NW</option></select>
+      </div>
+      <div class="field">
+        <label>Sea State</label>
+        <select id="seaState"><option>Calm</option><option>Slight</option><option selected>Moderate</option><option>Rough</option><option>Very Rough</option></select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Wind Speed <span class="range-value" id="windSpeedVal">10–12 kts</span></label>
+      <input type="range" id="windSpeed" min="0" max="9" value="3" oninput="updateWindSpeedLabel()">
+    </div>
+    <div class="field">
+      <label>Gusts (kts)</label>
+      <input type="number" id="gusts" placeholder="e.g. 18">
+    </div>
+    <div class="two-col">
+      <div class="field"><label>Wave Height (m)</label><input type="number" step="0.1" id="waveHeight" placeholder="e.g. 0.8"></div>
+      <div class="field"><label>Temperature (°C)</label><input type="number" id="temp" placeholder="e.g. 22"></div>
+    </div>
+    <div class="field">
+      <label>Notes</label>
+      <textarea id="tripNotes" placeholder="Conditions, what happened, what we learned…"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Crew Aboard</label>
+      <div class="crew-chip-row" id="activeCrewRow"></div>
+    </div>
+
+    <div class="field">
+      <label>Photos <span style="text-transform:none;font-weight:500;">— tap a photo to make it the cover</span></label>
+      <div class="photo-strip" id="activePhotoStrip">
+        <div class="add-photo-tile" onclick="document.getElementById('activePhotoInput').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+      </div>
+      <input type="file" id="activePhotoInput" accept="image/*" capture="environment" multiple style="display:none;" onchange="handleActivePhotos(event)">
+    </div>
+
+    <div style="height:6px;"></div>
+    <button class="btn btn-danger" onclick="endJourney()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      End Journey
+    </button>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section class="screen" id="screen-history">
+    <div class="backrow">
+      <div class="iconbtn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2>Trip History</h2>
+    </div>
+    <input type="text" class="search-input" id="historySearch" placeholder="Search logs (e.g., boat, place, notes)…" oninput="renderHistory()">
+    <div class="chiprow" id="historyChips">
+      <div class="chip active" data-f="all" onclick="setHistoryFilter('all')">All</div>
+      <div class="chip" data-f="recent" onclick="setHistoryFilter('recent')">Recent</div>
+      <div class="chip" data-f="photos" onclick="setHistoryFilter('photos')">With Photos</div>
+    </div>
+    <div id="historyList"></div>
+  </section>
+
+  <!-- ============ ENTRY DETAIL ============ -->
+  <section class="screen" id="screen-detail">
+    <div class="backrow">
+      <div class="iconbtn" onclick="nav('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2 id="detailTitle" style="font-size:17px;">Trip</h2>
+      <div class="iconbtn" onclick="deleteTripPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
+    </div>
+    <div id="detailBody"></div>
+  </section>
+
+  <!-- ============ BOATS ============ -->
+  <section class="screen" id="screen-boats">
+    <div class="backrow">
+      <div class="iconbtn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2>Boat Fleet</h2>
+      <div class="iconbtn" onclick="openBoatSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+    </div>
+    <div id="boatsList"></div>
+  </section>
+
+  <!-- ============ CREW ============ -->
+  <section class="screen" id="screen-crew">
+    <div class="backrow">
+      <div class="iconbtn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2>Crew</h2>
+      <div class="iconbtn" onclick="openCrewSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+    </div>
+    <div id="crewList"></div>
+  </section>
+
+  <!-- ============ PROFILE ============ -->
+  <section class="screen" id="screen-profile">
+    <div class="backrow"><h2>Profile</h2></div>
+    <div style="text-align:center;">
+      <div style="position:relative;display:inline-block;">
+        <img class="avatar" id="profileAvatarImg" style="width:88px;height:88px;" src="">
+        <div class="iconbtn" style="width:30px;height:30px;position:absolute;bottom:-4px;right:-4px;" onclick="document.getElementById('profileAvatarInput').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <input type="file" id="profileAvatarInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
+      </div>
+    </div>
+    <div class="field" style="margin-top:20px;">
+      <label>Name</label>
+      <input type="text" id="profileName" placeholder="Your name">
+    </div>
+    <div class="field">
+      <label>Bio</label>
+      <textarea id="profileBio" placeholder="Tell your crew a bit about yourself and your sailing…"></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="saveProfileForm()">Save Profile</button>
+
+    <div class="section-title">Lifetime Stats</div>
+    <div id="profileStats"></div>
+
+    <div class="section-title">Appearance</div>
+    <div class="theme-toggle">
+      <div>
+        <div style="font-weight:600;font-size:14px;" id="themeLabel">Day Theme</div>
+        <p style="font-size:12px;">Switch between day and night mode</p>
+      </div>
+      <div class="switch" onclick="toggleTheme()"><div class="knob" id="themeKnob">☀️</div></div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="link-plain" onclick="openResetSheet()">Reset app data…</div>
+  </section>
+
+  <!-- ============ RESUME / CERTIFICATE ============ -->
+  <section class="screen" id="screen-resume">
+    <div class="backrow">
+      <div class="iconbtn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2>Sailing Resume</h2>
+    </div>
+    <div class="chiprow" id="resumeChips">
+      <div class="chip active" data-r="all" onclick="setResumeRange('all')">All Time</div>
+      <div class="chip" data-r="year" onclick="setResumeRange('year')">This Year</div>
+      <div class="chip" data-r="30" onclick="setResumeRange('30')">Last 30 Days</div>
+      <div class="chip" data-r="custom" onclick="setResumeRange('custom')">Custom</div>
+    </div>
+    <div class="two-col" id="resumeCustomWrap" style="display:none;margin-top:8px;">
+      <div class="field"><label>From</label><input type="date" id="resumeFrom" onchange="renderResume()"></div>
+      <div class="field"><label>To</label><input type="date" id="resumeTo" onchange="renderResume()"></div>
+    </div>
+
+    <div class="stat-card stat-grid" style="margin-top:10px;">
+      <div class="cell"><div class="stat-label">Total Sails</div><div class="stat-value" id="resSails">0</div></div>
+      <div class="cell"><div class="stat-label">Total Distance</div><div class="stat-value" id="resDist">0<span class="stat-unit"> NM</span></div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">Time at Sea</div><div class="stat-value" id="resTime" style="font-size:19px;">0h</div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">Avg Speed</div><div class="stat-value" id="resAvg">0.0<span class="stat-unit"> kts</span></div></div>
+    </div>
+
+    <button class="btn btn-outline" style="margin-top:16px;" onclick="openCertificateSheet()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M9 13.5L7 22l5-3 5 3-2-8.5"/></svg>
+      Generate Certificate
+    </button>
+
+    <div class="section-title">Included Sails</div>
+    <div id="resumeList"></div>
+  </section>
+
+</div>
+
+<!-- ============ BOTTOM NAV ============ -->
+<nav class="bottomnav" id="bottomNav">
+  <div class="navitem" data-tab="home" onclick="nav('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+    <span>Home</span>
+  </div>
+  <div class="navitem" data-tab="history" onclick="nav('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    <span>History</span>
+  </div>
+  <div class="navitem" data-tab="boats" onclick="nav('boats')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 16l1.5 4h15L21 16"/><path d="M5 16l1-9h12l1 9"/><path d="M12 3v4"/></svg>
+    <span>Fleet</span>
+  </div>
+  <div class="navitem" data-tab="crew" onclick="nav('crew')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.6.4 4.5 2.4 4.5 5.3"/></svg>
+    <span>Crew</span>
+  </div>
+  <div class="navitem" data-tab="profile" onclick="nav('profile')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+    <span>Profile</span>
+  </div>
+</nav>
+
+<!-- ============ SHEETS / MODALS ============ -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeSheets()">
+
+  <div class="sheet" id="sheetStartJourney" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3>Start a New Journey</h3>
+    <div class="field"><label>Which boat?</label><select id="startBoatSelect"></select></div>
+    <p style="font-size:12.5px;margin-bottom:16px;">We'll try to use your device's GPS to track your route, speed and distance live. If GPS isn't available, you can enter distance manually when you finish.</p>
+    <button class="btn btn-primary" onclick="beginJourney()">Cast Off</button>
+  </div>
+
+  <div class="sheet" id="sheetBoat" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3 id="boatSheetTitle">Add a Boat</h3>
+    <div style="text-align:center;margin-bottom:10px;">
+      <img id="boatPhotoPreview" src="" style="width:96px;height:96px;border-radius:18px;object-fit:cover;background:var(--bg-sunk);display:block;margin:0 auto 8px;">
+      <div class="link-plain" onclick="document.getElementById('boatPhotoInput').click()">Add photo</div>
+      <input type="file" id="boatPhotoInput" accept="image/*" style="display:none;" onchange="handleBoatPhoto(event)">
+    </div>
+    <div class="field"><label>Name</label><input type="text" id="boatName" placeholder="e.g. Windswept"></div>
+    <div class="field"><label>Type</label><input type="text" id="boatType" placeholder="e.g. Beneteau Oceanis 38"></div>
+    <div class="field"><label>Notes</label><textarea id="boatNotes" placeholder="Home marina, rig details, quirks…"></textarea></div>
+    <button class="btn btn-primary" onclick="saveBoatForm()">Save Boat</button>
+    <button class="btn btn-ghost" id="deleteBoatBtn" style="display:none;color:var(--coral);" onclick="deleteBoatForm()">Remove Boat</button>
+  </div>
+
+  <div class="sheet" id="sheetCrew" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3 id="crewSheetTitle">Add Crew</h3>
+    <div style="text-align:center;margin-bottom:10px;">
+      <img id="crewPhotoPreview" src="" style="width:96px;height:96px;border-radius:50%;object-fit:cover;background:var(--bg-sunk);display:block;margin:0 auto 8px;">
+      <div class="link-plain" onclick="document.getElementById('crewPhotoInput').click()">Add photo</div>
+      <input type="file" id="crewPhotoInput" accept="image/*" style="display:none;" onchange="handleCrewPhoto(event)">
+    </div>
+    <div class="field"><label>Name</label><input type="text" id="crewName" placeholder="e.g. Alex"></div>
+    <div class="field"><label>Note</label><textarea id="crewNote" placeholder="How you know them, role aboard…"></textarea></div>
+    <button class="btn btn-primary" onclick="saveCrewForm()">Save</button>
+    <button class="btn btn-ghost" id="deleteCrewBtn" style="display:none;color:var(--coral);" onclick="deleteCrewForm()">Remove</button>
+  </div>
+
+  <div class="sheet" id="sheetCertificate" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3>Certificate Details</h3>
+    <div class="field"><label>Certificate Title</label><input type="text" id="certTitle" value="Certificate of Sea Time"></div>
+    <div class="field"><label>Sailor Name</label><input type="text" id="certName"></div>
+    <button class="btn btn-primary" onclick="renderCertificate()">Generate</button>
+    <div id="certificateOutput"></div>
+  </div>
+
+  <div class="sheet" id="sheetReset" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3>Reset App Data</h3>
+    <p style="margin-bottom:18px;">This permanently deletes all trips, boats, crew and your profile from this device. This can't be undone.</p>
+    <button class="btn btn-danger" onclick="resetAllData()">Yes, erase everything</button>
+    <div style="height:10px;"></div>
+    <button class="btn btn-ghost" onclick="closeSheets()">Cancel</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="printArea" style="display:none;"></div>
+
+<script>
+/* ============================================================
+   SAIL LA VIE — data layer (uses window.storage, personal/private)
+   ============================================================ */
+const KEYS = { INDEX:'trip-index', BOATS:'boats', CREW:'crew', PROFILE:'profile' };
+let VERS = {}; // path -> version token cache (best-effort; storage tool re-fetches on conflict)
+
+async function storeGet(key){
+  try{ const r = await window.storage.get(key,false); return r ? JSON.parse(r.value) : null; }
+  catch(e){ return null; }
+}
+async function storeSet(key,value){
+  try{ await window.storage.set(key, JSON.stringify(value), false); return true; }
+  catch(e){ console.error('storage set failed',key,e); showToast("Couldn't save — storage error"); return false; }
+}
+async function storeDelete(key){
+  try{ await window.storage.delete(key,false); }catch(e){}
+}
+
+/* ---------- in-memory state ---------- */
+let state = {
+  tripIndex: [],   // lightweight list for History screen
+  boats: [],
+  crew: [],
+  profile: { name:'Sailor', bio:'', avatar:'', theme:'light' },
+};
+
+let currentTrip = null;   // full record while a journey is active
+let watchId = null;
+let timerId = null;
+let startedAt = null;
+let lastFixTime = null;
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+/* ---------- boot ---------- */
+async function boot(){
+  const [idx, boats, crew, profile] = await Promise.all([
+    storeGet(KEYS.INDEX), storeGet(KEYS.BOATS), storeGet(KEYS.CREW), storeGet(KEYS.PROFILE)
+  ]);
+  state.tripIndex = idx || [];
+  state.boats = boats || [];
+  state.crew = crew || [];
+  state.profile = profile || state.profile;
+
+  document.documentElement.setAttribute('data-theme', state.profile.theme || 'light');
+  document.getElementById('themeKnob').textContent = (state.profile.theme==='dark') ? '🌙' : '☀️';
+  document.getElementById('themeLabel').textContent = (state.profile.theme==='dark') ? 'Night Theme' : 'Day Theme';
+
+  refreshAvatars();
+  document.getElementById('homeName').textContent = state.profile.name || 'Sailor';
+  greet();
+
+  document.getElementById('loadingScreen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  nav('home');
+  renderHomeStats();
+}
+function greet(){
+  const h = new Date().getHours();
+  document.getElementById('homeGreeting').textContent = h<12 ? 'Good morning' : h<18 ? 'Good afternoon' : 'Good evening';
+}
+function refreshAvatars(){
+  const a = state.profile.avatar || placeholderAvatar();
+  document.getElementById('homeAvatar').src = a;
+  document.getElementById('profileAvatarImg').src = a;
+}
+function placeholderAvatar(){
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#16324F"/><circle cx="40" cy="32" r="14" fill="#BFE0EA"/><path d="M14 70c0-16 12-26 26-26s26 10 26 26" fill="#BFE0EA"/></svg>`);
+}
+
+/* ---------- navigation ---------- */
+function nav(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.navitem').forEach(n=>n.classList.toggle('active', n.dataset.tab===name));
+  document.getElementById('bottomNav').style.display = (name==='active') ? 'none' : 'flex';
+  window.scrollTo(0,0);
+  if(name==='history') renderHistory();
+  if(name==='boats') renderBoats();
+  if(name==='crew') renderCrew();
+  if(name==='profile') renderProfileScreen();
+  if(name==='resume') renderResume();
+}
+function showToast(msg){
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function closeSheets(){
+  document.querySelectorAll('.sheet').forEach(s=>s.style.display='none');
+  document.getElementById('overlay').classList.remove('active');
+}
+function openSheet(id){
+  document.querySelectorAll('.sheet').forEach(s=>s.style.display='none');
+  document.getElementById(id).style.display='block';
+  document.getElementById('overlay').classList.add('active');
+}
+
+/* ---------- image resize helper (keeps window.storage payloads small) ---------- */
+function resizeImage(file, maxDim, quality){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=>reject(new Error('read failed'));
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onerror = ()=>reject(new Error('decode failed'));
+      img.onload = ()=>{
+        let w=img.width, h=img.height;
+        if(w>h && w>maxDim){ h=Math.round(h*maxDim/w); w=maxDim; }
+        else if(h>=w && h>maxDim){ w=Math.round(w*maxDim/h); h=maxDim; }
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(c.toDataURL('image/jpeg', quality||0.7));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ============================================================
+   HOME
+   ============================================================ */
+function renderHomeStats(){
+  const el = document.getElementById('homeStatsStrip');
+  if(!state.tripIndex.length){ el.innerHTML=''; return; }
+  const nm = state.tripIndex.reduce((s,t)=>s+(t.distanceNm||0),0);
+  const secs = state.tripIndex.reduce((s,t)=>s+(t.elapsedSeconds||0),0);
+  el.innerHTML = `<div class="stat-card stat-grid">
+    <div class="cell"><div class="stat-label">Total Sails</div><div class="stat-value">${state.tripIndex.length}</div></div>
+    <div class="cell"><div class="stat-label">Distance Logged</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
+  </div>`;
+}
+
+/* ============================================================
+   START / ACTIVE JOURNEY
+   ============================================================ */
+function populateBoatSelects(){
+  const opts = state.boats.length
+    ? state.boats.map(b=>`<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('')
+    : `<option value="">No boats yet — add one from Fleet</option>`;
+  document.getElementById('startBoatSelect').innerHTML = opts;
+  document.getElementById('activeBoatSelect').innerHTML = opts;
+}
+function openStartJourneySheet(){
+  populateBoatSelects();
+  openSheet('sheetStartJourney');
+}
+function updateWindSpeedLabel(){
+  const bands = ['0–1 kts (Calm)','2–3 kts','4–6 kts','7–10 kts','11–16 kts','17–21 kts','22–27 kts','28–33 kts','34–40 kts','40+ kts'];
+  const v = document.getElementById('windSpeed').value;
+  document.getElementById('windSpeedVal').textContent = bands[v];
+}
+function renderActiveCrewChips(){
+  const row = document.getElementById('activeCrewRow');
+  if(!state.crew.length){ row.innerHTML = `<p style="font-size:12.5px;">No crew added yet — you can add crew from the Crew tab.</p>`; return; }
+  row.innerHTML = state.crew.map(c=>`
+    <div class="crew-chip" data-id="${c.id}" onclick="toggleCrewChip('${c.id}')">
+      <img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span>
+    </div>`).join('');
+}
+function toggleCrewChip(id){
+  const el = document.querySelector(`.crew-chip[data-id="${id}"]`);
+  el.classList.toggle('active');
+}
+function selectedCrewIds(){
+  return Array.from(document.querySelectorAll('.crew-chip.active')).map(e=>e.dataset.id);
+}
+
+function beginJourney(){
+  const boatId = document.getElementById('startBoatSelect').value;
+  currentTrip = {
+    id: uid(),
+    boatId: boatId || null,
+    date: new Date().toISOString(),
+    elapsedSeconds: 0,
+    distanceNm: 0,
+    avgSpeed: 0,
+    maxSpeed: 0,
+    path: [],
+    weather: {}, notes:'', crewIds: [], photos: [], coverPhoto: null
+  };
+  closeSheets();
+  nav('active');
+  document.getElementById('windSpeed').value = 3; updateWindSpeedLabel();
+  document.getElementById('activePhotoStrip').querySelectorAll('.photo-thumb').forEach(n=>n.remove());
+  renderActiveCrewChips();
+  startedAt = Date.now();
+  document.getElementById('elapsedDisplay').textContent = '00:00:00';
+  document.getElementById('avgSpeedDisplay').innerHTML = '0.0<span class="stat-unit"> kts</span>';
+  document.getElementById('maxSpeedDisplay').innerHTML = '0.0<span class="stat-unit"> kts</span>';
+  document.getElementById('distDisplay').innerHTML = '0.0<span class="stat-unit"> NM</span>';
+  timerId = setInterval(tickTimer, 1000);
+  startGPS();
+}
+function tickTimer(){
+  const secs = Math.floor((Date.now()-startedAt)/1000);
+  currentTrip.elapsedSeconds = secs;
+  const h = String(Math.floor(secs/3600)).padStart(2,'0');
+  const m = String(Math.floor((secs%3600)/60)).padStart(2,'0');
+  const s = String(secs%60).padStart(2,'0');
+  document.getElementById('elapsedDisplay').textContent = `${h}:${m}:${s}`;
+}
+function haversineNm(a,b){
+  const R=3440.065; // nm
+  const toRad = d=>d*Math.PI/180;
+  const dLat = toRad(b.lat-a.lat), dLon = toRad(b.lng-a.lng);
+  const la1=toRad(a.lat), la2=toRad(b.lat);
+  const h = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1-h));
+}
+function startGPS(){
+  document.getElementById('manualDistanceWrap').style.display='none';
+  const gpsEl = document.getElementById('gpsStatus');
+  if(!('geolocation' in navigator)){
+    gpsEl.textContent = 'Unavailable'; gpsEl.style.color='var(--coral)';
+    document.getElementById('manualDistanceWrap').style.display='block';
+    return;
+  }
+  gpsEl.textContent = 'Searching…';
+  watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
+}
+function onFix(pos){
+  const gpsEl = document.getElementById('gpsStatus');
+  gpsEl.textContent = 'Live'; gpsEl.style.color='var(--navy)';
+  const point = { lat: pos.coords.latitude, lng: pos.coords.longitude, t: Date.now() };
+  const prev = currentTrip.path[currentTrip.path.length-1];
+  currentTrip.path.push(point);
+  if(prev){
+    const segNm = haversineNm(prev, point);
+    const dtHours = (point.t - prev.t)/3600000;
+    if(dtHours>0){
+      const instSpeed = segNm/dtHours;
+      if(instSpeed < 60){ // filter GPS noise/spikes
+        currentTrip.distanceNm += segNm;
+        currentTrip.maxSpeed = Math.max(currentTrip.maxSpeed, instSpeed);
+      }
+    }
+  }
+  const elapsedH = currentTrip.elapsedSeconds/3600;
+  currentTrip.avgSpeed = elapsedH>0 ? currentTrip.distanceNm/elapsedH : 0;
+  document.getElementById('distDisplay').innerHTML = currentTrip.distanceNm.toFixed(1)+'<span class="stat-unit"> NM</span>';
+  document.getElementById('avgSpeedDisplay').innerHTML = currentTrip.avgSpeed.toFixed(1)+'<span class="stat-unit"> kts</span>';
+  document.getElementById('maxSpeedDisplay').innerHTML = currentTrip.maxSpeed.toFixed(1)+'<span class="stat-unit"> kts</span>';
+}
+function onGpsError(){
+  const gpsEl = document.getElementById('gpsStatus');
+  gpsEl.textContent = 'No signal'; gpsEl.style.color='var(--coral)';
+  document.getElementById('manualDistanceWrap').style.display='block';
+}
+function stopGPS(){
+  if(watchId!==null && 'geolocation' in navigator){ navigator.geolocation.clearWatch(watchId); watchId=null; }
+  if(timerId){ clearInterval(timerId); timerId=null; }
+}
+function confirmLeaveActive(){
+  if(confirm('Leave without saving this journey? Your progress will be lost.')){
+    stopGPS(); currentTrip=null; nav('home');
+  }
+}
+async function handleActivePhotos(ev){
+  const files = Array.from(ev.target.files||[]);
+  for(const f of files){
+    try{
+      const dataUrl = await resizeImage(f, 900, 0.72);
+      currentTrip.photos.push(dataUrl);
+      if(!currentTrip.coverPhoto) currentTrip.coverPhoto = dataUrl;
+    }catch(e){ showToast("Couldn't process that photo"); }
+  }
+  renderActivePhotoStrip();
+  ev.target.value='';
+}
+function renderActivePhotoStrip(){
+  const strip = document.getElementById('activePhotoStrip');
+  strip.querySelectorAll('.photo-thumb').forEach(n=>n.remove());
+  currentTrip.photos.forEach((p,i)=>{
+    const div = document.createElement('div'); div.className='photo-thumb';
+    div.innerHTML = `<img src="${p}" onclick="setActiveCover(${i})">
+      ${currentTrip.coverPhoto===p?'<div class="cover-badge">COVER</div>':''}
+      <div class="rm" onclick="removeActivePhoto(${i})">✕</div>`;
+    strip.insertBefore(div, strip.firstChild);
+  });
+}
+function setActiveCover(i){ currentTrip.coverPhoto = currentTrip.photos[i]; renderActivePhotoStrip(); }
+function removeActivePhoto(i){
+  const removed = currentTrip.photos.splice(i,1)[0];
+  if(currentTrip.coverPhoto===removed) currentTrip.coverPhoto = currentTrip.photos[0]||null;
+  renderActivePhotoStrip();
+}
+
+async function endJourney(){
+  if(!confirm('End this journey and save it to your log?')) return;
+  stopGPS();
+  const manual = document.getElementById('manualDistance').value;
+  if(manual && (!currentTrip.path.length || currentTrip.distanceNm===0)){
+    currentTrip.distanceNm = parseFloat(manual)||0;
+    const h = currentTrip.elapsedSeconds/3600;
+    currentTrip.avgSpeed = h>0 ? currentTrip.distanceNm/h : 0;
+  }
+  currentTrip.weather = {
+    windDir: document.getElementById('windDir').value,
+    windSpeed: document.getElementById('windSpeedVal').textContent,
+    gusts: document.getElementById('gusts').value,
+    seaState: document.getElementById('seaState').value,
+    waveHeight: document.getElementById('waveHeight').value,
+    temp: document.getElementById('temp').value,
+  };
+  currentTrip.notes = document.getElementById('tripNotes').value;
+  currentTrip.crewIds = selectedCrewIds();
+  const boat = state.boats.find(b=>b.id===document.getElementById('activeBoatSelect').value);
+  currentTrip.boatId = boat ? boat.id : null;
+  currentTrip.title = boat ? `Sail aboard ${boat.name}` : 'Untitled Sail';
+
+  const ok = await storeSet('trip:'+currentTrip.id, currentTrip);
+  if(!ok){ showToast('Save failed — trip kept on screen, try again'); return; }
+
+  state.tripIndex.unshift({
+    id: currentTrip.id, title: currentTrip.title, date: currentTrip.date,
+    elapsedSeconds: currentTrip.elapsedSeconds, distanceNm: currentTrip.distanceNm,
+    avgSpeed: currentTrip.avgSpeed, maxSpeed: currentTrip.maxSpeed,
+    coverPhoto: currentTrip.coverPhoto, hasPhotos: currentTrip.photos.length>0,
+    boatId: currentTrip.boatId, notes: currentTrip.notes
+  });
+  await storeSet(KEYS.INDEX, state.tripIndex);
+  showToast('Journey saved ⚓');
+  const savedId = currentTrip.id;
+  currentTrip = null;
+  nav('home');
+  renderHomeStats();
+  openTripDetail(savedId);
+}
+
+/* ============================================================
+   HISTORY
+   ============================================================ */
+let historyFilter = 'all';
+function setHistoryFilter(f){ historyFilter=f; document.querySelectorAll('#historyChips .chip').forEach(c=>c.classList.toggle('active', c.dataset.f===f)); renderHistory(); }
+function renderHistory(){
+  const q = (document.getElementById('historySearch').value||'').toLowerCase();
+  let list = state.tripIndex.filter(t=>{
+    const boat = state.boats.find(b=>b.id===t.boatId);
+    const hay = (t.title+' '+(t.notes||'')+' '+(boat?boat.name:'')).toLowerCase();
+    if(q && !hay.includes(q)) return false;
+    if(historyFilter==='recent'){ const days=(Date.now()-new Date(t.date))/86400000; if(days>30) return false; }
+    if(historyFilter==='photos' && !t.hasPhotos) return false;
+    return true;
+  });
+  const el = document.getElementById('historyList');
+  if(!list.length){
+    el.innerHTML = `<div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18l9-15 9 15z"/></svg>
+      <h3>No sails logged yet</h3><p>Start a new journey from Home to begin your logbook.</p></div>`;
+    return;
+  }
+  el.innerHTML = list.map(t=>{
+    const d = new Date(t.date);
+    const dateStr = d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+    const dur = fmtDuration(t.elapsedSeconds);
+    return `<div class="trip-card" onclick="openTripDetail('${t.id}')">
+      ${t.coverPhoto ? `<img class="trip-cover" src="${t.coverPhoto}">` : `<div class="trip-cover placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18l9-15 9 15z"/></svg></div>`}
+      <div class="trip-body">
+        <div class="trip-title">${escapeHtml(t.title)}</div>
+        <div class="trip-meta"><span>📅 ${dateStr}</span><span>⏱ ${dur}</span></div>
+        <div class="trip-meta"><span>📏 <b>${(t.distanceNm||0).toFixed(1)} NM</b></span><span>⚓ Avg <b>${(t.avgSpeed||0).toFixed(1)} kts</b></span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function fmtDuration(secs){
+  secs = secs||0;
+  const h = Math.floor(secs/3600), m = Math.floor((secs%3600)/60);
+  return h>0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+/* ============================================================
+   ENTRY DETAIL
+   ============================================================ */
+let openTripId = null;
+async function openTripDetail(id){
+  openTripId = id;
+  const trip = await storeGet('trip:'+id);
+  if(!trip){ showToast('Could not load that trip'); return; }
+  const boat = state.boats.find(b=>b.id===trip.boatId);
+  document.getElementById('detailTitle').textContent = trip.title||'Trip';
+  const crewNames = (trip.crewIds||[]).map(cid=>{ const c=state.crew.find(x=>x.id===cid); return c?c.name:null; }).filter(Boolean);
+  const d = new Date(trip.date);
+
+  let mapSvg = '';
+  if(trip.path && trip.path.length>1){
+    mapSvg = buildPortholeSvg(trip.path);
+  }
+
+  document.getElementById('detailBody').innerHTML = `
+    ${trip.coverPhoto ? `<img src="${trip.coverPhoto}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius-lg);border:1px solid var(--border);">` : ''}
+    <p style="margin-top:12px;font-size:13px;">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}${boat?' · '+escapeHtml(boat.name):''}</p>
+
+    <div class="stat-card stat-grid" style="margin-top:14px;">
+      <div class="cell"><div class="stat-label">Elapsed</div><div class="stat-value" style="font-size:19px;">${fmtDuration(trip.elapsedSeconds)}</div></div>
+      <div class="cell"><div class="stat-label">Distance</div><div class="stat-value">${(trip.distanceNm||0).toFixed(1)}<span class="stat-unit"> NM</span></div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">Avg Speed</div><div class="stat-value">${(trip.avgSpeed||0).toFixed(1)}<span class="stat-unit"> kts</span></div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">Max Speed</div><div class="stat-value">${(trip.maxSpeed||0).toFixed(1)}<span class="stat-unit"> kts</span></div></div>
+    </div>
+
+    ${mapSvg ? `<div class="porthole">${mapSvg}</div>` : ''}
+
+    <div class="section-title">Weather</div>
+    <div class="card" style="padding:16px;">
+      <div class="trip-meta">
+        <span>💨 ${trip.weather?.windDir||'—'} ${trip.weather?.windSpeed||''}</span>
+        <span>${trip.weather?.gusts?`Gusts ${trip.weather.gusts} kts`:''}</span>
+        <span>🌊 ${trip.weather?.seaState||'—'}${trip.weather?.waveHeight?` (${trip.weather.waveHeight}m)`:''}</span>
+        <span>🌡 ${trip.weather?.temp?trip.weather.temp+'°C':'—'}</span>
+      </div>
+    </div>
+
+    ${trip.notes ? `<div class="section-title">Notes</div><div class="card" style="padding:16px;"><p style="color:var(--ink);">${escapeHtml(trip.notes)}</p></div>` : ''}
+
+    ${crewNames.length ? `<div class="section-title">Crew</div><p>${crewNames.map(escapeHtml).join(', ')}</p>` : ''}
+
+    ${trip.photos && trip.photos.length ? `<div class="section-title">Photos</div><div class="photo-strip">${trip.photos.map(p=>`<div class="photo-thumb"><img src="${p}"></div>`).join('')}</div>` : ''}
+
+    <div style="height:8px;"></div>
+    <button class="btn btn-outline" onclick="shareTrip('${trip.id}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
+      Share with Crew / Social
+    </button>
+  `;
+  window._detailTrip = trip;
+  nav('detail');
+}
+function buildPortholeSvg(path){
+  const lats = path.map(p=>p.lat), lngs = path.map(p=>p.lng);
+  const minLat=Math.min(...lats), maxLat=Math.max(...lats), minLng=Math.min(...lngs), maxLng=Math.max(...lngs);
+  const padLat=(maxLat-minLat)*0.15||0.001, padLng=(maxLng-minLng)*0.15||0.001;
+  const w=260,h=260;
+  const toXY = (p)=>{
+    const x = ((p.lng-(minLng-padLng))/((maxLng+padLng)-(minLng-padLng)))*w;
+    const y = h - ((p.lat-(minLat-padLat))/((maxLat+padLat)-(minLat-padLat)))*h;
+    return [x,y];
+  };
+  const pts = path.map(toXY);
+  const d = pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const start = pts[0], end = pts[pts.length-1];
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${w}" height="${h}" fill="var(--water)"/>
+    <path d="${d}" fill="none" stroke="var(--navy)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${start[0]}" cy="${start[1]}" r="6" fill="#2E8B57"/>
+    <circle cx="${end[0]}" cy="${end[1]}" r="6" fill="var(--coral)"/>
+  </svg>`;
+}
+async function deleteTripPrompt(){
+  if(!openTripId) return;
+  if(!confirm('Delete this trip permanently?')) return;
+  await storeDelete('trip:'+openTripId);
+  state.tripIndex = state.tripIndex.filter(t=>t.id!==openTripId);
+  await storeSet(KEYS.INDEX, state.tripIndex);
+  showToast('Trip deleted');
+  nav('history'); renderHomeStats();
+}
+function shareTrip(id){
+  const t = window._detailTrip;
+  const text = `⛵ ${t.title}\n${new Date(t.date).toLocaleDateString()}\n${(t.distanceNm||0).toFixed(1)} NM · ${fmtDuration(t.elapsedSeconds)} · Avg ${(t.avgSpeed||0).toFixed(1)} kts\nLogged with Sail la Vie`;
+  if(navigator.share){
+    navigator.share({ title: t.title, text }).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(text);
+    showToast('Copied trip summary to clipboard');
+  }
+}
+
+/* ============================================================
+   BOATS
+   ============================================================ */
+let editingBoatId = null;
+let pendingBoatPhoto = null;
+function openBoatSheet(boat){
+  editingBoatId = boat ? boat.id : null;
+  pendingBoatPhoto = boat ? boat.photo : null;
+  document.getElementById('boatSheetTitle').textContent = boat ? 'Edit Boat' : 'Add a Boat';
+  document.getElementById('boatName').value = boat ? boat.name : '';
+  document.getElementById('boatType').value = boat ? boat.type : '';
+  document.getElementById('boatNotes').value = boat ? boat.notes : '';
+  document.getElementById('boatPhotoPreview').src = pendingBoatPhoto || placeholderAvatar();
+  document.getElementById('deleteBoatBtn').style.display = boat ? 'flex' : 'none';
+  openSheet('sheetBoat');
+}
+async function handleBoatPhoto(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  pendingBoatPhoto = await resizeImage(f, 500, 0.75);
+  document.getElementById('boatPhotoPreview').src = pendingBoatPhoto;
+}
+async function saveBoatForm(){
+  const name = document.getElementById('boatName').value.trim();
+  if(!name){ showToast('Give the boat a name'); return; }
+  if(editingBoatId){
+    const b = state.boats.find(x=>x.id===editingBoatId);
+    b.name=name; b.type=document.getElementById('boatType').value; b.notes=document.getElementById('boatNotes').value; b.photo=pendingBoatPhoto;
+  } else {
+    state.boats.push({ id:uid(), name, type:document.getElementById('boatType').value, notes:document.getElementById('boatNotes').value, photo:pendingBoatPhoto });
+  }
+  const ok = await storeSet(KEYS.BOATS, state.boats);
+  if(ok){ showToast('Boat saved'); closeSheets(); renderBoats(); }
+}
+async function deleteBoatForm(){
+  if(!confirm('Remove this boat from your fleet?')) return;
+  state.boats = state.boats.filter(b=>b.id!==editingBoatId);
+  await storeSet(KEYS.BOATS, state.boats);
+  closeSheets(); renderBoats();
+}
+function renderBoats(){
+  const el = document.getElementById('boatsList');
+  if(!state.boats.length){
+    el.innerHTML = `<div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 16l1.5 4h15L21 16"/><path d="M5 16l1-9h12l1 9"/></svg>
+      <h3>No boats yet</h3><p>Add the boats you sail on to keep track of your fleet.</p></div>`;
+    return;
+  }
+  el.innerHTML = state.boats.map(b=>{
+    const trips = state.tripIndex.filter(t=>t.boatId===b.id).length;
+    return `<div class="row-card" onclick='openBoatSheet(${JSON.stringify(b).replace(/'/g,"&apos;")})'>
+      <img class="row-photo" src="${b.photo||placeholderAvatar()}">
+      <div class="row-info"><div class="name">${escapeHtml(b.name)}</div><div class="sub">${escapeHtml(b.type||'')}${b.type?' · ':''}${trips} sail${trips!==1?'s':''} logged</div></div>
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   CREW
+   ============================================================ */
+let editingCrewId = null;
+let pendingCrewPhoto = null;
+function openCrewSheet(member){
+  editingCrewId = member ? member.id : null;
+  pendingCrewPhoto = member ? member.photo : null;
+  document.getElementById('crewSheetTitle').textContent = member ? 'Edit Crew' : 'Add Crew';
+  document.getElementById('crewName').value = member ? member.name : '';
+  document.getElementById('crewNote').value = member ? member.note : '';
+  document.getElementById('crewPhotoPreview').src = pendingCrewPhoto || placeholderAvatar();
+  document.getElementById('deleteCrewBtn').style.display = member ? 'flex' : 'none';
+  openSheet('sheetCrew');
+}
+async function handleCrewPhoto(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  pendingCrewPhoto = await resizeImage(f, 400, 0.75);
+  document.getElementById('crewPhotoPreview').src = pendingCrewPhoto;
+}
+async function saveCrewForm(){
+  const name = document.getElementById('crewName').value.trim();
+  if(!name){ showToast('Enter a name'); return; }
+  if(editingCrewId){
+    const c = state.crew.find(x=>x.id===editingCrewId);
+    c.name=name; c.note=document.getElementById('crewNote').value; c.photo=pendingCrewPhoto;
+  } else {
+    state.crew.push({ id:uid(), name, note:document.getElementById('crewNote').value, photo:pendingCrewPhoto });
+  }
+  const ok = await storeSet(KEYS.CREW, state.crew);
+  if(ok){ showToast('Crew saved'); closeSheets(); renderCrew(); }
+}
+async function deleteCrewForm(){
+  if(!confirm('Remove this crew member?')) return;
+  state.crew = state.crew.filter(c=>c.id!==editingCrewId);
+  await storeSet(KEYS.CREW, state.crew);
+  closeSheets(); renderCrew();
+}
+function renderCrew(){
+  const el = document.getElementById('crewList');
+  if(!state.crew.length){
+    el.innerHTML = `<div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+      <h3>No crew added</h3><p>Add friends who sail with you to tag them on your logs.</p></div>`;
+    return;
+  }
+  el.innerHTML = state.crew.map(c=>`
+    <div class="row-card" onclick='openCrewSheet(${JSON.stringify(c).replace(/'/g,"&apos;")})'>
+      <img class="row-photo round" src="${c.photo||placeholderAvatar()}">
+      <div class="row-info"><div class="name">${escapeHtml(c.name)}</div><div class="sub">${escapeHtml(c.note||'')}</div></div>
+    </div>`).join('');
+}
+
+/* ============================================================
+   PROFILE
+   ============================================================ */
+function renderProfileScreen(){
+  document.getElementById('profileName').value = state.profile.name || '';
+  document.getElementById('profileBio').value = state.profile.bio || '';
+  refreshAvatars();
+  const nm = state.tripIndex.reduce((s,t)=>s+(t.distanceNm||0),0);
+  const secs = state.tripIndex.reduce((s,t)=>s+(t.elapsedSeconds||0),0);
+  document.getElementById('profileStats').innerHTML = `<div class="stat-card stat-grid">
+    <div class="cell"><div class="stat-label">Total Sails</div><div class="stat-value">${state.tripIndex.length}</div></div>
+    <div class="cell"><div class="stat-label">Total Distance</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
+    <div class="cell" style="margin-top:14px;"><div class="stat-label">Time at Sea</div><div class="stat-value" style="font-size:18px;">${fmtDuration(secs)}</div></div>
+    <div class="cell" style="margin-top:14px;"><div class="stat-label">Boats Sailed</div><div class="stat-value">${state.boats.length}</div></div>
+  </div>`;
+}
+async function handleAvatarUpload(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  state.profile.avatar = await resizeImage(f, 400, 0.75);
+  await storeSet(KEYS.PROFILE, state.profile);
+  refreshAvatars();
+}
+async function saveProfileForm(){
+  state.profile.name = document.getElementById('profileName').value.trim() || 'Sailor';
+  state.profile.bio = document.getElementById('profileBio').value;
+  const ok = await storeSet(KEYS.PROFILE, state.profile);
+  if(ok){ showToast('Profile saved'); document.getElementById('homeName').textContent = state.profile.name; }
+}
+async function toggleTheme(){
+  const next = document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  document.getElementById('themeKnob').textContent = next==='dark' ? '🌙' : '☀️';
+  document.getElementById('themeLabel').textContent = next==='dark' ? 'Night Theme' : 'Day Theme';
+  state.profile.theme = next;
+  await storeSet(KEYS.PROFILE, state.profile);
+}
+function openResetSheet(){ openSheet('sheetReset'); }
+async function resetAllData(){
+  for(const t of state.tripIndex){ await storeDelete('trip:'+t.id); }
+  await storeDelete(KEYS.INDEX); await storeDelete(KEYS.BOATS); await storeDelete(KEYS.CREW); await storeDelete(KEYS.PROFILE);
+  state = { tripIndex:[], boats:[], crew:[], profile:{name:'Sailor',bio:'',avatar:'',theme:'light'} };
+  document.documentElement.setAttribute('data-theme','light');
+  closeSheets(); showToast('All data erased');
+  refreshAvatars(); nav('home'); renderHomeStats();
+}
+
+/* ============================================================
+   RESUME / CERTIFICATE
+   ============================================================ */
+let resumeRange = 'all';
+function setResumeRange(r){
+  resumeRange = r;
+  document.querySelectorAll('#resumeChips .chip').forEach(c=>c.classList.toggle('active', c.dataset.r===r));
+  document.getElementById('resumeCustomWrap').style.display = r==='custom' ? 'grid' : 'none';
+  renderResume();
+}
+function tripsInRange(){
+  const now = new Date();
+  return state.tripIndex.filter(t=>{
+    const d = new Date(t.date);
+    if(resumeRange==='year') return d.getFullYear()===now.getFullYear();
+    if(resumeRange==='30') return (now-d)/86400000 <= 30;
+    if(resumeRange==='custom'){
+      const from = document.getElementById('resumeFrom').value, to = document.getElementById('resumeTo').value;
+      if(from && d < new Date(from)) return false;
+      if(to && d > new Date(to+'T23:59:59')) return false;
+      return true;
+    }
+    return true;
+  });
+}
+function renderResume(){
+  const trips = tripsInRange();
+  const nm = trips.reduce((s,t)=>s+(t.distanceNm||0),0);
+  const secs = trips.reduce((s,t)=>s+(t.elapsedSeconds||0),0);
+  const avg = secs>0 ? nm/(secs/3600) : 0;
+  document.getElementById('resSails').textContent = trips.length;
+  document.getElementById('resDist').innerHTML = nm.toFixed(1)+'<span class="stat-unit"> NM</span>';
+  document.getElementById('resTime').textContent = fmtDuration(secs);
+  document.getElementById('resAvg').innerHTML = avg.toFixed(1)+'<span class="stat-unit"> kts</span>';
+  const el = document.getElementById('resumeList');
+  el.innerHTML = trips.length ? trips.map(t=>`<div class="trip-card" style="margin-top:12px;" onclick="openTripDetail('${t.id}')">
+      <div class="trip-body">
+        <div class="trip-title">${escapeHtml(t.title)}</div>
+        <div class="trip-meta"><span>📅 ${new Date(t.date).toLocaleDateString()}</span><span>📏 ${(t.distanceNm||0).toFixed(1)} NM</span><span>⏱ ${fmtDuration(t.elapsedSeconds)}</span></div>
+      </div></div>`).join('')
+    : `<p style="margin-top:10px;">No sails in this range yet.</p>`;
+  window._resumeStats = { count:trips.length, nm, secs, avg };
+}
+function openCertificateSheet(){
+  document.getElementById('certName').value = state.profile.name || '';
+  document.getElementById('certificateOutput').innerHTML = '';
+  openSheet('sheetCertificate');
+}
+function renderCertificate(){
+  const s = window._resumeStats || {count:0,nm:0,secs:0};
+  const title = document.getElementById('certTitle').value || 'Certificate of Sea Time';
+  const name = document.getElementById('certName').value || 'Sailor';
+  const rangeLabel = resumeRange==='all' ? 'All Time' : resumeRange==='year' ? new Date().getFullYear() : resumeRange==='30' ? 'Last 30 Days' :
+    `${document.getElementById('resumeFrom').value||'…'} to ${document.getElementById('resumeTo').value||'…'}`;
+  const html = `<div class="certificate" id="certBlock">
+    <div class="cert-title">Sail la Vie · ${escapeHtml(String(rangeLabel))}</div>
+    <h2>${escapeHtml(title)}</h2>
+    <p style="font-size:12px;">This certifies that</p>
+    <div class="cert-name">${escapeHtml(name)}</div>
+    <p style="font-size:12px;">has logged the following time at sea</p>
+    <div class="cert-stats">
+      <div><span>${s.count}</span><small>Sails</small></div>
+      <div><span>${s.nm.toFixed(1)}</span><small>Nautical Miles</small></div>
+      <div><span>${fmtDuration(s.secs)}</span><small>Time at Sea</small></div>
+    </div>
+    <div class="cert-foot">Generated ${new Date().toLocaleDateString()} · Sail la Vie Logbook</div>
+  </div>
+  <button class="btn btn-outline" style="margin-top:14px;" onclick="printCertificate()">Print / Save as PDF</button>`;
+  document.getElementById('certificateOutput').innerHTML = html;
+}
+function printCertificate(){
+  const block = document.getElementById('certBlock');
+  document.getElementById('printArea').innerHTML = block.outerHTML;
+  window.print();
+}
+
+/* ---------- utils ---------- */
+function escapeHtml(s){
+  return (s||'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+boot();
+</script>
+</body>
+</html>
