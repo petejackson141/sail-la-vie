@@ -13,7 +13,7 @@
     --navy:#16324F; --navy-deep:#0E2338; --navy-soft:#2C5F91;
     --gold:#C9A24B; --water:#BFE0EA; --coral:#D65A4A; --coral-deep:#B8443A;
     --border:#DAE4EA; --shadow: 0 10px 30px -12px rgba(20,43,68,0.25);
-    --radius-lg:26px; --radius-md:18px; --radius-sm:12px;
+    --radius-lg:26px; --radius-md:18px; --rsadius-sm:12px;
     --font-display:'Space Grotesk',system-ui,sans-serif;
     --font-body:'Inter',system-ui,sans-serif;
   }
@@ -35,8 +35,15 @@
     max-width:480px; margin:0 auto; min-height:100vh; position:relative;
     display:flex; flex-direction:column; background:var(--bg);
   }
-  .screen{ display:none; flex:1; flex-direction:column; padding:20px 20px 100px; animation:fadeIn .25s ease; }
+  .screen{ display:none; flex:1; flex-direction:column; padding:20px 20px 100px; animation:fadeIn .25s ease; position:relative; z-index:1; }
   .screen.active{ display:flex; }
+  #watermark{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:min(70%,340px); height:min(70%,340px); max-width:340px;
+    background:url('images/Logo.png') center/contain no-repeat;
+    opacity:.06; pointer-events:none; z-index:0;
+  }
+  @media print{ #watermark{ display:none; } }
   @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
   @media (prefers-reduced-motion: reduce){ .screen{animation:none;} }
 
@@ -118,6 +125,11 @@
   .trip-cover{ width:100%; height:150px; object-fit:cover; display:block; background:var(--bg-sunk); }
   .trip-cover.placeholder{ display:flex; align-items:center; justify-content:center; }
   .trip-cover.placeholder svg{ width:36px; height:36px; color:var(--ink-faint); }
+  .trip-cover-wrap{ position:relative; }
+  .trip-cover-overlay{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end;
+    padding:12px 16px; background:linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,.7) 100%); }
+  .trip-cover-date{ font-family:var(--font-display); font-weight:700; font-size:16px; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.6); }
+  .trip-cover-place{ font-size:12.5px; color:#fff; opacity:.92; margin-top:2px; text-shadow:0 1px 6px rgba(0,0,0,.6); }
   .trip-body{ padding:14px 16px 16px; }
   .trip-title{ font-family:var(--font-display); font-weight:700; font-size:16px; margin-bottom:4px; }
   .trip-meta{ font-size:12.5px; color:var(--ink-muted); display:flex; flex-wrap:wrap; gap:2px 10px; margin-top:6px; }
@@ -149,6 +161,8 @@
     font-weight:700; padding:2px 6px; border-radius:8px; }
   .photo-thumb .rm{ position:absolute; top:3px; right:3px; width:18px; height:18px; background:rgba(20,43,68,.75); border-radius:50%;
     display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; cursor:pointer; }
+  .photo-thumb.pickable{ cursor:pointer; box-sizing:border-box; }
+  .photo-thumb.pickable.selected{ border:3px solid var(--gold); }
   .add-photo-tile{ flex:0 0 auto; width:78px; height:78px; border-radius:14px; border:1.5px dashed var(--border);
     display:flex; align-items:center; justify-content:center; color:var(--ink-faint); cursor:pointer; }
 
@@ -158,6 +172,14 @@
     border:1px solid var(--border); font-size:12.5px; font-weight:600; cursor:pointer; color:var(--ink-muted); }
   .crew-chip img{ width:22px; height:22px; border-radius:50%; object-fit:cover; }
   .crew-chip.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .crew-chip .rm{ width:16px; height:16px; border-radius:50%; background:rgba(0,0,0,.18); display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer; margin-left:2px; }
+  .crew-pick-row{ display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .crew-pick-row:last-of-type{ border-bottom:none; }
+  .crew-pick-row img{ width:36px; height:36px; border-radius:50%; object-fit:cover; background:var(--bg-sunk); }
+  .crew-pick-row .name{ flex:1; font-weight:600; font-size:14px; }
+  .crew-pick-check{ width:20px; height:20px; border-radius:50%; border:1.5px solid var(--border); flex:0 0 auto; }
+  .crew-pick-row.selected .crew-pick-check{ background:var(--navy); border-color:var(--navy); position:relative; }
+  .crew-pick-row.selected .crew-pick-check::after{ content:''; position:absolute; left:6px; top:2px; width:5px; height:9px; border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg); }
 
   /* ---------- porthole map ---------- */
   .porthole{ width:100%; aspect-ratio:1/1; max-width:280px; margin:6px auto; border-radius:50%; border:10px solid var(--navy);
@@ -215,6 +237,8 @@
     #printArea, #printArea *{ visibility:visible; }
     #printArea{ position:absolute; top:0; left:0; width:100%; }
   }
+
+}
 </style>
 </head>
 <body>
@@ -222,6 +246,7 @@
 <div id="loadingScreen"><div class="spinner"></div><p style="color:var(--ink-muted);font-size:13px;">Loading your logbook…</p></div>
 
 <div id="app" style="display:none;">
+  <div id="watermark" aria-hidden="true"></div>
 
   <!-- ============ HOME ============ -->
   <section class="screen" id="screen-home">
@@ -244,14 +269,15 @@
     <button class="btn btn-primary" onclick="openStartJourneySheet()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18l9-15 9 15z"/><path d="M12 3v13"/></svg>
       Start New Journey
+      
     </button>
     <div style="height:12px;"></div>
     <button class="btn btn-outline" onclick="nav('history')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
       View History
-    </button>
 
-    <div class="quicklinks">
+    </button>
+          <div class="quicklinks">
       <div class="quicklink" onclick="nav('boats')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 16l1.5 4h15L21 16"/><path d="M5 16l1-9h12l1 9"/><path d="M12 3v4"/></svg>
         <span>Fleet</span>
@@ -300,6 +326,10 @@
       <label>Boat</label>
       <select id="activeBoatSelect"></select>
     </div>
+    <div class="field">
+      <label>Place</label>
+      <input type="text" id="tripPlace" placeholder="e.g. Chesapeake Bay">
+    </div>
     <div class="two-col">
       <div class="field">
         <label>Wind Direction</label>
@@ -311,16 +341,20 @@
       </div>
     </div>
     <div class="field">
-      <label>Wind Speed <span class="range-value" id="windSpeedVal">10–12 kts</span></label>
-      <input type="range" id="windSpeed" min="0" max="9" value="3" oninput="updateWindSpeedLabel()">
+      <label>Wind Speed <span class="range-value" id="windSpeedVal">12 kts</span></label>
+      <input type="range" id="windSpeed" min="0" max="19" value="8" oninput="updateWindSpeedLabel()">
     </div>
     <div class="field">
-      <label>Gusts (kts)</label>
-      <input type="number" id="gusts" placeholder="e.g. 18">
+      <label>Gusts <span class="range-value" id="gustsVal">10 kts</span></label>
+      <input type="range" id="gusts" min="0" max="40" step="1" value="10" oninput="updateGustsLabel()">
     </div>
-    <div class="two-col">
-      <div class="field"><label>Wave Height (m)</label><input type="number" step="0.1" id="waveHeight" placeholder="e.g. 0.8"></div>
-      <div class="field"><label>Temperature (°C)</label><input type="number" id="temp" placeholder="e.g. 22"></div>
+    <div class="field">
+      <label>Wave Height <span class="range-value" id="waveHeightVal">0.5 m</span></label>
+      <input type="range" id="waveHeight" min="0" max="5" step="0.1" value="0.5" oninput="updateWaveHeightLabel()">
+    </div>
+    <div class="field">
+      <label>Temperature <span class="range-value" id="tempVal">20°C</span></label>
+      <input type="range" id="temp" min="0" max="50" step="1" value="20" oninput="updateTempLabel()">
     </div>
     <div class="field">
       <label>Notes</label>
@@ -329,7 +363,8 @@
 
     <div class="field">
       <label>Crew Aboard</label>
-      <div class="crew-chip-row" id="activeCrewRow"></div>
+      <div class="crew-chip-row" id="addedCrewRow"></div>
+      <button class="btn btn-outline" style="margin-top:8px;" onclick="openSelectCrewSheet()">+ Add Crew</button>
     </div>
 
     <div class="field">
@@ -410,6 +445,16 @@
       <label>Name</label>
       <input type="text" id="profileName" placeholder="Your name">
     </div>
+    <div class="two-col">
+      <div class="field">
+        <label>Role</label>
+        <input type="text" id="profileRole" placeholder="e.g. Skipper">
+      </div>
+      <div class="field">
+        <label>License</label>
+        <input type="text" id="profileLicense" placeholder="e.g. RYA Day Skipper">
+      </div>
+    </div>
     <div class="field">
       <label>Bio</label>
       <textarea id="profileBio" placeholder="Tell your crew a bit about yourself and your sailing…"></textarea>
@@ -429,6 +474,7 @@
     </div>
 
     <div class="divider"></div>
+    <div class="link-plain" onclick="clearProfilePrompt()" style="color:var(--coral);">Clear profile…</div>
     <div class="link-plain" onclick="openResetSheet()">Reset app data…</div>
   </section>
 
@@ -531,6 +577,23 @@
     <button class="btn btn-ghost" id="deleteCrewBtn" style="display:none;color:var(--coral);" onclick="deleteCrewForm()">Remove</button>
   </div>
 
+  <div class="sheet" id="sheetCoverPick" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3>Set a Cover Photo?</h3>
+    <p style="font-size:12.5px;margin-bottom:14px;">Tap a photo to use it as the cover for this log entry, or skip and it'll show in your history without one.</p>
+    <div class="photo-strip" id="coverPickStrip"></div>
+    <button class="btn btn-primary" style="margin-top:14px;" onclick="confirmCoverPick()">Set as Cover</button>
+    <button class="btn btn-ghost" onclick="skipCoverPick()">Skip — No Cover</button>
+  </div>
+
+  <div class="sheet" id="sheetSelectCrew" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3>Add Crew</h3>
+    <div id="crewPickList"></div>
+    <div class="link-plain" style="margin:12px 0 4px;" onclick="startAddCrewFromPicker()">+ Add New Crew Member</div>
+    <button class="btn btn-primary" style="margin-top:10px;" onclick="confirmCrewPick()">Done</button>
+  </div>
+
   <div class="sheet" id="sheetCertificate" style="display:none;">
     <div class="sheet-handle"></div>
     <h3>Certificate Details</h3>
@@ -556,21 +619,81 @@
 
 <script>
 /* ============================================================
-   SAIL LA VIE — data layer (uses window.storage, personal/private)
+   SAIL LA VIE — data layer (localStorage, self-contained/offline)
    ============================================================ */
 const KEYS = { INDEX:'trip-index', BOATS:'boats', CREW:'crew', PROFILE:'profile' };
-let VERS = {}; // path -> version token cache (best-effort; storage tool re-fetches on conflict)
+const LS_PREFIX = 'sail-la-vie:';
+
+// In-memory fallback used if localStorage is unavailable or throws
+// (private browsing, quota exceeded, unstable Android content:// origins, etc.)
+let memoryStore = {};
+let storageIsMemoryOnly = false;
+
+function lsAvailable(){
+  try{
+    const t = '__slv_test__';
+    localStorage.setItem(t,'1');
+    localStorage.removeItem(t);
+    return true;
+  }catch(e){ return false; }
+}
 
 async function storeGet(key){
-  try{ const r = await window.storage.get(key,false); return r ? JSON.parse(r.value) : null; }
-  catch(e){ return null; }
+  const full = LS_PREFIX+key;
+  try{
+    if(storageIsMemoryOnly) return memoryStore[full] ? JSON.parse(memoryStore[full]) : null;
+    const raw = localStorage.getItem(full);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){
+    console.error('storage get failed',key,e);
+    return memoryStore[full] ? JSON.parse(memoryStore[full]) : null;
+  }
 }
 async function storeSet(key,value){
-  try{ await window.storage.set(key, JSON.stringify(value), false); return true; }
-  catch(e){ console.error('storage set failed',key,e); showToast("Couldn't save — storage error"); return false; }
+  const full = LS_PREFIX+key;
+  const json = JSON.stringify(value);
+  memoryStore[full] = json; // always keep an in-memory copy for this session
+  if(storageIsMemoryOnly){
+    showPersistentStorageError();
+    return false;
+  }
+  try{
+    localStorage.setItem(full, json);
+    // verify the write actually stuck (some Android file:// origins fail silently)
+    const check = localStorage.getItem(full);
+    if(check !== json){
+      storageIsMemoryOnly = true;
+      showPersistentStorageError();
+      return false;
+    }
+    clearPersistentStorageError();
+    return true;
+  }catch(e){
+    console.error('storage set failed',key,e);
+    storageIsMemoryOnly = true;
+    showPersistentStorageError();
+    return false;
+  }
 }
 async function storeDelete(key){
-  try{ await window.storage.delete(key,false); }catch(e){}
+  const full = LS_PREFIX+key;
+  delete memoryStore[full];
+  try{ localStorage.removeItem(full); }catch(e){}
+}
+
+function showPersistentStorageError(){
+  let el = document.getElementById('storageErrorBanner');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'storageErrorBanner';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--coral);color:#fff;font-size:12.5px;font-weight:600;text-align:center;padding:10px 16px;';
+    el.textContent = "Storage isn't persisting on this device — entries will be lost on reload. Try opening this file from Chrome's Downloads page instead of a file manager/Drive share.";
+    document.body.appendChild(el);
+  }
+}
+function clearPersistentStorageError(){
+  const el = document.getElementById('storageErrorBanner');
+  if(el) el.remove();
 }
 
 /* ---------- in-memory state ---------- */
@@ -578,7 +701,7 @@ let state = {
   tripIndex: [],   // lightweight list for History screen
   boats: [],
   crew: [],
-  profile: { name:'Sailor', bio:'', avatar:'', theme:'light' },
+  profile: { name:'Sailor', role:'', license:'', bio:'', avatar:'', theme:'light' },
 };
 
 let currentTrip = null;   // full record while a journey is active
@@ -591,6 +714,9 @@ function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(
 
 /* ---------- boot ---------- */
 async function boot(){
+  storageIsMemoryOnly = !lsAvailable();
+  if(storageIsMemoryOnly) showPersistentStorageError();
+
   const [idx, boats, crew, profile] = await Promise.all([
     storeGet(KEYS.INDEX), storeGet(KEYS.BOATS), storeGet(KEYS.CREW), storeGet(KEYS.PROFILE)
   ]);
@@ -646,6 +772,7 @@ function showToast(msg){
 function closeSheets(){
   document.querySelectorAll('.sheet').forEach(s=>s.style.display='none');
   document.getElementById('overlay').classList.remove('active');
+  crewPickerActive = false;
 }
 function openSheet(id){
   document.querySelectorAll('.sheet').forEach(s=>s.style.display='none');
@@ -653,7 +780,7 @@ function openSheet(id){
   document.getElementById('overlay').classList.add('active');
 }
 
-/* ---------- image resize helper (keeps window.storage payloads small) ---------- */
+/* ---------- image resize helper (keeps localStorage payloads small) ---------- */
 function resizeImage(file, maxDim, quality){
   return new Promise((resolve,reject)=>{
     const reader = new FileReader();
@@ -704,24 +831,66 @@ function openStartJourneySheet(){
   openSheet('sheetStartJourney');
 }
 function updateWindSpeedLabel(){
-  const bands = ['0–1 kts (Calm)','2–3 kts','4–6 kts','7–10 kts','11–16 kts','17–21 kts','22–27 kts','28–33 kts','34–40 kts','40+ kts'];
+  const values = ['0 kts (Calm)', '1 kts', '2 kts', '3 kts', '4 kts', '5 kts', '6 kts', '7 kts', '8 kts', '9 kts', '10 kts', '11 kts', '12 kts', '13 kts', '14 kts', '15 kts', '16 kts', '17 kts', '18 kts', '19 kts'];
   const v = document.getElementById('windSpeed').value;
-  document.getElementById('windSpeedVal').textContent = bands[v];
+  document.getElementById('windSpeedVal').textContent = values[v];
 }
-function renderActiveCrewChips(){
-  const row = document.getElementById('activeCrewRow');
-  if(!state.crew.length){ row.innerHTML = `<p style="font-size:12.5px;">No crew added yet — you can add crew from the Crew tab.</p>`; return; }
-  row.innerHTML = state.crew.map(c=>`
-    <div class="crew-chip" data-id="${c.id}" onclick="toggleCrewChip('${c.id}')">
+function updateWaveHeightLabel(){
+  const v = parseFloat(document.getElementById('waveHeight').value).toFixed(1);
+  document.getElementById('waveHeightVal').textContent = v+' m';
+}
+function updateTempLabel(){
+  const v = document.getElementById('temp').value;
+  document.getElementById('tempVal').textContent = v+'°C';
+}
+function updateGustsLabel(){
+  const v = document.getElementById('gusts').value;
+  document.getElementById('gustsVal').textContent = v+' kts';
+}
+function renderAddedCrewChips(){
+  const row = document.getElementById('addedCrewRow');
+  const added = (currentTrip?.crewIds||[]).map(id=>state.crew.find(c=>c.id===id)).filter(Boolean);
+  if(!added.length){ row.innerHTML = `<p style="font-size:12.5px;">No crew added yet — tap "+ Add Crew" below.</p>`; return; }
+  row.innerHTML = added.map(c=>`
+    <div class="crew-chip active">
       <img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span>
+      <div class="rm" onclick="removeAddedCrew('${c.id}')">✕</div>
     </div>`).join('');
 }
-function toggleCrewChip(id){
-  const el = document.querySelector(`.crew-chip[data-id="${id}"]`);
-  el.classList.toggle('active');
+function removeAddedCrew(id){
+  currentTrip.crewIds = (currentTrip.crewIds||[]).filter(cid=>cid!==id);
+  renderAddedCrewChips();
 }
-function selectedCrewIds(){
-  return Array.from(document.querySelectorAll('.crew-chip.active')).map(e=>e.dataset.id);
+let crewPickTempIds = [];
+let crewPickerActive = false;
+function openSelectCrewSheet(){
+  crewPickTempIds = [...(currentTrip.crewIds||[])];
+  renderCrewPickList();
+  openSheet('sheetSelectCrew');
+}
+function renderCrewPickList(){
+  const el = document.getElementById('crewPickList');
+  if(!state.crew.length){ el.innerHTML = `<p style="font-size:12.5px;">No crew saved yet — add one below.</p>`; return; }
+  el.innerHTML = state.crew.map(c=>`
+    <div class="crew-pick-row${crewPickTempIds.includes(c.id)?' selected':''}" data-id="${c.id}" onclick="toggleCrewPick('${c.id}')">
+      <img src="${c.photo||placeholderAvatar()}">
+      <div class="name">${escapeHtml(c.name)}</div>
+      <div class="crew-pick-check"></div>
+    </div>`).join('');
+}
+function toggleCrewPick(id){
+  if(crewPickTempIds.includes(id)) crewPickTempIds = crewPickTempIds.filter(x=>x!==id);
+  else crewPickTempIds.push(id);
+  renderCrewPickList();
+}
+function confirmCrewPick(){
+  currentTrip.crewIds = [...crewPickTempIds];
+  closeSheets();
+  renderAddedCrewChips();
+}
+function startAddCrewFromPicker(){
+  crewPickerActive = true;
+  openCrewSheet();
 }
 
 function beginJourney(){
@@ -735,13 +904,17 @@ function beginJourney(){
     avgSpeed: 0,
     maxSpeed: 0,
     path: [],
-    weather: {}, notes:'', crewIds: [], photos: [], coverPhoto: null
+    weather: {}, place:'', notes:'', crewIds: [], photos: [], coverPhoto: null
   };
   closeSheets();
   nav('active');
-  document.getElementById('windSpeed').value = 3; updateWindSpeedLabel();
+  document.getElementById('tripPlace').value = '';
+  document.getElementById('windSpeed').value = 8; updateWindSpeedLabel();
+  document.getElementById('waveHeight').value = 0.5; updateWaveHeightLabel();
+  document.getElementById('temp').value = 20; updateTempLabel();
+  document.getElementById('gusts').value = 10; updateGustsLabel();
   document.getElementById('activePhotoStrip').querySelectorAll('.photo-thumb').forEach(n=>n.remove());
-  renderActiveCrewChips();
+  renderAddedCrewChips();
   startedAt = Date.now();
   document.getElementById('elapsedDisplay').textContent = '00:00:00';
   document.getElementById('avgSpeedDisplay').innerHTML = '0.0<span class="stat-unit"> kts</span>';
@@ -861,12 +1034,46 @@ async function endJourney(){
     waveHeight: document.getElementById('waveHeight').value,
     temp: document.getElementById('temp').value,
   };
+  currentTrip.place = document.getElementById('tripPlace').value.trim();
   currentTrip.notes = document.getElementById('tripNotes').value;
-  currentTrip.crewIds = selectedCrewIds();
   const boat = state.boats.find(b=>b.id===document.getElementById('activeBoatSelect').value);
   currentTrip.boatId = boat ? boat.id : null;
   currentTrip.title = boat ? `Sail aboard ${boat.name}` : 'Untitled Sail';
 
+  if(currentTrip.photos && currentTrip.photos.length){
+    openCoverPickSheet();
+  } else {
+    currentTrip.coverPhoto = null;
+    finalizeSaveTrip();
+  }
+}
+function openCoverPickSheet(){
+  const strip = document.getElementById('coverPickStrip');
+  strip.innerHTML = currentTrip.photos.map((p,i)=>`
+    <div class="photo-thumb pickable${currentTrip.coverPhoto===p?' selected':''}" data-i="${i}" onclick="pickCoverThumb(${i})">
+      <img src="${p}">
+    </div>`).join('');
+  openSheet('sheetCoverPick');
+}
+function pickCoverThumb(i){
+  document.querySelectorAll('#coverPickStrip .photo-thumb').forEach(n=>n.classList.remove('selected'));
+  document.querySelector(`#coverPickStrip .photo-thumb[data-i="${i}"]`).classList.add('selected');
+  currentTrip._pickedCoverIndex = i;
+}
+function confirmCoverPick(){
+  const i = currentTrip._pickedCoverIndex;
+  currentTrip.coverPhoto = (i!=null) ? currentTrip.photos[i] : (currentTrip.coverPhoto || currentTrip.photos[0]);
+  delete currentTrip._pickedCoverIndex;
+  closeSheets();
+  finalizeSaveTrip();
+}
+function skipCoverPick(){
+  currentTrip.coverPhoto = null;
+  delete currentTrip._pickedCoverIndex;
+  closeSheets();
+  finalizeSaveTrip();
+}
+async function finalizeSaveTrip(){
   const ok = await storeSet('trip:'+currentTrip.id, currentTrip);
   if(!ok){ showToast('Save failed — trip kept on screen, try again'); return; }
 
@@ -875,7 +1082,7 @@ async function endJourney(){
     elapsedSeconds: currentTrip.elapsedSeconds, distanceNm: currentTrip.distanceNm,
     avgSpeed: currentTrip.avgSpeed, maxSpeed: currentTrip.maxSpeed,
     coverPhoto: currentTrip.coverPhoto, hasPhotos: currentTrip.photos.length>0,
-    boatId: currentTrip.boatId, notes: currentTrip.notes
+    boatId: currentTrip.boatId, notes: currentTrip.notes, place: currentTrip.place
   });
   await storeSet(KEYS.INDEX, state.tripIndex);
   showToast('Journey saved ⚓');
@@ -895,7 +1102,7 @@ function renderHistory(){
   const q = (document.getElementById('historySearch').value||'').toLowerCase();
   let list = state.tripIndex.filter(t=>{
     const boat = state.boats.find(b=>b.id===t.boatId);
-    const hay = (t.title+' '+(t.notes||'')+' '+(boat?boat.name:'')).toLowerCase();
+    const hay = (t.title+' '+(t.notes||'')+' '+(t.place||'')+' '+(boat?boat.name:'')).toLowerCase();
     if(q && !hay.includes(q)) return false;
     if(historyFilter==='recent'){ const days=(Date.now()-new Date(t.date))/86400000; if(days>30) return false; }
     if(historyFilter==='photos' && !t.hasPhotos) return false;
@@ -913,10 +1120,17 @@ function renderHistory(){
     const dateStr = d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
     const dur = fmtDuration(t.elapsedSeconds);
     return `<div class="trip-card" onclick="openTripDetail('${t.id}')">
-      ${t.coverPhoto ? `<img class="trip-cover" src="${t.coverPhoto}">` : `<div class="trip-cover placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18l9-15 9 15z"/></svg></div>`}
+      ${t.coverPhoto
+        ? `<div class="trip-cover-wrap"><img class="trip-cover" src="${t.coverPhoto}">
+            <div class="trip-cover-overlay">
+              <div class="trip-cover-date">${dateStr}</div>
+              ${t.place ? `<div class="trip-cover-place">📍 ${escapeHtml(t.place)}</div>` : ''}
+            </div>
+          </div>`
+        : `<div class="trip-cover placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18l9-15 9 15z"/></svg></div>`}
       <div class="trip-body">
         <div class="trip-title">${escapeHtml(t.title)}</div>
-        <div class="trip-meta"><span>📅 ${dateStr}</span><span>⏱ ${dur}</span></div>
+        <div class="trip-meta">${t.coverPhoto ? '' : `<span>📅 ${dateStr}</span>`}${t.place && !t.coverPhoto ? `<span>📍 ${escapeHtml(t.place)}</span>` : ''}<span>⏱ ${dur}</span></div>
         <div class="trip-meta"><span>📏 <b>${(t.distanceNm||0).toFixed(1)} NM</b></span><span>⚓ Avg <b>${(t.avgSpeed||0).toFixed(1)} kts</b></span></div>
       </div>
     </div>`;
@@ -948,7 +1162,7 @@ async function openTripDetail(id){
 
   document.getElementById('detailBody').innerHTML = `
     ${trip.coverPhoto ? `<img src="${trip.coverPhoto}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius-lg);border:1px solid var(--border);">` : ''}
-    <p style="margin-top:12px;font-size:13px;">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}${boat?' · '+escapeHtml(boat.name):''}</p>
+    <p style="margin-top:12px;font-size:13px;">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</p>
 
     <div class="stat-card stat-grid" style="margin-top:14px;">
       <div class="cell"><div class="stat-label">Elapsed</div><div class="stat-value" style="font-size:19px;">${fmtDuration(trip.elapsedSeconds)}</div></div>
@@ -1103,14 +1317,25 @@ async function handleCrewPhoto(ev){
 async function saveCrewForm(){
   const name = document.getElementById('crewName').value.trim();
   if(!name){ showToast('Enter a name'); return; }
+  let newId = null;
   if(editingCrewId){
     const c = state.crew.find(x=>x.id===editingCrewId);
     c.name=name; c.note=document.getElementById('crewNote').value; c.photo=pendingCrewPhoto;
   } else {
-    state.crew.push({ id:uid(), name, note:document.getElementById('crewNote').value, photo:pendingCrewPhoto });
+    newId = uid();
+    state.crew.push({ id:newId, name, note:document.getElementById('crewNote').value, photo:pendingCrewPhoto });
   }
   const ok = await storeSet(KEYS.CREW, state.crew);
-  if(ok){ showToast('Crew saved'); closeSheets(); renderCrew(); }
+  if(!ok) return;
+  showToast('Crew saved');
+  if(crewPickerActive){
+    crewPickerActive = false;
+    if(newId) crewPickTempIds.push(newId);
+    renderCrewPickList();
+    openSheet('sheetSelectCrew');
+  } else {
+    closeSheets(); renderCrew();
+  }
 }
 async function deleteCrewForm(){
   if(!confirm('Remove this crew member?')) return;
@@ -1138,6 +1363,8 @@ function renderCrew(){
    ============================================================ */
 function renderProfileScreen(){
   document.getElementById('profileName').value = state.profile.name || '';
+  document.getElementById('profileRole').value = state.profile.role || '';
+  document.getElementById('profileLicense').value = state.profile.license || '';
   document.getElementById('profileBio').value = state.profile.bio || '';
   refreshAvatars();
   const nm = state.tripIndex.reduce((s,t)=>s+(t.distanceNm||0),0);
@@ -1157,9 +1384,23 @@ async function handleAvatarUpload(ev){
 }
 async function saveProfileForm(){
   state.profile.name = document.getElementById('profileName').value.trim() || 'Sailor';
+  state.profile.role = document.getElementById('profileRole').value.trim();
+  state.profile.license = document.getElementById('profileLicense').value.trim();
   state.profile.bio = document.getElementById('profileBio').value;
   const ok = await storeSet(KEYS.PROFILE, state.profile);
   if(ok){ showToast('Profile saved'); document.getElementById('homeName').textContent = state.profile.name; }
+}
+async function clearProfilePrompt(){
+  if(!confirm('Clear your profile (name, role, license, bio, photo)? Your trips, boats, and crew stay untouched.')) return;
+  const theme = state.profile.theme; // keep the current theme choice
+  state.profile = { name:'Sailor', role:'', license:'', bio:'', avatar:'', theme };
+  const ok = await storeSet(KEYS.PROFILE, state.profile);
+  if(ok){
+    showToast('Profile cleared');
+    document.getElementById('homeName').textContent = state.profile.name;
+    renderProfileScreen();
+    refreshAvatars();
+  }
 }
 async function toggleTheme(){
   const next = document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
@@ -1173,7 +1414,7 @@ function openResetSheet(){ openSheet('sheetReset'); }
 async function resetAllData(){
   for(const t of state.tripIndex){ await storeDelete('trip:'+t.id); }
   await storeDelete(KEYS.INDEX); await storeDelete(KEYS.BOATS); await storeDelete(KEYS.CREW); await storeDelete(KEYS.PROFILE);
-  state = { tripIndex:[], boats:[], crew:[], profile:{name:'Sailor',bio:'',avatar:'',theme:'light'} };
+  state = { tripIndex:[], boats:[], crew:[], profile:{name:'Sailor',role:'',license:'',bio:'',avatar:'',theme:'light'} };
   document.documentElement.setAttribute('data-theme','light');
   closeSheets(); showToast('All data erased');
   refreshAvatars(); nav('home'); renderHomeStats();
