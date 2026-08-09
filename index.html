@@ -169,7 +169,7 @@
 
   /* ---------- photo strip ---------- */
   .photo-strip{ display:flex; gap:10px; overflow-x:auto; padding:4px 0 6px; }
-  .photo-thumb{ position:relative; flex:0 0 auto; width:78px; height:78px; border-radius:14px; overflow:hidden; border:1px solid var(--border); }
+  .photo-thumb{ position:relative; flex:0 0 auto; width:78px; height:78px; border-radius:14px; overflow:hidden; border:1px solid var(--border); cursor:pointer; }
   .photo-thumb img{ width:100%; height:100%; object-fit:cover; }
   .photo-thumb .cover-badge{ position:absolute; bottom:3px; left:3px; background:var(--gold); color:var(--navy-deep); font-size:9px;
     font-weight:700; padding:2px 6px; border-radius:8px; }
@@ -252,20 +252,31 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   #printArea{ position:absolute; top:0; left:0; width:100%; }
   @page{ size:A4; margin:14mm; }
 }
-.pdf-sheet{ font-family:var(--font-body); color:#1a1a1a; max-width:190mm; }
-.pdf-sheet h1{ font-family:var(--font-display); font-size:24px; margin-bottom:2px; }
-.pdf-sheet .pdf-sub{ font-size:12px; color:#555; margin-bottom:14px; }
-.pdf-sheet .pdf-cover{ width:100%; max-height:70mm; object-fit:cover; border-radius:8px; margin-bottom:14px; display:block; }
-.pdf-stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
-.pdf-stats-grid div{ border:1px solid #ddd; border-radius:8px; padding:8px 6px; text-align:center; }
-.pdf-stats-grid div b{ display:block; font-family:var(--font-display); font-size:17px; }
-.pdf-stats-grid div span{ font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; color:#777; }
-.pdf-section-title{ font-family:var(--font-display); font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.05em;
-  color:#555; margin:16px 0 6px; border-bottom:1px solid #ddd; padding-bottom:4px; }
-.pdf-sheet p{ font-size:12.5px; line-height:1.5; }
-.pdf-photos-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:6px; }
-.pdf-photos-grid img{ width:100%; height:32mm; object-fit:cover; border-radius:6px; }
-.pdf-foot{ margin-top:20px; font-size:10px; color:#999; text-align:center; }
+.pdf-sheet{ font-family:var(--font-body); color:#1a1a1a; max-width:190mm; font-size:10pt; }
+.pdf-sheet h1{ font-family:var(--font-display); font-size:19px; margin:0 0 2px; }
+.pdf-sheet .pdf-sub{ font-size:10.5px; color:#555; margin-bottom:10px; }
+.pdf-top-row{ display:flex; gap:12px; margin-bottom:10px; }
+.pdf-sheet .pdf-cover{ width:52mm; height:38mm; object-fit:cover; border-radius:6px; flex:0 0 auto; }
+.pdf-top-right{ flex:1; min-width:0; }
+.pdf-stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:8px; }
+.pdf-stats-grid div{ border:1px solid #ddd; border-radius:6px; padding:5px 4px; text-align:center; }
+.pdf-stats-grid div b{ display:block; font-family:var(--font-display); font-size:13px; }
+.pdf-stats-grid div span{ font-size:7.8px; text-transform:uppercase; letter-spacing:.03em; color:#777; }
+.pdf-weather-line{ font-size:10px; line-height:1.5; margin:0; }
+.pdf-section-title{ font-family:var(--font-display); font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em;
+  color:#555; margin:10px 0 4px; border-bottom:1px solid #ddd; padding-bottom:3px; }
+.pdf-sheet p{ font-size:10px; line-height:1.4; margin:2px 0; }
+.pdf-photos-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-top:4px; }
+.pdf-photos-grid img{ width:100%; height:26mm; object-fit:cover; border-radius:5px; }
+.pdf-foot{ margin-top:12px; font-size:8.5px; color:#999; text-align:center; }
+.lightbox{ position:fixed; inset:0; background:rgba(10,20,30,.95); z-index:2000; display:none; align-items:center; justify-content:center; flex-direction:column; padding:20px; }
+.lightbox.show{ display:flex; }
+.lightbox img{ max-width:92vw; max-height:70vh; object-fit:contain; border-radius:10px; }
+.lightbox-actions{ display:flex; gap:12px; margin-top:20px; }
+.lightbox-btn{ display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.25);
+  border-radius:999px; padding:11px 20px; font-weight:600; font-size:14px; cursor:pointer; }
+.lightbox-close{ position:absolute; top:18px; right:18px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.14);
+  display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -346,6 +357,11 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
         <div class="cell"><div class="stat-label">Max Speed</div><div class="stat-value" id="maxSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
         <div class="cell" style="margin-top:14px;"><div class="stat-label">Distance</div><div class="stat-value" id="distDisplay">0.0<span class="stat-unit"> NM</span></div></div>
         <div class="cell" style="margin-top:14px;"><div class="stat-label">GPS</div><div class="stat-value" id="gpsStatus" style="font-size:15px;">—</div></div>
+      </div>
+
+      <div class="stat-label" style="text-align:center;margin-top:16px;">Live Track</div>
+      <div id="liveTrackWrap">
+        <div class="porthole" id="liveTrackPorthole"></div>
       </div>
 
       <div id="manualDistanceWrap" style="display:none;">
@@ -458,6 +474,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     <div class="backrow">
       <div class="iconbtn" onclick="nav('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
       <h2 id="detailTitle" style="font-size:17px;">Trip</h2>
+      <div class="iconbtn" onclick="editTrip()" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
       <div class="iconbtn" onclick="deleteTripPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
     </div>
     <div id="detailBody"></div>
@@ -729,6 +746,19 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 
 <div class="toast" id="toast"></div>
 <div id="printArea" style="display:none;"></div>
+
+<div class="lightbox" id="photoLightbox" onclick="if(event.target===this) closeLightbox()">
+  <div class="lightbox-close" onclick="closeLightbox()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  </div>
+  <img id="lightboxImg" src="" alt="">
+  <div class="lightbox-actions">
+    <div class="lightbox-btn" onclick="shareLightboxPhoto()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
+      Share
+    </div>
+  </div>
+</div>
 
 <script>
 /* ============================================================
@@ -1005,7 +1035,9 @@ function updateRecordingBanner(currentScreen){
   document.getElementById('recordingBannerTime').style.display = (show && !currentTrip.isManual) ? 'block' : 'none';
   if(show){
     const boat = state.boats.find(b=>b.id===currentTrip.boatId);
-    if(currentTrip.isManual){
+    if(currentTrip.isEditing){
+      document.getElementById('recordingBannerText').textContent = 'Unsaved edits to a log entry — tap to finish';
+    } else if(currentTrip.isManual){
       document.getElementById('recordingBannerText').textContent = 'Unsaved past-sail entry — tap to finish';
     } else {
       document.getElementById('recordingBannerText').textContent = boat ? `Recording — ${boat.name}` : 'Recording journey';
@@ -1293,6 +1325,48 @@ function beginJourney(){
   timerId = setInterval(tickTimer, 1000);
   startGPS();
 }
+function editTrip(){
+  const trip = window._detailTrip;
+  if(!trip){ showToast('Open a trip first'); return; }
+  if(currentTrip){
+    showToast('Finish or discard your current journey/entry first');
+    return;
+  }
+  currentTrip = JSON.parse(JSON.stringify(trip)); // deep clone so cancel never touches the saved version
+  currentTrip.isManual = true;
+  currentTrip.isEditing = true;
+  populateBoatSelects();
+  nav('active');
+  document.getElementById('liveStatsBlock').style.display = 'none';
+  document.getElementById('pastStatsBlock').style.display = 'block';
+  document.getElementById('endJourneyBtnLabel').textContent = 'Save Changes';
+
+  document.getElementById('tripPlace').value = trip.place || '';
+  document.getElementById('activeBoatSelect').value = trip.boatId || '';
+  document.getElementById('windDir').value = trip.weather?.windDir || 'N';
+  const wsMatch = (trip.weather?.windSpeed||'').match(/(\d+)/);
+  document.getElementById('windSpeed').value = wsMatch ? wsMatch[1] : 8;
+  updateWindSpeedLabel();
+  document.getElementById('gusts').value = trip.weather?.gusts || 10;
+  updateGustsLabel();
+  document.getElementById('seaState').value = trip.weather?.seaState || 'Moderate';
+  document.getElementById('waveHeight').value = trip.weather?.waveHeight || 0.5;
+  updateWaveHeightLabel();
+  document.getElementById('temp').value = trip.weather?.temp || 20;
+  updateTempLabel();
+  document.getElementById('tripNotes').value = trip.notes || '';
+
+  const d = new Date(trip.date);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  document.getElementById('pastDate').value = d.toISOString().slice(0,16);
+  const totalMin = Math.round((trip.elapsedSeconds||0)/60);
+  document.getElementById('pastHours').value = Math.floor(totalMin/60);
+  document.getElementById('pastMinutes').value = totalMin%60;
+  document.getElementById('pastDistance').value = trip.distanceNm || 0;
+
+  renderAddedCrewChips();
+  renderActivePhotoStrip();
+}
 function beginManualJourney(){
   if(currentTrip){
     if(confirm('You already have a journey being recorded. Return to it? (Starting a past-sail entry would discard the current recording.)')){
@@ -1347,6 +1421,7 @@ function haversineNm(a,b){
 function startGPS(){
   document.getElementById('manualDistanceWrap').style.display='none';
   const gpsEl = document.getElementById('gpsStatus');
+  renderLiveTrack();
   if(!('geolocation' in navigator)){
     gpsEl.textContent = 'Unavailable'; gpsEl.style.color='var(--coral)';
     document.getElementById('manualDistanceWrap').style.display='block';
@@ -1377,11 +1452,13 @@ function onFix(pos){
   document.getElementById('distDisplay').innerHTML = currentTrip.distanceNm.toFixed(1)+'<span class="stat-unit"> NM</span>';
   document.getElementById('avgSpeedDisplay').innerHTML = currentTrip.avgSpeed.toFixed(1)+'<span class="stat-unit"> kts</span>';
   document.getElementById('maxSpeedDisplay').innerHTML = currentTrip.maxSpeed.toFixed(1)+'<span class="stat-unit"> kts</span>';
+  renderLiveTrack();
 }
 function onGpsError(){
   const gpsEl = document.getElementById('gpsStatus');
   gpsEl.textContent = 'No signal'; gpsEl.style.color='var(--coral)';
   document.getElementById('manualDistanceWrap').style.display='block';
+  renderLiveTrack();
 }
 function stopGPS(){
   if(watchId!==null && 'geolocation' in navigator){ navigator.geolocation.clearWatch(watchId); watchId=null; }
@@ -1389,19 +1466,22 @@ function stopGPS(){
 }
 function confirmLeaveActive(){
   // Leaving the screen no longer stops tracking — GPS/timer keep running in the
-  // background. The journey only ends when "End Journey" / "Save Log Entry" is pressed.
+  // background. The journey only ends when "End Journey" / "Save Log Entry" / "Save Changes" is pressed.
   nav('home');
-  showToast(currentTrip.isManual ? "Draft kept — tap the banner to finish it" : 'Still recording — tap the banner to return');
+  showToast(currentTrip.isEditing ? "Edits kept — tap the banner to finish" : currentTrip.isManual ? "Draft kept — tap the banner to finish it" : 'Still recording — tap the banner to return');
 }
 function discardJourney(){
-  const msg = currentTrip.isManual
+  const msg = currentTrip.isEditing
+    ? "Discard these changes? The log entry will stay as it was. This can't be undone."
+    : currentTrip.isManual
     ? "Discard this past-sail entry? Nothing will be saved. This can't be undone."
     : "Discard this journey? Tracking will stop and none of it will be saved. This can't be undone.";
   if(confirm(msg)){
     stopGPS();
+    const wasEditing = currentTrip.isEditing, editedId = currentTrip.id;
     currentTrip = null;
     document.getElementById('recordingBanner').classList.remove('show');
-    nav('home');
+    if(wasEditing){ nav('history'); openTripDetail(editedId); } else { nav('home'); }
   }
 }
 async function handleActivePhotos(ev){
@@ -1435,7 +1515,7 @@ function removeActivePhoto(i){
 }
 
 async function endJourney(){
-  const confirmMsg = currentTrip.isManual ? 'Save this past sail to your log?' : 'End this journey and save it to your log?';
+  const confirmMsg = currentTrip.isEditing ? 'Save changes to this log entry?' : currentTrip.isManual ? 'Save this past sail to your log?' : 'End this journey and save it to your log?';
   if(!confirm(confirmMsg)) return;
 
   if(currentTrip.isManual){
@@ -1509,15 +1589,21 @@ async function finalizeSaveTrip(){
   const ok = await storeSet('trip:'+currentTrip.id, currentTrip);
   if(!ok){ showToast('Save failed — trip kept on screen, try again'); return; }
 
-  state.tripIndex.unshift({
+  const indexEntry = {
     id: currentTrip.id, title: currentTrip.title, date: currentTrip.date,
     elapsedSeconds: currentTrip.elapsedSeconds, distanceNm: currentTrip.distanceNm,
     avgSpeed: currentTrip.avgSpeed, maxSpeed: currentTrip.maxSpeed,
     coverPhoto: currentTrip.coverPhoto, hasPhotos: currentTrip.photos.length>0,
     boatId: currentTrip.boatId, notes: currentTrip.notes, place: currentTrip.place
-  });
+  };
+  if(currentTrip.isEditing){
+    const idx = state.tripIndex.findIndex(t=>t.id===currentTrip.id);
+    if(idx>=0) state.tripIndex[idx] = indexEntry; else state.tripIndex.unshift(indexEntry);
+  } else {
+    state.tripIndex.unshift(indexEntry);
+  }
   await storeSet(KEYS.INDEX, state.tripIndex);
-  showToast('Journey saved ⚓');
+  showToast(currentTrip.isEditing ? 'Changes saved ⚓' : 'Journey saved ⚓');
   const savedId = currentTrip.id;
   currentTrip = null;
   nav('home');
@@ -1593,7 +1679,7 @@ async function openTripDetail(id){
   }
 
   document.getElementById('detailBody').innerHTML = `
-    ${trip.coverPhoto ? `<img src="${trip.coverPhoto}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius-lg);border:1px solid var(--border);">` : ''}
+    ${trip.coverPhoto ? `<img src="${trip.coverPhoto}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius-lg);border:1px solid var(--border);cursor:pointer;" onclick="openLightbox('${trip.coverPhoto}')">` : ''}
     <p style="margin-top:12px;font-size:13px;">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</p>
 
     <div class="stat-card stat-grid" style="margin-top:14px;">
@@ -1619,7 +1705,7 @@ async function openTripDetail(id){
 
     ${crewNames.length ? `<div class="section-title">Crew</div><p>${crewNames.map(escapeHtml).join(', ')}</p>` : ''}
 
-    ${trip.photos && trip.photos.length ? `<div class="section-title">Photos</div><div class="photo-strip">${trip.photos.map(p=>`<div class="photo-thumb"><img src="${p}"></div>`).join('')}</div>` : ''}
+    ${trip.photos && trip.photos.length ? `<div class="section-title">Photos</div><div class="photo-strip">${trip.photos.map(p=>`<div class="photo-thumb" onclick="openLightbox('${p}')"><img src="${p}"></div>`).join('')}</div>` : ''}
 
     <div style="height:8px;"></div>
     <button class="btn btn-outline" onclick="shareTrip('${trip.id}')">
@@ -1635,7 +1721,7 @@ async function openTripDetail(id){
   window._detailTrip = trip;
   nav('detail');
 }
-function buildPortholeSvg(path){
+function buildPortholeSvg(path, live){
   const lats = path.map(p=>p.lat), lngs = path.map(p=>p.lng);
   const minLat=Math.min(...lats), maxLat=Math.max(...lats), minLng=Math.min(...lngs), maxLng=Math.max(...lngs);
   const padLat=(maxLat-minLat)*0.15||0.001, padLng=(maxLng-minLng)*0.15||0.001;
@@ -1652,8 +1738,20 @@ function buildPortholeSvg(path){
     <rect width="${w}" height="${h}" fill="var(--water)"/>
     <path d="${d}" fill="none" stroke="var(--navy)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
     <circle cx="${start[0]}" cy="${start[1]}" r="6" fill="#2E8B57"/>
-    <circle cx="${end[0]}" cy="${end[1]}" r="6" fill="var(--coral)"/>
+    ${live
+      ? `<circle cx="${end[0]}" cy="${end[1]}" r="9" fill="var(--coral)" opacity=".35"><animate attributeName="r" values="7;13;7" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".45;.05;.45" dur="1.6s" repeatCount="indefinite"/></circle><circle cx="${end[0]}" cy="${end[1]}" r="6" fill="var(--coral)"/>`
+      : `<circle cx="${end[0]}" cy="${end[1]}" r="6" fill="var(--coral)"/>`}
   </svg>`;
+}
+function renderLiveTrack(){
+  const el = document.getElementById('liveTrackPorthole');
+  if(!el || !currentTrip) return;
+  const path = currentTrip.path;
+  if(!path || path.length<2){
+    el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:20px;font-size:12px;color:var(--ink-muted);">${path && path.length===1 ? 'Got your position — plotting the track as you move…' : 'Waiting for GPS signal…'}</div>`;
+    return;
+  }
+  el.innerHTML = buildPortholeSvg(path, true);
 }
 async function deleteTripPrompt(){
   if(!openTripId) return;
@@ -1955,29 +2053,32 @@ function printTripPdf(){
   const crewNames = (trip.crewIds||[]).map(cid=>{ const c=state.crew.find(x=>x.id===cid); return c?c.name:null; }).filter(Boolean);
   const d = new Date(trip.date);
   const dateStr = d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  const photos = (trip.photos||[]).slice(0,8); // cap so the sheet stays to a couple of pages
+  const photos = (trip.photos||[]).slice(0,6); // keep the sheet to one A4 side
+  let notes = trip.notes || '';
+  if(notes.length>420) notes = notes.slice(0,420).trim()+'…'; // guard against a long note pushing to a 2nd page
 
   const html = `<div class="pdf-sheet" id="pdfTripBlock">
     <h1>${escapeHtml(trip.title||'Sail Log')}</h1>
     <div class="pdf-sub">${dateStr}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</div>
 
-    ${trip.coverPhoto ? `<img class="pdf-cover" src="${trip.coverPhoto}">` : ''}
-
-    <div class="pdf-stats-grid">
-      <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>Elapsed</span></div>
-      <div><b>${(trip.distanceNm||0).toFixed(1)} NM</b><span>Distance</span></div>
-      <div><b>${(trip.avgSpeed||0).toFixed(1)} kts</b><span>Avg Speed</span></div>
-      <div><b>${(trip.maxSpeed||0).toFixed(1)} kts</b><span>Max Speed</span></div>
+    <div class="pdf-top-row">
+      ${trip.coverPhoto ? `<img class="pdf-cover" src="${trip.coverPhoto}">` : ''}
+      <div class="pdf-top-right">
+        <div class="pdf-stats-grid">
+          <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>Elapsed</span></div>
+          <div><b>${(trip.distanceNm||0).toFixed(1)} NM</b><span>Distance</span></div>
+          <div><b>${(trip.avgSpeed||0).toFixed(1)} kts</b><span>Avg Speed</span></div>
+          <div><b>${(trip.maxSpeed||0).toFixed(1)} kts</b><span>Max Speed</span></div>
+        </div>
+        <p class="pdf-weather-line">
+          💨 ${escapeHtml(trip.weather?.windDir||'—')} ${escapeHtml(trip.weather?.windSpeed||'')}${trip.weather?.gusts?` · Gusts ${escapeHtml(String(trip.weather.gusts))} kts`:''}<br>
+          🌊 ${escapeHtml(trip.weather?.seaState||'—')}${trip.weather?.waveHeight?` (${escapeHtml(String(trip.weather.waveHeight))} m)`:''}
+          ${trip.weather?.temp?` · 🌡 ${escapeHtml(String(trip.weather.temp))}°C`:''}
+        </p>
+      </div>
     </div>
 
-    <div class="pdf-section-title">Weather</div>
-    <p>
-      💨 ${escapeHtml(trip.weather?.windDir||'—')} ${escapeHtml(trip.weather?.windSpeed||'')}${trip.weather?.gusts?` · Gusts ${escapeHtml(String(trip.weather.gusts))} kts`:''}<br>
-      🌊 ${escapeHtml(trip.weather?.seaState||'—')}${trip.weather?.waveHeight?` (${escapeHtml(String(trip.weather.waveHeight))} m)`:''}
-      ${trip.weather?.temp?` · 🌡 ${escapeHtml(String(trip.weather.temp))}°C`:''}
-    </p>
-
-    ${trip.notes ? `<div class="pdf-section-title">Notes</div><p>${escapeHtml(trip.notes)}</p>` : ''}
+    ${notes ? `<div class="pdf-section-title">Notes</div><p>${escapeHtml(notes)}</p>` : ''}
 
     ${crewNames.length ? `<div class="pdf-section-title">Crew</div><p>${crewNames.map(escapeHtml).join(', ')}</p>` : ''}
 
@@ -1987,6 +2088,38 @@ function printTripPdf(){
   </div>`;
   document.getElementById('printArea').innerHTML = html;
   window.print();
+}
+
+/* ---------- photo lightbox ---------- */
+let lightboxDataUrl = null;
+function openLightbox(dataUrl){
+  lightboxDataUrl = dataUrl;
+  document.getElementById('lightboxImg').src = dataUrl;
+  document.getElementById('photoLightbox').classList.add('show');
+}
+function closeLightbox(){
+  document.getElementById('photoLightbox').classList.remove('show');
+  lightboxDataUrl = null;
+}
+async function shareLightboxPhoto(){
+  if(!lightboxDataUrl) return;
+  try{
+    const res = await fetch(lightboxDataUrl);
+    const blob = await res.blob();
+    const file = new File([blob], 'sail-la-vie-photo.jpg', {type: blob.type||'image/jpeg'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:'Sail la Vie Photo'});
+      return;
+    }
+  }catch(e){
+    if(e && e.name==='AbortError') return; // user cancelled the native share sheet
+    console.error('share failed', e);
+  }
+  const a = document.createElement('a');
+  a.href = lightboxDataUrl;
+  a.download = 'sail-la-vie-photo.jpg';
+  document.body.appendChild(a); a.click(); a.remove();
+  showToast('Photo downloaded — share it from your gallery');
 }
 
 /* ---------- utils ---------- */
