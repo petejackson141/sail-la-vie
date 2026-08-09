@@ -13,7 +13,7 @@
     --navy:#16324F; --navy-deep:#0E2338; --navy-soft:#2C5F91;
     --gold:#C9A24B; --water:#BFE0EA; --coral:#D65A4A; --coral-deep:#B8443A;
     --border:#DAE4EA; --shadow: 0 10px 30px -12px rgba(20,43,68,0.25);
-    --radius-lg:26px; --radius-md:18px; --radius-sm:12px;
+    --radius-lg:26px; --radius-md:18px; --rsadius-sm:12px;
     --font-display:'Space Grotesk',system-ui,sans-serif;
     --font-body:'Inter',system-ui,sans-serif;
   }
@@ -101,23 +101,9 @@
   .quicklink span{ display:block; font-size:12px; font-weight:600; color:var(--ink); }
 
   /* ---------- bottom nav ---------- */
-  .bottombar-wrap{ position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:480px; z-index:50; }
-  .bottomnav{ background:var(--bg-elevated); border-top:1px solid var(--border); display:flex; padding:10px 6px calc(10px + env(safe-area-inset-bottom)); }
-  .recording-banner{ display:none; align-items:center; justify-content:space-between; gap:10px; padding:10px 16px;
-    background:var(--navy); color:#fff; cursor:pointer; border-top:1px solid var(--border); }
-  html[data-theme="dark"] .recording-banner{ background:var(--gold); color:var(--navy-deep); }
-  .recording-banner.show{ display:flex; }
-  .recording-banner .dot{ width:9px; height:9px; border-radius:50%; background:var(--coral); flex:0 0 auto; animation:pulseDot 1.4s ease-in-out infinite; }
-  @keyframes pulseDot{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
-  .recording-banner .rec-text{ flex:1; font-size:13px; font-weight:600; }
-  .recording-banner .rec-time{ font-family:var(--font-display); font-weight:700; font-size:14px; }
-  #adjustViewport{ width:260px; height:260px; margin:0 auto; position:relative; overflow:hidden; border-radius:50%;
-    background:var(--bg-sunk); border:1px solid var(--border); touch-action:none; cursor:grab; }
-  #adjustViewport:active{ cursor:grabbing; }
-  #adjustViewport img{ position:absolute; user-select:none; -webkit-user-drag:none; pointer-events:none; }
-  .adjust-zoom-row{ display:flex; align-items:center; gap:10px; margin-top:18px; }
-  .adjust-zoom-row svg{ width:18px; height:18px; color:var(--ink-muted); flex:0 0 auto; }
-  .adjust-zoom-row input[type=range]{ flex:1; }
+  .bottomnav{ position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:480px;
+    background:var(--bg-elevated); border-top:1px solid var(--border); display:flex; padding:10px 6px calc(10px + env(safe-area-inset-bottom));
+    z-index:50; }
   .navitem{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; color:var(--ink-faint); padding:4px 0; }
   .navitem svg{ width:22px; height:22px; }
   .navitem span{ font-size:10.5px; font-weight:600; letter-spacing:.02em; }
@@ -233,39 +219,26 @@
   .toast.show{ opacity:1; transform:translate(-50%,-6px); }
   .section-title{ font-family:var(--font-display); font-weight:700; font-size:15px; margin:22px 0 12px; color:var(--ink); }
   .link-plain{ color:var(--navy-soft); font-weight:600; font-size:13px; cursor:pointer; }
-.certificate{ background:var(--bg-elevated); border:2px solid var(--gold); border-radius:20px; padding:28px 22px; text-align:center; margin-top:16px; }
-.certificate .cert-title{ font-family:var(--font-display); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-muted); }
-.certificate h2{ font-size:22px; margin:10px 0 4px; }
-.certificate .cert-name{ font-family:var(--font-display); font-size:26px; color:var(--navy); margin:14px 0; }
-html[data-theme="dark"] .certificate .cert-name{ color:var(--gold); }
-.certificate .cert-stats{ display:flex; justify-content:center; gap:26px; margin:18px 0; }
-.certificate .cert-stats div span{ display:block; font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--navy); }
-html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
-.certificate .cert-stats div small{ font-size:10.5px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em; }
-.certificate .cert-foot{ font-size:11px; color:var(--ink-faint); margin-top:16px; }
-#loadingScreen{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:var(--bg); z-index:999; flex-direction:column; gap:14px; }
-.spinner{ width:34px; height:34px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--navy); animation:spin .8s linear infinite; }
-@keyframes spin{ to{ transform:rotate(360deg); } }
-@media print{
-  body *{ visibility:hidden; }
-  #printArea, #printArea *{ visibility:visible; }
-  #printArea{ position:absolute; top:0; left:0; width:100%; }
-  @page{ size:A4; margin:14mm; }
+  .certificate{ background:var(--bg-elevated); border:2px solid var(--gold); border-radius:20px; padding:28px 22px; text-align:center; margin-top:16px; }
+  .certificate .cert-title{ font-family:var(--font-display); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-muted); }
+  .certificate h2{ font-size:22px; margin:10px 0 4px; }
+  .certificate .cert-name{ font-family:var(--font-display); font-size:26px; color:var(--navy); margin:14px 0; }
+  html[data-theme="dark"] .certificate .cert-name{ color:var(--gold); }
+  .certificate .cert-stats{ display:flex; justify-content:center; gap:26px; margin:18px 0; }
+  .certificate .cert-stats div span{ display:block; font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--navy); }
+  html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
+  .certificate .cert-stats div small{ font-size:10.5px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em; }
+  .certificate .cert-foot{ font-size:11px; color:var(--ink-faint); margin-top:16px; }
+  #loadingScreen{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:var(--bg); z-index:999; flex-direction:column; gap:14px; }
+  .spinner{ width:34px; height:34px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--navy); animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @media print{
+    body *{ visibility:hidden; }
+    #printArea, #printArea *{ visibility:visible; }
+    #printArea{ position:absolute; top:0; left:0; width:100%; }
+  }
+
 }
-.pdf-sheet{ font-family:var(--font-body); color:#1a1a1a; max-width:190mm; }
-.pdf-sheet h1{ font-family:var(--font-display); font-size:24px; margin-bottom:2px; }
-.pdf-sheet .pdf-sub{ font-size:12px; color:#555; margin-bottom:14px; }
-.pdf-sheet .pdf-cover{ width:100%; max-height:70mm; object-fit:cover; border-radius:8px; margin-bottom:14px; display:block; }
-.pdf-stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
-.pdf-stats-grid div{ border:1px solid #ddd; border-radius:8px; padding:8px 6px; text-align:center; }
-.pdf-stats-grid div b{ display:block; font-family:var(--font-display); font-size:17px; }
-.pdf-stats-grid div span{ font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; color:#777; }
-.pdf-section-title{ font-family:var(--font-display); font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.05em;
-  color:#555; margin:16px 0 6px; border-bottom:1px solid #ddd; padding-bottom:4px; }
-.pdf-sheet p{ font-size:12.5px; line-height:1.5; }
-.pdf-photos-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:6px; }
-.pdf-photos-grid img{ width:100%; height:32mm; object-fit:cover; border-radius:6px; }
-.pdf-foot{ margin-top:20px; font-size:10px; color:#999; text-align:center; }
 </style>
 </head>
 <body>
@@ -299,11 +272,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
       
     </button>
     <div style="height:12px;"></div>
-    <button class="btn btn-outline" onclick="beginManualJourney()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3h8l3 4v14H5V7z"/><path d="M8 3v4H5"/><path d="M9 13h6M9 17h6"/></svg>
-      Log a Past Sail
-    </button>
-    <div style="height:12px;"></div>
     <button class="btn btn-outline" onclick="nav('history')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
       View History
@@ -332,42 +300,24 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     <div class="backrow">
       <div class="iconbtn" onclick="confirmLeaveActive()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
       <h2>Active Journey Log</h2>
-      <div class="iconbtn" onclick="discardJourney()" title="Discard journey"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
     </div>
 
-    <div id="liveStatsBlock">
-      <div class="stat-card" style="text-align:center;">
-        <div class="stat-label">Elapsed Time</div>
-        <div style="font-family:var(--font-display);font-size:42px;font-weight:700;color:var(--navy);letter-spacing:.02em;" id="elapsedDisplay">00:00:00</div>
-      </div>
-
-      <div class="stat-card stat-grid" style="margin-top:14px;">
-        <div class="cell"><div class="stat-label">Avg Speed</div><div class="stat-value" id="avgSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
-        <div class="cell"><div class="stat-label">Max Speed</div><div class="stat-value" id="maxSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
-        <div class="cell" style="margin-top:14px;"><div class="stat-label">Distance</div><div class="stat-value" id="distDisplay">0.0<span class="stat-unit"> NM</span></div></div>
-        <div class="cell" style="margin-top:14px;"><div class="stat-label">GPS</div><div class="stat-value" id="gpsStatus" style="font-size:15px;">—</div></div>
-      </div>
-
-      <div id="manualDistanceWrap" style="display:none;">
-        <div class="field" style="margin-top:16px;">
-          <label>Distance covered (manual entry — GPS unavailable)</label>
-          <input type="number" step="0.1" min="0" id="manualDistance" placeholder="Nautical miles">
-        </div>
-      </div>
+    <div class="stat-card" style="text-align:center;">
+      <div class="stat-label">Elapsed Time</div>
+      <div style="font-family:var(--font-display);font-size:42px;font-weight:700;color:var(--navy);letter-spacing:.02em;" id="elapsedDisplay">00:00:00</div>
     </div>
 
-    <div id="pastStatsBlock" style="display:none;">
-      <div class="field">
-        <label>Date &amp; time of sail</label>
-        <input type="datetime-local" id="pastDate">
-      </div>
-      <div class="two-col">
-        <div class="field"><label>Duration (hrs)</label><input type="number" min="0" step="1" id="pastHours" placeholder="e.g. 3"></div>
-        <div class="field"><label>Duration (mins)</label><input type="number" min="0" max="59" step="1" id="pastMinutes" placeholder="e.g. 30"></div>
-      </div>
-      <div class="field">
-        <label>Distance (NM)</label>
-        <input type="number" step="0.1" min="0" id="pastDistance" placeholder="e.g. 12.4">
+    <div class="stat-card stat-grid" style="margin-top:14px;">
+      <div class="cell"><div class="stat-label">Avg Speed</div><div class="stat-value" id="avgSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
+      <div class="cell"><div class="stat-label">Max Speed</div><div class="stat-value" id="maxSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">Distance</div><div class="stat-value" id="distDisplay">0.0<span class="stat-unit"> NM</span></div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">GPS</div><div class="stat-value" id="gpsStatus" style="font-size:15px;">—</div></div>
+    </div>
+
+    <div id="manualDistanceWrap" style="display:none;">
+      <div class="field" style="margin-top:16px;">
+        <label>Distance covered (manual entry — GPS unavailable)</label>
+        <input type="number" step="0.1" min="0" id="manualDistance" placeholder="Nautical miles">
       </div>
     </div>
 
@@ -420,21 +370,17 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     <div class="field">
       <label>Photos <span style="text-transform:none;font-weight:500;">— tap a photo to make it the cover</span></label>
       <div class="photo-strip" id="activePhotoStrip">
-        <div class="add-photo-tile" onclick="document.getElementById('activePhotoCameraInput').click()" title="Take Photo">
+        <div class="add-photo-tile" onclick="document.getElementById('activePhotoInput').click()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
-        <div class="add-photo-tile" onclick="document.getElementById('activePhotoUploadInput').click()" title="Upload Photos">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
-        </div>
       </div>
-      <input type="file" id="activePhotoCameraInput" accept="image/*" capture="environment" multiple style="display:none;" onchange="handleActivePhotos(event)">
-      <input type="file" id="activePhotoUploadInput" accept="image/*" multiple style="display:none;" onchange="handleActivePhotos(event)">
+      <input type="file" id="activePhotoInput" accept="image/*" capture="environment" multiple style="display:none;" onchange="handleActivePhotos(event)">
     </div>
 
     <div style="height:6px;"></div>
-    <button class="btn btn-danger" onclick="endJourney()" id="endJourneyBtn">
+    <button class="btn btn-danger" onclick="endJourney()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      <span id="endJourneyBtnLabel">End Journey</span>
+      End Journey
     </button>
   </section>
 
@@ -485,12 +431,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 
   <!-- ============ PROFILE ============ -->
   <section class="screen" id="screen-profile">
-    <div class="backrow">
-      <h2>Profile</h2>
-      <div class="iconbtn" onclick="nav('settings')" title="Settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </div>
-    </div>
+    <div class="backrow"><h2>Profile</h2></div>
     <div style="text-align:center;">
       <div style="position:relative;display:inline-block;">
         <img class="avatar" id="profileAvatarImg" style="width:88px;height:88px;" src="">
@@ -514,20 +455,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
         <input type="text" id="profileLicense" placeholder="e.g. RYA Day Skipper">
       </div>
     </div>
-    <div class="two-col">
-      <div class="field">
-        <label>Phone</label>
-        <input type="tel" id="profilePhone" placeholder="e.g. +1 555 123 4567">
-      </div>
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="profileEmail" placeholder="e.g. you@email.com">
-      </div>
-    </div>
-    <div class="field">
-      <label>Social / Website</label>
-      <input type="text" id="profileSocial" placeholder="e.g. @you or instagram.com/you">
-    </div>
     <div class="field">
       <label>Bio</label>
       <textarea id="profileBio" placeholder="Tell your crew a bit about yourself and your sailing…"></textarea>
@@ -536,20 +463,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 
     <div class="section-title">Lifetime Stats</div>
     <div id="profileStats"></div>
-
-    <div class="section-title">Backup & Restore</div>
-    <p style="font-size:12.5px;margin-bottom:10px;">Save everything to a file you can keep in the cloud (Drive, iCloud, email) or move to a new phone.</p>
-    <button class="btn btn-outline" onclick="backupToFile()">Backup to File</button>
-    <button class="btn btn-outline" style="margin-top:8px;" onclick="document.getElementById('restoreFileInput').click()">Restore from File</button>
-    <input type="file" id="restoreFileInput" accept="application/json" style="display:none;" onchange="restoreFromFile(event)">
-  </section>
-
-  <!-- ============ SETTINGS ============ -->
-  <section class="screen" id="screen-settings">
-    <div class="backrow">
-      <div class="iconbtn" onclick="nav('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
-      <h2>Settings</h2>
-    </div>
 
     <div class="section-title">Appearance</div>
     <div class="theme-toggle">
@@ -601,35 +514,28 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 </div>
 
 <!-- ============ BOTTOM NAV ============ -->
-<div class="bottombar-wrap">
-  <div class="recording-banner" id="recordingBanner" onclick="nav('active')">
-    <div class="dot"></div>
-    <div class="rec-text" id="recordingBannerText">Recording journey</div>
-    <div class="rec-time" id="recordingBannerTime">00:00:00</div>
+<nav class="bottomnav" id="bottomNav">
+  <div class="navitem" data-tab="home" onclick="nav('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+    <span>Home</span>
   </div>
-  <nav class="bottomnav" id="bottomNav">
-    <div class="navitem" data-tab="home" onclick="nav('home')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
-      <span>Home</span>
-    </div>
-    <div class="navitem" data-tab="history" onclick="nav('history')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-      <span>History</span>
-    </div>
-    <div class="navitem" data-tab="boats" onclick="nav('boats')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 16l1.5 4h15L21 16"/><path d="M5 16l1-9h12l1 9"/><path d="M12 3v4"/></svg>
-      <span>Fleet</span>
-    </div>
-    <div class="navitem" data-tab="crew" onclick="nav('crew')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.6.4 4.5 2.4 4.5 5.3"/></svg>
-      <span>Crew</span>
-    </div>
-    <div class="navitem" data-tab="profile" onclick="nav('profile')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
-      <span>Profile</span>
-    </div>
-  </nav>
-</div>
+  <div class="navitem" data-tab="history" onclick="nav('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    <span>History</span>
+  </div>
+  <div class="navitem" data-tab="boats" onclick="nav('boats')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 16l1.5 4h15L21 16"/><path d="M5 16l1-9h12l1 9"/><path d="M12 3v4"/></svg>
+    <span>Fleet</span>
+  </div>
+  <div class="navitem" data-tab="crew" onclick="nav('crew')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.6.4 4.5 2.4 4.5 5.3"/></svg>
+    <span>Crew</span>
+  </div>
+  <div class="navitem" data-tab="profile" onclick="nav('profile')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+    <span>Profile</span>
+  </div>
+</nav>
 
 <!-- ============ SHEETS / MODALS ============ -->
 <div class="overlay" id="overlay" onclick="if(event.target===this)closeSheets()">
@@ -666,11 +572,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
       <input type="file" id="crewPhotoInput" accept="image/*" style="display:none;" onchange="handleCrewPhoto(event)">
     </div>
     <div class="field"><label>Name</label><input type="text" id="crewName" placeholder="e.g. Alex"></div>
-    <div class="two-col">
-      <div class="field"><label>Phone</label><input type="tel" id="crewPhone" placeholder="e.g. +1 555 123 4567"></div>
-      <div class="field"><label>Email</label><input type="email" id="crewEmail" placeholder="e.g. alex@email.com"></div>
-    </div>
-    <div class="field"><label>Social / Website</label><input type="text" id="crewSocial" placeholder="e.g. @alex or instagram.com/alex"></div>
     <div class="field"><label>Note</label><textarea id="crewNote" placeholder="How you know them, role aboard…"></textarea></div>
     <button class="btn btn-primary" onclick="saveCrewForm()">Save</button>
     <button class="btn btn-ghost" id="deleteCrewBtn" style="display:none;color:var(--coral);" onclick="deleteCrewForm()">Remove</button>
@@ -691,20 +592,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     <div id="crewPickList"></div>
     <div class="link-plain" style="margin:12px 0 4px;" onclick="startAddCrewFromPicker()">+ Add New Crew Member</div>
     <button class="btn btn-primary" style="margin-top:10px;" onclick="confirmCrewPick()">Done</button>
-  </div>
-
-  <div class="sheet" id="sheetPhotoAdjust" style="display:none;">
-    <div class="sheet-handle"></div>
-    <h3>Adjust Photo</h3>
-    <p style="font-size:12.5px;margin-bottom:14px;">Drag to reposition, use the slider to zoom.</p>
-    <div id="adjustViewport"><img id="adjustPreviewImg" src="" alt=""></div>
-    <div class="adjust-zoom-row">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="6"/><path d="M21 21l-4.3-4.3"/></svg>
-      <input type="range" id="adjustZoomSlider" min="1" max="3" step="0.01" value="1" oninput="onAdjustZoomInput()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-    </div>
-    <button class="btn btn-primary" style="margin-top:16px;" onclick="confirmPhotoAdjust()">Use Photo</button>
-    <button class="btn btn-ghost" onclick="cancelPhotoAdjust()">Cancel</button>
   </div>
 
   <div class="sheet" id="sheetCertificate" style="display:none;">
@@ -732,57 +619,16 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 
 <script>
 /* ============================================================
-   SAIL LA VIE — data layer (self-contained/offline)
-   Tiered storage: IndexedDB (largest quota) -> localStorage (fallback)
-   -> in-memory (last resort, session-only, shows a persistent warning)
+   SAIL LA VIE — data layer (localStorage, self-contained/offline)
    ============================================================ */
 const KEYS = { INDEX:'trip-index', BOATS:'boats', CREW:'crew', PROFILE:'profile' };
 const LS_PREFIX = 'sail-la-vie:';
-const IDB_NAME = 'sail-la-vie-db';
-const IDB_STORE = 'kv';
 
-let memoryStore = {};       // always-on session fallback, keyed same as chosen tier
-let storageTier = 'memory'; // 'idb' | 'localStorage' | 'memory' — set by initStorage()
-let idb = null;             // open IDBDatabase once storageTier==='idb'
+// In-memory fallback used if localStorage is unavailable or throws
+// (private browsing, quota exceeded, unstable Android content:// origins, etc.)
+let memoryStore = {};
+let storageIsMemoryOnly = false;
 
-function openIDB(){
-  return new Promise((resolve,reject)=>{
-    if(!('indexedDB' in window)){ reject(new Error('no indexedDB')); return; }
-    const req = indexedDB.open(IDB_NAME, 1);
-    req.onupgradeneeded = (e)=>{
-      const db = e.target.result;
-      if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
-    };
-    req.onsuccess = ()=> resolve(req.result);
-    req.onerror = ()=> reject(req.error);
-    req.onblocked = ()=> reject(new Error('idb blocked'));
-  });
-}
-function idbGet(key){
-  return new Promise((resolve,reject)=>{
-    const tx = idb.transaction(IDB_STORE,'readonly');
-    const req = tx.objectStore(IDB_STORE).get(key);
-    req.onsuccess = ()=> resolve(req.result===undefined ? null : req.result);
-    req.onerror = ()=> reject(req.error);
-  });
-}
-function idbPut(key,value){
-  return new Promise((resolve,reject)=>{
-    const tx = idb.transaction(IDB_STORE,'readwrite');
-    tx.objectStore(IDB_STORE).put(value, key);
-    tx.oncomplete = ()=> resolve(true);
-    tx.onerror = ()=> reject(tx.error);
-    tx.onabort = ()=> reject(tx.error);
-  });
-}
-function idbDel(key){
-  return new Promise((resolve,reject)=>{
-    const tx = idb.transaction(IDB_STORE,'readwrite');
-    tx.objectStore(IDB_STORE).delete(key);
-    tx.oncomplete = ()=> resolve(true);
-    tx.onerror = ()=> reject(tx.error);
-  });
-}
 function lsAvailable(){
   try{
     const t = '__slv_test__';
@@ -792,76 +638,47 @@ function lsAvailable(){
   }catch(e){ return false; }
 }
 
-// Picks the best available tier once at boot. Called from boot() before any load/save.
-async function initStorage(){
-  try{
-    idb = await openIDB();
-    // verify a real write actually round-trips (mirrors the Android file:// caution from localStorage)
-    await idbPut('__slv_probe__', 1);
-    const probe = await idbGet('__slv_probe__');
-    if(probe !== 1) throw new Error('idb probe mismatch');
-    await idbDel('__slv_probe__');
-    storageTier = 'idb';
-    clearPersistentStorageError();
-    return;
-  }catch(e){
-    console.error('IndexedDB unavailable, falling back', e);
-  }
-  if(lsAvailable()){
-    storageTier = 'localStorage';
-    clearPersistentStorageError();
-  } else {
-    storageTier = 'memory';
-    showPersistentStorageError();
-  }
-}
-
 async function storeGet(key){
+  const full = LS_PREFIX+key;
   try{
-    if(storageTier==='idb') return await idbGet(key);
-    if(storageTier==='localStorage'){
-      const raw = localStorage.getItem(LS_PREFIX+key);
-      return raw ? JSON.parse(raw) : null;
-    }
-    return memoryStore[key] ? JSON.parse(memoryStore[key]) : null;
+    if(storageIsMemoryOnly) return memoryStore[full] ? JSON.parse(memoryStore[full]) : null;
+    const raw = localStorage.getItem(full);
+    return raw ? JSON.parse(raw) : null;
   }catch(e){
     console.error('storage get failed',key,e);
-    return memoryStore[key] ? JSON.parse(memoryStore[key]) : null;
+    return memoryStore[full] ? JSON.parse(memoryStore[full]) : null;
   }
 }
 async function storeSet(key,value){
-  memoryStore[key] = JSON.stringify(value); // always keep an in-memory copy for this session
-  try{
-    if(storageTier==='idb'){
-      await idbPut(key,value);
-      clearPersistentStorageError();
-      return true;
-    }
-    if(storageTier==='localStorage'){
-      const json = memoryStore[key];
-      localStorage.setItem(LS_PREFIX+key, json);
-      const check = localStorage.getItem(LS_PREFIX+key);
-      if(check !== json){ storageTier='memory'; showPersistentStorageError(); return false; }
-      clearPersistentStorageError();
-      return true;
-    }
+  const full = LS_PREFIX+key;
+  const json = JSON.stringify(value);
+  memoryStore[full] = json; // always keep an in-memory copy for this session
+  if(storageIsMemoryOnly){
     showPersistentStorageError();
     return false;
+  }
+  try{
+    localStorage.setItem(full, json);
+    // verify the write actually stuck (some Android file:// origins fail silently)
+    const check = localStorage.getItem(full);
+    if(check !== json){
+      storageIsMemoryOnly = true;
+      showPersistentStorageError();
+      return false;
+    }
+    clearPersistentStorageError();
+    return true;
   }catch(e){
     console.error('storage set failed',key,e);
-    // step down a tier rather than losing everything outright
-    storageTier = (storageTier==='idb') ? 'localStorage' : 'memory';
-    if(storageTier==='localStorage' && !lsAvailable()) storageTier='memory';
-    if(storageTier==='memory') showPersistentStorageError();
+    storageIsMemoryOnly = true;
+    showPersistentStorageError();
     return false;
   }
 }
 async function storeDelete(key){
-  delete memoryStore[key];
-  try{
-    if(storageTier==='idb') await idbDel(key);
-    else if(storageTier==='localStorage') localStorage.removeItem(LS_PREFIX+key);
-  }catch(e){}
+  const full = LS_PREFIX+key;
+  delete memoryStore[full];
+  try{ localStorage.removeItem(full); }catch(e){}
 }
 
 function showPersistentStorageError(){
@@ -879,63 +696,12 @@ function clearPersistentStorageError(){
   if(el) el.remove();
 }
 
-async function backupToFile(){
-  const trips = [];
-  for(const t of state.tripIndex){
-    const full = await storeGet('trip:'+t.id);
-    if(full) trips.push(full);
-  }
-  const payload = {
-    app:'Sail la Vie', version:1, exportedAt:new Date().toISOString(),
-    profile: state.profile, boats: state.boats, crew: state.crew,
-    tripIndex: state.tripIndex, trips
-  };
-  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `sail-la-vie-backup-${new Date().toISOString().slice(0,10)}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-  showToast('Backup downloaded');
-}
-async function restoreFromFile(ev){
-  const f = ev.target.files[0];
-  ev.target.value = '';
-  if(!f) return;
-  try{
-    const data = JSON.parse(await f.text());
-    if(!data || !data.profile || !Array.isArray(data.trips)){ showToast("That doesn't look like a valid backup file"); return; }
-    if(!confirm(`Restore "${f.name}"? This replaces all current trips, boats, crew, and profile on this device. This can't be undone.`)) return;
-
-    await storeSet(KEYS.PROFILE, data.profile);
-    await storeSet(KEYS.BOATS, data.boats||[]);
-    await storeSet(KEYS.CREW, data.crew||[]);
-    await storeSet(KEYS.INDEX, data.tripIndex||[]);
-    for(const trip of data.trips){ await storeSet('trip:'+trip.id, trip); }
-
-    state.profile = data.profile;
-    state.boats = data.boats||[];
-    state.crew = data.crew||[];
-    state.tripIndex = data.tripIndex||[];
-
-    document.documentElement.setAttribute('data-theme', state.profile.theme||'light');
-    document.getElementById('homeName').textContent = state.profile.name || 'Sailor';
-    refreshAvatars();
-    showToast('Backup restored ⚓');
-    nav('home');
-    renderHomeStats();
-  }catch(e){
-    console.error('restore failed', e);
-    showToast('Could not read that backup file');
-  }
-}
-
 /* ---------- in-memory state ---------- */
 let state = {
   tripIndex: [],   // lightweight list for History screen
   boats: [],
   crew: [],
-  profile: { name:'Sailor', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme:'light' },
+  profile: { name:'Sailor', role:'', license:'', bio:'', avatar:'', theme:'light' },
 };
 
 let currentTrip = null;   // full record while a journey is active
@@ -948,7 +714,8 @@ function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(
 
 /* ---------- boot ---------- */
 async function boot(){
-  await initStorage();
+  storageIsMemoryOnly = !lsAvailable();
+  if(storageIsMemoryOnly) showPersistentStorageError();
 
   const [idx, boats, crew, profile] = await Promise.all([
     storeGet(KEYS.INDEX), storeGet(KEYS.BOATS), storeGet(KEYS.CREW), storeGet(KEYS.PROFILE)
@@ -989,28 +756,13 @@ function nav(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.navitem').forEach(n=>n.classList.toggle('active', n.dataset.tab===name));
+  document.getElementById('bottomNav').style.display = (name==='active') ? 'none' : 'flex';
   window.scrollTo(0,0);
   if(name==='history') renderHistory();
   if(name==='boats') renderBoats();
   if(name==='crew') renderCrew();
   if(name==='profile') renderProfileScreen();
   if(name==='resume') renderResume();
-  updateRecordingBanner(name);
-}
-function updateRecordingBanner(currentScreen){
-  const banner = document.getElementById('recordingBanner');
-  const show = !!currentTrip && currentScreen!=='active';
-  banner.classList.toggle('show', show);
-  banner.querySelector('.dot').style.display = (show && !currentTrip.isManual) ? 'block' : 'none';
-  document.getElementById('recordingBannerTime').style.display = (show && !currentTrip.isManual) ? 'block' : 'none';
-  if(show){
-    const boat = state.boats.find(b=>b.id===currentTrip.boatId);
-    if(currentTrip.isManual){
-      document.getElementById('recordingBannerText').textContent = 'Unsaved past-sail entry — tap to finish';
-    } else {
-      document.getElementById('recordingBannerText').textContent = boat ? `Recording — ${boat.name}` : 'Recording journey';
-    }
-  }
 }
 function showToast(msg){
   const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
@@ -1050,113 +802,6 @@ function resizeImage(file, maxDim, quality){
   });
 }
 
-/* ---------- photo adjuster: drag to reposition, slider to zoom, used for
-   profile avatar & crew photos ---------- */
-let adjustState = null; // { naturalImg, naturalW, naturalH, baseScale, baseW, baseH, zoom, left, top, viewport, target, returnSheetId }
-function readFileAsDataUrl(file){
-  return new Promise((resolve,reject)=>{
-    const r = new FileReader();
-    r.onerror = ()=>reject(new Error('read failed'));
-    r.onload = ()=>resolve(r.result);
-    r.readAsDataURL(file);
-  });
-}
-async function openPhotoAdjuster(file, target, returnSheetId){
-  if(!file) return;
-  let dataUrl;
-  try{ dataUrl = await readFileAsDataUrl(file); }
-  catch(e){ showToast("Couldn't read that photo"); return; }
-  const img = new Image();
-  img.onload = ()=>{
-    const viewport = 260;
-    const baseScale = Math.max(viewport/img.naturalWidth, viewport/img.naturalHeight);
-    const baseW = img.naturalWidth*baseScale, baseH = img.naturalHeight*baseScale;
-    adjustState = {
-      naturalImg:img, naturalW:img.naturalWidth, naturalH:img.naturalHeight,
-      baseScale, baseW, baseH, zoom:1,
-      left:(viewport-baseW)/2, top:(viewport-baseH)/2,
-      viewport, target, returnSheetId: returnSheetId||null
-    };
-    document.getElementById('adjustPreviewImg').src = dataUrl;
-    document.getElementById('adjustZoomSlider').value = 1;
-    renderAdjustTransform();
-    openSheet('sheetPhotoAdjust');
-    setupAdjustDrag();
-  };
-  img.onerror = ()=> showToast("Couldn't read that photo");
-  img.src = dataUrl;
-}
-function renderAdjustTransform(){
-  const s = adjustState; if(!s) return;
-  const el = document.getElementById('adjustPreviewImg');
-  const dispW = s.baseW*s.zoom, dispH = s.baseH*s.zoom;
-  el.style.width = dispW+'px'; el.style.height = dispH+'px';
-  el.style.left = s.left+'px'; el.style.top = s.top+'px';
-}
-function clampAdjustPosition(){
-  const s = adjustState; if(!s) return;
-  const dispW = s.baseW*s.zoom, dispH = s.baseH*s.zoom;
-  const minLeft = s.viewport-dispW, minTop = s.viewport-dispH;
-  s.left = Math.min(0, Math.max(minLeft, s.left));
-  s.top = Math.min(0, Math.max(minTop, s.top));
-}
-function onAdjustZoomInput(){
-  if(!adjustState) return;
-  adjustState.zoom = parseFloat(document.getElementById('adjustZoomSlider').value)||1;
-  clampAdjustPosition();
-  renderAdjustTransform();
-}
-function setupAdjustDrag(){
-  const vp = document.getElementById('adjustViewport');
-  if(vp._adjustBound) return; // only wire listeners once, state resets via adjustState
-  vp._adjustBound = true;
-  let dragging=false, startX=0, startY=0, startLeft=0, startTop=0;
-  vp.addEventListener('pointerdown', (e)=>{
-    if(!adjustState) return;
-    dragging=true; startX=e.clientX; startY=e.clientY;
-    startLeft=adjustState.left; startTop=adjustState.top;
-    vp.setPointerCapture(e.pointerId);
-  });
-  vp.addEventListener('pointermove', (e)=>{
-    if(!dragging || !adjustState) return;
-    adjustState.left = startLeft + (e.clientX-startX);
-    adjustState.top = startTop + (e.clientY-startY);
-    clampAdjustPosition();
-    renderAdjustTransform();
-  });
-  const endDrag = ()=>{ dragging=false; };
-  vp.addEventListener('pointerup', endDrag);
-  vp.addEventListener('pointercancel', endDrag);
-}
-function cancelPhotoAdjust(){
-  const returnTo = adjustState?.returnSheetId;
-  adjustState = null;
-  if(returnTo) openSheet(returnTo); else closeSheets();
-}
-async function confirmPhotoAdjust(){
-  const s = adjustState; if(!s) return;
-  const outputSize = 500;
-  const k = s.baseScale*s.zoom; // displayed px per natural px
-  const srcX = (0 - s.left)/k, srcY = (0 - s.top)/k;
-  const srcW = s.viewport/k, srcH = s.viewport/k;
-  const c = document.createElement('canvas'); c.width=outputSize; c.height=outputSize;
-  c.getContext('2d').drawImage(s.naturalImg, srcX, srcY, srcW, srcH, 0, 0, outputSize, outputSize);
-  const dataUrl = c.toDataURL('image/jpeg', 0.85);
-
-  if(s.target==='profile'){
-    state.profile.avatar = dataUrl;
-    await storeSet(KEYS.PROFILE, state.profile);
-    refreshAvatars();
-    showToast('Photo updated');
-  } else if(s.target==='crew'){
-    pendingCrewPhoto = dataUrl;
-    document.getElementById('crewPhotoPreview').src = dataUrl;
-  }
-  const returnTo = s.returnSheetId;
-  adjustState = null;
-  if(returnTo) openSheet(returnTo); else closeSheets();
-}
-
 /* ============================================================
    HOME
    ============================================================ */
@@ -1182,13 +827,6 @@ function populateBoatSelects(){
   document.getElementById('activeBoatSelect').innerHTML = opts;
 }
 function openStartJourneySheet(){
-  if(currentTrip){
-    if(confirm('You already have a journey being recorded. Return to it? (Starting a new one would discard the current recording.)')){
-      nav('active');
-      return;
-    }
-    return;
-  }
   populateBoatSelects();
   openSheet('sheetStartJourney');
 }
@@ -1255,21 +893,10 @@ function startAddCrewFromPicker(){
   openCrewSheet();
 }
 
-function resetActiveFormFields(){
-  document.getElementById('tripPlace').value = '';
-  document.getElementById('windSpeed').value = 8; updateWindSpeedLabel();
-  document.getElementById('waveHeight').value = 0.5; updateWaveHeightLabel();
-  document.getElementById('temp').value = 20; updateTempLabel();
-  document.getElementById('gusts').value = 10; updateGustsLabel();
-  document.getElementById('activePhotoStrip').querySelectorAll('.photo-thumb').forEach(n=>n.remove());
-  document.getElementById('tripNotes').value = '';
-  renderAddedCrewChips();
-}
 function beginJourney(){
   const boatId = document.getElementById('startBoatSelect').value;
   currentTrip = {
     id: uid(),
-    isManual: false,
     boatId: boatId || null,
     date: new Date().toISOString(),
     elapsedSeconds: 0,
@@ -1281,10 +908,13 @@ function beginJourney(){
   };
   closeSheets();
   nav('active');
-  document.getElementById('liveStatsBlock').style.display = 'block';
-  document.getElementById('pastStatsBlock').style.display = 'none';
-  document.getElementById('endJourneyBtnLabel').textContent = 'End Journey';
-  resetActiveFormFields();
+  document.getElementById('tripPlace').value = '';
+  document.getElementById('windSpeed').value = 8; updateWindSpeedLabel();
+  document.getElementById('waveHeight').value = 0.5; updateWaveHeightLabel();
+  document.getElementById('temp').value = 20; updateTempLabel();
+  document.getElementById('gusts').value = 10; updateGustsLabel();
+  document.getElementById('activePhotoStrip').querySelectorAll('.photo-thumb').forEach(n=>n.remove());
+  renderAddedCrewChips();
   startedAt = Date.now();
   document.getElementById('elapsedDisplay').textContent = '00:00:00';
   document.getElementById('avgSpeedDisplay').innerHTML = '0.0<span class="stat-unit"> kts</span>';
@@ -1293,39 +923,6 @@ function beginJourney(){
   timerId = setInterval(tickTimer, 1000);
   startGPS();
 }
-function beginManualJourney(){
-  if(currentTrip){
-    if(confirm('You already have a journey being recorded. Return to it? (Starting a past-sail entry would discard the current recording.)')){
-      nav('active');
-    }
-    return;
-  }
-  populateBoatSelects();
-  currentTrip = {
-    id: uid(),
-    isManual: true,
-    boatId: null,
-    date: new Date().toISOString(),
-    elapsedSeconds: 0,
-    distanceNm: 0,
-    avgSpeed: 0,
-    maxSpeed: 0,
-    path: [],
-    weather: {}, place:'', notes:'', crewIds: [], photos: [], coverPhoto: null
-  };
-  nav('active');
-  document.getElementById('liveStatsBlock').style.display = 'none';
-  document.getElementById('pastStatsBlock').style.display = 'block';
-  document.getElementById('endJourneyBtnLabel').textContent = 'Save Log Entry';
-  resetActiveFormFields();
-  // default the date/time picker to now, in local time, formatted for datetime-local
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  document.getElementById('pastDate').value = now.toISOString().slice(0,16);
-  document.getElementById('pastHours').value = '';
-  document.getElementById('pastMinutes').value = '';
-  document.getElementById('pastDistance').value = '';
-}
 function tickTimer(){
   const secs = Math.floor((Date.now()-startedAt)/1000);
   currentTrip.elapsedSeconds = secs;
@@ -1333,8 +930,6 @@ function tickTimer(){
   const m = String(Math.floor((secs%3600)/60)).padStart(2,'0');
   const s = String(secs%60).padStart(2,'0');
   document.getElementById('elapsedDisplay').textContent = `${h}:${m}:${s}`;
-  const bannerTime = document.getElementById('recordingBannerTime');
-  if(bannerTime) bannerTime.textContent = `${h}:${m}:${s}`;
 }
 function haversineNm(a,b){
   const R=3440.065; // nm
@@ -1388,20 +983,8 @@ function stopGPS(){
   if(timerId){ clearInterval(timerId); timerId=null; }
 }
 function confirmLeaveActive(){
-  // Leaving the screen no longer stops tracking — GPS/timer keep running in the
-  // background. The journey only ends when "End Journey" / "Save Log Entry" is pressed.
-  nav('home');
-  showToast(currentTrip.isManual ? "Draft kept — tap the banner to finish it" : 'Still recording — tap the banner to return');
-}
-function discardJourney(){
-  const msg = currentTrip.isManual
-    ? "Discard this past-sail entry? Nothing will be saved. This can't be undone."
-    : "Discard this journey? Tracking will stop and none of it will be saved. This can't be undone.";
-  if(confirm(msg)){
-    stopGPS();
-    currentTrip = null;
-    document.getElementById('recordingBanner').classList.remove('show');
-    nav('home');
+  if(confirm('Leave without saving this journey? Your progress will be lost.')){
+    stopGPS(); currentTrip=null; nav('home');
   }
 }
 async function handleActivePhotos(ev){
@@ -1435,28 +1018,13 @@ function removeActivePhoto(i){
 }
 
 async function endJourney(){
-  const confirmMsg = currentTrip.isManual ? 'Save this past sail to your log?' : 'End this journey and save it to your log?';
-  if(!confirm(confirmMsg)) return;
-
-  if(currentTrip.isManual){
-    const hrs = parseFloat(document.getElementById('pastHours').value)||0;
-    const mins = parseFloat(document.getElementById('pastMinutes').value)||0;
-    const dist = parseFloat(document.getElementById('pastDistance').value)||0;
-    const dateVal = document.getElementById('pastDate').value;
-    currentTrip.elapsedSeconds = Math.round(hrs*3600 + mins*60);
-    currentTrip.distanceNm = dist;
+  if(!confirm('End this journey and save it to your log?')) return;
+  stopGPS();
+  const manual = document.getElementById('manualDistance').value;
+  if(manual && (!currentTrip.path.length || currentTrip.distanceNm===0)){
+    currentTrip.distanceNm = parseFloat(manual)||0;
     const h = currentTrip.elapsedSeconds/3600;
-    currentTrip.avgSpeed = h>0 ? dist/h : 0;
-    currentTrip.maxSpeed = currentTrip.avgSpeed;
-    currentTrip.date = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
-  } else {
-    stopGPS();
-    const manual = document.getElementById('manualDistance').value;
-    if(manual && (!currentTrip.path.length || currentTrip.distanceNm===0)){
-      currentTrip.distanceNm = parseFloat(manual)||0;
-      const h = currentTrip.elapsedSeconds/3600;
-      currentTrip.avgSpeed = h>0 ? currentTrip.distanceNm/h : 0;
-    }
+    currentTrip.avgSpeed = h>0 ? currentTrip.distanceNm/h : 0;
   }
   currentTrip.weather = {
     windDir: document.getElementById('windDir').value,
@@ -1626,11 +1194,6 @@ async function openTripDetail(id){
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
       Share with Crew / Social
     </button>
-    <div style="height:10px;"></div>
-    <button class="btn btn-outline" onclick="printTripPdf()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
-      Export as A4 PDF
-    </button>
   `;
   window._detailTrip = trip;
   nav('detail');
@@ -1741,9 +1304,6 @@ function openCrewSheet(member){
   pendingCrewPhoto = member ? member.photo : null;
   document.getElementById('crewSheetTitle').textContent = member ? 'Edit Crew' : 'Add Crew';
   document.getElementById('crewName').value = member ? member.name : '';
-  document.getElementById('crewPhone').value = member ? (member.phone||'') : '';
-  document.getElementById('crewEmail').value = member ? (member.email||'') : '';
-  document.getElementById('crewSocial').value = member ? (member.social||'') : '';
   document.getElementById('crewNote').value = member ? member.note : '';
   document.getElementById('crewPhotoPreview').src = pendingCrewPhoto || placeholderAvatar();
   document.getElementById('deleteCrewBtn').style.display = member ? 'flex' : 'none';
@@ -1751,23 +1311,19 @@ function openCrewSheet(member){
 }
 async function handleCrewPhoto(ev){
   const f = ev.target.files[0]; if(!f) return;
-  ev.target.value='';
-  openPhotoAdjuster(f, 'crew', 'sheetCrew');
+  pendingCrewPhoto = await resizeImage(f, 400, 0.75);
+  document.getElementById('crewPhotoPreview').src = pendingCrewPhoto;
 }
 async function saveCrewForm(){
   const name = document.getElementById('crewName').value.trim();
   if(!name){ showToast('Enter a name'); return; }
   let newId = null;
-  const phone = document.getElementById('crewPhone').value.trim();
-  const email = document.getElementById('crewEmail').value.trim();
-  const social = document.getElementById('crewSocial').value.trim();
-  const note = document.getElementById('crewNote').value;
   if(editingCrewId){
     const c = state.crew.find(x=>x.id===editingCrewId);
-    c.name=name; c.phone=phone; c.email=email; c.social=social; c.note=note; c.photo=pendingCrewPhoto;
+    c.name=name; c.note=document.getElementById('crewNote').value; c.photo=pendingCrewPhoto;
   } else {
     newId = uid();
-    state.crew.push({ id:newId, name, phone, email, social, note, photo:pendingCrewPhoto });
+    state.crew.push({ id:newId, name, note:document.getElementById('crewNote').value, photo:pendingCrewPhoto });
   }
   const ok = await storeSet(KEYS.CREW, state.crew);
   if(!ok) return;
@@ -1795,14 +1351,11 @@ function renderCrew(){
       <h3>No crew added</h3><p>Add friends who sail with you to tag them on your logs.</p></div>`;
     return;
   }
-  el.innerHTML = state.crew.map(c=>{
-    const contactBits = [c.phone, c.email].filter(Boolean).join(' · ');
-    return `
+  el.innerHTML = state.crew.map(c=>`
     <div class="row-card" onclick='openCrewSheet(${JSON.stringify(c).replace(/'/g,"&apos;")})'>
       <img class="row-photo round" src="${c.photo||placeholderAvatar()}">
-      <div class="row-info"><div class="name">${escapeHtml(c.name)}</div><div class="sub">${escapeHtml(contactBits || c.note || '')}</div></div>
-    </div>`;
-  }).join('');
+      <div class="row-info"><div class="name">${escapeHtml(c.name)}</div><div class="sub">${escapeHtml(c.note||'')}</div></div>
+    </div>`).join('');
 }
 
 /* ============================================================
@@ -1812,9 +1365,6 @@ function renderProfileScreen(){
   document.getElementById('profileName').value = state.profile.name || '';
   document.getElementById('profileRole').value = state.profile.role || '';
   document.getElementById('profileLicense').value = state.profile.license || '';
-  document.getElementById('profilePhone').value = state.profile.phone || '';
-  document.getElementById('profileEmail').value = state.profile.email || '';
-  document.getElementById('profileSocial').value = state.profile.social || '';
   document.getElementById('profileBio').value = state.profile.bio || '';
   refreshAvatars();
   const nm = state.tripIndex.reduce((s,t)=>s+(t.distanceNm||0),0);
@@ -1828,24 +1378,22 @@ function renderProfileScreen(){
 }
 async function handleAvatarUpload(ev){
   const f = ev.target.files[0]; if(!f) return;
-  ev.target.value='';
-  openPhotoAdjuster(f, 'profile', null);
+  state.profile.avatar = await resizeImage(f, 400, 0.75);
+  await storeSet(KEYS.PROFILE, state.profile);
+  refreshAvatars();
 }
 async function saveProfileForm(){
   state.profile.name = document.getElementById('profileName').value.trim() || 'Sailor';
   state.profile.role = document.getElementById('profileRole').value.trim();
   state.profile.license = document.getElementById('profileLicense').value.trim();
-  state.profile.phone = document.getElementById('profilePhone').value.trim();
-  state.profile.email = document.getElementById('profileEmail').value.trim();
-  state.profile.social = document.getElementById('profileSocial').value.trim();
   state.profile.bio = document.getElementById('profileBio').value;
   const ok = await storeSet(KEYS.PROFILE, state.profile);
   if(ok){ showToast('Profile saved'); document.getElementById('homeName').textContent = state.profile.name; }
 }
 async function clearProfilePrompt(){
-  if(!confirm('Clear your profile (name, role, license, contact info, bio, photo)? Your trips, boats, and crew stay untouched.')) return;
+  if(!confirm('Clear your profile (name, role, license, bio, photo)? Your trips, boats, and crew stay untouched.')) return;
   const theme = state.profile.theme; // keep the current theme choice
-  state.profile = { name:'Sailor', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme };
+  state.profile = { name:'Sailor', role:'', license:'', bio:'', avatar:'', theme };
   const ok = await storeSet(KEYS.PROFILE, state.profile);
   if(ok){
     showToast('Profile cleared');
@@ -1866,7 +1414,7 @@ function openResetSheet(){ openSheet('sheetReset'); }
 async function resetAllData(){
   for(const t of state.tripIndex){ await storeDelete('trip:'+t.id); }
   await storeDelete(KEYS.INDEX); await storeDelete(KEYS.BOATS); await storeDelete(KEYS.CREW); await storeDelete(KEYS.PROFILE);
-  state = { tripIndex:[], boats:[], crew:[], profile:{name:'Sailor',role:'',license:'',phone:'',email:'',social:'',bio:'',avatar:'',theme:'light'} };
+  state = { tripIndex:[], boats:[], crew:[], profile:{name:'Sailor',role:'',license:'',bio:'',avatar:'',theme:'light'} };
   document.documentElement.setAttribute('data-theme','light');
   closeSheets(); showToast('All data erased');
   refreshAvatars(); nav('home'); renderHomeStats();
@@ -1945,47 +1493,6 @@ function renderCertificate(){
 function printCertificate(){
   const block = document.getElementById('certBlock');
   document.getElementById('printArea').innerHTML = block.outerHTML;
-  window.print();
-}
-
-function printTripPdf(){
-  const trip = window._detailTrip;
-  if(!trip){ showToast('Open a trip first'); return; }
-  const boat = state.boats.find(b=>b.id===trip.boatId);
-  const crewNames = (trip.crewIds||[]).map(cid=>{ const c=state.crew.find(x=>x.id===cid); return c?c.name:null; }).filter(Boolean);
-  const d = new Date(trip.date);
-  const dateStr = d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  const photos = (trip.photos||[]).slice(0,8); // cap so the sheet stays to a couple of pages
-
-  const html = `<div class="pdf-sheet" id="pdfTripBlock">
-    <h1>${escapeHtml(trip.title||'Sail Log')}</h1>
-    <div class="pdf-sub">${dateStr}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</div>
-
-    ${trip.coverPhoto ? `<img class="pdf-cover" src="${trip.coverPhoto}">` : ''}
-
-    <div class="pdf-stats-grid">
-      <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>Elapsed</span></div>
-      <div><b>${(trip.distanceNm||0).toFixed(1)} NM</b><span>Distance</span></div>
-      <div><b>${(trip.avgSpeed||0).toFixed(1)} kts</b><span>Avg Speed</span></div>
-      <div><b>${(trip.maxSpeed||0).toFixed(1)} kts</b><span>Max Speed</span></div>
-    </div>
-
-    <div class="pdf-section-title">Weather</div>
-    <p>
-      💨 ${escapeHtml(trip.weather?.windDir||'—')} ${escapeHtml(trip.weather?.windSpeed||'')}${trip.weather?.gusts?` · Gusts ${escapeHtml(String(trip.weather.gusts))} kts`:''}<br>
-      🌊 ${escapeHtml(trip.weather?.seaState||'—')}${trip.weather?.waveHeight?` (${escapeHtml(String(trip.weather.waveHeight))} m)`:''}
-      ${trip.weather?.temp?` · 🌡 ${escapeHtml(String(trip.weather.temp))}°C`:''}
-    </p>
-
-    ${trip.notes ? `<div class="pdf-section-title">Notes</div><p>${escapeHtml(trip.notes)}</p>` : ''}
-
-    ${crewNames.length ? `<div class="pdf-section-title">Crew</div><p>${crewNames.map(escapeHtml).join(', ')}</p>` : ''}
-
-    ${photos.length ? `<div class="pdf-section-title">Photos</div><div class="pdf-photos-grid">${photos.map(p=>`<img src="${p}">`).join('')}</div>` : ''}
-
-    <div class="pdf-foot">Sail la Vie Logbook · Generated ${new Date().toLocaleDateString()}</div>
-  </div>`;
-  document.getElementById('printArea').innerHTML = html;
   window.print();
 }
 
