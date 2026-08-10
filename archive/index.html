@@ -277,11 +277,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   border-radius:999px; padding:11px 20px; font-weight:600; font-size:14px; cursor:pointer; }
 .lightbox-close{ position:absolute; top:18px; right:18px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.14);
   display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; }
-.lightbox-nav{ position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,.14);
-  display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; z-index:1; }
-.lightbox-nav-prev{ left:10px; }
-.lightbox-nav-next{ right:10px; }
-.lightbox-counter{ margin-top:12px; font-size:12.5px; color:rgba(255,255,255,.7); letter-spacing:.03em; }
 </style>
 </head>
 <body>
@@ -371,8 +366,8 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 
       <div id="manualDistanceWrap" style="display:none;">
         <div class="field" style="margin-top:16px;">
-          <label id="manualDistanceLabel">Distance covered — NM (manual entry, GPS unavailable)</label>
-          <input type="number" step="0.1" min="0" id="manualDistance" placeholder="e.g. 12.4">
+          <label>Distance covered (manual entry — GPS unavailable)</label>
+          <input type="number" step="0.1" min="0" id="manualDistance" placeholder="Nautical miles">
         </div>
       </div>
     </div>
@@ -387,7 +382,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
         <div class="field"><label>Duration (mins)</label><input type="number" min="0" max="59" step="1" id="pastMinutes" placeholder="e.g. 30"></div>
       </div>
       <div class="field">
-        <label id="pastDistanceLabel">Distance (NM)</label>
+        <label>Distance (NM)</label>
         <input type="number" step="0.1" min="0" id="pastDistance" placeholder="e.g. 12.4">
       </div>
     </div>
@@ -400,13 +395,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     <div class="field">
       <label>Place</label>
       <input type="text" id="tripPlace" placeholder="e.g. Chesapeake Bay">
-    </div>
-    <div class="theme-toggle" style="margin-bottom:6px;">
-      <div>
-        <div style="font-weight:600;font-size:14px;" id="logUnitsLabel">Nautical (kts / NM)</div>
-        <p style="font-size:12px;">Units for this log entry — flip anytime, doesn't change your default</p>
-      </div>
-      <div class="switch" onclick="toggleLogUnitSystem()"><div class="knob" id="logUnitsKnob">⚓</div></div>
     </div>
     <div class="two-col">
       <div class="field">
@@ -422,15 +410,9 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
       <label>Wind Speed <span class="range-value" id="windSpeedVal">12 kts</span></label>
       <input type="range" id="windSpeed" min="0" max="19" value="8" oninput="updateWindSpeedLabel()">
     </div>
-    <div class="two-col">
-      <div class="field">
-        <label>Gusts <span class="range-value" id="gustsVal">10 kts</span></label>
-        <input type="range" id="gusts" min="0" max="40" step="1" value="10" oninput="updateGustsLabel()">
-      </div>
-      <div class="field">
-        <label>Gust Direction</label>
-        <select id="gustDir"><option>N</option><option>NE</option><option>E</option><option>SE</option><option>S</option><option>SW</option><option>W</option><option>NW</option></select>
-      </div>
+    <div class="field">
+      <label>Gusts <span class="range-value" id="gustsVal">10 kts</span></label>
+      <input type="range" id="gusts" min="0" max="40" step="1" value="10" oninput="updateGustsLabel()">
     </div>
     <div class="field">
       <label>Wave Height <span class="range-value" id="waveHeightVal">0.5 m</span></label>
@@ -595,15 +577,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
       <div class="switch" onclick="toggleTheme()"><div class="knob" id="themeKnob">☀️</div></div>
     </div>
 
-    <div class="section-title">Units</div>
-    <div class="theme-toggle">
-      <div>
-        <div style="font-weight:600;font-size:14px;" id="unitsLabel">Nautical (kts / NM)</div>
-        <p style="font-size:12px;">Default used throughout the app — you can still flip units for a single log entry while logging</p>
-      </div>
-      <div class="switch" onclick="toggleDefaultUnitSystem()"><div class="knob" id="unitsKnob">⚓</div></div>
-    </div>
-
     <div class="divider"></div>
     <div class="link-plain" onclick="clearProfilePrompt()" style="color:var(--coral);">Clear profile…</div>
     <div class="link-plain" onclick="openResetSheet()">Reset app data…</div>
@@ -706,11 +679,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     <h3 id="crewSheetTitle">Add Crew</h3>
     <div style="text-align:center;margin-bottom:10px;">
       <img id="crewPhotoPreview" src="" style="width:96px;height:96px;border-radius:50%;object-fit:cover;background:var(--bg-sunk);display:block;margin:0 auto 8px;">
-      <div style="display:flex;gap:16px;justify-content:center;">
-        <div class="link-plain" onclick="document.getElementById('crewSelfieInput').click()">Take Selfie</div>
-        <div class="link-plain" onclick="document.getElementById('crewPhotoInput').click()">Add Photo</div>
-      </div>
-      <input type="file" id="crewSelfieInput" accept="image/*" capture="user" style="display:none;" onchange="handleCrewPhoto(event)">
+      <div class="link-plain" onclick="document.getElementById('crewPhotoInput').click()">Add photo</div>
       <input type="file" id="crewPhotoInput" accept="image/*" style="display:none;" onchange="handleCrewPhoto(event)">
     </div>
     <div class="field"><label>Name</label><input type="text" id="crewName" placeholder="e.g. Alex"></div>
@@ -782,14 +751,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   <div class="lightbox-close" onclick="closeLightbox()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M18 6L6 18M6 6l12 12"/></svg>
   </div>
-  <div class="lightbox-nav lightbox-nav-prev" onclick="lightboxPrev()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M15 18l-6-6 6-6"/></svg>
-  </div>
   <img id="lightboxImg" src="" alt="">
-  <div class="lightbox-nav lightbox-nav-next" onclick="lightboxNext()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 18l6-6-6-6"/></svg>
-  </div>
-  <div class="lightbox-counter" id="lightboxCounter"></div>
   <div class="lightbox-actions">
     <div class="lightbox-btn" onclick="shareLightboxPhoto()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
@@ -1003,7 +965,7 @@ let state = {
   tripIndex: [],   // lightweight list for History screen
   boats: [],
   crew: [],
-  profile: { name:'Sailor', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme:'light', unitSystem:'nautical' },
+  profile: { name:'Sailor', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme:'light' },
 };
 
 let currentTrip = null;   // full record while a journey is active
@@ -1029,7 +991,6 @@ async function boot(){
   document.documentElement.setAttribute('data-theme', state.profile.theme || 'light');
   document.getElementById('themeKnob').textContent = (state.profile.theme==='dark') ? '🌙' : '☀️';
   document.getElementById('themeLabel').textContent = (state.profile.theme==='dark') ? 'Night Theme' : 'Day Theme';
-  renderUnitsSettingUI();
 
   refreshAvatars();
   document.getElementById('homeName').textContent = state.profile.name || 'Sailor';
@@ -1264,8 +1225,9 @@ function openStartJourneySheet(){
   openSheet('sheetStartJourney');
 }
 function updateWindSpeedLabel(){
-  const kts = parseFloat(document.getElementById('windSpeed').value)||0;
-  document.getElementById('windSpeedVal').textContent = (kts===0 ? '0 kts (Calm)' : fmtSpeed(kts)).replace('kts', speedUnitLabel());
+  const values = ['0 kts (Calm)', '1 kts', '2 kts', '3 kts', '4 kts', '5 kts', '6 kts', '7 kts', '8 kts', '9 kts', '10 kts', '11 kts', '12 kts', '13 kts', '14 kts', '15 kts', '16 kts', '17 kts', '18 kts', '19 kts'];
+  const v = document.getElementById('windSpeed').value;
+  document.getElementById('windSpeedVal').textContent = values[v];
 }
 function updateWaveHeightLabel(){
   const v = parseFloat(document.getElementById('waveHeight').value).toFixed(1);
@@ -1276,39 +1238,8 @@ function updateTempLabel(){
   document.getElementById('tempVal').textContent = v+'°C';
 }
 function updateGustsLabel(){
-  const kts = parseFloat(document.getElementById('gusts').value)||0;
-  document.getElementById('gustsVal').textContent = fmtSpeed(kts);
-}
-function toggleLogUnitSystem(){
-  // convert whatever's currently typed into the distance fields so nothing is lost on flip
-  const from = activeUnitSystem;
-  const to = from==='metric' ? 'nautical' : 'metric';
-  ['manualDistance','pastDistance'].forEach(id=>{
-    const el = document.getElementById(id);
-    const v = parseFloat(el.value);
-    if(!isNaN(v)){
-      const nm = from==='metric' ? v/NM_TO_KM : v;
-      el.value = (to==='metric' ? nm*NM_TO_KM : nm).toFixed(1);
-    }
-  });
-  activeUnitSystem = to;
-  refreshLogUnitsUI();
-}
-function updateLiveStatDisplays(){
-  if(!currentTrip) return;
-  document.getElementById('avgSpeedDisplay').innerHTML = fmtSpeed(currentTrip.avgSpeed||0).replace(' ', '<span class="stat-unit"> ')+'</span>';
-  document.getElementById('maxSpeedDisplay').innerHTML = fmtSpeed(currentTrip.maxSpeed||0).replace(' ', '<span class="stat-unit"> ')+'</span>';
-  document.getElementById('distDisplay').innerHTML = fmtDistance(currentTrip.distanceNm||0).replace(' ', '<span class="stat-unit"> ')+'</span>';
-}
-function refreshLogUnitsUI(){
-  const sys = activeUnitSystem;
-  document.getElementById('logUnitsKnob').textContent = sys==='metric' ? '🌍' : '⚓';
-  document.getElementById('logUnitsLabel').textContent = sys==='metric' ? 'Metric (km/h / km)' : 'Nautical (kts / NM)';
-  document.getElementById('manualDistanceLabel').textContent = `Distance covered — ${distUnitLabel()} (manual entry, GPS unavailable)`;
-  document.getElementById('pastDistanceLabel').textContent = `Distance (${distUnitLabel()})`;
-  updateWindSpeedLabel();
-  updateGustsLabel();
-  updateLiveStatDisplays();
+  const v = document.getElementById('gusts').value;
+  document.getElementById('gustsVal').textContent = v+' kts';
 }
 function renderAddedCrewChips(){
   const row = document.getElementById('addedCrewRow');
@@ -1362,7 +1293,6 @@ function resetActiveFormFields(){
   document.getElementById('waveHeight').value = 0.5; updateWaveHeightLabel();
   document.getElementById('temp').value = 20; updateTempLabel();
   document.getElementById('gusts').value = 10; updateGustsLabel();
-  document.getElementById('gustDir').value = 'N';
   document.getElementById('activePhotoStrip').querySelectorAll('.photo-thumb').forEach(n=>n.remove());
   document.getElementById('tripNotes').value = '';
   renderAddedCrewChips();
@@ -1381,17 +1311,17 @@ function beginJourney(){
     path: [],
     weather: {}, place:'', notes:'', crewIds: [], photos: [], coverPhoto: null
   };
-  activeUnitSystem = appUnitSystem();
   closeSheets();
   nav('active');
   document.getElementById('liveStatsBlock').style.display = 'block';
   document.getElementById('pastStatsBlock').style.display = 'none';
   document.getElementById('endJourneyBtnLabel').textContent = 'End Journey';
   resetActiveFormFields();
-  refreshLogUnitsUI();
   startedAt = Date.now();
   document.getElementById('elapsedDisplay').textContent = '00:00:00';
-  updateLiveStatDisplays();
+  document.getElementById('avgSpeedDisplay').innerHTML = '0.0<span class="stat-unit"> kts</span>';
+  document.getElementById('maxSpeedDisplay').innerHTML = '0.0<span class="stat-unit"> kts</span>';
+  document.getElementById('distDisplay').innerHTML = '0.0<span class="stat-unit"> NM</span>';
   timerId = setInterval(tickTimer, 1000);
   startGPS();
 }
@@ -1405,7 +1335,6 @@ function editTrip(){
   currentTrip = JSON.parse(JSON.stringify(trip)); // deep clone so cancel never touches the saved version
   currentTrip.isManual = true;
   currentTrip.isEditing = true;
-  activeUnitSystem = appUnitSystem();
   populateBoatSelects();
   nav('active');
   document.getElementById('liveStatsBlock').style.display = 'none';
@@ -1415,21 +1344,17 @@ function editTrip(){
   document.getElementById('tripPlace').value = trip.place || '';
   document.getElementById('activeBoatSelect').value = trip.boatId || '';
   document.getElementById('windDir').value = trip.weather?.windDir || 'N';
-  // windSpeed may be a plain kts number (current format) or older saved text like "8.0 kts" — handle both
-  const wsRaw = trip.weather?.windSpeed;
-  const wsNum = typeof wsRaw === 'number' ? wsRaw : parseFloat(String(wsRaw||'').match(/[\d.]+/)?.[0]) || 8;
-  document.getElementById('windSpeed').value = wsNum;
-  const gustsRaw = trip.weather?.gusts;
-  const gustsNum = typeof gustsRaw === 'number' ? gustsRaw : parseFloat(String(gustsRaw||'').match(/[\d.]+/)?.[0]) || 10;
-  document.getElementById('gusts').value = gustsNum;
-  document.getElementById('gustDir').value = trip.weather?.gustDir || 'N';
+  const wsMatch = (trip.weather?.windSpeed||'').match(/(\d+)/);
+  document.getElementById('windSpeed').value = wsMatch ? wsMatch[1] : 8;
+  updateWindSpeedLabel();
+  document.getElementById('gusts').value = trip.weather?.gusts || 10;
+  updateGustsLabel();
   document.getElementById('seaState').value = trip.weather?.seaState || 'Moderate';
   document.getElementById('waveHeight').value = trip.weather?.waveHeight || 0.5;
-  document.getElementById('temp').value = trip.weather?.temp || 20;
-  document.getElementById('tripNotes').value = trip.notes || '';
-  refreshLogUnitsUI();
   updateWaveHeightLabel();
+  document.getElementById('temp').value = trip.weather?.temp || 20;
   updateTempLabel();
+  document.getElementById('tripNotes').value = trip.notes || '';
 
   const d = new Date(trip.date);
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
@@ -1437,8 +1362,7 @@ function editTrip(){
   const totalMin = Math.round((trip.elapsedSeconds||0)/60);
   document.getElementById('pastHours').value = Math.floor(totalMin/60);
   document.getElementById('pastMinutes').value = totalMin%60;
-  const distNm = trip.distanceNm || 0;
-  document.getElementById('pastDistance').value = (activeUnitSystem==='metric' ? distNm*NM_TO_KM : distNm).toFixed(1);
+  document.getElementById('pastDistance').value = trip.distanceNm || 0;
 
   renderAddedCrewChips();
   renderActivePhotoStrip();
@@ -1463,13 +1387,11 @@ function beginManualJourney(){
     path: [],
     weather: {}, place:'', notes:'', crewIds: [], photos: [], coverPhoto: null
   };
-  activeUnitSystem = appUnitSystem();
   nav('active');
   document.getElementById('liveStatsBlock').style.display = 'none';
   document.getElementById('pastStatsBlock').style.display = 'block';
   document.getElementById('endJourneyBtnLabel').textContent = 'Save Log Entry';
   resetActiveFormFields();
-  refreshLogUnitsUI();
   // default the date/time picker to now, in local time, formatted for datetime-local
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -1527,7 +1449,9 @@ function onFix(pos){
   }
   const elapsedH = currentTrip.elapsedSeconds/3600;
   currentTrip.avgSpeed = elapsedH>0 ? currentTrip.distanceNm/elapsedH : 0;
-  updateLiveStatDisplays();
+  document.getElementById('distDisplay').innerHTML = currentTrip.distanceNm.toFixed(1)+'<span class="stat-unit"> NM</span>';
+  document.getElementById('avgSpeedDisplay').innerHTML = currentTrip.avgSpeed.toFixed(1)+'<span class="stat-unit"> kts</span>';
+  document.getElementById('maxSpeedDisplay').innerHTML = currentTrip.maxSpeed.toFixed(1)+'<span class="stat-unit"> kts</span>';
   renderLiveTrack();
 }
 function onGpsError(){
@@ -1597,8 +1521,7 @@ async function endJourney(){
   if(currentTrip.isManual){
     const hrs = parseFloat(document.getElementById('pastHours').value)||0;
     const mins = parseFloat(document.getElementById('pastMinutes').value)||0;
-    const distInput = parseFloat(document.getElementById('pastDistance').value)||0;
-    const dist = activeUnitSystem==='metric' ? distInput/NM_TO_KM : distInput; // convert to canonical NM
+    const dist = parseFloat(document.getElementById('pastDistance').value)||0;
     const dateVal = document.getElementById('pastDate').value;
     currentTrip.elapsedSeconds = Math.round(hrs*3600 + mins*60);
     currentTrip.distanceNm = dist;
@@ -1608,18 +1531,17 @@ async function endJourney(){
     currentTrip.date = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
   } else {
     stopGPS();
-    const manualInput = parseFloat(document.getElementById('manualDistance').value);
-    if(!isNaN(manualInput) && (!currentTrip.path.length || currentTrip.distanceNm===0)){
-      currentTrip.distanceNm = activeUnitSystem==='metric' ? manualInput/NM_TO_KM : manualInput; // canonical NM
+    const manual = document.getElementById('manualDistance').value;
+    if(manual && (!currentTrip.path.length || currentTrip.distanceNm===0)){
+      currentTrip.distanceNm = parseFloat(manual)||0;
       const h = currentTrip.elapsedSeconds/3600;
       currentTrip.avgSpeed = h>0 ? currentTrip.distanceNm/h : 0;
     }
   }
   currentTrip.weather = {
     windDir: document.getElementById('windDir').value,
-    windSpeed: parseFloat(document.getElementById('windSpeed').value)||0, // canonical kts
-    gusts: parseFloat(document.getElementById('gusts').value)||0, // canonical kts
-    gustDir: document.getElementById('gustDir').value,
+    windSpeed: document.getElementById('windSpeedVal').textContent,
+    gusts: document.getElementById('gusts').value,
     seaState: document.getElementById('seaState').value,
     waveHeight: document.getElementById('waveHeight').value,
     temp: document.getElementById('temp').value,
@@ -1727,7 +1649,7 @@ function renderHistory(){
       <div class="trip-body">
         <div class="trip-title">${escapeHtml(t.title)}</div>
         <div class="trip-meta">${t.coverPhoto ? '' : `<span>📅 ${dateStr}</span>`}${t.place && !t.coverPhoto ? `<span>📍 ${escapeHtml(t.place)}</span>` : ''}<span>⏱ ${dur}</span></div>
-        <div class="trip-meta"><span>📏 <b>${fmtDistance(t.distanceNm||0)}</b></span><span>⚓ Avg <b>${fmtSpeed(t.avgSpeed||0)}</b></span></div>
+        <div class="trip-meta"><span>📏 <b>${(t.distanceNm||0).toFixed(1)} NM</b></span><span>⚓ Avg <b>${(t.avgSpeed||0).toFixed(1)} kts</b></span></div>
       </div>
     </div>`;
   }).join('');
@@ -1757,14 +1679,14 @@ async function openTripDetail(id){
   }
 
   document.getElementById('detailBody').innerHTML = `
-    ${trip.coverPhoto ? `<img src="${trip.coverPhoto}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius-lg);border:1px solid var(--border);cursor:pointer;" onclick="openTripCoverLightbox()">` : ''}
+    ${trip.coverPhoto ? `<img src="${trip.coverPhoto}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius-lg);border:1px solid var(--border);cursor:pointer;" onclick="openLightbox('${trip.coverPhoto}')">` : ''}
     <p style="margin-top:12px;font-size:13px;">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</p>
 
     <div class="stat-card stat-grid" style="margin-top:14px;">
       <div class="cell"><div class="stat-label">Elapsed</div><div class="stat-value" style="font-size:19px;">${fmtDuration(trip.elapsedSeconds)}</div></div>
-      <div class="cell"><div class="stat-label">Distance</div><div class="stat-value">${fmtDistance(trip.distanceNm||0)}</div></div>
-      <div class="cell" style="margin-top:14px;"><div class="stat-label">Avg Speed</div><div class="stat-value">${fmtSpeed(trip.avgSpeed||0)}</div></div>
-      <div class="cell" style="margin-top:14px;"><div class="stat-label">Max Speed</div><div class="stat-value">${fmtSpeed(trip.maxSpeed||0)}</div></div>
+      <div class="cell"><div class="stat-label">Distance</div><div class="stat-value">${(trip.distanceNm||0).toFixed(1)}<span class="stat-unit"> NM</span></div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">Avg Speed</div><div class="stat-value">${(trip.avgSpeed||0).toFixed(1)}<span class="stat-unit"> kts</span></div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">Max Speed</div><div class="stat-value">${(trip.maxSpeed||0).toFixed(1)}<span class="stat-unit"> kts</span></div></div>
     </div>
 
     ${mapSvg ? `<div class="porthole">${mapSvg}</div>` : ''}
@@ -1772,8 +1694,8 @@ async function openTripDetail(id){
     <div class="section-title">Weather</div>
     <div class="card" style="padding:16px;">
       <div class="trip-meta">
-        <span>💨 ${trip.weather?.windDir||'—'} ${trip.weather?.windSpeed!=null?fmtSpeed(trip.weather.windSpeed):''}</span>
-        <span>${trip.weather?.gusts?`Gusts ${trip.weather.gustDir?trip.weather.gustDir+' ':''}${fmtSpeed(trip.weather.gusts)}`:''}</span>
+        <span>💨 ${trip.weather?.windDir||'—'} ${trip.weather?.windSpeed||''}</span>
+        <span>${trip.weather?.gusts?`Gusts ${trip.weather.gusts} kts`:''}</span>
         <span>🌊 ${trip.weather?.seaState||'—'}${trip.weather?.waveHeight?` (${trip.weather.waveHeight}m)`:''}</span>
         <span>🌡 ${trip.weather?.temp?trip.weather.temp+'°C':'—'}</span>
       </div>
@@ -1783,7 +1705,7 @@ async function openTripDetail(id){
 
     ${crewNames.length ? `<div class="section-title">Crew</div><p>${crewNames.map(escapeHtml).join(', ')}</p>` : ''}
 
-    ${trip.photos && trip.photos.length ? `<div class="section-title">Photos</div><div class="photo-strip">${trip.photos.map((p,i)=>`<div class="photo-thumb" onclick="openTripPhotoLightbox(${i})"><img src="${p}"></div>`).join('')}</div>` : ''}
+    ${trip.photos && trip.photos.length ? `<div class="section-title">Photos</div><div class="photo-strip">${trip.photos.map(p=>`<div class="photo-thumb" onclick="openLightbox('${p}')"><img src="${p}"></div>`).join('')}</div>` : ''}
 
     <div style="height:8px;"></div>
     <button class="btn btn-outline" onclick="shareTrip('${trip.id}')">
@@ -1842,7 +1764,7 @@ async function deleteTripPrompt(){
 }
 function shareTrip(id){
   const t = window._detailTrip;
-  const text = `⛵ ${t.title}\n${new Date(t.date).toLocaleDateString()}\n${fmtDistance(t.distanceNm||0)} · ${fmtDuration(t.elapsedSeconds)} · Avg ${fmtSpeed(t.avgSpeed||0)}\nLogged with Sail la Vie`;
+  const text = `⛵ ${t.title}\n${new Date(t.date).toLocaleDateString()}\n${(t.distanceNm||0).toFixed(1)} NM · ${fmtDuration(t.elapsedSeconds)} · Avg ${(t.avgSpeed||0).toFixed(1)} kts\nLogged with Sail la Vie`;
   if(navigator.share){
     navigator.share({ title: t.title, text }).catch(()=>{});
   } else {
@@ -2038,25 +1960,11 @@ async function toggleTheme(){
   state.profile.theme = next;
   await storeSet(KEYS.PROFILE, state.profile);
 }
-async function toggleDefaultUnitSystem(){
-  const next = (state.profile.unitSystem==='metric') ? 'nautical' : 'metric';
-  state.profile.unitSystem = next;
-  renderUnitsSettingUI();
-  await storeSet(KEYS.PROFILE, state.profile);
-  showToast(next==='metric' ? 'Default units: Metric (km/h, km)' : 'Default units: Nautical (kts, NM)');
-}
-function renderUnitsSettingUI(){
-  const sys = appUnitSystem();
-  const knob = document.getElementById('unitsKnob');
-  const label = document.getElementById('unitsLabel');
-  if(knob) knob.textContent = sys==='metric' ? '🌍' : '⚓';
-  if(label) label.textContent = sys==='metric' ? 'Metric (km/h / km)' : 'Nautical (kts / NM)';
-}
 function openResetSheet(){ openSheet('sheetReset'); }
 async function resetAllData(){
   for(const t of state.tripIndex){ await storeDelete('trip:'+t.id); }
   await storeDelete(KEYS.INDEX); await storeDelete(KEYS.BOATS); await storeDelete(KEYS.CREW); await storeDelete(KEYS.PROFILE);
-  state = { tripIndex:[], boats:[], crew:[], profile:{name:'Sailor',role:'',license:'',phone:'',email:'',social:'',bio:'',avatar:'',theme:'light',unitSystem:'nautical'} };
+  state = { tripIndex:[], boats:[], crew:[], profile:{name:'Sailor',role:'',license:'',phone:'',email:'',social:'',bio:'',avatar:'',theme:'light'} };
   document.documentElement.setAttribute('data-theme','light');
   closeSheets(); showToast('All data erased');
   refreshAvatars(); nav('home'); renderHomeStats();
@@ -2093,14 +2001,14 @@ function renderResume(){
   const secs = trips.reduce((s,t)=>s+(t.elapsedSeconds||0),0);
   const avg = secs>0 ? nm/(secs/3600) : 0;
   document.getElementById('resSails').textContent = trips.length;
-  document.getElementById('resDist').innerHTML = fmtDistance(nm).replace(' ', '<span class="stat-unit"> ')+'</span>';
+  document.getElementById('resDist').innerHTML = nm.toFixed(1)+'<span class="stat-unit"> NM</span>';
   document.getElementById('resTime').textContent = fmtDuration(secs);
-  document.getElementById('resAvg').innerHTML = fmtSpeed(avg).replace(' ', '<span class="stat-unit"> ')+'</span>';
+  document.getElementById('resAvg').innerHTML = avg.toFixed(1)+'<span class="stat-unit"> kts</span>';
   const el = document.getElementById('resumeList');
   el.innerHTML = trips.length ? trips.map(t=>`<div class="trip-card" style="margin-top:12px;" onclick="openTripDetail('${t.id}')">
       <div class="trip-body">
         <div class="trip-title">${escapeHtml(t.title)}</div>
-        <div class="trip-meta"><span>📅 ${new Date(t.date).toLocaleDateString()}</span><span>📏 ${fmtDistance(t.distanceNm||0)}</span><span>⏱ ${fmtDuration(t.elapsedSeconds)}</span></div>
+        <div class="trip-meta"><span>📅 ${new Date(t.date).toLocaleDateString()}</span><span>📏 ${(t.distanceNm||0).toFixed(1)} NM</span><span>⏱ ${fmtDuration(t.elapsedSeconds)}</span></div>
       </div></div>`).join('')
     : `<p style="margin-top:10px;">No sails in this range yet.</p>`;
   window._resumeStats = { count:trips.length, nm, secs, avg };
@@ -2124,7 +2032,7 @@ function renderCertificate(){
     <p style="font-size:12px;">has logged the following time at sea</p>
     <div class="cert-stats">
       <div><span>${s.count}</span><small>Sails</small></div>
-      <div><span>${appUnitSystem()==='metric' ? (s.nm*NM_TO_KM).toFixed(1) : s.nm.toFixed(1)}</span><small>${distUnitLabel()}</small></div>
+      <div><span>${s.nm.toFixed(1)}</span><small>Nautical Miles</small></div>
       <div><span>${fmtDuration(s.secs)}</span><small>Time at Sea</small></div>
     </div>
     <div class="cert-foot">Generated ${new Date().toLocaleDateString()} · Sail la Vie Logbook</div>
@@ -2158,12 +2066,12 @@ function printTripPdf(){
       <div class="pdf-top-right">
         <div class="pdf-stats-grid">
           <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>Elapsed</span></div>
-          <div><b>${fmtDistance(trip.distanceNm||0)}</b><span>Distance</span></div>
-          <div><b>${fmtSpeed(trip.avgSpeed||0)}</b><span>Avg Speed</span></div>
-          <div><b>${fmtSpeed(trip.maxSpeed||0)}</b><span>Max Speed</span></div>
+          <div><b>${(trip.distanceNm||0).toFixed(1)} NM</b><span>Distance</span></div>
+          <div><b>${(trip.avgSpeed||0).toFixed(1)} kts</b><span>Avg Speed</span></div>
+          <div><b>${(trip.maxSpeed||0).toFixed(1)} kts</b><span>Max Speed</span></div>
         </div>
         <p class="pdf-weather-line">
-          💨 ${escapeHtml(trip.weather?.windDir||'—')} ${trip.weather?.windSpeed!=null?fmtSpeed(trip.weather.windSpeed):''}${trip.weather?.gusts?` · Gusts ${trip.weather.gustDir?escapeHtml(trip.weather.gustDir)+' ':''}${fmtSpeed(trip.weather.gusts)}`:''}<br>
+          💨 ${escapeHtml(trip.weather?.windDir||'—')} ${escapeHtml(trip.weather?.windSpeed||'')}${trip.weather?.gusts?` · Gusts ${escapeHtml(String(trip.weather.gusts))} kts`:''}<br>
           🌊 ${escapeHtml(trip.weather?.seaState||'—')}${trip.weather?.waveHeight?` (${escapeHtml(String(trip.weather.waveHeight))} m)`:''}
           ${trip.weather?.temp?` · 🌡 ${escapeHtml(String(trip.weather.temp))}°C`:''}
         </p>
@@ -2182,53 +2090,21 @@ function printTripPdf(){
   window.print();
 }
 
-/* ---------- photo lightbox — supports swipe/arrow navigation across a photo set ---------- */
-function openTripCoverLightbox(){
-  const trip = window._detailTrip;
-  if(!trip || !trip.coverPhoto) return;
-  const photos = (trip.photos && trip.photos.length) ? trip.photos : [trip.coverPhoto];
-  const idx = Math.max(0, photos.indexOf(trip.coverPhoto));
-  openLightbox(photos, idx);
-}
-function openTripPhotoLightbox(i){
-  const trip = window._detailTrip;
-  if(!trip || !trip.photos) return;
-  openLightbox(trip.photos, i);
-}
-let lightboxPhotos = [];
-let lightboxIndex = 0;
-function openLightbox(photos, index){
-  lightboxPhotos = (photos||[]).filter(Boolean);
-  lightboxIndex = Math.max(0, Math.min(index||0, lightboxPhotos.length-1));
-  renderLightboxImage();
+/* ---------- photo lightbox ---------- */
+let lightboxDataUrl = null;
+function openLightbox(dataUrl){
+  lightboxDataUrl = dataUrl;
+  document.getElementById('lightboxImg').src = dataUrl;
   document.getElementById('photoLightbox').classList.add('show');
-}
-function renderLightboxImage(){
-  document.getElementById('lightboxImg').src = lightboxPhotos[lightboxIndex] || '';
-  const multi = lightboxPhotos.length > 1;
-  document.querySelectorAll('.lightbox-nav').forEach(el=> el.style.display = multi ? 'flex' : 'none');
-  const counter = document.getElementById('lightboxCounter');
-  counter.textContent = multi ? (lightboxIndex+1)+' / '+lightboxPhotos.length : '';
-}
-function lightboxPrev(){
-  if(lightboxPhotos.length<2) return;
-  lightboxIndex = (lightboxIndex - 1 + lightboxPhotos.length) % lightboxPhotos.length;
-  renderLightboxImage();
-}
-function lightboxNext(){
-  if(lightboxPhotos.length<2) return;
-  lightboxIndex = (lightboxIndex + 1) % lightboxPhotos.length;
-  renderLightboxImage();
 }
 function closeLightbox(){
   document.getElementById('photoLightbox').classList.remove('show');
-  lightboxPhotos = []; lightboxIndex = 0;
+  lightboxDataUrl = null;
 }
 async function shareLightboxPhoto(){
-  const url = lightboxPhotos[lightboxIndex];
-  if(!url) return;
+  if(!lightboxDataUrl) return;
   try{
-    const res = await fetch(url);
+    const res = await fetch(lightboxDataUrl);
     const blob = await res.blob();
     const file = new File([blob], 'sail-la-vie-photo.jpg', {type: blob.type||'image/jpeg'});
     if(navigator.canShare && navigator.canShare({files:[file]})){
@@ -2240,52 +2116,16 @@ async function shareLightboxPhoto(){
     console.error('share failed', e);
   }
   const a = document.createElement('a');
-  a.href = url;
+  a.href = lightboxDataUrl;
   a.download = 'sail-la-vie-photo.jpg';
   document.body.appendChild(a); a.click(); a.remove();
   showToast('Photo downloaded — share it from your gallery');
 }
-(function setupLightboxSwipe(){
-  const img = document.getElementById('lightboxImg');
-  let startX=0, startY=0, tracking=false;
-  img.addEventListener('pointerdown', e=>{ tracking=true; startX=e.clientX; startY=e.clientY; });
-  img.addEventListener('pointerup', e=>{
-    if(!tracking) return;
-    tracking = false;
-    const dx = e.clientX-startX, dy = e.clientY-startY;
-    if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)*1.5){
-      if(dx<0) lightboxNext(); else lightboxPrev();
-    }
-  });
-  document.addEventListener('keydown', e=>{
-    if(!document.getElementById('photoLightbox').classList.contains('show')) return;
-    if(e.key==='ArrowLeft') lightboxPrev();
-    else if(e.key==='ArrowRight') lightboxNext();
-    else if(e.key==='Escape') closeLightbox();
-  });
-})();
 
 /* ---------- utils ---------- */
 function escapeHtml(s){
   return (s||'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
-
-/* ---------- units: nautical (kts/NM) <-> metric (km/h/km) ----------
-   Canonical storage is always kts/NM. These helpers only affect display
-   and the parsing of what the person typed into a distance field. */
-const KT_TO_KMH = 1.852, NM_TO_KM = 1.852;
-let activeUnitSystem = 'nautical'; // session state for the log-entry screen, seeded from the profile default each time it opens
-function appUnitSystem(){ return state.profile.unitSystem || 'nautical'; }
-function fmtSpeed(kts, sys){
-  sys = sys || appUnitSystem();
-  return sys==='metric' ? (kts*KT_TO_KMH).toFixed(1)+' km/h' : (kts||0).toFixed(1)+' kts';
-}
-function fmtDistance(nm, sys){
-  sys = sys || appUnitSystem();
-  return sys==='metric' ? (nm*NM_TO_KM).toFixed(1)+' km' : (nm||0).toFixed(1)+' NM';
-}
-function speedUnitLabel(sys){ return (sys||appUnitSystem())==='metric' ? 'km/h' : 'kts'; }
-function distUnitLabel(sys){ return (sys||appUnitSystem())==='metric' ? 'km' : 'NM'; }
 
 boot();
 </script>
