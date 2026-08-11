@@ -4,31 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sail la Vie</title>
-<!--
-  SAIL LA VIE — a self-contained sailing logbook.
-  No server, no build step, no external dependencies beyond the two Google
-  Fonts below (which degrade gracefully if offline). Everything — markup,
-  styling, and logic — lives in this one file so it can be hosted as a
-  static page and opened straight from disk if needed.
-
-  File layout:
-    1. style     — all CSS. Note: #app{} closes almost immediately after its
-                   own layout rules; nearly everything else is top-level CSS,
-                   not nested inside #app. This matters because #printArea
-                   and #loadingScreen are DOM siblings of #app, not children.
-    2. body      — one <section class="screen" id="screen-X"> per page, only
-                   one visible at a time (see nav() in the script). Modals
-                   ("sheets") and the photo lightbox are separate overlays.
-    3. script    — grouped into: storage layer, app state/boot, navigation,
-                   photo handling, active journey (live/manual/edit — the
-                   biggest section), history/trip detail, boats, crew,
-                   profile/settings, certificate, PDF export, lightbox, units.
-
-  Two globals worth knowing before debugging anything:
-    currentTrip    — the one journey/entry/edit in progress, or null
-    storageTier    — which storage backend is actually active: 'idb' | 'localStorage' | 'memory'
--->
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -136,7 +111,7 @@
   @keyframes pulseDot{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
   .recording-banner .rec-text{ flex:1; font-size:13px; font-weight:600; }
   .recording-banner .rec-time{ font-family:var(--font-display); font-weight:700; font-size:14px; }
-  #adjustViewport{ margin:0 auto; position:relative; overflow:hidden;
+  #adjustViewport{ width:260px; height:260px; margin:0 auto; position:relative; overflow:hidden; border-radius:50%;
     background:var(--bg-sunk); border:1px solid var(--border); touch-action:none; cursor:grab; }
   #adjustViewport:active{ cursor:grabbing; }
   #adjustViewport img{ position:absolute; user-select:none; -webkit-user-drag:none; pointer-events:none; }
@@ -323,7 +298,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
         <img class="avatar" id="homeAvatar" src="" alt="">
         <div><div class="eyebrow" id="homeGreeting">Ahoy</div><div style="font-weight:700;" id="homeName">Sailor</div></div>
       </div>
-      <div class="iconbtn" onclick="nav('settings')" title="Settings">
+      <div class="iconbtn" onclick="nav('profile')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
       </div>
     </div>
@@ -389,14 +364,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
         <div class="cell" style="margin-top:14px;"><div class="stat-label">GPS</div><div class="stat-value" id="gpsStatus" style="font-size:15px;">—</div></div>
       </div>
 
-      <div class="theme-toggle" style="margin-top:12px;">
-        <div>
-          <div style="font-weight:600;font-size:14px;" id="logUnitsLabelLive">Nautical (kts / NM)</div>
-          <p style="font-size:12px;">Units for this log entry — flip anytime, doesn't change your default</p>
-        </div>
-        <div class="switch" onclick="toggleLogUnitSystem()"><div class="knob" id="logUnitsKnobLive">⚓</div></div>
-      </div>
-
       <div class="stat-label" style="text-align:center;margin-top:16px;">Live Track</div>
       <div id="liveTrackWrap">
         <div class="porthole" id="liveTrackPorthole"></div>
@@ -423,13 +390,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
         <label id="pastDistanceLabel">Distance (NM)</label>
         <input type="number" step="0.1" min="0" id="pastDistance" placeholder="e.g. 12.4">
       </div>
-      <div class="theme-toggle" style="margin-bottom:6px;">
-        <div>
-          <div style="font-weight:600;font-size:14px;" id="logUnitsLabelPast">Nautical (kts / NM)</div>
-          <p style="font-size:12px;">Units for this log entry — flip anytime, doesn't change your default</p>
-        </div>
-        <div class="switch" onclick="toggleLogUnitSystem()"><div class="knob" id="logUnitsKnobPast">⚓</div></div>
-      </div>
     </div>
 
     <div class="section-title">Log Entry</div>
@@ -440,6 +400,13 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     <div class="field">
       <label>Place</label>
       <input type="text" id="tripPlace" placeholder="e.g. Chesapeake Bay">
+    </div>
+    <div class="theme-toggle" style="margin-bottom:6px;">
+      <div>
+        <div style="font-weight:600;font-size:14px;" id="logUnitsLabel">Nautical (kts / NM)</div>
+        <p style="font-size:12px;">Units for this log entry — flip anytime, doesn't change your default</p>
+      </div>
+      <div class="switch" onclick="toggleLogUnitSystem()"><div class="knob" id="logUnitsKnob">⚓</div></div>
     </div>
     <div class="two-col">
       <div class="field">
@@ -455,19 +422,19 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
       <label>Wind Speed <span class="range-value" id="windSpeedVal">12 kts</span></label>
       <input type="range" id="windSpeed" min="0" max="19" value="8" oninput="updateWindSpeedLabel()">
     </div>
-    <div class="field">
-      <label>Gusts <span class="range-value" id="gustsVal">10 kts</span></label>
-      <input type="range" id="gusts" min="0" max="40" step="1" value="10" oninput="updateGustsLabel()">
-    </div>
     <div class="two-col">
       <div class="field">
-        <label>Wave Height <span class="range-value" id="waveHeightVal">0.5 m</span></label>
-        <input type="range" id="waveHeight" min="0" max="5" step="0.1" value="0.5" oninput="updateWaveHeightLabel()">
+        <label>Gusts <span class="range-value" id="gustsVal">10 kts</span></label>
+        <input type="range" id="gusts" min="0" max="40" step="1" value="10" oninput="updateGustsLabel()">
       </div>
       <div class="field">
-        <label>Wave Direction</label>
-        <select id="waveDir"><option>N</option><option>NE</option><option>E</option><option>SE</option><option>S</option><option>SW</option><option>W</option><option>NW</option></select>
+        <label>Gust Direction</label>
+        <select id="gustDir"><option>N</option><option>NE</option><option>E</option><option>SE</option><option>S</option><option>SW</option><option>W</option><option>NW</option></select>
       </div>
+    </div>
+    <div class="field">
+      <label>Wave Height <span class="range-value" id="waveHeightVal">0.5 m</span></label>
+      <input type="range" id="waveHeight" min="0" max="5" step="0.1" value="0.5" oninput="updateWaveHeightLabel()">
     </div>
     <div class="field">
       <label>Temperature <span class="range-value" id="tempVal">20°C</span></label>
@@ -722,17 +689,11 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   <div class="sheet" id="sheetBoat" style="display:none;">
     <div class="sheet-handle"></div>
     <h3 id="boatSheetTitle">Add a Boat</h3>
-    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-muted);">Photos <span style="text-transform:none;font-weight:500;">— tap one to make it the default</span></label>
-    <div class="photo-strip" id="boatPhotoStrip">
-      <div class="add-photo-tile" onclick="document.getElementById('boatCameraInput').click()" title="Take Photo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      </div>
-      <div class="add-photo-tile" onclick="document.getElementById('boatUploadInput').click()" title="Upload Photos">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
-      </div>
+    <div style="text-align:center;margin-bottom:10px;">
+      <img id="boatPhotoPreview" src="" style="width:96px;height:96px;border-radius:18px;object-fit:cover;background:var(--bg-sunk);display:block;margin:0 auto 8px;">
+      <div class="link-plain" onclick="document.getElementById('boatPhotoInput').click()">Add photo</div>
+      <input type="file" id="boatPhotoInput" accept="image/*" style="display:none;" onchange="handleBoatPhoto(event)">
     </div>
-    <input type="file" id="boatCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleBoatPhoto(event)">
-    <input type="file" id="boatUploadInput" accept="image/*" multiple style="display:none;" onchange="handleBoatPhoto(event)">
     <div class="field"><label>Name</label><input type="text" id="boatName" placeholder="e.g. Windswept"></div>
     <div class="field"><label>Type</label><input type="text" id="boatType" placeholder="e.g. Beneteau Oceanis 38"></div>
     <div class="field"><label>Notes</label><textarea id="boatNotes" placeholder="Home marina, rig details, quirks…"></textarea></div>
@@ -768,8 +729,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     <h3>Set a Cover Photo?</h3>
     <p style="font-size:12.5px;margin-bottom:14px;">Tap a photo to use it as the cover for this log entry, or skip and it'll show in your history without one.</p>
     <div class="photo-strip" id="coverPickStrip"></div>
-    <button class="btn btn-outline" style="margin-top:14px;" onclick="openCoverPhotoAdjuster()">Adjust / Crop Selected Photo</button>
-    <button class="btn btn-primary" style="margin-top:10px;" onclick="confirmCoverPick()">Set as Cover</button>
+    <button class="btn btn-primary" style="margin-top:14px;" onclick="confirmCoverPick()">Set as Cover</button>
     <button class="btn btn-ghost" onclick="skipCoverPick()">Skip — No Cover</button>
   </div>
 
@@ -853,15 +813,11 @@ let memoryStore = {};       // always-on session fallback, keyed same as chosen 
 let storageTier = 'memory'; // 'idb' | 'localStorage' | 'memory' — set by initStorage()
 let idb = null;             // open IDBDatabase once storageTier==='idb'
 
-// Low-level IndexedDB wrappers — thin Promise wrappers around the callback-based
-// IndexedDB API. Nothing outside this file's storeGet/storeSet/storeDelete calls
-// these directly.
 function openIDB(){
   return new Promise((resolve,reject)=>{
     if(!('indexedDB' in window)){ reject(new Error('no indexedDB')); return; }
     const req = indexedDB.open(IDB_NAME, 1);
     req.onupgradeneeded = (e)=>{
-      // Runs once on first use (or version bump) to create the single key/value object store
       const db = e.target.result;
       if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
     };
@@ -928,9 +884,6 @@ async function initStorage(){
   }
 }
 
-// storeGet / storeSet / storeDelete are the ONLY storage functions the rest of
-// the app should call — everything above this line is internal plumbing for
-// picking and talking to whichever tier is active.
 async function storeGet(key){
   try{
     if(storageTier==='idb') return await idbGet(key);
@@ -994,9 +947,6 @@ function clearPersistentStorageError(){
   if(el) el.remove();
 }
 
-/* ---------- backup / restore: exports everything to a downloadable .json,
-   and can restore from one. This is the only way data moves between devices
-   or off the phone, since storage above is device-local only. ---------- */
 async function backupToFile(){
   const trips = [];
   for(const t of state.tripIndex){
@@ -1048,27 +998,23 @@ async function restoreFromFile(ev){
   }
 }
 
-/* ---------- in-memory state ----------
-   The single source of truth while the app is open. Loaded from storage in
-   boot() and written back to storage piecemeal whenever something changes
-   (see storeSet calls throughout — there's no single "save everything" call). */
+/* ---------- in-memory state ---------- */
 let state = {
-  tripIndex: [],   // lightweight list for History screen — NOT the full trip records (those are stored separately as 'trip:<id>')
+  tripIndex: [],   // lightweight list for History screen
   boats: [],
   crew: [],
   profile: { name:'Sailor', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme:'light', unitSystem:'nautical' },
 };
 
-let currentTrip = null;   // the ONE journey/manual-entry/edit in progress right now; null when nothing's active — check this first if the active screen misbehaves
-let watchId = null;       // navigator.geolocation.watchPosition() handle, so stopGPS() can cancel it
-let timerId = null;       // setInterval() handle for the elapsed-time ticker
-let startedAt = null;     // Date.now() when the current live journey began, used to compute elapsed time
+let currentTrip = null;   // full record while a journey is active
+let watchId = null;
+let timerId = null;
+let startedAt = null;
 let lastFixTime = null;
 
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 
-/* ---------- boot: runs once on page load, loads everything from storage,
-   then reveals the app (hides the loading spinner) ---------- */
+/* ---------- boot ---------- */
 async function boot(){
   await initStorage();
 
@@ -1107,8 +1053,7 @@ function placeholderAvatar(){
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#16324F"/><circle cx="40" cy="32" r="14" fill="#BFE0EA"/><path d="M14 70c0-16 12-26 26-26s26 10 26 26" fill="#BFE0EA"/></svg>`);
 }
 
-/* ---------- navigation: nav(name) is the app's entire "router" — it just
-   shows the matching .screen div and hides the rest. No URL/history involved. ---------- */
+/* ---------- navigation ---------- */
 function nav(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
@@ -1121,10 +1066,6 @@ function nav(name){
   if(name==='resume') renderResume();
   updateRecordingBanner(name);
 }
-// Shows/hides the "🔴 Recording" banner above the bottom nav whenever a journey,
-// manual entry, or edit is in progress and you've navigated away from the active
-// screen (backgrounded, not stopped). Text and pulsing dot vary by what kind of
-// entry is in flight.
 function updateRecordingBanner(currentScreen){
   const banner = document.getElementById('recordingBanner');
   const show = !!currentTrip && currentScreen!=='active';
@@ -1148,8 +1089,6 @@ function showToast(msg){
   window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
 }
 function closeSheets(){
-  // Sheets (modals) are just divs toggled between display:none/block — hiding "all of them"
-  // is simplest since only one is ever open at a time anyway.
   document.querySelectorAll('.sheet').forEach(s=>s.style.display='none');
   document.getElementById('overlay').classList.remove('active');
   crewPickerActive = false;
@@ -1184,7 +1123,7 @@ function resizeImage(file, maxDim, quality){
 
 /* ---------- photo adjuster: drag to reposition, slider to zoom, used for
    profile avatar & crew photos ---------- */
-let adjustState = null; // { naturalImg, naturalW, naturalH, baseScale, baseW, baseH, zoom, left, top, vw, vh, shape, outputW, outputH, target, returnSheetId }
+let adjustState = null; // { naturalImg, naturalW, naturalH, baseScale, baseW, baseH, zoom, left, top, viewport, target, returnSheetId }
 function readFileAsDataUrl(file){
   return new Promise((resolve,reject)=>{
     const r = new FileReader();
@@ -1193,41 +1132,22 @@ function readFileAsDataUrl(file){
     r.readAsDataURL(file);
   });
 }
-// Opens the crop/zoom sheet for a given file. Loads it at "cover fit" (baseScale)
-// so the viewport starts fully covered, centered, with zoom=1.
-// opts: { shape:'circle'|'rect', vw, vh, outputW, outputH } — defaults to the
-// original 260x260 circular avatar crop if omitted, for profile/crew photos.
-// Boats and trip covers pass a wide rect instead (see openBoatPhotoAdjuster /
-// openCoverPhotoAdjuster below).
-async function openPhotoAdjuster(file, target, returnSheetId, opts){
+async function openPhotoAdjuster(file, target, returnSheetId){
   if(!file) return;
   let dataUrl;
   try{ dataUrl = await readFileAsDataUrl(file); }
   catch(e){ showToast("Couldn't read that photo"); return; }
-  startPhotoAdjuster(dataUrl, target, returnSheetId, opts);
-}
-// Same as openPhotoAdjuster but for a photo that's already a dataURL (e.g. one
-// of a trip's existing photos, when picking/cropping a cover) rather than a
-// fresh File from a file input.
-function startPhotoAdjuster(dataUrl, target, returnSheetId, opts){
-  opts = opts || {};
-  const shape = opts.shape || 'circle';
-  const vw = opts.vw || 260, vh = opts.vh || 260;
-  const outputW = opts.outputW || 500, outputH = opts.outputH || 500;
   const img = new Image();
   img.onload = ()=>{
-    const baseScale = Math.max(vw/img.naturalWidth, vh/img.naturalHeight);
+    const viewport = 260;
+    const baseScale = Math.max(viewport/img.naturalWidth, viewport/img.naturalHeight);
     const baseW = img.naturalWidth*baseScale, baseH = img.naturalHeight*baseScale;
     adjustState = {
       naturalImg:img, naturalW:img.naturalWidth, naturalH:img.naturalHeight,
       baseScale, baseW, baseH, zoom:1,
-      left:(vw-baseW)/2, top:(vh-baseH)/2,
-      vw, vh, shape, outputW, outputH, target, returnSheetId: returnSheetId||null
+      left:(viewport-baseW)/2, top:(viewport-baseH)/2,
+      viewport, target, returnSheetId: returnSheetId||null
     };
-    const vp = document.getElementById('adjustViewport');
-    vp.style.width = vw+'px'; vp.style.height = vh+'px';
-    vp.style.borderRadius = shape==='circle' ? '50%' : '14px';
-    vp.style.maxWidth = '100%';
     document.getElementById('adjustPreviewImg').src = dataUrl;
     document.getElementById('adjustZoomSlider').value = 1;
     renderAdjustTransform();
@@ -1237,8 +1157,6 @@ function startPhotoAdjuster(dataUrl, target, returnSheetId, opts){
   img.onerror = ()=> showToast("Couldn't read that photo");
   img.src = dataUrl;
 }
-// Applies the current zoom/position to the actual <img> element in the viewport —
-// pure display, no math beyond what's already stored on adjustState.
 function renderAdjustTransform(){
   const s = adjustState; if(!s) return;
   const el = document.getElementById('adjustPreviewImg');
@@ -1246,12 +1164,10 @@ function renderAdjustTransform(){
   el.style.width = dispW+'px'; el.style.height = dispH+'px';
   el.style.left = s.left+'px'; el.style.top = s.top+'px';
 }
-// Keeps the image from being dragged/zoomed so far that it no longer covers the
-// full viewport (i.e. no empty gaps at the edges) — works for circle or rect.
 function clampAdjustPosition(){
   const s = adjustState; if(!s) return;
   const dispW = s.baseW*s.zoom, dispH = s.baseH*s.zoom;
-  const minLeft = s.vw-dispW, minTop = s.vh-dispH;
+  const minLeft = s.viewport-dispW, minTop = s.viewport-dispH;
   s.left = Math.min(0, Math.max(minLeft, s.left));
   s.top = Math.min(0, Math.max(minTop, s.top));
 }
@@ -1261,8 +1177,6 @@ function onAdjustZoomInput(){
   clampAdjustPosition();
   renderAdjustTransform();
 }
-// Pointer-drag panning — Pointer Events cover mouse, touch, and pen in one
-// listener set, so this works the same on desktop and phone.
 function setupAdjustDrag(){
   const vp = document.getElementById('adjustViewport');
   if(vp._adjustBound) return; // only wire listeners once, state resets via adjustState
@@ -1290,18 +1204,14 @@ function cancelPhotoAdjust(){
   adjustState = null;
   if(returnTo) openSheet(returnTo); else closeSheets();
 }
-// Renders the final crop to a canvas and saves it. The math converts from
-// "displayed viewport pixels" back to "original photo pixels" using k (the
-// combined cover-fit + zoom scale factor), then crops exactly what's visible
-// in the viewport into a fixed-size output image (outputW x outputH — square
-// for avatars, wide for boat/cover photos).
 async function confirmPhotoAdjust(){
   const s = adjustState; if(!s) return;
+  const outputSize = 500;
   const k = s.baseScale*s.zoom; // displayed px per natural px
   const srcX = (0 - s.left)/k, srcY = (0 - s.top)/k;
-  const srcW = s.vw/k, srcH = s.vh/k;
-  const c = document.createElement('canvas'); c.width=s.outputW; c.height=s.outputH;
-  c.getContext('2d').drawImage(s.naturalImg, srcX, srcY, srcW, srcH, 0, 0, s.outputW, s.outputH);
+  const srcW = s.viewport/k, srcH = s.viewport/k;
+  const c = document.createElement('canvas'); c.width=outputSize; c.height=outputSize;
+  c.getContext('2d').drawImage(s.naturalImg, srcX, srcY, srcW, srcH, 0, 0, outputSize, outputSize);
   const dataUrl = c.toDataURL('image/jpeg', 0.85);
 
   if(s.target==='profile'){
@@ -1312,17 +1222,6 @@ async function confirmPhotoAdjust(){
   } else if(s.target==='crew'){
     pendingCrewPhoto = dataUrl;
     document.getElementById('crewPhotoPreview').src = dataUrl;
-  } else if(s.target==='boat'){
-    pendingBoatPhotos.push(dataUrl);
-    if(!pendingBoatPhoto) pendingBoatPhoto = dataUrl; // first photo added becomes the default automatically
-    renderBoatPhotoStrip();
-    if(pendingBoatFilesQueue.length){
-      adjustState = null;
-      continueBoatPhotoQueue();
-      return; // stay on the adjuster for the next queued photo instead of returning to sheetBoat yet
-    }
-  } else if(s.target==='cover'){
-    currentTrip.coverPhoto = dataUrl;
   }
   const returnTo = s.returnSheetId;
   adjustState = null;
@@ -1345,10 +1244,6 @@ function renderHomeStats(){
 
 /* ============================================================
    START / ACTIVE JOURNEY
-   The "screen-active" HTML section does triple duty: a live GPS-tracked
-   journey, a manually-entered past sail, and editing an existing trip all
-   share this one screen and form — see beginJourney/beginManualJourney/editTrip
-   below for how each mode sets it up differently.
    ============================================================ */
 function populateBoatSelects(){
   const opts = state.boats.length
@@ -1368,13 +1263,9 @@ function openStartJourneySheet(){
   populateBoatSelects();
   openSheet('sheetStartJourney');
 }
-/* ---- weather slider labels & the per-entry unit toggle ----
-   Sliders (windSpeed, gusts) always STORE kts internally regardless of what's
-   displayed — activeUnitSystem only changes the label text via fmtSpeed(). This
-   keeps the data model simple: one canonical unit, converted for display only. */
 function updateWindSpeedLabel(){
   const kts = parseFloat(document.getElementById('windSpeed').value)||0;
-  document.getElementById('windSpeedVal').textContent = (kts===0 ? '0 kts (Calm)' : fmtSpeed(kts, activeUnitSystem)).replace('kts', speedUnitLabel(activeUnitSystem));
+  document.getElementById('windSpeedVal').textContent = (kts===0 ? '0 kts (Calm)' : fmtSpeed(kts)).replace('kts', speedUnitLabel());
 }
 function updateWaveHeightLabel(){
   const v = parseFloat(document.getElementById('waveHeight').value).toFixed(1);
@@ -1386,13 +1277,10 @@ function updateTempLabel(){
 }
 function updateGustsLabel(){
   const kts = parseFloat(document.getElementById('gusts').value)||0;
-  document.getElementById('gustsVal').textContent = fmtSpeed(kts, activeUnitSystem);
+  document.getElementById('gustsVal').textContent = fmtSpeed(kts);
 }
-// The little ⚓/🌍 switch on the log screen. Unlike the sliders (which stay in
-// kts and only relabel), the distance fields hold whatever unit is currently
-// selected — so flipping here has to actually convert their typed values,
-// not just relabel them.
 function toggleLogUnitSystem(){
+  // convert whatever's currently typed into the distance fields so nothing is lost on flip
   const from = activeUnitSystem;
   const to = from==='metric' ? 'nautical' : 'metric';
   ['manualDistance','pastDistance'].forEach(id=>{
@@ -1406,37 +1294,22 @@ function toggleLogUnitSystem(){
   activeUnitSystem = to;
   refreshLogUnitsUI();
 }
-// Refreshes the avg/max speed + distance stat cards on the active screen to
-// match activeUnitSystem. Called after every GPS fix and whenever units flip.
-// BUG FIX (see notes): fmtSpeed/fmtDistance default to the app-wide Settings unit
-// when no 'sys' argument is passed. On the log screen specifically we must pass
-// activeUnitSystem explicitly, or the local ⚓/🌍 toggle silently does nothing.
 function updateLiveStatDisplays(){
   if(!currentTrip) return;
-  document.getElementById('avgSpeedDisplay').innerHTML = fmtSpeed(currentTrip.avgSpeed||0, activeUnitSystem).replace(' ', '<span class="stat-unit"> ')+'</span>';
-  document.getElementById('maxSpeedDisplay').innerHTML = fmtSpeed(currentTrip.maxSpeed||0, activeUnitSystem).replace(' ', '<span class="stat-unit"> ')+'</span>';
-  document.getElementById('distDisplay').innerHTML = fmtDistance(currentTrip.distanceNm||0, activeUnitSystem).replace(' ', '<span class="stat-unit"> ')+'</span>';
+  document.getElementById('avgSpeedDisplay').innerHTML = fmtSpeed(currentTrip.avgSpeed||0).replace(' ', '<span class="stat-unit"> ')+'</span>';
+  document.getElementById('maxSpeedDisplay').innerHTML = fmtSpeed(currentTrip.maxSpeed||0).replace(' ', '<span class="stat-unit"> ')+'</span>';
+  document.getElementById('distDisplay').innerHTML = fmtDistance(currentTrip.distanceNm||0).replace(' ', '<span class="stat-unit"> ')+'</span>';
 }
-// Re-renders every unit-dependent label on the log screen at once — call this
-// after seeding activeUnitSystem at the start of a journey/entry/edit.
 function refreshLogUnitsUI(){
   const sys = activeUnitSystem;
-  const label = sys==='metric' ? 'Metric (km/h / km)' : 'Nautical (kts / NM)';
-  const knob = sys==='metric' ? '🌍' : '⚓';
-  // Two visible instances of the same toggle — one under the live stat-grid, one
-  // under the manual/edit distance field — both drive the same activeUnitSystem.
-  document.getElementById('logUnitsKnobLive').textContent = knob;
-  document.getElementById('logUnitsLabelLive').textContent = label;
-  document.getElementById('logUnitsKnobPast').textContent = knob;
-  document.getElementById('logUnitsLabelPast').textContent = label;
-  document.getElementById('manualDistanceLabel').textContent = `Distance covered — ${distUnitLabel(sys)} (manual entry, GPS unavailable)`;
-  document.getElementById('pastDistanceLabel').textContent = `Distance (${distUnitLabel(sys)})`;
+  document.getElementById('logUnitsKnob').textContent = sys==='metric' ? '🌍' : '⚓';
+  document.getElementById('logUnitsLabel').textContent = sys==='metric' ? 'Metric (km/h / km)' : 'Nautical (kts / NM)';
+  document.getElementById('manualDistanceLabel').textContent = `Distance covered — ${distUnitLabel()} (manual entry, GPS unavailable)`;
+  document.getElementById('pastDistanceLabel').textContent = `Distance (${distUnitLabel()})`;
   updateWindSpeedLabel();
   updateGustsLabel();
   updateLiveStatDisplays();
 }
-/* ---- crew picker: only crew explicitly added to THIS trip show on the log
-   screen (not the whole roster) — see renderAddedCrewChips vs renderCrewPickList ---- */
 function renderAddedCrewChips(){
   const row = document.getElementById('addedCrewRow');
   const added = (currentTrip?.crewIds||[]).map(id=>state.crew.find(c=>c.id===id)).filter(Boolean);
@@ -1451,8 +1324,8 @@ function removeAddedCrew(id){
   currentTrip.crewIds = (currentTrip.crewIds||[]).filter(cid=>cid!==id);
   renderAddedCrewChips();
 }
-let crewPickTempIds = [];   // draft selection while the "Add Crew" sheet is open — only committed to currentTrip.crewIds on Done
-let crewPickerActive = false; // true while "+ Add New Crew Member" is open from inside the picker, so saveCrewForm() knows to return here instead of the Crew tab
+let crewPickTempIds = [];
+let crewPickerActive = false;
 function openSelectCrewSheet(){
   crewPickTempIds = [...(currentTrip.crewIds||[])];
   renderCrewPickList();
@@ -1483,22 +1356,17 @@ function startAddCrewFromPicker(){
   openCrewSheet();
 }
 
-// Shared field-reset used by both a fresh live journey and a fresh manual entry
-// (NOT used by editTrip, which pre-fills from the existing trip instead).
 function resetActiveFormFields(){
   document.getElementById('tripPlace').value = '';
   document.getElementById('windSpeed').value = 8; updateWindSpeedLabel();
   document.getElementById('waveHeight').value = 0.5; updateWaveHeightLabel();
   document.getElementById('temp').value = 20; updateTempLabel();
   document.getElementById('gusts').value = 10; updateGustsLabel();
-  document.getElementById('waveDir').value = 'N';
+  document.getElementById('gustDir').value = 'N';
   document.getElementById('activePhotoStrip').querySelectorAll('.photo-thumb').forEach(n=>n.remove());
   document.getElementById('tripNotes').value = '';
   renderAddedCrewChips();
 }
-// MODE 1: live GPS journey. Creates a fresh currentTrip, starts the timer and
-// GPS watch immediately. See beginManualJourney() and editTrip() for the other
-// two ways this same screen gets used.
 function beginJourney(){
   const boatId = document.getElementById('startBoatSelect').value;
   currentTrip = {
@@ -1527,10 +1395,6 @@ function beginJourney(){
   timerId = setInterval(tickTimer, 1000);
   startGPS();
 }
-// MODE 3: editing an existing trip. Deep-clones it into currentTrip (so
-// discarding never touches the saved copy) and pre-fills every field, reusing
-// the same "past sail" UI as manual entry. finalizeSaveTrip() checks
-// currentTrip.isEditing to overwrite the original instead of creating a new trip.
 function editTrip(){
   const trip = window._detailTrip;
   if(!trip){ showToast('Open a trip first'); return; }
@@ -1558,7 +1422,7 @@ function editTrip(){
   const gustsRaw = trip.weather?.gusts;
   const gustsNum = typeof gustsRaw === 'number' ? gustsRaw : parseFloat(String(gustsRaw||'').match(/[\d.]+/)?.[0]) || 10;
   document.getElementById('gusts').value = gustsNum;
-  document.getElementById('waveDir').value = trip.weather?.waveDir || 'N';
+  document.getElementById('gustDir').value = trip.weather?.gustDir || 'N';
   document.getElementById('seaState').value = trip.weather?.seaState || 'Moderate';
   document.getElementById('waveHeight').value = trip.weather?.waveHeight || 0.5;
   document.getElementById('temp').value = trip.weather?.temp || 20;
@@ -1579,8 +1443,6 @@ function editTrip(){
   renderAddedCrewChips();
   renderActivePhotoStrip();
 }
-// MODE 2: manually logging a sail that already happened. No GPS/timer — the
-// person fills in date, duration, and distance by hand instead.
 function beginManualJourney(){
   if(currentTrip){
     if(confirm('You already have a journey being recorded. Return to it? (Starting a past-sail entry would discard the current recording.)')){
@@ -1616,7 +1478,6 @@ function beginManualJourney(){
   document.getElementById('pastMinutes').value = '';
   document.getElementById('pastDistance').value = '';
 }
-/* ---- live GPS: runs every second (timer) / on every position fix (GPS watch) ---- */
 function tickTimer(){
   const secs = Math.floor((Date.now()-startedAt)/1000);
   currentTrip.elapsedSeconds = secs;
@@ -1627,9 +1488,8 @@ function tickTimer(){
   const bannerTime = document.getElementById('recordingBannerTime');
   if(bannerTime) bannerTime.textContent = `${h}:${m}:${s}`;
 }
-// Great-circle distance between two lat/lng points, in nautical miles.
 function haversineNm(a,b){
-  const R=3440.065; // Earth's radius in nautical miles
+  const R=3440.065; // nm
   const toRad = d=>d*Math.PI/180;
   const dLat = toRad(b.lat-a.lat), dLon = toRad(b.lng-a.lng);
   const la1=toRad(a.lat), la2=toRad(b.lat);
@@ -1659,7 +1519,7 @@ function onFix(pos){
     const dtHours = (point.t - prev.t)/3600000;
     if(dtHours>0){
       const instSpeed = segNm/dtHours;
-      if(instSpeed < 60){ // discard the segment if it implies >60kts — almost certainly a GPS glitch, not real sailing speed
+      if(instSpeed < 60){ // filter GPS noise/spikes
         currentTrip.distanceNm += segNm;
         currentTrip.maxSpeed = Math.max(currentTrip.maxSpeed, instSpeed);
       }
@@ -1700,9 +1560,6 @@ function discardJourney(){
     if(wasEditing){ nav('history'); openTripDetail(editedId); } else { nav('home'); }
   }
 }
-/* ---- photos while logging: added via camera or upload tile, tap any thumb
-   to set it as the cover, ✕ to remove. Resized to 900px/72% quality on add to
-   keep storage usage down. ---- */
 async function handleActivePhotos(ev){
   const files = Array.from(ev.target.files||[]);
   for(const f of files){
@@ -1733,9 +1590,6 @@ function removeActivePhoto(i){
   renderActivePhotoStrip();
 }
 
-// The finish line for all three modes (live/manual/edit). Reads every form field
-// into currentTrip, converting distance to canonical NM if the log was in metric.
-// Then either prompts for a cover photo (if any were added) or saves straight away.
 async function endJourney(){
   const confirmMsg = currentTrip.isEditing ? 'Save changes to this log entry?' : currentTrip.isManual ? 'Save this past sail to your log?' : 'End this journey and save it to your log?';
   if(!confirm(confirmMsg)) return;
@@ -1765,7 +1619,7 @@ async function endJourney(){
     windDir: document.getElementById('windDir').value,
     windSpeed: parseFloat(document.getElementById('windSpeed').value)||0, // canonical kts
     gusts: parseFloat(document.getElementById('gusts').value)||0, // canonical kts
-    waveDir: document.getElementById('waveDir').value,
+    gustDir: document.getElementById('gustDir').value,
     seaState: document.getElementById('seaState').value,
     waveHeight: document.getElementById('waveHeight').value,
     temp: document.getElementById('temp').value,
@@ -1784,13 +1638,9 @@ async function endJourney(){
   }
 }
 function openCoverPickSheet(){
-  // Default the selection to whatever's already the cover (editing) or the first photo, so
-  // "Adjust Cover" has something sensible to work on even before the person taps a thumbnail.
-  const existingIdx = currentTrip.photos.indexOf(currentTrip.coverPhoto);
-  currentTrip._pickedCoverIndex = existingIdx>=0 ? existingIdx : 0;
   const strip = document.getElementById('coverPickStrip');
   strip.innerHTML = currentTrip.photos.map((p,i)=>`
-    <div class="photo-thumb pickable${i===currentTrip._pickedCoverIndex?' selected':''}" data-i="${i}" onclick="pickCoverThumb(${i})">
+    <div class="photo-thumb pickable${currentTrip.coverPhoto===p?' selected':''}" data-i="${i}" onclick="pickCoverThumb(${i})">
       <img src="${p}">
     </div>`).join('');
   openSheet('sheetCoverPick');
@@ -1799,40 +1649,20 @@ function pickCoverThumb(i){
   document.querySelectorAll('#coverPickStrip .photo-thumb').forEach(n=>n.classList.remove('selected'));
   document.querySelector(`#coverPickStrip .photo-thumb[data-i="${i}"]`).classList.add('selected');
   currentTrip._pickedCoverIndex = i;
-  currentTrip._coverAdjusted = false; // picking a different photo discards any crop made on the previous one
-}
-// Opens the rectangular crop/zoom adjuster on whichever photo is currently
-// selected, matching the cover's actual wide-banner display shape. On confirm,
-// confirmPhotoAdjust() sets currentTrip.coverPhoto directly (target:'cover'),
-// which confirmCoverPick() below then respects instead of re-deriving from the
-// raw, unedited photo array.
-function openCoverPhotoAdjuster(){
-  const i = currentTrip._pickedCoverIndex ?? 0;
-  const src = currentTrip.photos[i];
-  if(!src) return;
-  currentTrip._coverAdjusted = true;
-  startPhotoAdjuster(src, 'cover', 'sheetCoverPick', {shape:'rect', vw:320, vh:150, outputW:800, outputH:375});
 }
 function confirmCoverPick(){
-  if(!currentTrip._coverAdjusted){
-    const i = currentTrip._pickedCoverIndex;
-    currentTrip.coverPhoto = (i!=null) ? currentTrip.photos[i] : (currentTrip.coverPhoto || currentTrip.photos[0]);
-  } // else coverPhoto was already set by the adjuster — keep the cropped version
+  const i = currentTrip._pickedCoverIndex;
+  currentTrip.coverPhoto = (i!=null) ? currentTrip.photos[i] : (currentTrip.coverPhoto || currentTrip.photos[0]);
   delete currentTrip._pickedCoverIndex;
-  delete currentTrip._coverAdjusted;
   closeSheets();
   finalizeSaveTrip();
 }
 function skipCoverPick(){
   currentTrip.coverPhoto = null;
   delete currentTrip._pickedCoverIndex;
-  delete currentTrip._coverAdjusted;
   closeSheets();
   finalizeSaveTrip();
 }
-// The actual write to storage — shared by all three modes. Branches on
-// isEditing to decide whether to overwrite the existing tripIndex entry in
-// place or add a new one, since editing must never duplicate the trip.
 async function finalizeSaveTrip(){
   const ok = await storeSet('trip:'+currentTrip.id, currentTrip);
   if(!ok){ showToast('Save failed — trip kept on screen, try again'); return; }
@@ -1862,10 +1692,8 @@ async function finalizeSaveTrip(){
 /* ============================================================
    HISTORY
    ============================================================ */
-let historyFilter = 'all';   // 'all' | 'recent' | 'photos' — set by the filter chips above the list
+let historyFilter = 'all';
 function setHistoryFilter(f){ historyFilter=f; document.querySelectorAll('#historyChips .chip').forEach(c=>c.classList.toggle('active', c.dataset.f===f)); renderHistory(); }
-// Renders the History list from state.tripIndex (the lightweight summaries,
-// NOT full trip records — that's why this doesn't need to be async).
 function renderHistory(){
   const q = (document.getElementById('historySearch').value||'').toLowerCase();
   let list = state.tripIndex.filter(t=>{
@@ -1886,13 +1714,12 @@ function renderHistory(){
   el.innerHTML = list.map(t=>{
     const d = new Date(t.date);
     const dateStr = d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
-    const timeStr = d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
     const dur = fmtDuration(t.elapsedSeconds);
     return `<div class="trip-card" onclick="openTripDetail('${t.id}')">
       ${t.coverPhoto
         ? `<div class="trip-cover-wrap"><img class="trip-cover" src="${t.coverPhoto}">
             <div class="trip-cover-overlay">
-              <div class="trip-cover-date">${dateStr} · ${timeStr}</div>
+              <div class="trip-cover-date">${dateStr}</div>
               ${t.place ? `<div class="trip-cover-place">📍 ${escapeHtml(t.place)}</div>` : ''}
             </div>
           </div>`
@@ -1915,9 +1742,6 @@ function fmtDuration(secs){
    ENTRY DETAIL
    ============================================================ */
 let openTripId = null;
-// Loads one full trip record from storage (tripIndex only has summaries) and
-// renders the whole detail screen: cover, stats, live-track-style map of
-// where the trip went, weather, notes, crew, and photo gallery.
 async function openTripDetail(id){
   openTripId = id;
   const trip = await storeGet('trip:'+id);
@@ -1933,15 +1757,8 @@ async function openTripDetail(id){
   }
 
   document.getElementById('detailBody').innerHTML = `
-    ${trip.coverPhoto
-      ? `<div class="trip-cover-wrap" style="border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);cursor:pointer;" onclick="openTripCoverLightbox()">
-          <img class="trip-cover" src="${trip.coverPhoto}" style="height:200px;">
-          <div class="trip-cover-overlay">
-            <div class="trip-cover-date">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · ${d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}</div>
-            ${trip.place || boat ? `<div class="trip-cover-place">${trip.place?'📍 '+escapeHtml(trip.place):''}${trip.place&&boat?' · ':''}${boat?escapeHtml(boat.name):''}</div>` : ''}
-          </div>
-        </div>`
-      : `<p style="margin-top:12px;font-size:13px;">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · ${d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</p>`}
+    ${trip.coverPhoto ? `<img src="${trip.coverPhoto}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius-lg);border:1px solid var(--border);cursor:pointer;" onclick="openTripCoverLightbox()">` : ''}
+    <p style="margin-top:12px;font-size:13px;">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</p>
 
     <div class="stat-card stat-grid" style="margin-top:14px;">
       <div class="cell"><div class="stat-label">Elapsed</div><div class="stat-value" style="font-size:19px;">${fmtDuration(trip.elapsedSeconds)}</div></div>
@@ -1956,8 +1773,8 @@ async function openTripDetail(id){
     <div class="card" style="padding:16px;">
       <div class="trip-meta">
         <span>💨 ${trip.weather?.windDir||'—'} ${trip.weather?.windSpeed!=null?fmtSpeed(trip.weather.windSpeed):''}</span>
-        <span>${trip.weather?.gusts?`Gusts ${fmtSpeed(trip.weather.gusts)}`:''}</span>
-        <span>🌊 ${trip.weather?.seaState||'—'}${trip.weather?.waveHeight?` (${trip.weather.waveHeight}m)`:''}${trip.weather?.waveDir?` from ${trip.weather.waveDir}`:''}</span>
+        <span>${trip.weather?.gusts?`Gusts ${trip.weather.gustDir?trip.weather.gustDir+' ':''}${fmtSpeed(trip.weather.gusts)}`:''}</span>
+        <span>🌊 ${trip.weather?.seaState||'—'}${trip.weather?.waveHeight?` (${trip.weather.waveHeight}m)`:''}</span>
         <span>🌡 ${trip.weather?.temp?trip.weather.temp+'°C':'—'}</span>
       </div>
     </div>
@@ -1982,11 +1799,6 @@ async function openTripDetail(id){
   window._detailTrip = trip;
   nav('detail');
 }
-// Draws the little circular "porthole" track map — an abstract line drawing
-// scaled to fit the path's own bounding box, NOT a real map (no coastline/
-// tiles — this app works fully offline, see the conversation history for why).
-// live=true adds a pulsing marker at the last point instead of a static one,
-// used while a journey is actively being tracked.
 function buildPortholeSvg(path, live){
   const lats = path.map(p=>p.lat), lngs = path.map(p=>p.lng);
   const minLat=Math.min(...lats), maxLat=Math.max(...lats), minLng=Math.min(...lngs), maxLng=Math.max(...lngs);
@@ -2009,9 +1821,6 @@ function buildPortholeSvg(path, live){
       : `<circle cx="${end[0]}" cy="${end[1]}" r="6" fill="var(--coral)"/>`}
   </svg>`;
 }
-// Called on the active journey screen after every GPS fix — re-draws the
-// live porthole map, or shows a "waiting for signal" placeholder if there's
-// not yet enough of a track to draw (needs 2+ points to make a line).
 function renderLiveTrack(){
   const el = document.getElementById('liveTrackPorthole');
   if(!el || !currentTrip) return;
@@ -2031,8 +1840,6 @@ async function deleteTripPrompt(){
   showToast('Trip deleted');
   nav('history'); renderHomeStats();
 }
-// Native share sheet if the browser supports it (navigator.share), otherwise
-// falls back to copying a text summary to the clipboard.
 function shareTrip(id){
   const t = window._detailTrip;
   const text = `⛵ ${t.title}\n${new Date(t.date).toLocaleDateString()}\n${fmtDistance(t.distanceNm||0)} · ${fmtDuration(t.elapsedSeconds)} · Avg ${fmtSpeed(t.avgSpeed||0)}\nLogged with Sail la Vie`;
@@ -2046,75 +1853,33 @@ function shareTrip(id){
 
 /* ============================================================
    BOATS
-   Standard pattern used here and in Crew below: openXSheet(item) pre-fills
-   the form (item=null means "adding new"), saveXForm() pushes/updates
-   state.X and re-renders the list, deleteXForm() removes and re-renders.
    ============================================================ */
-let editingBoatId = null;   // null while adding a new boat, otherwise the id being edited
-let pendingBoatPhotos = [];  // all photos for the boat currently being edited/added
-let pendingBoatPhoto = null; // which one of pendingBoatPhotos is the default (shown in lists/wherever a single boat photo is needed)
+let editingBoatId = null;
+let pendingBoatPhoto = null;
 function openBoatSheet(boat){
   editingBoatId = boat ? boat.id : null;
-  // Backward compatible with older boats saved before multi-photo support (single `photo` field, no `photos` array)
-  pendingBoatPhotos = boat ? (boat.photos && boat.photos.length ? [...boat.photos] : (boat.photo ? [boat.photo] : [])) : [];
-  pendingBoatPhoto = boat ? (boat.photo || pendingBoatPhotos[0] || null) : null;
+  pendingBoatPhoto = boat ? boat.photo : null;
   document.getElementById('boatSheetTitle').textContent = boat ? 'Edit Boat' : 'Add a Boat';
   document.getElementById('boatName').value = boat ? boat.name : '';
   document.getElementById('boatType').value = boat ? boat.type : '';
   document.getElementById('boatNotes').value = boat ? boat.notes : '';
+  document.getElementById('boatPhotoPreview').src = pendingBoatPhoto || placeholderAvatar();
   document.getElementById('deleteBoatBtn').style.display = boat ? 'flex' : 'none';
-  renderBoatPhotoStrip();
   openSheet('sheetBoat');
 }
-// Boat photos go through the crop/zoom adjuster in rectangular mode (matching
-// how they're displayed — a wide thumbnail, not a circle) rather than a plain
-// resize. Multiple files (from the upload tile) are queued and adjusted one
-// at a time so each gets its own crop.
-let pendingBoatFilesQueue = [];
 async function handleBoatPhoto(ev){
-  const files = Array.from(ev.target.files||[]);
-  ev.target.value = '';
-  if(!files.length) return;
-  pendingBoatFilesQueue = files.slice(1);
-  openPhotoAdjuster(files[0], 'boat', 'sheetBoat', {shape:'rect', vw:320, vh:150, outputW:800, outputH:375});
-}
-// Called by confirmPhotoAdjust() after each boat photo is cropped — if more
-// files were queued from a multi-select upload, immediately opens the next one.
-function continueBoatPhotoQueue(){
-  if(pendingBoatFilesQueue.length){
-    const next = pendingBoatFilesQueue.shift();
-    openPhotoAdjuster(next, 'boat', 'sheetBoat', {shape:'rect', vw:320, vh:150, outputW:800, outputH:375});
-  }
-}
-function renderBoatPhotoStrip(){
-  const strip = document.getElementById('boatPhotoStrip');
-  // keep the two add-tiles, remove only the photo thumbs, then re-insert thumbs at the front
-  strip.querySelectorAll('.photo-thumb').forEach(n=>n.remove());
-  pendingBoatPhotos.forEach((p,i)=>{
-    const div = document.createElement('div');
-    div.className = 'photo-thumb';
-    div.innerHTML = `<img src="${p}" onclick="setBoatDefaultPhoto(${i})">
-      ${p===pendingBoatPhoto ? `<div class="cover-badge">Default</div>` : ''}
-      <div class="rm" onclick="removeBoatPhoto(${i})">✕</div>`;
-    strip.insertBefore(div, strip.firstChild);
-  });
-}
-function setBoatDefaultPhoto(i){ pendingBoatPhoto = pendingBoatPhotos[i]; renderBoatPhotoStrip(); }
-function removeBoatPhoto(i){
-  const removed = pendingBoatPhotos[i];
-  pendingBoatPhotos.splice(i,1);
-  if(pendingBoatPhoto===removed) pendingBoatPhoto = pendingBoatPhotos[0] || null;
-  renderBoatPhotoStrip();
+  const f = ev.target.files[0]; if(!f) return;
+  pendingBoatPhoto = await resizeImage(f, 500, 0.75);
+  document.getElementById('boatPhotoPreview').src = pendingBoatPhoto;
 }
 async function saveBoatForm(){
   const name = document.getElementById('boatName').value.trim();
   if(!name){ showToast('Give the boat a name'); return; }
-  const type = document.getElementById('boatType').value, notes = document.getElementById('boatNotes').value;
   if(editingBoatId){
     const b = state.boats.find(x=>x.id===editingBoatId);
-    b.name=name; b.type=type; b.notes=notes; b.photos=[...pendingBoatPhotos]; b.photo=pendingBoatPhoto;
+    b.name=name; b.type=document.getElementById('boatType').value; b.notes=document.getElementById('boatNotes').value; b.photo=pendingBoatPhoto;
   } else {
-    state.boats.push({ id:uid(), name, type, notes, photos:[...pendingBoatPhotos], photo:pendingBoatPhoto });
+    state.boats.push({ id:uid(), name, type:document.getElementById('boatType').value, notes:document.getElementById('boatNotes').value, photo:pendingBoatPhoto });
   }
   const ok = await storeSet(KEYS.BOATS, state.boats);
   if(ok){ showToast('Boat saved'); closeSheets(); renderBoats(); }
@@ -2160,16 +1925,11 @@ function openCrewSheet(member){
   document.getElementById('deleteCrewBtn').style.display = member ? 'flex' : 'none';
   openSheet('sheetCrew');
 }
-// Photos here go through the crop/zoom adjuster (openPhotoAdjuster), not a
-// plain resize — 'sheetCrew' tells the adjuster to return to this sheet when done.
 async function handleCrewPhoto(ev){
   const f = ev.target.files[0]; if(!f) return;
   ev.target.value='';
   openPhotoAdjuster(f, 'crew', 'sheetCrew');
 }
-// If this crew member is being added from inside the trip's crew-picker sheet
-// (crewPickerActive), saving returns to that picker with the new person
-// already selected, instead of going back to the Crew tab.
 async function saveCrewForm(){
   const name = document.getElementById('crewName').value.trim();
   if(!name){ showToast('Enter a name'); return; }
@@ -2222,10 +1982,7 @@ function renderCrew(){
 }
 
 /* ============================================================
-   PROFILE & SETTINGS
-   Two separate screens sharing this section: Profile holds personal info +
-   backup/restore; Settings (reached via the gear icon) holds app-wide
-   preferences — theme, default units, clear profile, full reset.
+   PROFILE
    ============================================================ */
 function renderProfileScreen(){
   document.getElementById('profileName').value = state.profile.name || '';
@@ -2281,10 +2038,6 @@ async function toggleTheme(){
   state.profile.theme = next;
   await storeSet(KEYS.PROFILE, state.profile);
 }
-// Sets the DEFAULT unit system used app-wide (History, trip detail, PDF,
-// certificate) and as the starting point for new log entries. This is
-// distinct from activeUnitSystem, which is just the current session's
-// quick-flip while actively logging — see toggleLogUnitSystem() above.
 async function toggleDefaultUnitSystem(){
   const next = (state.profile.unitSystem==='metric') ? 'nautical' : 'metric';
   state.profile.unitSystem = next;
@@ -2311,10 +2064,6 @@ async function resetAllData(){
 
 /* ============================================================
    RESUME / CERTIFICATE
-   A date-range summary (all-time, this year, last 30 days, or custom) that
-   can generate a printable "sea time" certificate. Shares the same
-   window.print() + #printArea trick as the trip PDF export below —
-   see the note there for how that works.
    ============================================================ */
 let resumeRange = 'all';
 function setResumeRange(r){
@@ -2383,23 +2132,12 @@ function renderCertificate(){
   <button class="btn btn-outline" style="margin-top:14px;" onclick="printCertificate()">Print / Save as PDF</button>`;
   document.getElementById('certificateOutput').innerHTML = html;
 }
-// Printing trick: build the certificate's HTML, drop it into the otherwise-
-// empty #printArea div, then call window.print(). The @media print CSS rule
-// (see <style>) hides everything else on the page during printing, so only
-// #printArea's content ends up on the printed page/PDF.
 function printCertificate(){
   const block = document.getElementById('certBlock');
   document.getElementById('printArea').innerHTML = block.outerHTML;
   window.print();
 }
 
-/* ============================================================
-   A4 TRIP PDF EXPORT
-   Deliberately compact (cover beside stats, not stacked; max 6 photos;
-   notes truncated past 420 chars) so a typical entry fits one printed page —
-   see .pdf-* rules in <style> for the layout. Uses the same window.print() +
-   #printArea trick as the certificate above.
-   ============================================================ */
 function printTripPdf(){
   const trip = window._detailTrip;
   if(!trip){ showToast('Open a trip first'); return; }
@@ -2425,8 +2163,8 @@ function printTripPdf(){
           <div><b>${fmtSpeed(trip.maxSpeed||0)}</b><span>Max Speed</span></div>
         </div>
         <p class="pdf-weather-line">
-          💨 ${escapeHtml(trip.weather?.windDir||'—')} ${trip.weather?.windSpeed!=null?fmtSpeed(trip.weather.windSpeed):''}${trip.weather?.gusts?` · Gusts ${fmtSpeed(trip.weather.gusts)}`:''}<br>
-          🌊 ${escapeHtml(trip.weather?.seaState||'—')}${trip.weather?.waveHeight?` (${escapeHtml(String(trip.weather.waveHeight))} m)`:''}${trip.weather?.waveDir?` from ${escapeHtml(trip.weather.waveDir)}`:''}
+          💨 ${escapeHtml(trip.weather?.windDir||'—')} ${trip.weather?.windSpeed!=null?fmtSpeed(trip.weather.windSpeed):''}${trip.weather?.gusts?` · Gusts ${trip.weather.gustDir?escapeHtml(trip.weather.gustDir)+' ':''}${fmtSpeed(trip.weather.gusts)}`:''}<br>
+          🌊 ${escapeHtml(trip.weather?.seaState||'—')}${trip.weather?.waveHeight?` (${escapeHtml(String(trip.weather.waveHeight))} m)`:''}
           ${trip.weather?.temp?` · 🌡 ${escapeHtml(String(trip.weather.temp))}°C`:''}
         </p>
       </div>
