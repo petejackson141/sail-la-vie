@@ -400,11 +400,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
       <div class="stat-label" style="text-align:center;margin-top:16px;">Live Track</div>
       <div id="liveTrackWrap">
         <div class="porthole" id="liveTrackPorthole"></div>
-        <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:4px;" id="liveTrackCoords"></div>
-        <button class="btn btn-outline" style="margin-top:8px;display:none;" id="liveTrackMapsBtn" onclick="openTripInMaps(currentTrip.path)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="vertical-align:-3px;margin-right:4px;"><path d="M9 20l-5.5-2V4l5.5 2 6-2 5.5 2v14l-5.5-2-6 2z"/><path d="M9 4v16M15 6v14"/></svg>
-          Open in Maps
-        </button>
       </div>
 
       <div id="manualDistanceWrap" style="display:none;">
@@ -1929,13 +1924,12 @@ async function openTripDetail(id){
   if(!trip){ showToast('Could not load that trip'); return; }
   const boat = state.boats.find(b=>b.id===trip.boatId);
   document.getElementById('detailTitle').textContent = trip.title||'Trip';
-  const tripCrew = (trip.crewIds||[]).map(cid=>state.crew.find(x=>x.id===cid)).filter(Boolean);
-  const crewNames = tripCrew.map(c=>c.name); // still used by shareTrip()'s plain-text summary
+  const crewNames = (trip.crewIds||[]).map(cid=>{ const c=state.crew.find(x=>x.id===cid); return c?c.name:null; }).filter(Boolean);
   const d = new Date(trip.date);
 
   let mapSvg = '';
   if(trip.path && trip.path.length>1){
-    mapSvg = buildPortholeSvg(trip.path, false, appUnitSystem());
+    mapSvg = buildPortholeSvg(trip.path);
   }
 
   document.getElementById('detailBody').innerHTML = `
@@ -1956,13 +1950,7 @@ async function openTripDetail(id){
       <div class="cell" style="margin-top:14px;"><div class="stat-label">Max Speed</div><div class="stat-value">${fmtSpeed(trip.maxSpeed||0)}</div></div>
     </div>
 
-    ${mapSvg ? `<div class="stat-label" style="text-align:center;margin-top:16px;">Track</div>
-      <div class="porthole">${mapSvg}</div>
-      <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:4px;">${portholeCoordsCaption(trip.path)}</div>
-      <button class="btn btn-outline" style="margin-top:8px;" onclick="openTripInMaps(window._detailTrip.path)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="vertical-align:-3px;margin-right:4px;"><path d="M9 20l-5.5-2V4l5.5 2 6-2 5.5 2v14l-5.5-2-6 2z"/><path d="M9 4v16M15 6v14"/></svg>
-        Open in Maps
-      </button>` : ''}
+    ${mapSvg ? `<div class="porthole">${mapSvg}</div>` : ''}
 
     <div class="section-title">Weather</div>
     <div class="card" style="padding:16px;">
@@ -1976,8 +1964,7 @@ async function openTripDetail(id){
 
     ${trip.notes ? `<div class="section-title">Notes</div><div class="card" style="padding:16px;"><p style="color:var(--ink);">${escapeHtml(trip.notes)}</p></div>` : ''}
 
-    ${tripCrew.length ? `<div class="section-title">Crew</div><div class="crew-chip-row">${tripCrew.map(c=>`
-      <div class="crew-chip active"><img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
+    ${crewNames.length ? `<div class="section-title">Crew</div><p>${crewNames.map(escapeHtml).join(', ')}</p>` : ''}
 
     ${trip.photos && trip.photos.length ? `<div class="section-title">Photos</div><div class="photo-strip">${trip.photos.map((p,i)=>`<div class="photo-thumb" onclick="openTripPhotoLightbox(${i})"><img src="${p}"></div>`).join('')}</div>` : ''}
 
@@ -2000,46 +1987,19 @@ async function openTripDetail(id){
 // tiles — this app works fully offline, see the conversation history for why).
 // live=true adds a pulsing marker at the last point instead of a static one,
 // used while a journey is actively being tracked.
-// Picks a "nice" round distance (in whatever unit sys uses) for the scale bar —
-// never an awkward number like "0.37 NM".
-function niceScaleValue(maxVal){
-  const steps = [0.05,0.1,0.25,0.5,1,2,5,10,20,50,100,200,500];
-  let best = steps[0];
-  for(const s of steps){ if(s<=maxVal) best=s; else break; }
-  return best;
-}
-// Draws the porthole track map: the line/markers as before, plus a compass
-// rose (map is naturally north-up at this scale), a distance scale bar, and
-// start/current coordinates as text — all computed offline from the GPS
-// points themselves, no map tiles or internet involved. sys picks which unit
-// the scale bar reads in ('nautical'|'metric'); live=true pulses the end marker.
-function buildPortholeSvg(path, live, sys){
+function buildPortholeSvg(path, live){
   const lats = path.map(p=>p.lat), lngs = path.map(p=>p.lng);
   const minLat=Math.min(...lats), maxLat=Math.max(...lats), minLng=Math.min(...lngs), maxLng=Math.max(...lngs);
   const padLat=(maxLat-minLat)*0.15||0.001, padLng=(maxLng-minLng)*0.15||0.001;
   const w=260,h=260;
-  const viewMinLat=minLat-padLat, viewMaxLat=maxLat+padLat, viewMinLng=minLng-padLng, viewMaxLng=maxLng+padLng;
   const toXY = (p)=>{
-    const x = ((p.lng-viewMinLng)/(viewMaxLng-viewMinLng))*w;
-    const y = h - ((p.lat-viewMinLat)/(viewMaxLat-viewMinLat))*h;
+    const x = ((p.lng-(minLng-padLng))/((maxLng+padLng)-(minLng-padLng)))*w;
+    const y = h - ((p.lat-(minLat-padLat))/((maxLat+padLat)-(minLat-padLat)))*h;
     return [x,y];
   };
   const pts = path.map(toXY);
   const d = pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
   const start = pts[0], end = pts[pts.length-1];
-
-  // Scale bar: convert the width of the view (in degrees longitude) to a real
-  // distance at this latitude, pick a round number, then draw a bar that long.
-  const meanLatRad = (viewMinLat+viewMaxLat)/2 * Math.PI/180;
-  const totalNmAcrossView = (viewMaxLng-viewMinLng) * 60 * Math.cos(meanLatRad); // 1° longitude ≈ 60·cos(lat) NM
-  const nmPerPx = totalNmAcrossView / w;
-  const isMetric = sys==='metric';
-  const maxBarNm = 90 * nmPerPx; // keep the bar comfortably inside the circle
-  const barValue = isMetric ? niceScaleValue(maxBarNm*NM_TO_KM)/NM_TO_KM : niceScaleValue(maxBarNm);
-  const barPx = barValue / nmPerPx;
-  const barLabel = isMetric ? (barValue*NM_TO_KM).toFixed(barValue*NM_TO_KM<1?2:0)+' km' : barValue.toFixed(barValue<1?2:0)+' NM';
-  const barX0 = 130 - barPx/2, barY = 222;
-
   return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
     <rect width="${w}" height="${h}" fill="var(--water)"/>
     <path d="${d}" fill="none" stroke="var(--navy)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -2047,52 +2007,7 @@ function buildPortholeSvg(path, live, sys){
     ${live
       ? `<circle cx="${end[0]}" cy="${end[1]}" r="9" fill="var(--coral)" opacity=".35"><animate attributeName="r" values="7;13;7" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".45;.05;.45" dur="1.6s" repeatCount="indefinite"/></circle><circle cx="${end[0]}" cy="${end[1]}" r="6" fill="var(--coral)"/>`
       : `<circle cx="${end[0]}" cy="${end[1]}" r="6" fill="var(--coral)"/>`}
-    <g transform="translate(130,32)" opacity=".85">
-      <path d="M0,-11 L5,4 L0,0.5 L-5,4 Z" fill="var(--navy)"/>
-      <text x="0" y="17" text-anchor="middle" font-size="10" font-weight="700" fill="var(--navy)" font-family="sans-serif">N</text>
-    </g>
-    <g opacity=".85">
-      <line x1="${barX0}" y1="${barY}" x2="${barX0+barPx}" y2="${barY}" stroke="var(--navy)" stroke-width="2"/>
-      <line x1="${barX0}" y1="${barY-4}" x2="${barX0}" y2="${barY+4}" stroke="var(--navy)" stroke-width="2"/>
-      <line x1="${barX0+barPx}" y1="${barY-4}" x2="${barX0+barPx}" y2="${barY+4}" stroke="var(--navy)" stroke-width="2"/>
-      <text x="130" y="${barY+15}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--navy)" font-family="sans-serif">${barLabel}</text>
-    </g>
   </svg>`;
-}
-// Small text caption shown under the porthole with the start/current lat-lng —
-// pairs with the map to give real numbers alongside the abstract picture.
-function portholeCoordsCaption(path){
-  if(!path || !path.length) return '';
-  const last = path[path.length-1];
-  const fmt = (v,pos,neg)=> Math.abs(v).toFixed(4)+'°'+(v>=0?pos:neg);
-  return `${fmt(last.lat,'N','S')}, ${fmt(last.lng,'E','W')}`;
-}
-// Builds a Google Maps link so the actual track can be viewed against a real
-// map when there's signal — this app draws no map tiles itself (see the
-// notes above buildPortholeSvg for why). Uses "directions" with a handful of
-// sampled waypoints for multi-point tracks, or a simple pin for a single fix.
-function buildMapsUrl(path){
-  if(!path || !path.length) return null;
-  if(path.length===1){
-    const p = path[0];
-    return `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
-  }
-  const origin = path[0], dest = path[path.length-1];
-  const maxWaypoints = 8;
-  const mid = path.slice(1,-1);
-  let waypoints = [];
-  if(mid.length){
-    const step = Math.max(1, Math.floor(mid.length/maxWaypoints));
-    for(let i=0;i<mid.length && waypoints.length<maxWaypoints;i+=step) waypoints.push(mid[i]);
-  }
-  let url = `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lng}&destination=${dest.lat},${dest.lng}&travelmode=walking`;
-  if(waypoints.length) url += `&waypoints=${encodeURIComponent(waypoints.map(p=>`${p.lat},${p.lng}`).join('|'))}`;
-  return url;
-}
-function openTripInMaps(path){
-  const url = buildMapsUrl(path);
-  if(!url){ showToast('No GPS track to show'); return; }
-  window.open(url, '_blank');
 }
 // Called on the active journey screen after every GPS fix — re-draws the
 // live porthole map, or shows a "waiting for signal" placeholder if there's
@@ -2101,17 +2016,11 @@ function renderLiveTrack(){
   const el = document.getElementById('liveTrackPorthole');
   if(!el || !currentTrip) return;
   const path = currentTrip.path;
-  const mapsBtn = document.getElementById('liveTrackMapsBtn');
-  const coordsEl = document.getElementById('liveTrackCoords');
   if(!path || path.length<2){
     el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:20px;font-size:12px;color:var(--ink-muted);">${path && path.length===1 ? 'Got your position — plotting the track as you move…' : 'Waiting for GPS signal…'}</div>`;
-    if(mapsBtn) mapsBtn.style.display = (path && path.length) ? 'block' : 'none';
-    if(coordsEl) coordsEl.textContent = portholeCoordsCaption(path);
     return;
   }
-  el.innerHTML = buildPortholeSvg(path, true, activeUnitSystem);
-  if(mapsBtn) mapsBtn.style.display = 'block';
-  if(coordsEl) coordsEl.textContent = portholeCoordsCaption(path);
+  el.innerHTML = buildPortholeSvg(path, true);
 }
 async function deleteTripPrompt(){
   if(!openTripId) return;
