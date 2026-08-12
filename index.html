@@ -36,6 +36,12 @@
      it doesn't cost anything offline beyond the very first time the app runs. -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" defer></script>
+<!-- jsPDF + html2canvas: only used to generate the shareable PDF export — lets
+     us render the same styled HTML used for the in-app preview into a real
+     PDF file client-side, so it can go through the native share sheet
+     (Mail, WhatsApp, etc.) instead of just the browser's print dialog. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <style>
   :root{
     --bg:#EFF4F7; --bg-elevated:#FFFFFF; --bg-sunk:#E3EBF0;
@@ -536,6 +542,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
       </div>
       <input type="file" id="activePhotoCameraInput" accept="image/*" capture="environment" multiple style="display:none;" onchange="handleActivePhotos(event)">
       <input type="file" id="activePhotoUploadInput" accept="image/*" multiple style="display:none;" onchange="handleActivePhotos(event)">
+      <div class="link-plain" id="changeCoverLink" style="display:none;margin-top:8px;" onclick="openCoverPickSheet('swap')">Change Cover Photo…</div>
     </div>
 
     <div style="height:6px;"></div>
@@ -822,7 +829,21 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     <div class="photo-strip" id="coverPickStrip"></div>
     <button class="btn btn-outline" style="margin-top:14px;" onclick="openCoverPhotoAdjuster()">Adjust / Crop Selected Photo</button>
     <button class="btn btn-primary" style="margin-top:10px;" onclick="confirmCoverPick()">Set as Cover</button>
-    <button class="btn btn-ghost" onclick="skipCoverPick()">Skip — No Cover</button>
+    <button class="btn btn-ghost" id="skipCoverPickBtn" onclick="skipCoverPick()">Skip — No Cover</button>
+  </div>
+
+  <div class="sheet" id="sheetPdfPreview" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3>Preview PDF</h3>
+    <p style="font-size:12.5px;margin-bottom:10px;">This is exactly how it'll look — one A4 page, ready to share.</p>
+    <div id="pdfPreviewScaleWrap" style="overflow:hidden;border-radius:10px;border:1px solid var(--border);background:#fff;">
+      <div id="pdfPreviewInner"></div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:14px;" onclick="generateAndShareTripPdf()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="vertical-align:-3px;margin-right:6px;"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
+      Share / Save PDF
+    </button>
+    <button class="btn btn-ghost" onclick="closeSheets()">Cancel</button>
   </div>
 
   <div class="sheet" id="sheetSelectCrew" style="display:none;">
@@ -1809,6 +1830,11 @@ function renderActivePhotoStrip(){
       <div class="rm" onclick="removeActivePhoto(${i})">✕</div>`;
     strip.insertBefore(div, strip.firstChild);
   });
+  // Editing keeps the existing cover untouched by default (see endJourney) — this
+  // link is the deliberate way to change it instead, rather than being forced
+  // to re-pick on every save.
+  const changeCoverLink = document.getElementById('changeCoverLink');
+  if(changeCoverLink) changeCoverLink.style.display = (currentTrip.isEditing && currentTrip.photos.length) ? 'block' : 'none';
 }
 function setActiveCover(i){ currentTrip.coverPhoto = currentTrip.photos[i]; renderActivePhotoStrip(); }
 function removeActivePhoto(i){
@@ -1860,14 +1886,21 @@ async function endJourney(){
   currentTrip.boatId = boat ? boat.id : null;
   currentTrip.title = boat ? `Sail aboard ${boat.name}` : 'Untitled Sail';
 
-  if(currentTrip.photos && currentTrip.photos.length){
-    openCoverPickSheet();
+  if(currentTrip.isEditing){
+    // Editing keeps whatever cover was already set — no forced re-pick. Use the
+    // "Change Cover Photo" link in the Photos section if you want to swap it.
+    finalizeSaveTrip();
+  } else if(currentTrip.photos && currentTrip.photos.length){
+    openCoverPickSheet('onSave');
   } else {
     currentTrip.coverPhoto = null;
     finalizeSaveTrip();
   }
 }
-function openCoverPickSheet(){
+let coverPickMode = 'onSave'; // 'onSave' (part of finishing a new entry) | 'swap' (changing the cover mid-edit, doesn't save)
+function openCoverPickSheet(mode){
+  coverPickMode = mode || 'onSave';
+  if(!currentTrip.photos || !currentTrip.photos.length){ showToast('Add a photo first'); return; }
   // Default the selection to whatever's already the cover (editing) or the first photo, so
   // "Adjust Cover" has something sensible to work on even before the person taps a thumbnail.
   const existingIdx = currentTrip.photos.indexOf(currentTrip.coverPhoto);
@@ -1877,6 +1910,7 @@ function openCoverPickSheet(){
     <div class="photo-thumb pickable${i===currentTrip._pickedCoverIndex?' selected':''}" data-i="${i}" onclick="pickCoverThumb(${i})">
       <img src="${p}">
     </div>`).join('');
+  document.getElementById('skipCoverPickBtn').style.display = coverPickMode==='onSave' ? 'block' : 'none';
   openSheet('sheetCoverPick');
 }
 function pickCoverThumb(i){
@@ -1905,14 +1939,16 @@ function confirmCoverPick(){
   delete currentTrip._pickedCoverIndex;
   delete currentTrip._coverAdjusted;
   closeSheets();
-  finalizeSaveTrip();
+  if(coverPickMode==='onSave'){ finalizeSaveTrip(); }
+  else { renderActivePhotoStrip(); showToast('Cover photo updated'); }
 }
 function skipCoverPick(){
   currentTrip.coverPhoto = null;
   delete currentTrip._pickedCoverIndex;
   delete currentTrip._coverAdjusted;
   closeSheets();
-  finalizeSaveTrip();
+  if(coverPickMode==='onSave'){ finalizeSaveTrip(); }
+  else { renderActivePhotoStrip(); showToast('Cover photo removed'); }
 }
 // The actual write to storage — shared by all three modes. Branches on
 // isEditing to decide whether to overwrite the existing tripIndex entry in
@@ -2055,7 +2091,7 @@ async function openTripDetail(id){
       Share with Crew / Social
     </button>
     <div style="height:10px;"></div>
-    <button class="btn btn-outline" onclick="printTripPdf()">
+    <button class="btn btn-outline" onclick="openTripPdfPreview()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
       Export as A4 PDF
     </button>
@@ -2674,20 +2710,23 @@ function printCertificate(){
    see .pdf-* rules in <style> for the layout. Uses the same window.print() +
    #printArea trick as the certificate above.
    ============================================================ */
-function printTripPdf(){
-  const trip = window._detailTrip;
-  if(!trip){ showToast('Open a trip first'); return; }
+// Builds the PDF's HTML content — shared by the in-app preview and the final
+// rendered PDF, so what you preview is exactly what gets shared (WYSIWYG).
+// Designed to comfortably fit one A4 page even with 8 photos and full weather
+// details; notes are capped so a very long one can't push it onto a 2nd page.
+function buildTripPdfHtml(trip){
   const boat = state.boats.find(b=>b.id===trip.boatId);
   const crewNames = (trip.crewIds||[]).map(cid=>{ const c=state.crew.find(x=>x.id===cid); return c?c.name:null; }).filter(Boolean);
   const d = new Date(trip.date);
   const dateStr = d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  const photos = (trip.photos||[]).slice(0,6); // keep the sheet to one A4 side
+  const timeStr = d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+  const photos = (trip.photos||[]).slice(0,8);
   let notes = trip.notes || '';
-  if(notes.length>420) notes = notes.slice(0,420).trim()+'…'; // guard against a long note pushing to a 2nd page
+  if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
 
-  const html = `<div class="pdf-sheet" id="pdfTripBlock">
+  return `<div class="pdf-sheet" id="pdfTripBlock">
     <h1>${escapeHtml(trip.title||'Sail Log')}</h1>
-    <div class="pdf-sub">${dateStr}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</div>
+    <div class="pdf-sub">${dateStr} · ${timeStr}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</div>
 
     <div class="pdf-top-row">
       ${trip.coverPhoto ? `<img class="pdf-cover" src="${trip.coverPhoto}">` : ''}
@@ -2714,8 +2753,71 @@ function printTripPdf(){
 
     <div class="pdf-foot">Sail la Vie Logbook · Generated ${new Date().toLocaleDateString()}</div>
   </div>`;
-  document.getElementById('printArea').innerHTML = html;
-  window.print();
+}
+// Renders the preview sheet at true A4 proportions (794px ≈ 210mm at 96dpi),
+// then scales it down to fit the sheet's width — an accurate shrink-to-fit
+// preview of exactly what the final PDF page will look like, including
+// whether the content is tall enough to risk spilling onto a 2nd page.
+function openTripPdfPreview(){
+  const trip = window._detailTrip;
+  if(!trip){ showToast('Open a trip first'); return; }
+  const inner = document.getElementById('pdfPreviewInner');
+  inner.innerHTML = buildTripPdfHtml(trip);
+  inner.style.transform = 'none';
+  inner.style.width = '794px';
+  openSheet('sheetPdfPreview');
+  requestAnimationFrame(()=>{
+    const wrap = document.getElementById('pdfPreviewScaleWrap');
+    const naturalHeight = inner.scrollHeight;
+    const scale = wrap.clientWidth / 794;
+    inner.style.transformOrigin = 'top left';
+    inner.style.transform = `scale(${scale})`;
+    wrap.style.height = Math.round(naturalHeight*scale)+'px';
+  });
+}
+// The actual PDF generation, triggered from the preview's "Share / Save PDF"
+// button. Renders the same HTML shown in the preview into a real PDF file
+// (via html2canvas + jsPDF), then hands it to the native share sheet — from
+// there the person picks Mail, WhatsApp, or anything else that accepts a
+// file. Falls back to a plain download if the browser can't share files.
+async function generateAndShareTripPdf(){
+  const trip = window._detailTrip;
+  if(!trip) return;
+  if(typeof window.jspdf==='undefined' || typeof html2canvas==='undefined'){
+    showToast("PDF export needs a connection the first time (loading a small library) — try again once you're online.");
+    return;
+  }
+  showToast('Preparing PDF…');
+  const inner = document.getElementById('pdfPreviewInner');
+  const prevTransform = inner.style.transform;
+  inner.style.transform = 'none'; // capture at full, unscaled resolution
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p','pt','a4');
+    await doc.html(inner, {
+      x:0, y:0, width:595, windowWidth:794,
+      html2canvas: { scale:2, useCORS:true }
+    });
+    const blob = doc.output('blob');
+    const fileName = (trip.title||'sail-log').replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.pdf';
+    const file = new File([blob], fileName, {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title: trip.title||'Sail Log'});
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      showToast('PDF downloaded — attach it to an email or WhatsApp manually');
+    }
+    closeSheets();
+  }catch(e){
+    if(e && e.name==='AbortError'){ /* user cancelled the native share sheet — not an error */ }
+    else { console.error('PDF generation failed', e); showToast('Could not generate the PDF — try again'); }
+  } finally {
+    inner.style.transform = prevTransform;
+  }
 }
 
 /* ---------- photo lightbox — supports swipe/arrow navigation across a photo set ---------- */
