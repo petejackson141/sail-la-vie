@@ -305,11 +305,11 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   #printArea{ position:absolute; top:0; left:0; width:100%; }
   @page{ size:A4; margin:14mm; }
 }
-.pdf-sheet{ font-family:var(--font-body); color:#1a1a1a; width:794px; box-sizing:border-box; padding:18px; font-size:10pt; background:#fff; }
+.pdf-sheet{ font-family:var(--font-body); color:#1a1a1a; width:794px; box-sizing:border-box; padding:12px 18px 14px; font-size:10pt; background:#fff; }
 .pdf-sheet h1{ font-family:var(--font-display); font-size:22px; margin:0 0 3px; }
 .pdf-sheet .pdf-sub{ font-size:10.5px; color:#555; margin-bottom:10px; }
-.pdf-top-row{ display:flex; gap:14px; margin-bottom:10px; align-items:stretch; }
-.pdf-sheet .pdf-cover{ width:270px; height:180px; object-fit:contain; object-position:center; border-radius:7px; flex:0 0 240px; display:block; }
+.pdf-top-row{ display:flex; gap:14px; margin-bottom:10px; align-items:flex-start; }
+.pdf-sheet .pdf-cover{ width:270px; height:auto; max-height:190px; object-fit:contain; object-position:center; border-radius:7px; flex:0 0 270px; display:block; }
 .pdf-top-right{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; }
 .pdf-stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:9px; }
 .pdf-stats-grid div{ border:1px solid #ddd; border-radius:6px; padding:7px 4px; text-align:center; min-width:0; }
@@ -322,8 +322,8 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-crew-grid{ display:flex; flex-wrap:wrap; gap:6px 8px; margin-top:4px; }
 .pdf-crew-chip{ display:flex; align-items:center; gap:6px; padding:4px 9px 4px 4px; border:1px solid #ddd; border-radius:999px; background:#f5f7f8; font-size:9.5px; font-weight:600; color:#444; }
 .pdf-crew-chip img{ width:24px; height:24px; border-radius:50%; object-fit:cover; display:block; background:#e3ebf0; flex:0 0 24px; }
-.pdf-photos-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-top:5px; }
-.pdf-photos-grid img{ width:100%; height:125px; object-fit:contain; object-position:center; border-radius:6px; display:block; }
+.pdf-photos-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-top:5px; align-items:start; }
+.pdf-photos-grid img{ width:100%; height:auto; max-height:145px; object-fit:contain; object-position:center; border-radius:6px; display:block; }
 .pdf-foot{ margin-top:10px; font-size:8.5px; color:#999; text-align:center; }
 .lightbox{ position:fixed; inset:0; background:rgba(10,20,30,.95); z-index:2000; display:none; align-items:center; justify-content:center; flex-direction:column; padding:20px; }
 .lightbox.show{ display:flex; }
@@ -2723,7 +2723,7 @@ function buildTripPdfHtml(trip){
   const d = new Date(trip.date);
   const dateStr = d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const timeStr = d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
-  const photos = (trip.photos||[]).slice(0,8);
+  const photos = (trip.photos||[]);
   let notes = trip.notes || '';
   if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
 
