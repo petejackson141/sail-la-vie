@@ -2793,31 +2793,11 @@ async function generateAndShareTripPdf(){
   inner.style.transform = 'none'; // capture at full, unscaled resolution
   try{
     const { jsPDF } = window.jspdf;
-
-    // Render the complete log as one canvas, then scale it proportionally
-    // so the entire export always fits on ONE A4 portrait page.
-    const canvas = await html2canvas(inner, {
-      scale:2,
-      useCORS:true,
-      backgroundColor:'#ffffff',
-      logging:false,
-      windowWidth:794
-    });
-
     const doc = new jsPDF('p','pt','a4');
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const margin = 18;
-    const maxW = pageW - margin * 2;
-    const maxH = pageH - margin * 2;
-
-    const scale = Math.min(maxW / canvas.width, maxH / canvas.height);
-    const imgW = canvas.width * scale;
-    const imgH = canvas.height * scale;
-    const x = (pageW - imgW) / 2;
-    const y = (pageH - imgH) / 2;
-
-    doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', x, y, imgW, imgH);
+    await doc.html(inner, {
+      x:0, y:0, width:595, windowWidth:794,
+      html2canvas: { scale:2, useCORS:true }
+    });
     const blob = doc.output('blob');
     const fileName = (trip.title||'sail-log').replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.pdf';
     const file = new File([blob], fileName, {type:'application/pdf'});
