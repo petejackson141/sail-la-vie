@@ -305,23 +305,26 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   #printArea{ position:absolute; top:0; left:0; width:100%; }
   @page{ size:A4; margin:14mm; }
 }
-.pdf-sheet{ font-family:var(--font-body); color:#1a1a1a; max-width:190mm; font-size:10pt; }
-.pdf-sheet h1{ font-family:var(--font-display); font-size:19px; margin:0 0 2px; }
+.pdf-sheet{ font-family:var(--font-body); color:#1a1a1a; width:794px; box-sizing:border-box; padding:18px; font-size:10pt; background:#fff; }
+.pdf-sheet h1{ font-family:var(--font-display); font-size:22px; margin:0 0 3px; }
 .pdf-sheet .pdf-sub{ font-size:10.5px; color:#555; margin-bottom:10px; }
-.pdf-top-row{ display:flex; gap:12px; margin-bottom:10px; }
-.pdf-sheet .pdf-cover{ width:52mm; height:38mm; object-fit:cover; border-radius:6px; flex:0 0 auto; }
-.pdf-top-right{ flex:1; min-width:0; }
-.pdf-stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:8px; }
-.pdf-stats-grid div{ border:1px solid #ddd; border-radius:6px; padding:5px 4px; text-align:center; }
-.pdf-stats-grid div b{ display:block; font-family:var(--font-display); font-size:13px; }
+.pdf-top-row{ display:flex; gap:14px; margin-bottom:10px; align-items:stretch; }
+.pdf-sheet .pdf-cover{ width:240px; height:155px; object-fit:cover; object-position:center; border-radius:7px; flex:0 0 240px; display:block; }
+.pdf-top-right{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; }
+.pdf-stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:9px; }
+.pdf-stats-grid div{ border:1px solid #ddd; border-radius:6px; padding:7px 4px; text-align:center; min-width:0; }
+.pdf-stats-grid div b{ display:block; font-family:var(--font-display); font-size:13px; white-space:nowrap; }
 .pdf-stats-grid div span{ font-size:7.8px; text-transform:uppercase; letter-spacing:.03em; color:#777; }
 .pdf-weather-line{ font-size:10px; line-height:1.5; margin:0; }
 .pdf-section-title{ font-family:var(--font-display); font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em;
   color:#555; margin:10px 0 4px; border-bottom:1px solid #ddd; padding-bottom:3px; }
 .pdf-sheet p{ font-size:10px; line-height:1.4; margin:2px 0; }
-.pdf-photos-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-top:4px; }
-.pdf-photos-grid img{ width:100%; height:26mm; object-fit:cover; border-radius:5px; }
-.pdf-foot{ margin-top:12px; font-size:8.5px; color:#999; text-align:center; }
+.pdf-crew-grid{ display:flex; flex-wrap:wrap; gap:6px 8px; margin-top:4px; }
+.pdf-crew-chip{ display:flex; align-items:center; gap:6px; padding:4px 9px 4px 4px; border:1px solid #ddd; border-radius:999px; background:#f5f7f8; font-size:9.5px; font-weight:600; color:#444; }
+.pdf-crew-chip img{ width:24px; height:24px; border-radius:50%; object-fit:cover; display:block; background:#e3ebf0; flex:0 0 24px; }
+.pdf-photos-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-top:5px; }
+.pdf-photos-grid img{ width:100%; height:125px; object-fit:cover; object-position:center; border-radius:6px; display:block; }
+.pdf-foot{ margin-top:10px; font-size:8.5px; color:#999; text-align:center; }
 .lightbox{ position:fixed; inset:0; background:rgba(10,20,30,.95); z-index:2000; display:none; align-items:center; justify-content:center; flex-direction:column; padding:20px; }
 .lightbox.show{ display:flex; }
 .lightbox img{ max-width:92vw; max-height:70vh; object-fit:contain; border-radius:10px; }
@@ -2716,7 +2719,7 @@ function printCertificate(){
 // details; notes are capped so a very long one can't push it onto a 2nd page.
 function buildTripPdfHtml(trip){
   const boat = state.boats.find(b=>b.id===trip.boatId);
-  const crewNames = (trip.crewIds||[]).map(cid=>{ const c=state.crew.find(x=>x.id===cid); return c?c.name:null; }).filter(Boolean);
+  const tripCrew = (trip.crewIds||[]).map(cid=>state.crew.find(x=>x.id===cid)).filter(Boolean);
   const d = new Date(trip.date);
   const dateStr = d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const timeStr = d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
@@ -2747,7 +2750,7 @@ function buildTripPdfHtml(trip){
 
     ${notes ? `<div class="pdf-section-title">Notes</div><p>${escapeHtml(notes)}</p>` : ''}
 
-    ${crewNames.length ? `<div class="pdf-section-title">Crew</div><p>${crewNames.map(escapeHtml).join(', ')}</p>` : ''}
+    ${tripCrew.length ? `<div class="pdf-section-title">Crew</div><div class="pdf-crew-grid">${tripCrew.map(c=>`<div class="pdf-crew-chip"><img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
 
     ${photos.length ? `<div class="pdf-section-title">Photos</div><div class="pdf-photos-grid">${photos.map(p=>`<img src="${p}">`).join('')}</div>` : ''}
 
