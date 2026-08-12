@@ -2758,6 +2758,7 @@ function buildTripPdfHtml(trip){
 // then scales it down to fit the sheet's width — an accurate shrink-to-fit
 // preview of exactly what the final PDF page will look like, including
 // whether the content is tall enough to risk spilling onto a 2nd page.
+// Preview and export are both true single-page A4 portrait shrink-to-fit.
 function openTripPdfPreview(){
   const trip = window._detailTrip;
   if(!trip){ showToast('Open a trip first'); return; }
@@ -2769,17 +2770,22 @@ function openTripPdfPreview(){
   requestAnimationFrame(()=>{
     const wrap = document.getElementById('pdfPreviewScaleWrap');
     const naturalHeight = inner.scrollHeight;
-    const scale = wrap.clientWidth / 794;
+    const wrapWidth = wrap.clientWidth;
+    const a4Height = wrapWidth * (841.89 / 595.28);
+    const margin = 12;
+    const scale = Math.min(
+      (wrapWidth - margin * 2) / 794,
+      (a4Height - margin * 2) / naturalHeight
+    );
     inner.style.transformOrigin = 'top left';
     inner.style.transform = `scale(${scale})`;
-    wrap.style.height = Math.round(naturalHeight*scale)+'px';
+    wrap.style.height = Math.ceil(naturalHeight * scale + margin * 2) + 'px';
   });
 }
-// The actual PDF generation, triggered from the preview's "Share / Save PDF"
-// button. Renders the same HTML shown in the preview into a real PDF file
-// (via html2canvas + jsPDF), then hands it to the native share sheet — from
-// there the person picks Mail, WhatsApp, or anything else that accepts a
-// file. Falls back to a plain download if the browser can't share files.
+
+// IMPORTANT: Do not use jsPDF.doc.html() here. Its HTML renderer can paginate
+// tall content. We first render the COMPLETE log into one canvas, then place
+// that one image onto one A4 page. This guarantees exactly one PDF page.
 async function generateAndShareTripPdf(){
   const trip = window._detailTrip;
   if(!trip) return;
@@ -2787,56 +2793,92 @@ async function generateAndShareTripPdf(){
     showToast("PDF export needs a connection the first time (loading a small library) — try again once you're online.");
     return;
   }
-  showToast('Preparing PDF…');
+
+  showToast('Preparing single-page A4 PDF…');
   const inner = document.getElementById('pdfPreviewInner');
   const prevTransform = inner.style.transform;
-  inner.style.transform = 'none'; // capture at full, unscaled resolution
-  try{
-    const { jsPDF } = window.jspdf;
+  const prevWidth = inner.style.width;
+  const prevHeight = inner.style.height;
+  const prevOverflow = inner.style.overflow;
 
-    // Render the complete log as one canvas, then scale it proportionally
-    // so the entire export always fits on ONE A4 portrait page.
+  try{
+    inner.style.transform = 'none';
+    inner.style.width = '794px';
+    inner.style.height = 'auto';
+    inner.style.overflow = 'visible';
+
+    // Allow fonts/images and layout to settle before measuring/capturing.
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
     const canvas = await html2canvas(inner, {
-      scale:2,
-      useCORS:true,
-      backgroundColor:'#ffffff',
-      logging:false,
-      windowWidth:794
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: 794,
+      height: inner.scrollHeight,
+      windowWidth: 794,
+      scrollX: 0,
+      scrollY: 0
     });
 
-    const doc = new jsPDF('p','pt','a4');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: 'a4',
+      compress: true
+    });
+
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const margin = 18;
-    const maxW = pageW - margin * 2;
-    const maxH = pageH - margin * 2;
+    const availableW = pageW - margin * 2;
+    const availableH = pageH - margin * 2;
 
-    const scale = Math.min(maxW / canvas.width, maxH / canvas.height);
-    const imgW = canvas.width * scale;
-    const imgH = canvas.height * scale;
-    const x = (pageW - imgW) / 2;
-    const y = (pageH - imgH) / 2;
+    // Fit the COMPLETE canvas into the printable A4 rectangle, preserving ratio.
+    const scale = Math.min(availableW / canvas.width, availableH / canvas.height);
+    const renderW = canvas.width * scale;
+    const renderH = canvas.height * scale;
+    const x = (pageW - renderW) / 2;
+    const y = (pageH - renderH) / 2;
 
-    doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', x, y, imgW, imgH);
+    doc.addImage(
+      canvas.toDataURL('image/jpeg', 0.92),
+      'JPEG', x, y, renderW, renderH, undefined, 'FAST'
+    );
+
+    // There should only ever be one page. Keep this defensive guard in place.
+    while(doc.getNumberOfPages() > 1){
+      doc.deletePage(doc.getNumberOfPages());
+    }
+
     const blob = doc.output('blob');
     const fileName = (trip.title||'sail-log').replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.pdf';
     const file = new File([blob], fileName, {type:'application/pdf'});
+
     if(navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({files:[file], title: trip.title||'Sail Log'});
     } else {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = fileName;
-      document.body.appendChild(a); a.click(); a.remove();
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
       URL.revokeObjectURL(url);
-      showToast('PDF downloaded — attach it to an email or WhatsApp manually');
+      showToast('Single-page A4 PDF downloaded');
     }
     closeSheets();
   }catch(e){
-    if(e && e.name==='AbortError'){ /* user cancelled the native share sheet — not an error */ }
+    if(e && e.name==='AbortError'){ /* user cancelled the native share sheet */ }
     else { console.error('PDF generation failed', e); showToast('Could not generate the PDF — try again'); }
   } finally {
     inner.style.transform = prevTransform;
+    inner.style.width = prevWidth;
+    inner.style.height = prevHeight;
+    inner.style.overflow = prevOverflow;
   }
 }
 
