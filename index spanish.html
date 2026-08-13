@@ -354,20 +354,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .lightbox-nav-prev{ left:10px; }
 .lightbox-nav-next{ right:10px; }
 .lightbox-counter{ margin-top:12px; font-size:12.5px; color:rgba(255,255,255,.7); letter-spacing:.03em; }
-
-/* ---------- RTL (Hebrew) ----------
-   Most layout is flexbox with `gap`, which reverses correctly on its own
-   when the browser's dir flips — no rule needed there. What doesn't reverse
-   on its own: directional chevron icons (an SVG path doesn't know which way
-   "back" points) and a couple of asymmetric paddings/margins that were
-   written with a fixed side rather than a logical one. Photo-gallery
-   prev/next arrows are deliberately left as fixed left/right — that's a
-   physical left/right convention independent of reading direction. */
-html[dir="rtl"] .back-icon svg{ transform:scaleX(-1); }
-html[dir="rtl"] .crew-chip{ padding:6px 6px 6px 12px; }
-html[dir="rtl"] .crew-chip .rm{ margin-left:0; margin-right:2px; }
-html[dir="rtl"] .btn-danger svg[style*="margin-right"],
-html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !important; margin-left:6px; }
 </style>
 </head>
 <body>
@@ -430,7 +416,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <!-- ============ ACTIVE JOURNEY ============ -->
   <section class="screen" id="screen-active">
     <div class="backrow">
-      <div class="iconbtn back-icon" onclick="confirmLeaveActive()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <div class="iconbtn" onclick="confirmLeaveActive()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
       <h2 data-i18n="active.title">Active Journey Log</h2>
       <div class="iconbtn" onclick="discardJourney()" title="Discard journey" data-i18n-title="active.discardTitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
     </div>
@@ -597,7 +583,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <!-- ============ HISTORY ============ -->
   <section class="screen" id="screen-history">
     <div class="backrow">
-      <div class="iconbtn back-icon" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <div class="iconbtn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
       <h2 data-i18n="history.title">Trip History</h2>
     </div>
     <input type="text" class="search-input" id="historySearch" placeholder="Search logs (e.g., boat, place, notes)…" oninput="renderHistory()" data-i18n-ph="history.searchPh">
@@ -612,7 +598,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <!-- ============ ENTRY DETAIL ============ -->
   <section class="screen" id="screen-detail">
     <div class="backrow">
-      <div class="iconbtn back-icon" onclick="nav('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <div class="iconbtn" onclick="nav('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
       <h2 id="detailTitle" style="font-size:17px;">Trip</h2>
       <div class="iconbtn" onclick="editTrip()" title="Edit" data-i18n-title="action.edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
       <div class="iconbtn" onclick="deleteTripPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
@@ -623,7 +609,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <!-- ============ BOATS ============ -->
   <section class="screen" id="screen-boats">
     <div class="backrow">
-      <div class="iconbtn back-icon" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <div class="iconbtn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
       <h2 data-i18n="boats.title">Boat Fleet</h2>
       <div class="iconbtn" onclick="openBoatSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
     </div>
@@ -633,7 +619,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <!-- ============ CREW ============ -->
   <section class="screen" id="screen-crew">
     <div class="backrow">
-      <div class="iconbtn back-icon" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <div class="iconbtn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
       <h2 data-i18n="nav.crew">Crew</h2>
       <div class="iconbtn" onclick="openCrewSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
     </div>
@@ -704,7 +690,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <!-- ============ SETTINGS ============ -->
   <section class="screen" id="screen-settings">
     <div class="backrow">
-      <div class="iconbtn back-icon" onclick="nav('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <div class="iconbtn" onclick="nav('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
       <h2 data-i18n="settings.title">Settings</h2>
     </div>
 
@@ -730,7 +716,6 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div class="chiprow" id="languageChips">
       <div class="chip" data-lang="en" onclick="setLanguage('en')">English</div>
       <div class="chip" data-lang="es" onclick="setLanguage('es')">Español</div>
-      <div class="chip" data-lang="he" onclick="setLanguage('he')">עברית</div>
     </div>
 
     <div class="divider"></div>
@@ -749,7 +734,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <!-- ============ RESUME / CERTIFICATE ============ -->
   <section class="screen" id="screen-resume">
     <div class="backrow">
-      <div class="iconbtn back-icon" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <div class="iconbtn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
       <h2 data-i18n="resume.title">Sailing Resume</h2>
     </div>
     <div class="chiprow" id="resumeChips">
@@ -1251,8 +1236,6 @@ const TRANSLATIONS = {
   'active.distanceUnitLabel': 'Distance ({unit})',
   'active.avgSpeedUnitLabel': 'Avg Speed ({unit})',
   'active.maxSpeedUnitLabel': 'Max Speed ({unit})',
-  'map.gotPosition': 'Got your position — plotting the track as you move…',
-  'map.waitingGps': 'Waiting for GPS signal…',
 },
   es: {
   'action.cancel': 'Cancelar',
@@ -1530,287 +1513,6 @@ const TRANSLATIONS = {
   'active.distanceUnitLabel': 'Distancia ({unit})',
   'active.avgSpeedUnitLabel': 'Vel. Media ({unit})',
   'active.maxSpeedUnitLabel': 'Vel. Máxima ({unit})',
-  'map.gotPosition': 'Tenemos tu posición — trazando la ruta mientras te mueves…',
-  'map.waitingGps': 'Esperando señal GPS…',
-},
-  he: {
-  'action.cancel': 'ביטול',
-  'action.done': 'סיום',
-  'action.edit': 'עריכה',
-  'action.remove': 'הסרה',
-  'action.save': 'שמירה',
-  'action.share': 'שיתוף',
-  'action.takePhoto': 'צילום תמונה',
-  'action.upload': 'העלאה',
-  'action.uploadPhotos': 'העלאת תמונות',
-  'active.addCrew': '+ הוספת צוות',
-  'active.addCrewTitle': 'הוספת איש צוות',
-  'active.addNewCrew': '+ הוספת איש צוות חדש',
-  'active.autoCalcHint': 'אופציונלי — השאירו ריק וזה יחושב מהמרחק ÷ משך הזמן.',
-  'active.avgSpeedUnitLabel': 'מהירות ממוצעת ({unit})',
-  'active.boat': 'כלי שיט',
-  'active.changeCover': 'החלפת תמונת נושא…',
-  'active.checkingConnection': 'בודק חיבור…',
-  'active.chooseSkipper': 'בחירת רב חובל',
-  'active.coverBadge': 'תמונת נושא',
-  'active.crewAboard': 'צוות על הסיפון',
-  'active.dateTime': 'תאריך ושעת השיט',
-  'active.discardTitle': 'ביטול השיט',
-  'active.distanceUnitLabel': 'מרחק ({unit})',
-  'active.durationHrs': 'משך (שעות)',
-  'active.durationMins': 'משך (דקות)',
-  'active.elapsedTime': 'זמן שחלף',
-  'active.endJourney': 'סיום שיט',
-  'active.gusts': 'משבים',
-  'active.liveTrack': 'מסלול בזמן אמת',
-  'active.logEntry': 'רישום שיט',
-  'active.manualDistanceLabel': 'מרחק שהופלג — {unit} (הזנה ידנית, GPS לא זמין)',
-  'active.mapImage': 'תמונת מפה',
-  'active.mapImageHint': '— אופציונלי, אין מסלול GPS לרישום מהעבר, אז אפשר להוסיף צילום מסך או תמונה של מפה אם יש לכם',
-  'active.maxSpeedUnitLabel': 'מהירות מרבית ({unit})',
-  'active.noSkipper': 'ללא רב חובל',
-  'active.notes': 'הערות',
-  'active.photos': 'תמונות',
-  'active.photosHint': '— הקישו על תמונה כדי להפוך אותה לתמונת הנושא',
-  'active.place': 'מיקום',
-  'active.saveChanges': 'שמירת שינויים',
-  'active.saveLogEntry': 'שמירת רישום',
-  'active.seaState': 'מצב הים',
-  'active.skipper': 'רב חובל',
-  'active.temperature': 'טמפרטורה',
-  'active.title': 'רישום שיט פעיל',
-  'active.unitsHint': 'יחידות לרישום זה — ניתן להחליף בכל עת, זה לא משנה את ברירת המחדל שלכם',
-  'active.waveDir': 'כיוון הגלים',
-  'active.waveHeight': 'גובה הגלים',
-  'active.windDir': 'כיוון הרוח',
-  'active.windSpeed': 'מהירות הרוח',
-  'active.youSuffix': '(אתם)',
-  'banner.recordingBoat': 'מקליט — {boat}',
-  'banner.recordingJourney': 'מקליט שיט',
-  'banner.unsavedEdits': 'שינויים לא שמורים ברישום — הקישו לסיום',
-  'banner.unsavedPastSail': 'רישום מהעבר לא שמור — הקישו לסיום',
-  'boats.emptyHint': 'הוסיפו את כלי השיט שאתם מפליגים בהם כדי לעקוב אחר הצי שלכם.',
-  'boats.emptyTitle': 'עדיין אין כלי שיט',
-  'boats.sailsPlural': '{count} שיטים נרשמו',
-  'boats.sailsSingular': 'שיט אחד נרשם',
-  'boats.title': 'צי כלי השיט',
-  'cert.certifiesThat': 'מסמך זה מאשר כי',
-  'cert.defaultTitle': 'תעודת זמן ים',
-  'cert.generated': 'הופק בתאריך',
-  'cert.hasLogged': 'רשם/ה את זמן הים הבא',
-  'cert.printSave': 'הדפסה / שמירה כ-PDF',
-  'cert.sails': 'שיטים',
-  'cert.to': 'עד',
-  'common.avgShort': 'ממוצע',
-  'compass.E': 'מז',
-  'compass.N': 'צפ',
-  'compass.NE': 'צמ',
-  'compass.NW': 'צמע',
-  'compass.S': 'דר',
-  'compass.SE': 'דמ',
-  'compass.SW': 'דמע',
-  'compass.W': 'מע',
-  'confirm.alreadyRecordingNew': 'כבר יש לכם שיט בהקלטה. לחזור אליו? (התחלת שיט חדש תבטל את ההקלטה הנוכחית.)',
-  'confirm.alreadyRecordingPast': 'כבר יש לכם שיט בהקלטה. לחזור אליו? (התחלת רישום מהעבר תבטל את ההקלטה הנוכחית.)',
-  'confirm.clearProfile': 'למחוק את הפרופיל שלכם (שם, תפקיד, רישיון, פרטי קשר, ביוגרפיה, תמונה)? השיטים, כלי השיט והצוות שלכם לא ייפגעו.',
-  'confirm.deleteTrip': 'למחוק את השיט הזה לצמיתות?',
-  'confirm.discardEdits': 'לבטל את השינויים האלה? הרישום יישאר כפי שהיה. לא ניתן לבטל פעולה זו.',
-  'confirm.discardJourney': 'לבטל את השיט הזה? המעקב ייפסק ושום דבר לא יישמר. לא ניתן לבטל פעולה זו.',
-  'confirm.discardManual': 'לבטל את הרישום מהעבר הזה? שום דבר לא יישמר. לא ניתן לבטל פעולה זו.',
-  'confirm.endJourney': 'לסיים את השיט הזה ולשמור אותו ברישום שלכם?',
-  'confirm.removeBoat': 'להסיר את כלי השיט הזה מהצי שלכם?',
-  'confirm.removeCrew': 'להסיר את איש הצוות הזה?',
-  'confirm.restore': 'לשחזר את "{name}"? פעולה זו תחליף את כל השיטים, כלי השיט, הצוות והפרופיל הנוכחיים במכשיר זה. לא ניתן לבטל פעולה זו.',
-  'confirm.saveChanges': 'לשמור את השינויים ברישום הזה?',
-  'confirm.savePastSail': 'לשמור את השיט הזה מהעבר ברישום שלכם?',
-  'crew.emptyHint': 'הוסיפו חברים שמפליגים איתכם כדי לתייג אותם ברישומים שלכם.',
-  'crew.emptyTitle': 'עדיין לא נוסף צוות',
-  'default.sailorName': 'מלח',
-  'detail.duration': 'משך',
-  'detail.elapsed': 'חלף',
-  'detail.exportPdf': 'ייצוא כ-PDF A4',
-  'detail.fromDir': 'מ-',
-  'detail.gustsShort': 'משבים',
-  'detail.locked': 'נעול',
-  'detail.map': 'מפה',
-  'detail.shareCrewSocial': 'שיתוף עם צוות / רשתות חברתיות',
-  'detail.track': 'מסלול',
-  'detail.tripFallback': 'שיט',
-  'detail.unlocked': 'פתוח',
-  'detail.weather': 'מזג אוויר',
-  'gps.live': 'בזמן אמת',
-  'gps.noSignal': 'אין אות',
-  'gps.searching': 'מחפש…',
-  'gps.unavailable': 'לא זמין',
-  'greet.afternoon': 'צהריים טובים',
-  'greet.evening': 'ערב טוב',
-  'greet.morning': 'בוקר טוב',
-  'history.all': 'הכול',
-  'history.emptyHint': 'התחילו שיט חדש מהמסך הראשי כדי להתחיל את יומן הרישום שלכם.',
-  'history.emptyTitle': 'עדיין לא נרשמו שיטים',
-  'history.recent': 'אחרונים',
-  'history.searchPh': 'חיפוש ברישומים (למשל כלי שיט, מיקום, הערות)…',
-  'history.title': 'היסטוריית שיטים',
-  'history.withPhotos': 'עם תמונות',
-  'home.distanceLogged': 'מרחק שנרשם',
-  'home.fleet': 'צי',
-  'home.logPastSail': 'רישום שיט מהעבר',
-  'home.resume': 'קורות חיים',
-  'home.startJourney': 'התחלת שיט חדש',
-  'home.viewHistory': 'צפייה בהיסטוריה',
-  'map.gotPosition': 'קיבלנו את המיקום שלכם — מציירים את המסלול תוך כדי תנועה…',
-  'map.liveMap': 'מפה בזמן אמת',
-  'map.offlineTrack': 'מסלול לא מקוון (אין חיבור)',
-  'map.waitingGps': 'ממתין לאות GPS…',
-  'nav.crew': 'צוות',
-  'nav.history': 'היסטוריה',
-  'nav.home': 'בית',
-  'nav.settings': 'הגדרות',
-  'pdf.sailLogFallback': 'רישום שיט',
-  'ph.auto': 'אוטומטי',
-  'ph.egDistance': 'למשל 12.4',
-  'ph.egHours': 'למשל 3',
-  'ph.egMinutes': 'למשל 30',
-  'ph.egPlace': 'למשל מפרץ חיפה',
-  'ph.notes': 'תנאים, מה קרה, מה למדנו…',
-  'profile.backupHint': 'שמרו הכול לקובץ שתוכלו לשמור בענן (Drive, iCloud, אימייל) או להעביר לטלפון חדש.',
-  'profile.backupRestore': 'גיבוי ושחזור',
-  'profile.backupToFile': 'גיבוי לקובץ',
-  'profile.bio': 'ביוגרפיה',
-  'profile.bioPh': 'ספרו לצוות שלכם קצת על עצמכם ועל ההפלגות שלכם…',
-  'profile.boatsSailed': 'כלי שיט שהופלגו',
-  'profile.email': 'אימייל',
-  'profile.license': 'רישיון',
-  'profile.licensePh': 'למשל רב חובל ימי',
-  'profile.lifetimeStats': 'סטטיסטיקות כוללות',
-  'profile.name': 'שם',
-  'profile.namePh': 'השם שלכם',
-  'profile.phone': 'טלפון',
-  'profile.restoreFromFile': 'שחזור מקובץ',
-  'profile.role': 'תפקיד',
-  'profile.rolePh': 'למשל רב חובל',
-  'profile.save': 'שמירת פרופיל',
-  'profile.social': 'רשתות חברתיות / אתר',
-  'profile.title': 'פרופיל',
-  'resume.allTime': 'כל הזמנים',
-  'resume.custom': 'מותאם אישית',
-  'resume.emptyRange': 'עדיין אין שיטים בטווח הזה.',
-  'resume.from': 'מ-',
-  'resume.generateCert': 'יצירת תעודה',
-  'resume.includedSails': 'שיטים כלולים',
-  'resume.last30': '30 הימים האחרונים',
-  'resume.thisYear': 'השנה הנוכחית',
-  'resume.timeAtSea': 'זמן בים',
-  'resume.title': 'קורות חיים ימיים',
-  'resume.to': 'עד',
-  'resume.totalDistance': 'מרחק כולל',
-  'resume.totalSails': 'סך השיטים',
-  'sea.calm': 'שקט',
-  'sea.moderate': 'בינוני',
-  'sea.rough': 'סוער',
-  'sea.slight': 'קל',
-  'sea.veryRough': 'סוער מאוד',
-  'settings.appearance': 'מראה',
-  'settings.clearProfile': 'מחיקת פרופיל…',
-  'settings.dangerZone': 'אזור סכנה',
-  'settings.dayTheme': 'מצב יום',
-  'settings.language': 'שפה',
-  'settings.nightTheme': 'מצב לילה',
-  'settings.resetApp': 'איפוס נתוני האפליקציה…',
-  'settings.resetApp2': 'איפוס נתוני האפליקציה',
-  'settings.resetHint': 'מוחק לצמיתות כל שיט, כלי שיט, איש צוות ופרט פרופיל במכשיר זה. לא ניתן לבטל פעולה זו — גבו קודם אם ברצונכם לשמור משהו.',
-  'settings.themeHint': 'החלפה בין מצב יום למצב לילה',
-  'settings.title': 'הגדרות',
-  'settings.units': 'יחידות',
-  'settings.unitsHint': 'ברירת המחדל בכל האפליקציה — עדיין ניתן להחליף יחידות לרישום בודד תוך כדי שיט',
-  'share.tripSummary': '⛵ {title}\n{date}\n{distance} · {duration} · ממוצע {avgSpeed}\nנרשם עם Sail la Vie',
-  'sheet.addBoat': 'הוספת כלי שיט',
-  'sheet.addPhoto': 'הוספת תמונה',
-  'sheet.adjustCrop': 'התאמה / חיתוך התמונה הנבחרת',
-  'sheet.adjustPhoto': 'התאמת תמונה',
-  'sheet.adjustPhotoHint': 'גררו כדי למקם מחדש, השתמשו במחוון להגדלה.',
-  'sheet.boatName': 'שם',
-  'sheet.boatNamePh': 'למשל Windswept',
-  'sheet.boatNotesPh': 'מרינה ביתית, פרטי חבלה, מוזרויות…',
-  'sheet.boatPhotos': 'תמונות',
-  'sheet.boatPhotosHint': '— הקישו על אחת כדי להפוך אותה לברירת המחדל',
-  'sheet.boatType': 'סוג',
-  'sheet.boatTypePh': 'למשל Beneteau Oceanis 38',
-  'sheet.castOff': 'הפלגה',
-  'sheet.certDetails': 'פרטי התעודה',
-  'sheet.certTitle': 'כותרת התעודה',
-  'sheet.chooseBoatOpt': 'בחרו את כלי השיט שלכם…',
-  'sheet.coverPickHint': 'הקישו על תמונה כדי להשתמש בה כתמונת הנושא לרישום זה, או דלגו והיא תופיע בהיסטוריה שלכם בלעדיה.',
-  'sheet.coverPickTitle': 'להגדיר תמונת נושא?',
-  'sheet.crewEmailPh': 'למשל alex@email.com',
-  'sheet.crewNamePh': 'למשל אלכס',
-  'sheet.crewNotePh': 'איך אתם מכירים אותם, תפקיד על הסיפון…',
-  'sheet.crewSocialPh': 'למשל ‎@alex@‏ או instagram.com/alex',
-  'sheet.defaultBadge': 'ברירת מחדל',
-  'sheet.editBoat': 'עריכת כלי שיט',
-  'sheet.editCrew': 'עריכת איש צוות',
-  'sheet.eraseEverything': 'כן, למחוק הכול',
-  'sheet.generate': 'יצירה',
-  'sheet.gpsHint': 'ננסה להשתמש ב-GPS של המכשיר שלכם כדי לעקוב אחר המסלול, המהירות והמרחק בזמן אמת. אם GPS אינו זמין, תוכלו להזין את המרחק ידנית בסיום.',
-  'sheet.noBoatsOpt': 'עדיין אין כלי שיט — הוסיפו אחד מהצי',
-  'sheet.note': 'הערה',
-  'sheet.previewPdf': 'תצוגה מקדימה של PDF',
-  'sheet.previewPdfHint': 'כך זה ייראה בדיוק — עמוד A4 אחד, מוכן לשיתוף.',
-  'sheet.removeBoat': 'הסרת כלי שיט',
-  'sheet.resetConfirmHint': 'פעולה זו מוחקת לצמיתות את כל השיטים, כלי השיט, הצוות והפרופיל שלכם ממכשיר זה. לא ניתן לבטל פעולה זו.',
-  'sheet.sailorName': 'שם המלח',
-  'sheet.saveBoat': 'שמירת כלי שיט',
-  'sheet.setAsCover': 'הגדרה כתמונת נושא',
-  'sheet.sharePdf': 'שיתוף / שמירת PDF',
-  'sheet.skipNoCover': 'דילוג — ללא תמונת נושא',
-  'sheet.startJourneyTitle': 'התחלת שיט חדש',
-  'sheet.takeSelfie': 'צילום סלפי',
-  'sheet.usePhoto': 'שימוש בתמונה',
-  'sheet.whichBoat': 'איזה כלי שיט?',
-  'sheet.whichBoatHint': 'בחרו את כלי השיט שאתם יוצאים איתו — זה יישמר עם הרישום.',
-  'stat.avgSpeed': 'מהירות ממוצעת',
-  'stat.distance': 'מרחק',
-  'stat.gps': 'GPS',
-  'stat.maxSpeed': 'מהירות מרבית',
-  'toast.addPhotoFirst': 'הוסיפו תמונה קודם',
-  'toast.allDataErased': 'כל הנתונים נמחקו',
-  'toast.backupDownloaded': 'הגיבוי הורד',
-  'toast.backupReadFail': 'לא ניתן היה לקרוא את קובץ הגיבוי',
-  'toast.backupRestored': 'הגיבוי שוחזר ⚓',
-  'toast.boatSaved': 'כלי השיט נשמר',
-  'toast.changesSaved': 'השינויים נשמרו ⚓',
-  'toast.copiedSummary': 'תקציר השיט הועתק ללוח',
-  'toast.coverRemoved': 'תמונת הנושא הוסרה',
-  'toast.coverUpdated': 'תמונת הנושא עודכנה',
-  'toast.crewSaved': 'איש הצוות נשמר',
-  'toast.draftKept': 'הטיוטה נשמרה — הקישו על ההודעה לסיום',
-  'toast.editsKept': 'השינויים נשמרו — הקישו על ההודעה לסיום',
-  'toast.enterName': 'הזינו שם',
-  'toast.finishOrDiscardFirst': 'סיימו או בטלו את השיט/הרישום הנוכחי קודם',
-  'toast.giveBoatName': 'תנו שם לכלי השיט',
-  'toast.invalidBackup': 'זה לא נראה כמו קובץ גיבוי תקין',
-  'toast.journeySaved': 'השיט נשמר ⚓',
-  'toast.openTripFirst': 'פתחו שיט קודם',
-  'toast.pdfDownloaded': 'PDF בעמוד A4 אחד הורד',
-  'toast.pdfGenFail': 'לא ניתן היה ליצור את ה-PDF — נסו שוב',
-  'toast.pdfNeedsConnection': 'ייצוא PDF דורש חיבור בפעם הראשונה (טעינת ספרייה קטנה) — נסו שוב כשתהיו מחוברים.',
-  'toast.photoDownloaded': 'התמונה הורדה — שתפו אותה מהגלריה שלכם',
-  'toast.photoProcessFail': 'לא ניתן היה לעבד את התמונה הזו',
-  'toast.photoReadFail': 'לא ניתן היה לקרוא את התמונה הזו',
-  'toast.photoUpdated': 'התמונה עודכנה',
-  'toast.preparingPdf': 'מכין PDF בעמוד A4 אחד…',
-  'toast.profileCleared': 'הפרופיל נמחק',
-  'toast.profileSaved': 'הפרופיל נשמר',
-  'toast.saveFailed': 'השמירה נכשלה — השיט נשאר על המסך, נסו שוב',
-  'toast.stillRecording': 'עדיין מקליט — הקישו על ההודעה כדי לחזור',
-  'toast.tripDeleted': 'השיט נמחק',
-  'toast.tripLoadFail': 'לא ניתן היה לטעון את השיט הזה',
-  'toast.unitsMetric': 'יחידות ברירת מחדל: מטרי (קמ"ש, ק"מ)',
-  'toast.unitsNautical': 'יחידות ברירת מחדל: ימי (קשר, מייל ימי)',
-  'unit.hourAbbr': 'ש',
-  'unit.metric': 'מטרי (קמ"ש / ק"מ)',
-  'unit.minAbbr': 'ד',
-  'unit.nautical': 'ימי (קשר / מייל ימי)',
 }
 };
 
@@ -1841,7 +1543,6 @@ function applyStaticTranslations(){
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.getAttribute('data-i18n-ph')); });
   document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title = t(el.getAttribute('data-i18n-title')); });
   document.documentElement.lang = currentLang;
-  document.documentElement.dir = (currentLang==='he') ? 'rtl' : 'ltr';
   document.querySelectorAll('#languageChips .chip').forEach(el=>{ el.classList.toggle('active', el.getAttribute('data-lang')===currentLang); });
 }
 // Re-renders whichever dynamic screens/elements are currently live so a
@@ -3432,7 +3133,7 @@ function renderLiveTrack(){
   }
 
   if(!path || path.length<2){
-    el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:20px;font-size:12px;color:var(--ink-muted);">${path && path.length===1 ? t('map.gotPosition') : t('map.waitingGps')}</div>`;
+    el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:20px;font-size:12px;color:var(--ink-muted);">${path && path.length===1 ? 'Got your position — plotting the track as you move…' : 'Waiting for GPS signal…'}</div>`;
     return;
   }
   el.innerHTML = buildPortholeSvg(path, true, activeUnitSystem);
