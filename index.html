@@ -252,6 +252,16 @@
   .map-stats-overlay div{ text-align:center; flex:1; }
   .map-stats-overlay div b{ display:block; font-family:var(--font-display); font-weight:700; font-size:15px; color:#fff; }
   .map-stats-overlay div span{ font-size:8.5px; text-transform:uppercase; letter-spacing:.03em; color:rgba(255,255,255,.75); }
+  /* Read-only history map: dragging/zoom start OFF so a scroll gesture that
+     starts on the map keeps scrolling the page instead of panning the map.
+     This little pill lets someone explicitly opt in to pan/zoom the map itself. */
+  .map-lock-toggle{ position:absolute; bottom:10px; right:10px; z-index:6; display:flex; align-items:center; gap:5px;
+    background:rgba(20,43,68,.82); color:#fff; border-radius:999px; padding:7px 12px 7px 9px; font-size:11px; font-weight:600;
+    cursor:pointer; box-shadow:var(--shadow); }
+  .map-lock-toggle svg{ width:13px; height:13px; flex:0 0 auto; }
+  .map-lock-toggle.unlocked{ background:var(--navy-soft); }
+  /* Leaflet divIcons default to a white box + border — strip that so only our SVG shows. */
+  .yacht-marker-icon{ background:transparent; border:none; }
 
   /* ---------- list rows (boats/crew) ---------- */
   .row-card{ display:flex; align-items:center; gap:14px; background:var(--bg-elevated); border:1px solid var(--border);
@@ -309,7 +319,8 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-sheet h1{ font-family:var(--font-display); font-size:22px; margin:0 0 3px; }
 .pdf-sheet .pdf-sub{ font-size:10.5px; color:#555; margin-bottom:10px; }
 .pdf-top-row{ display:flex; gap:14px; margin-bottom:10px; align-items:flex-start; }
-.pdf-sheet .pdf-cover{ width:270px; height:auto; max-height:190px; object-fit:contain; object-position:center; border-radius:7px; flex:0 0 270px; display:block; }
+.pdf-sheet .pdf-cover-cell{ width:270px; height:190px; border-radius:7px; flex:0 0 270px; overflow:hidden; display:block; }
+.pdf-sheet .pdf-cover-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
 .pdf-top-right{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; }
 .pdf-stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:9px; }
 .pdf-stats-grid div{ border:1px solid #ddd; border-radius:6px; padding:7px 4px; text-align:center; min-width:0; }
@@ -323,7 +334,12 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-crew-chip{ display:flex; align-items:center; gap:6px; padding:4px 9px 4px 4px; border:1px solid #ddd; border-radius:999px; background:#f5f7f8; font-size:9.5px; font-weight:600; color:#444; }
 .pdf-crew-chip img{ width:24px; height:24px; border-radius:50%; object-fit:cover; display:block; background:#e3ebf0; flex:0 0 24px; }
 .pdf-photos-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-top:5px; align-items:start; }
-.pdf-photos-grid img{ width:100%; height:auto; max-height:145px; object-fit:contain; object-position:center; border-radius:6px; display:block; }
+/* Fixed-size cells (not width:100%/height:auto/max-height on the <img> itself) —
+   that combo is ambiguous replaced-element sizing that html2canvas rasterizes
+   inconsistently (see generateAndShareTripPdf notes). A cell with an explicit
+   height and object-fit:cover on the img gives every renderer the same box. */
+.pdf-photos-grid .pdf-photo-cell{ width:100%; height:145px; border-radius:6px; overflow:hidden; display:block; background:#f0f0f0; }
+.pdf-photos-grid .pdf-photo-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
 .pdf-foot{ margin-top:10px; font-size:8.5px; color:#999; text-align:center; }
 .lightbox{ position:fixed; inset:0; background:rgba(10,20,30,.95); z-index:2000; display:none; align-items:center; justify-content:center; flex-direction:column; padding:20px; }
 .lightbox.show{ display:flex; }
@@ -457,6 +473,11 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
         <label id="pastDistanceLabel">Distance (NM)</label>
         <input type="number" step="0.1" min="0" id="pastDistance" placeholder="e.g. 12.4">
       </div>
+      <div class="two-col">
+        <div class="field"><label id="pastAvgSpeedLabel">Avg Speed (kts)</label><input type="number" min="0" step="0.1" id="pastAvgSpeed" placeholder="auto"></div>
+        <div class="field"><label id="pastMaxSpeedLabel">Max Speed (kts)</label><input type="number" min="0" step="0.1" id="pastMaxSpeed" placeholder="auto"></div>
+      </div>
+      <p style="font-size:11.5px;margin:-10px 0 4px;">Optional — leave blank and these are worked out from distance ÷ duration.</p>
       <div class="field">
         <label>Map Image <span style="text-transform:none;font-weight:500;">— optional, no GPS track for a past entry, so add a screenshot or photo of a chart if you have one</span></label>
         <div id="mapImagePreviewWrap" style="display:none;position:relative;margin-bottom:8px;">
@@ -1477,12 +1498,14 @@ function updateGustsLabel(){
 function toggleLogUnitSystem(){
   const from = activeUnitSystem;
   const to = from==='metric' ? 'nautical' : 'metric';
-  ['manualDistance','pastDistance'].forEach(id=>{
+  // NM<->km and kts<->km/h share the same 1.852 factor, so distance and speed
+  // fields can all run through the same conversion loop.
+  ['manualDistance','pastDistance','pastAvgSpeed','pastMaxSpeed'].forEach(id=>{
     const el = document.getElementById(id);
     const v = parseFloat(el.value);
     if(!isNaN(v)){
-      const nm = from==='metric' ? v/NM_TO_KM : v;
-      el.value = (to==='metric' ? nm*NM_TO_KM : nm).toFixed(1);
+      const canonical = from==='metric' ? v/NM_TO_KM : v;
+      el.value = (to==='metric' ? canonical*NM_TO_KM : canonical).toFixed(1);
     }
   });
   activeUnitSystem = to;
@@ -1513,6 +1536,8 @@ function refreshLogUnitsUI(){
   document.getElementById('logUnitsLabelPast').textContent = label;
   document.getElementById('manualDistanceLabel').textContent = `Distance covered — ${distUnitLabel(sys)} (manual entry, GPS unavailable)`;
   document.getElementById('pastDistanceLabel').textContent = `Distance (${distUnitLabel(sys)})`;
+  document.getElementById('pastAvgSpeedLabel').textContent = `Avg Speed (${speedUnitLabel(sys)})`;
+  document.getElementById('pastMaxSpeedLabel').textContent = `Max Speed (${speedUnitLabel(sys)})`;
   updateWindSpeedLabel();
   updateGustsLabel();
   updateLiveStatDisplays();
@@ -1664,6 +1689,8 @@ function editTrip(){
   document.getElementById('pastMinutes').value = totalMin%60;
   const distNm = trip.distanceNm || 0;
   document.getElementById('pastDistance').value = (activeUnitSystem==='metric' ? distNm*NM_TO_KM : distNm).toFixed(1);
+  document.getElementById('pastAvgSpeed').value = fmtSpeed(trip.avgSpeed||0, activeUnitSystem).split(' ')[0];
+  document.getElementById('pastMaxSpeed').value = fmtSpeed(trip.maxSpeed||0, activeUnitSystem).split(' ')[0];
   if(trip.mapImage){
     document.getElementById('mapImagePreview').src = trip.mapImage;
     document.getElementById('mapImagePreviewWrap').style.display = 'block';
@@ -1708,6 +1735,8 @@ function beginManualJourney(){
   document.getElementById('pastHours').value = '';
   document.getElementById('pastMinutes').value = '';
   document.getElementById('pastDistance').value = '';
+  document.getElementById('pastAvgSpeed').value = '';
+  document.getElementById('pastMaxSpeed').value = '';
 }
 /* ---- live GPS: runs every second (timer) / on every position fix (GPS watch) ---- */
 function tickTimer(){
@@ -1862,8 +1891,13 @@ async function endJourney(){
     currentTrip.elapsedSeconds = Math.round(hrs*3600 + mins*60);
     currentTrip.distanceNm = dist;
     const h = currentTrip.elapsedSeconds/3600;
-    currentTrip.avgSpeed = h>0 ? dist/h : 0;
-    currentTrip.maxSpeed = currentTrip.avgSpeed;
+    const autoAvg = h>0 ? dist/h : 0;
+    // Avg/Max Speed default to the distance÷duration estimate, but a typed
+    // value in either field (e.g. from a boat's own instruments) always wins.
+    const avgInput = parseFloat(document.getElementById('pastAvgSpeed').value);
+    const maxInput = parseFloat(document.getElementById('pastMaxSpeed').value);
+    currentTrip.avgSpeed = !isNaN(avgInput) ? (activeUnitSystem==='metric' ? avgInput/KT_TO_KMH : avgInput) : autoAvg;
+    currentTrip.maxSpeed = !isNaN(maxInput) ? (activeUnitSystem==='metric' ? maxInput/KT_TO_KMH : maxInput) : currentTrip.avgSpeed;
     currentTrip.date = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
   } else {
     stopGPS();
@@ -2109,6 +2143,7 @@ async function openTripDetail(id){
 async function renderTripDetailMap(trip){
   const area = document.getElementById('detailMapArea');
   if(!area) return; // navigated away before this finished loading
+  detailLeafletMap = null; detailMapLocked = true; // fresh state per trip — rebuilt below if this trip has a GPS track
 
   if(trip.path && trip.path.length>1){
     area.innerHTML = `
@@ -2121,6 +2156,10 @@ async function renderTripDetailMap(trip){
           <div><b>${fmtSpeed(trip.avgSpeed||0)}</b><span>Avg Speed</span></div>
           <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>Duration</span></div>
         </div>
+        <div class="map-lock-toggle" id="detailMapLockToggle" style="display:none;" onclick="toggleDetailMapLock()">
+          <svg id="detailMapLockIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          <span id="detailMapLockLabel">Locked</span>
+        </div>
       </div>
       <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:4px;">${portholeCoordsCaption(trip.path)}</div>`;
 
@@ -2132,7 +2171,15 @@ async function renderTripDetailMap(trip){
       document.getElementById('detailLeaflet').style.display='block';
       document.getElementById('detailPorthole').style.display='none';
       document.getElementById('detailMapStatsOverlay').style.display='flex';
-      const map = L.map('detailLeaflet', {attributionControl:true});
+      // Starts fully non-interactive: this is a read-only history view (there's
+      // nothing here to edit), so a touch that lands on the map should keep
+      // scrolling the page, not pan the map out from under it. The lock pill
+      // (bottom-right) lets someone explicitly opt in to pan/zoom it.
+      const map = L.map('detailLeaflet', {
+        attributionControl:true,
+        dragging:false, touchZoom:false, scrollWheelZoom:false,
+        doubleClickZoom:false, boxZoom:false, keyboard:false, tap:false
+      });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom:19, attribution:'© OpenStreetMap contributors'
       }).addTo(map);
@@ -2142,6 +2189,10 @@ async function renderTripDetailMap(trip){
       L.circleMarker(latlngs[latlngs.length-1], {radius:6, color:'#fff', weight:2, fillColor:'#D65A4A', fillOpacity:1}).addTo(map);
       map.fitBounds(poly.getBounds(), {padding:[24,24]});
       setTimeout(()=>map.invalidateSize(), 50);
+      detailLeafletMap = map;
+      detailMapLocked = true;
+      const toggle = document.getElementById('detailMapLockToggle');
+      if(toggle) toggle.style.display = 'flex';
     } else {
       document.getElementById('detailPorthole').innerHTML = buildPortholeSvg(trip.path, false, appUnitSystem());
     }
@@ -2157,6 +2208,27 @@ async function renderTripDetailMap(trip){
         </div>
       </div>`;
   }
+}
+let detailLeafletMap = null, detailMapLocked = true;
+// Flips the read-only history map between "locked" (page scroll wins, map
+// ignores touches) and "unlocked" (map handles its own pan/zoom) — see the
+// dragging:false etc. set when the map is first created above.
+function toggleDetailMapLock(){
+  if(!detailLeafletMap) return;
+  detailMapLocked = !detailMapLocked;
+  const handlers = ['dragging','touchZoom','scrollWheelZoom','doubleClickZoom','boxZoom','keyboard'];
+  handlers.forEach(h=>{
+    if(!detailLeafletMap[h]) return;
+    detailMapLocked ? detailLeafletMap[h].disable() : detailLeafletMap[h].enable();
+  });
+  const toggle = document.getElementById('detailMapLockToggle');
+  const icon = document.getElementById('detailMapLockIcon');
+  const label = document.getElementById('detailMapLockLabel');
+  if(toggle) toggle.classList.toggle('unlocked', !detailMapLocked);
+  if(label) label.textContent = detailMapLocked ? 'Locked' : 'Unlocked';
+  if(icon) icon.innerHTML = detailMapLocked
+    ? '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'
+    : '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-1"/>';
 }
 // Draws the little circular "porthole" track map — an abstract line drawing
 // scaled to fit the path's own bounding box, NOT a real map (no coastline/
@@ -2183,6 +2255,29 @@ function niceScaleValue(maxVal){
 let liveLeafletMap=null, liveLeafletPolyline=null, liveLeafletMarker=null;
 let liveMapIsOnline = false;
 let liveConnCheckInterval = null;
+let liveMarkerHeading = 0; // degrees, last known — kept steady between fixes when the boat's barely moving
+
+// Small top-down sailboat glyph used as the live-tracking marker (bow = 0°/north,
+// rotated to the boat's heading between GPS fixes). Built as a divIcon so plain
+// CSS transform:rotate can turn it, instead of juggling separate rotated PNGs.
+function yachtDivIcon(headingDeg){
+  return L.divIcon({
+    className: 'yacht-marker-icon',
+    html: `<div style="width:100%;height:100%;transform:rotate(${headingDeg}deg);transition:transform .4s ease;">
+      <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 1.5 L15.5 12 L12 10 L8.5 12 Z" fill="#F4E7C9" stroke="#16324F" stroke-width="1"/><path d="M12 10 L12 21" stroke="#16324F" stroke-width="1.6" stroke-linecap="round"/><path d="M7 20.5 L17 20.5 L14.5 23 L9.5 23 Z" fill="#D65A4A" stroke="#16324F" stroke-width="1"/></svg>
+    </div>`,
+    iconSize: [26,26],
+    iconAnchor: [13,13]
+  });
+}
+// Great-circle initial bearing from a to b, in compass degrees (0=N, 90=E).
+function bearingDeg(a,b){
+  const toRad = d=>d*Math.PI/180, toDeg = r=>r*180/Math.PI;
+  const lat1=toRad(a.lat), lat2=toRad(b.lat), dLon=toRad(b.lng-a.lng);
+  const y = Math.sin(dLon)*Math.cos(lat2);
+  const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+  return (toDeg(Math.atan2(y,x))+360)%360;
+}
 
 // The actual test: try to load one real map tile. This checks the exact thing
 // we need (can we draw a live map right now) rather than a generic "online"
@@ -2207,7 +2302,8 @@ function initLiveLeafletMap(){
     maxZoom:19, attribution:'© OpenStreetMap contributors'
   }).addTo(liveLeafletMap);
   liveLeafletPolyline = L.polyline([], {color:'#16324F', weight:3}).addTo(liveLeafletMap);
-  liveLeafletMarker = L.circleMarker([0,0], {radius:7, color:'#fff', weight:2, fillColor:'#D65A4A', fillOpacity:1}).addTo(liveLeafletMap);
+  liveMarkerHeading = 0;
+  liveLeafletMarker = L.marker([0,0], {icon: yachtDivIcon(liveMarkerHeading)}).addTo(liveLeafletMap);
   liveLeafletMap.setView([0,0], 14);
 }
 function updateLiveLeafletTrack(path){
@@ -2215,6 +2311,15 @@ function updateLiveLeafletTrack(path){
   const latlngs = path.map(p=>[p.lat,p.lng]);
   liveLeafletPolyline.setLatLngs(latlngs);
   const last = latlngs[latlngs.length-1];
+  // Only re-point the boat once it's actually moved a meaningful amount —
+  // otherwise GPS jitter while sitting still spins the icon back and forth.
+  if(path.length>1){
+    const prev = path[path.length-2], curr = path[path.length-1];
+    if(haversineNm(prev,curr) > 0.005){ // ~9m
+      liveMarkerHeading = bearingDeg(prev,curr);
+      liveLeafletMarker.setIcon(yachtDivIcon(liveMarkerHeading));
+    }
+  }
   liveLeafletMarker.setLatLng(last);
   liveLeafletMap.setView(last, Math.max(liveLeafletMap.getZoom(), 15));
 }
@@ -2732,7 +2837,7 @@ function buildTripPdfHtml(trip){
     <div class="pdf-sub">${dateStr} · ${timeStr}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</div>
 
     <div class="pdf-top-row">
-      ${trip.coverPhoto ? `<img class="pdf-cover" src="${trip.coverPhoto}">` : ''}
+      ${trip.coverPhoto ? `<div class="pdf-cover-cell"><img src="${trip.coverPhoto}"></div>` : ''}
       <div class="pdf-top-right">
         <div class="pdf-stats-grid">
           <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>Elapsed</span></div>
@@ -2752,10 +2857,28 @@ function buildTripPdfHtml(trip){
 
     ${tripCrew.length ? `<div class="pdf-section-title">Crew</div><div class="pdf-crew-grid">${tripCrew.map(c=>`<div class="pdf-crew-chip"><img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
 
-    ${photos.length ? `<div class="pdf-section-title">Photos</div><div class="pdf-photos-grid">${photos.map(p=>`<img src="${p}">`).join('')}</div>` : ''}
+    ${photos.length ? `<div class="pdf-section-title">Photos</div><div class="pdf-photos-grid">${photos.map(p=>`<div class="pdf-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
 
     <div class="pdf-foot">Sail la Vie Logbook · Generated ${new Date().toLocaleDateString()}</div>
   </div>`;
+}
+// Waits for every <img> inside a container to finish loading AND decoding
+// before we measure or rasterize it. Without this, html2canvas can snapshot
+// mid-load images at the wrong size (or blank), which is what produced the
+// inconsistent photo sizes people saw after the PDF was re-opened/re-rendered
+// by WhatsApp's own preview — the capture, not the sharing step, was the bug.
+function waitForImagesToLoad(container){
+  const imgs = Array.from(container.querySelectorAll('img'));
+  return Promise.all(imgs.map(img=>{
+    if(img.complete && img.naturalWidth>0){
+      return img.decode ? img.decode().catch(()=>{}) : Promise.resolve();
+    }
+    return new Promise(resolve=>{
+      const done = ()=>{ img.removeEventListener('load',done); img.removeEventListener('error',done); resolve(); };
+      img.addEventListener('load',done);
+      img.addEventListener('error',done);
+    }).then(()=> img.decode ? img.decode().catch(()=>{}) : Promise.resolve());
+  }));
 }
 // Renders the preview sheet at true A4 proportions (794px ≈ 210mm at 96dpi),
 // then scales it down to fit the sheet's width — an accurate shrink-to-fit
@@ -2770,6 +2893,7 @@ function openTripPdfPreview(){
   inner.style.transform = 'none';
   inner.style.width = '794px';
   openSheet('sheetPdfPreview');
+  waitForImagesToLoad(inner).then(()=>{
   requestAnimationFrame(()=>{
     const wrap = document.getElementById('pdfPreviewScaleWrap');
     const naturalHeight = inner.scrollHeight;
@@ -2783,6 +2907,7 @@ function openTripPdfPreview(){
     inner.style.transformOrigin = 'top left';
     inner.style.transform = `scale(${scale})`;
     wrap.style.height = Math.ceil(naturalHeight * scale + margin * 2) + 'px';
+  });
   });
 }
 
@@ -2810,7 +2935,11 @@ async function generateAndShareTripPdf(){
     inner.style.height = 'auto';
     inner.style.overflow = 'visible';
 
-    // Allow fonts/images and layout to settle before measuring/capturing.
+    // Wait for every photo to actually finish loading/decoding, then let
+    // fonts/layout settle before measuring/capturing. Racing html2canvas
+    // against still-loading images was the root cause of photos coming out
+    // the wrong/inconsistent size in the shared PDF.
+    await waitForImagesToLoad(inner);
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
     const canvas = await html2canvas(inner, {
