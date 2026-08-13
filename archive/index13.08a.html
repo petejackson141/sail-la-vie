@@ -549,12 +549,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     </div>
 
     <div class="field">
-      <label>Skipper</label>
-      <div class="crew-chip-row" id="skipperChipRow"></div>
-      <button class="btn btn-outline" style="margin-top:8px;" onclick="openSelectSkipperSheet()">Choose Skipper</button>
-    </div>
-
-    <div class="field">
       <label>Crew Aboard</label>
       <div class="crew-chip-row" id="addedCrewRow"></div>
       <button class="btn btn-outline" style="margin-top:8px;" onclick="openSelectCrewSheet()">+ Add Crew</button>
@@ -882,13 +876,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     <div id="crewPickList"></div>
     <div class="link-plain" style="margin:12px 0 4px;" onclick="startAddCrewFromPicker()">+ Add New Crew Member</div>
     <button class="btn btn-primary" style="margin-top:10px;" onclick="confirmCrewPick()">Done</button>
-  </div>
-
-  <div class="sheet" id="sheetSelectSkipper" style="display:none;">
-    <div class="sheet-handle"></div>
-    <h3>Choose Skipper</h3>
-    <div id="skipperPickList"></div>
-    <button class="btn btn-ghost" style="margin-top:10px;" onclick="clearSkipperPick()">No Skipper</button>
   </div>
 
   <div class="sheet" id="sheetPhotoAdjust" style="display:none;">
@@ -1603,47 +1590,6 @@ function startAddCrewFromPicker(){
   openCrewSheet();
 }
 
-/* ---- skipper picker: single-select from the crew roster, shown on this
-   same shared screen for both live and manual/edit entries ---- */
-function renderSkipperChip(){
-  const row = document.getElementById('skipperChipRow');
-  const skipper = currentTrip?.skipperId ? state.crew.find(c=>c.id===currentTrip.skipperId) : null;
-  if(!skipper){ row.innerHTML = `<p style="font-size:12.5px;">No skipper set — tap "Choose Skipper" below.</p>`; return; }
-  row.innerHTML = `
-    <div class="crew-chip active">
-      <img src="${skipper.photo||placeholderAvatar()}"><span>${escapeHtml(skipper.name)}</span>
-      <div class="rm" onclick="clearSkipper()">✕</div>
-    </div>`;
-}
-function clearSkipper(){
-  currentTrip.skipperId = null;
-  renderSkipperChip();
-}
-function openSelectSkipperSheet(){
-  renderSkipperPickList();
-  openSheet('sheetSelectSkipper');
-}
-function renderSkipperPickList(){
-  const el = document.getElementById('skipperPickList');
-  if(!state.crew.length){ el.innerHTML = `<p style="font-size:12.5px;">No crew saved yet — add one from the Crew tab first.</p>`; return; }
-  el.innerHTML = [...state.crew].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`
-    <div class="crew-pick-row${currentTrip.skipperId===c.id?' selected':''}" data-id="${c.id}" onclick="selectSkipper('${c.id}')">
-      <img src="${c.photo||placeholderAvatar()}">
-      <div class="name">${escapeHtml(c.name)}</div>
-      <div class="crew-pick-check"></div>
-    </div>`).join('');
-}
-function selectSkipper(id){
-  currentTrip.skipperId = id;
-  closeSheets();
-  renderSkipperChip();
-}
-function clearSkipperPick(){
-  currentTrip.skipperId = null;
-  closeSheets();
-  renderSkipperChip();
-}
-
 // Shared field-reset used by both a fresh live journey and a fresh manual entry
 // (NOT used by editTrip, which pre-fills from the existing trip instead).
 function resetActiveFormFields(){
@@ -1657,7 +1603,6 @@ function resetActiveFormFields(){
   document.getElementById('tripNotes').value = '';
   document.getElementById('mapImagePreviewWrap').style.display = 'none';
   document.getElementById('mapImagePreview').src = '';
-  renderSkipperChip();
   renderAddedCrewChips();
 }
 // MODE 1: live GPS journey. Creates a fresh currentTrip, starts the timer and
@@ -1675,7 +1620,7 @@ function beginJourney(){
     avgSpeed: 0,
     maxSpeed: 0,
     path: [],
-    weather: {}, place:'', notes:'', skipperId: null, crewIds: [], photos: [], coverPhoto: null, mapImage: null
+    weather: {}, place:'', notes:'', crewIds: [], photos: [], coverPhoto: null, mapImage: null
   };
   activeUnitSystem = appUnitSystem();
   closeSheets();
@@ -1751,7 +1696,6 @@ function editTrip(){
     document.getElementById('mapImagePreviewWrap').style.display = 'block';
   }
 
-  renderSkipperChip();
   renderAddedCrewChips();
   renderActivePhotoStrip();
 }
@@ -1775,7 +1719,7 @@ function beginManualJourney(){
     avgSpeed: 0,
     maxSpeed: 0,
     path: [],
-    weather: {}, place:'', notes:'', skipperId: null, crewIds: [], photos: [], coverPhoto: null, mapImage: null
+    weather: {}, place:'', notes:'', crewIds: [], photos: [], coverPhoto: null, mapImage: null
   };
   activeUnitSystem = appUnitSystem();
   nav('active');
@@ -2055,8 +1999,7 @@ async function finalizeSaveTrip(){
     elapsedSeconds: currentTrip.elapsedSeconds, distanceNm: currentTrip.distanceNm,
     avgSpeed: currentTrip.avgSpeed, maxSpeed: currentTrip.maxSpeed,
     coverPhoto: currentTrip.coverPhoto, hasPhotos: currentTrip.photos.length>0,
-    boatId: currentTrip.boatId, notes: currentTrip.notes, place: currentTrip.place,
-    skipperId: currentTrip.skipperId||null
+    boatId: currentTrip.boatId, notes: currentTrip.notes, place: currentTrip.place
   };
   if(currentTrip.isEditing){
     const idx = state.tripIndex.findIndex(t=>t.id===currentTrip.id);
@@ -2090,10 +2033,6 @@ function renderHistory(){
     if(historyFilter==='photos' && !t.hasPhotos) return false;
     return true;
   });
-  // Order by the date of the sail itself (most recent first), not by
-  // insertion order — state.tripIndex is unshift-ordered by when the entry
-  // was saved, which drifts from sail date for manual/back-logged entries.
-  list = list.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
   const el = document.getElementById('historyList');
   if(!list.length){
     el.innerHTML = `<div class="empty">
@@ -2144,7 +2083,6 @@ async function openTripDetail(id){
   document.getElementById('detailTitle').textContent = trip.title||'Trip';
   const tripCrew = (trip.crewIds||[]).map(cid=>state.crew.find(x=>x.id===cid)).filter(Boolean);
   const crewNames = tripCrew.map(c=>c.name); // still used by shareTrip()'s plain-text summary
-  const tripSkipper = trip.skipperId ? state.crew.find(x=>x.id===trip.skipperId) : null;
   const d = new Date(trip.date);
 
   document.getElementById('detailBody').innerHTML = `
@@ -2178,9 +2116,6 @@ async function openTripDetail(id){
     </div>
 
     ${trip.notes ? `<div class="section-title">Notes</div><div class="card" style="padding:16px;"><p style="color:var(--ink);">${escapeHtml(trip.notes)}</p></div>` : ''}
-
-    ${tripSkipper ? `<div class="section-title">Skipper</div><div class="crew-chip-row">
-      <div class="crew-chip active"><img src="${tripSkipper.photo||placeholderAvatar()}"><span>${escapeHtml(tripSkipper.name)}</span></div></div>` : ''}
 
     ${tripCrew.length ? `<div class="section-title">Crew</div><div class="crew-chip-row">${tripCrew.map(c=>`
       <div class="crew-chip active"><img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
