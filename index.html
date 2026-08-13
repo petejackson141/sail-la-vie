@@ -1603,11 +1603,18 @@ function startAddCrewFromPicker(){
   openCrewSheet();
 }
 
-/* ---- skipper picker: single-select from the crew roster, shown on this
-   same shared screen for both live and manual/edit entries ---- */
+/* ---- skipper picker: single-select from the crew roster (plus the app's
+   own profile, since the person logging the sail is often the skipper too),
+   shown on this same shared screen for both live and manual/edit entries ---- */
+const SKIPPER_SELF_ID = 'self'; // sentinel id for "me" (state.profile), distinct from any crew uid()
+function skipperById(id){
+  if(!id) return null;
+  if(id===SKIPPER_SELF_ID) return { name: state.profile.name||'Sailor', photo: state.profile.avatar||'' };
+  return state.crew.find(c=>c.id===id) || null;
+}
 function renderSkipperChip(){
   const row = document.getElementById('skipperChipRow');
-  const skipper = currentTrip?.skipperId ? state.crew.find(c=>c.id===currentTrip.skipperId) : null;
+  const skipper = currentTrip?.skipperId ? skipperById(currentTrip.skipperId) : null;
   if(!skipper){ row.innerHTML = `<p style="font-size:12.5px;">No skipper set — tap "Choose Skipper" below.</p>`; return; }
   row.innerHTML = `
     <div class="crew-chip active">
@@ -1625,13 +1632,19 @@ function openSelectSkipperSheet(){
 }
 function renderSkipperPickList(){
   const el = document.getElementById('skipperPickList');
-  if(!state.crew.length){ el.innerHTML = `<p style="font-size:12.5px;">No crew saved yet — add one from the Crew tab first.</p>`; return; }
-  el.innerHTML = [...state.crew].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`
+  const selfRow = `
+    <div class="crew-pick-row${currentTrip.skipperId===SKIPPER_SELF_ID?' selected':''}" data-id="${SKIPPER_SELF_ID}" onclick="selectSkipper('${SKIPPER_SELF_ID}')">
+      <img src="${state.profile.avatar||placeholderAvatar()}">
+      <div class="name">${escapeHtml(state.profile.name||'Sailor')} (You)</div>
+      <div class="crew-pick-check"></div>
+    </div>`;
+  const crewRows = [...state.crew].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`
     <div class="crew-pick-row${currentTrip.skipperId===c.id?' selected':''}" data-id="${c.id}" onclick="selectSkipper('${c.id}')">
       <img src="${c.photo||placeholderAvatar()}">
       <div class="name">${escapeHtml(c.name)}</div>
       <div class="crew-pick-check"></div>
     </div>`).join('');
+  el.innerHTML = selfRow + crewRows;
 }
 function selectSkipper(id){
   currentTrip.skipperId = id;
@@ -2144,7 +2157,7 @@ async function openTripDetail(id){
   document.getElementById('detailTitle').textContent = trip.title||'Trip';
   const tripCrew = (trip.crewIds||[]).map(cid=>state.crew.find(x=>x.id===cid)).filter(Boolean);
   const crewNames = tripCrew.map(c=>c.name); // still used by shareTrip()'s plain-text summary
-  const tripSkipper = trip.skipperId ? state.crew.find(x=>x.id===trip.skipperId) : null;
+  const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
   const d = new Date(trip.date);
 
   document.getElementById('detailBody').innerHTML = `
