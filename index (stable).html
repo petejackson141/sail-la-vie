@@ -370,7 +370,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
         <img class="avatar" id="homeAvatar" src="" alt="">
         <div><div class="eyebrow" id="homeGreeting">Ahoy</div><div style="font-weight:700;" id="homeName">Sailor</div></div>
       </div>
-      <div class="iconbtn" onclick="nav('settings')" title="Settings" data-i18n-title="nav.settings">
+      <div class="iconbtn" onclick="nav('settings')" title="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
       </div>
     </div>
@@ -383,30 +383,32 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 
     <button class="btn btn-primary" onclick="openStartJourneySheet()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18l9-15 9 15z"/><path d="M12 3v13"/></svg>
-      <span data-i18n="home.startJourney">Start New Journey</span>
+      Start New Journey
+      
     </button>
     <div style="height:12px;"></div>
     <button class="btn btn-outline" onclick="beginManualJourney()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3h8l3 4v14H5V7z"/><path d="M8 3v4H5"/><path d="M9 13h6M9 17h6"/></svg>
-      <span data-i18n="home.logPastSail">Log a Past Sail</span>
+      Log a Past Sail
     </button>
     <div style="height:12px;"></div>
     <button class="btn btn-outline" onclick="nav('history')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
-      <span data-i18n="home.viewHistory">View History</span>
+      View History
+
     </button>
           <div class="quicklinks">
       <div class="quicklink" onclick="nav('boats')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 16l1.5 4h15L21 16"/><path d="M5 16l1-9h12l1 9"/><path d="M12 3v4"/></svg>
-        <span data-i18n="home.fleet">Fleet</span>
+        <span>Fleet</span>
       </div>
       <div class="quicklink" onclick="nav('crew')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.6.4 4.5 2.4 4.5 5.3"/></svg>
-        <span data-i18n="nav.crew">Crew</span>
+        <span>Crew</span>
       </div>
       <div class="quicklink" onclick="nav('resume')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3h8l3 4v14H5V7z"/><path d="M8 3v4H5"/><path d="M9 13h6M9 17h6"/></svg>
-        <span data-i18n="home.resume">Resume</span>
+        <span>Resume</span>
       </div>
     </div>
 
@@ -417,34 +419,34 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   <section class="screen" id="screen-active">
     <div class="backrow">
       <div class="iconbtn" onclick="confirmLeaveActive()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
-      <h2 data-i18n="active.title">Active Journey Log</h2>
-      <div class="iconbtn" onclick="discardJourney()" title="Discard journey" data-i18n-title="active.discardTitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
+      <h2>Active Journey Log</h2>
+      <div class="iconbtn" onclick="discardJourney()" title="Discard journey"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
     </div>
 
     <div id="liveStatsBlock">
       <div class="stat-card" style="text-align:center;">
-        <div class="stat-label" data-i18n="active.elapsedTime">Elapsed Time</div>
+        <div class="stat-label">Elapsed Time</div>
         <div style="font-family:var(--font-display);font-size:42px;font-weight:700;color:var(--navy);letter-spacing:.02em;" id="elapsedDisplay">00:00:00</div>
       </div>
 
       <div class="stat-card stat-grid" style="margin-top:14px;">
-        <div class="cell"><div class="stat-label" data-i18n="stat.avgSpeed">Avg Speed</div><div class="stat-value" id="avgSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
-        <div class="cell"><div class="stat-label" data-i18n="stat.maxSpeed">Max Speed</div><div class="stat-value" id="maxSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
-        <div class="cell" style="margin-top:14px;"><div class="stat-label" data-i18n="stat.distance">Distance</div><div class="stat-value" id="distDisplay">0.0<span class="stat-unit"> NM</span></div></div>
-        <div class="cell" style="margin-top:14px;"><div class="stat-label" data-i18n="stat.gps">GPS</div><div class="stat-value" id="gpsStatus" style="font-size:15px;">—</div></div>
+        <div class="cell"><div class="stat-label">Avg Speed</div><div class="stat-value" id="avgSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
+        <div class="cell"><div class="stat-label">Max Speed</div><div class="stat-value" id="maxSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
+        <div class="cell" style="margin-top:14px;"><div class="stat-label">Distance</div><div class="stat-value" id="distDisplay">0.0<span class="stat-unit"> NM</span></div></div>
+        <div class="cell" style="margin-top:14px;"><div class="stat-label">GPS</div><div class="stat-value" id="gpsStatus" style="font-size:15px;">—</div></div>
       </div>
 
       <div class="theme-toggle" style="margin-top:12px;">
         <div>
           <div style="font-weight:600;font-size:14px;" id="logUnitsLabelLive">Nautical (kts / NM)</div>
-          <p style="font-size:12px;" data-i18n="active.unitsHint">Units for this log entry — flip anytime, doesn't change your default</p>
+          <p style="font-size:12px;">Units for this log entry — flip anytime, doesn't change your default</p>
         </div>
         <div class="switch" onclick="toggleLogUnitSystem()"><div class="knob" id="logUnitsKnobLive">⚓</div></div>
       </div>
 
-      <div class="stat-label" style="text-align:center;margin-top:16px;" data-i18n="active.liveTrack">Live Track</div>
+      <div class="stat-label" style="text-align:center;margin-top:16px;">Live Track</div>
       <div id="liveTrackWrap">
-        <div class="map-mode-badge offline" id="liveMapModeBadge"><span class="dot"></span><span id="liveMapModeText" data-i18n="active.checkingConnection">Checking connection…</span></div>
+        <div class="map-mode-badge offline" id="liveMapModeBadge"><span class="dot"></span><span id="liveMapModeText">Checking connection…</span></div>
         <div class="live-map" id="liveTrackLeaflet" style="display:none;"></div>
         <div class="porthole" id="liveTrackPorthole"></div>
         <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:4px;" id="liveTrackCoords"></div>
@@ -453,31 +455,31 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
       <div id="manualDistanceWrap" style="display:none;">
         <div class="field" style="margin-top:16px;">
           <label id="manualDistanceLabel">Distance covered — NM (manual entry, GPS unavailable)</label>
-          <input type="number" step="0.1" min="0" id="manualDistance" placeholder="e.g. 12.4" data-i18n-ph="ph.egDistance">
+          <input type="number" step="0.1" min="0" id="manualDistance" placeholder="e.g. 12.4">
         </div>
       </div>
     </div>
 
     <div id="pastStatsBlock" style="display:none;">
       <div class="field">
-        <label data-i18n="active.dateTime">Date &amp; time of sail</label>
+        <label>Date &amp; time of sail</label>
         <input type="datetime-local" id="pastDate">
       </div>
       <div class="two-col">
-        <div class="field"><label data-i18n="active.durationHrs">Duration (hrs)</label><input type="number" min="0" step="1" id="pastHours" placeholder="e.g. 3" data-i18n-ph="ph.egHours"></div>
-        <div class="field"><label data-i18n="active.durationMins">Duration (mins)</label><input type="number" min="0" max="59" step="1" id="pastMinutes" placeholder="e.g. 30" data-i18n-ph="ph.egMinutes"></div>
+        <div class="field"><label>Duration (hrs)</label><input type="number" min="0" step="1" id="pastHours" placeholder="e.g. 3"></div>
+        <div class="field"><label>Duration (mins)</label><input type="number" min="0" max="59" step="1" id="pastMinutes" placeholder="e.g. 30"></div>
       </div>
       <div class="field">
         <label id="pastDistanceLabel">Distance (NM)</label>
-        <input type="number" step="0.1" min="0" id="pastDistance" placeholder="e.g. 12.4" data-i18n-ph="ph.egDistance">
+        <input type="number" step="0.1" min="0" id="pastDistance" placeholder="e.g. 12.4">
       </div>
       <div class="two-col">
-        <div class="field"><label id="pastAvgSpeedLabel">Avg Speed (kts)</label><input type="number" min="0" step="0.1" id="pastAvgSpeed" placeholder="auto" data-i18n-ph="ph.auto"></div>
-        <div class="field"><label id="pastMaxSpeedLabel">Max Speed (kts)</label><input type="number" min="0" step="0.1" id="pastMaxSpeed" placeholder="auto" data-i18n-ph="ph.auto"></div>
+        <div class="field"><label id="pastAvgSpeedLabel">Avg Speed (kts)</label><input type="number" min="0" step="0.1" id="pastAvgSpeed" placeholder="auto"></div>
+        <div class="field"><label id="pastMaxSpeedLabel">Max Speed (kts)</label><input type="number" min="0" step="0.1" id="pastMaxSpeed" placeholder="auto"></div>
       </div>
-      <p style="font-size:11.5px;margin:-10px 0 4px;" data-i18n="active.autoCalcHint">Optional — leave blank and these are worked out from distance ÷ duration.</p>
+      <p style="font-size:11.5px;margin:-10px 0 4px;">Optional — leave blank and these are worked out from distance ÷ duration.</p>
       <div class="field">
-        <label data-i18n="active.mapImage">Map Image <span style="text-transform:none;font-weight:500;" data-i18n="active.mapImageHint">— optional, no GPS track for a past entry, so add a screenshot or photo of a chart if you have one</span></label>
+        <label>Map Image <span style="text-transform:none;font-weight:500;">— optional, no GPS track for a past entry, so add a screenshot or photo of a chart if you have one</span></label>
         <div id="mapImagePreviewWrap" style="display:none;position:relative;margin-bottom:8px;">
           <img id="mapImagePreview" src="" style="width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);display:block;">
           <div class="iconbtn" style="position:absolute;top:6px;right:6px;background:rgba(20,43,68,.7);color:#fff;" onclick="removeMapImage()">
@@ -485,8 +487,8 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
           </div>
         </div>
         <div style="display:flex;gap:10px;">
-          <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('mapImageCameraInput').click()" data-i18n="action.takePhoto">Take Photo</button>
-          <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('mapImageUploadInput').click()" data-i18n="action.upload">Upload</button>
+          <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('mapImageCameraInput').click()">Take Photo</button>
+          <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('mapImageUploadInput').click()">Upload</button>
         </div>
         <input type="file" id="mapImageCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleMapImage(event)">
         <input type="file" id="mapImageUploadInput" accept="image/*" style="display:none;" onchange="handleMapImage(event)">
@@ -494,83 +496,83 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
       <div class="theme-toggle" style="margin-bottom:6px;">
         <div>
           <div style="font-weight:600;font-size:14px;" id="logUnitsLabelPast">Nautical (kts / NM)</div>
-          <p style="font-size:12px;" data-i18n="active.unitsHint">Units for this log entry — flip anytime, doesn't change your default</p>
+          <p style="font-size:12px;">Units for this log entry — flip anytime, doesn't change your default</p>
         </div>
         <div class="switch" onclick="toggleLogUnitSystem()"><div class="knob" id="logUnitsKnobPast">⚓</div></div>
       </div>
     </div>
 
-    <div class="section-title" data-i18n="active.logEntry">Log Entry</div>
+    <div class="section-title">Log Entry</div>
     <div class="field">
-      <label data-i18n="active.boat">Boat</label>
+      <label>Boat</label>
       <select id="activeBoatSelect"></select>
     </div>
     <div class="field">
-      <label data-i18n="active.place">Place</label>
-      <input type="text" id="tripPlace" placeholder="e.g. Chesapeake Bay" data-i18n-ph="ph.egPlace">
+      <label>Place</label>
+      <input type="text" id="tripPlace" placeholder="e.g. Chesapeake Bay">
     </div>
     <div class="two-col">
       <div class="field">
-        <label data-i18n="active.windDir">Wind Direction</label>
-        <select id="windDir"><option data-i18n="compass.N">N</option><option data-i18n="compass.NE">NE</option><option data-i18n="compass.E">E</option><option data-i18n="compass.SE">SE</option><option data-i18n="compass.S">S</option><option data-i18n="compass.SW">SW</option><option data-i18n="compass.W">W</option><option data-i18n="compass.NW">NW</option></select>
+        <label>Wind Direction</label>
+        <select id="windDir"><option>N</option><option>NE</option><option>E</option><option>SE</option><option>S</option><option>SW</option><option>W</option><option>NW</option></select>
       </div>
       <div class="field">
-        <label data-i18n="active.seaState">Sea State</label>
-        <select id="seaState"><option data-i18n="sea.calm">Calm</option><option data-i18n="sea.slight">Slight</option><option selected data-i18n="sea.moderate">Moderate</option><option data-i18n="sea.rough">Rough</option><option data-i18n="sea.veryRough">Very Rough</option></select>
+        <label>Sea State</label>
+        <select id="seaState"><option>Calm</option><option>Slight</option><option selected>Moderate</option><option>Rough</option><option>Very Rough</option></select>
       </div>
     </div>
     <div class="field">
-      <label data-i18n="active.windSpeed">Wind Speed <span class="range-value" id="windSpeedVal">12 kts</span></label>
+      <label>Wind Speed <span class="range-value" id="windSpeedVal">12 kts</span></label>
       <input type="range" id="windSpeed" min="0" max="19" value="8" oninput="updateWindSpeedLabel()">
     </div>
     <div class="field">
-      <label data-i18n="active.gusts">Gusts <span class="range-value" id="gustsVal">10 kts</span></label>
+      <label>Gusts <span class="range-value" id="gustsVal">10 kts</span></label>
       <input type="range" id="gusts" min="0" max="40" step="1" value="10" oninput="updateGustsLabel()">
     </div>
     <div class="two-col">
       <div class="field">
-        <label data-i18n="active.waveHeight">Wave Height <span class="range-value" id="waveHeightVal">0.5 m</span></label>
+        <label>Wave Height <span class="range-value" id="waveHeightVal">0.5 m</span></label>
         <input type="range" id="waveHeight" min="0" max="5" step="0.1" value="0.5" oninput="updateWaveHeightLabel()">
       </div>
       <div class="field">
-        <label data-i18n="active.waveDir">Wave Direction</label>
-        <select id="waveDir"><option data-i18n="compass.N">N</option><option data-i18n="compass.NE">NE</option><option data-i18n="compass.E">E</option><option data-i18n="compass.SE">SE</option><option data-i18n="compass.S">S</option><option data-i18n="compass.SW">SW</option><option data-i18n="compass.W">W</option><option data-i18n="compass.NW">NW</option></select>
+        <label>Wave Direction</label>
+        <select id="waveDir"><option>N</option><option>NE</option><option>E</option><option>SE</option><option>S</option><option>SW</option><option>W</option><option>NW</option></select>
       </div>
     </div>
     <div class="field">
-      <label data-i18n="active.temperature">Temperature <span class="range-value" id="tempVal">20°C</span></label>
+      <label>Temperature <span class="range-value" id="tempVal">20°C</span></label>
       <input type="range" id="temp" min="0" max="50" step="1" value="20" oninput="updateTempLabel()">
     </div>
     <div class="field">
-      <label data-i18n="active.notes">Notes</label>
-      <textarea id="tripNotes" placeholder="Conditions, what happened, what we learned…" data-i18n-ph="ph.notes"></textarea>
+      <label>Notes</label>
+      <textarea id="tripNotes" placeholder="Conditions, what happened, what we learned…"></textarea>
     </div>
 
     <div class="field">
-      <label data-i18n="active.skipper">Skipper</label>
+      <label>Skipper</label>
       <div class="crew-chip-row" id="skipperChipRow"></div>
-      <button class="btn btn-outline" style="margin-top:8px;" onclick="openSelectSkipperSheet()" data-i18n="active.chooseSkipper">Choose Skipper</button>
+      <button class="btn btn-outline" style="margin-top:8px;" onclick="openSelectSkipperSheet()">Choose Skipper</button>
     </div>
 
     <div class="field">
-      <label data-i18n="active.crewAboard">Crew Aboard</label>
+      <label>Crew Aboard</label>
       <div class="crew-chip-row" id="addedCrewRow"></div>
-      <button class="btn btn-outline" style="margin-top:8px;" onclick="openSelectCrewSheet()" data-i18n="active.addCrew">+ Add Crew</button>
+      <button class="btn btn-outline" style="margin-top:8px;" onclick="openSelectCrewSheet()">+ Add Crew</button>
     </div>
 
     <div class="field">
-      <label data-i18n="active.photos">Photos <span style="text-transform:none;font-weight:500;" data-i18n="active.photosHint">— tap a photo to make it the cover</span></label>
+      <label>Photos <span style="text-transform:none;font-weight:500;">— tap a photo to make it the cover</span></label>
       <div class="photo-strip" id="activePhotoStrip">
-        <div class="add-photo-tile" onclick="document.getElementById('activePhotoCameraInput').click()" title="Take Photo" data-i18n-title="action.takePhoto">
+        <div class="add-photo-tile" onclick="document.getElementById('activePhotoCameraInput').click()" title="Take Photo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
-        <div class="add-photo-tile" onclick="document.getElementById('activePhotoUploadInput').click()" title="Upload Photos" data-i18n-title="action.uploadPhotos">
+        <div class="add-photo-tile" onclick="document.getElementById('activePhotoUploadInput').click()" title="Upload Photos">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
         </div>
       </div>
       <input type="file" id="activePhotoCameraInput" accept="image/*" capture="environment" multiple style="display:none;" onchange="handleActivePhotos(event)">
       <input type="file" id="activePhotoUploadInput" accept="image/*" multiple style="display:none;" onchange="handleActivePhotos(event)">
-      <div class="link-plain" id="changeCoverLink" style="display:none;margin-top:8px;" onclick="openCoverPickSheet('swap')" data-i18n="active.changeCover">Change Cover Photo…</div>
+      <div class="link-plain" id="changeCoverLink" style="display:none;margin-top:8px;" onclick="openCoverPickSheet('swap')">Change Cover Photo…</div>
     </div>
 
     <div style="height:6px;"></div>
@@ -584,13 +586,13 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   <section class="screen" id="screen-history">
     <div class="backrow">
       <div class="iconbtn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
-      <h2 data-i18n="history.title">Trip History</h2>
+      <h2>Trip History</h2>
     </div>
-    <input type="text" class="search-input" id="historySearch" placeholder="Search logs (e.g., boat, place, notes)…" oninput="renderHistory()" data-i18n-ph="history.searchPh">
+    <input type="text" class="search-input" id="historySearch" placeholder="Search logs (e.g., boat, place, notes)…" oninput="renderHistory()">
     <div class="chiprow" id="historyChips">
-      <div class="chip active" data-f="all" onclick="setHistoryFilter('all')" data-i18n="history.all">All</div>
-      <div class="chip" data-f="recent" onclick="setHistoryFilter('recent')" data-i18n="history.recent">Recent</div>
-      <div class="chip" data-f="photos" onclick="setHistoryFilter('photos')" data-i18n="history.withPhotos">With Photos</div>
+      <div class="chip active" data-f="all" onclick="setHistoryFilter('all')">All</div>
+      <div class="chip" data-f="recent" onclick="setHistoryFilter('recent')">Recent</div>
+      <div class="chip" data-f="photos" onclick="setHistoryFilter('photos')">With Photos</div>
     </div>
     <div id="historyList"></div>
   </section>
@@ -600,7 +602,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     <div class="backrow">
       <div class="iconbtn" onclick="nav('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
       <h2 id="detailTitle" style="font-size:17px;">Trip</h2>
-      <div class="iconbtn" onclick="editTrip()" title="Edit" data-i18n-title="action.edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
+      <div class="iconbtn" onclick="editTrip()" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
       <div class="iconbtn" onclick="deleteTripPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
     </div>
     <div id="detailBody"></div>
@@ -610,7 +612,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   <section class="screen" id="screen-boats">
     <div class="backrow">
       <div class="iconbtn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
-      <h2 data-i18n="boats.title">Boat Fleet</h2>
+      <h2>Boat Fleet</h2>
       <div class="iconbtn" onclick="openBoatSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
     </div>
     <div id="boatsList"></div>
@@ -620,7 +622,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   <section class="screen" id="screen-crew">
     <div class="backrow">
       <div class="iconbtn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
-      <h2 data-i18n="nav.crew">Crew</h2>
+      <h2>Crew</h2>
       <div class="iconbtn" onclick="openCrewSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
     </div>
     <div id="crewList"></div>
@@ -629,8 +631,8 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   <!-- ============ PROFILE ============ -->
   <section class="screen" id="screen-profile">
     <div class="backrow">
-      <h2 data-i18n="profile.title">Profile</h2>
-      <div class="iconbtn" onclick="nav('settings')" title="Settings" data-i18n-title="nav.settings">
+      <h2>Profile</h2>
+      <div class="iconbtn" onclick="nav('settings')" title="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </div>
     </div>
@@ -644,46 +646,46 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
       </div>
     </div>
     <div class="field" style="margin-top:20px;">
-      <label data-i18n="profile.name">Name</label>
-      <input type="text" id="profileName" placeholder="Your name" data-i18n-ph="profile.namePh">
+      <label>Name</label>
+      <input type="text" id="profileName" placeholder="Your name">
     </div>
     <div class="two-col">
       <div class="field">
-        <label data-i18n="profile.role">Role</label>
-        <input type="text" id="profileRole" placeholder="e.g. Skipper" data-i18n-ph="profile.rolePh">
+        <label>Role</label>
+        <input type="text" id="profileRole" placeholder="e.g. Skipper">
       </div>
       <div class="field">
-        <label data-i18n="profile.license">License</label>
-        <input type="text" id="profileLicense" placeholder="e.g. RYA Day Skipper" data-i18n-ph="profile.licensePh">
+        <label>License</label>
+        <input type="text" id="profileLicense" placeholder="e.g. RYA Day Skipper">
       </div>
     </div>
     <div class="two-col">
       <div class="field">
-        <label data-i18n="profile.phone">Phone</label>
+        <label>Phone</label>
         <input type="tel" id="profilePhone" placeholder="e.g. +1 555 123 4567">
       </div>
       <div class="field">
-        <label data-i18n="profile.email">Email</label>
+        <label>Email</label>
         <input type="email" id="profileEmail" placeholder="e.g. you@email.com">
       </div>
     </div>
     <div class="field">
-      <label data-i18n="profile.social">Social / Website</label>
+      <label>Social / Website</label>
       <input type="text" id="profileSocial" placeholder="e.g. @you or instagram.com/you">
     </div>
     <div class="field">
-      <label data-i18n="profile.bio">Bio</label>
-      <textarea id="profileBio" placeholder="Tell your crew a bit about yourself and your sailing…" data-i18n-ph="profile.bioPh"></textarea>
+      <label>Bio</label>
+      <textarea id="profileBio" placeholder="Tell your crew a bit about yourself and your sailing…"></textarea>
     </div>
-    <button class="btn btn-primary" onclick="saveProfileForm()" data-i18n="profile.save">Save Profile</button>
+    <button class="btn btn-primary" onclick="saveProfileForm()">Save Profile</button>
 
-    <div class="section-title" data-i18n="profile.lifetimeStats">Lifetime Stats</div>
+    <div class="section-title">Lifetime Stats</div>
     <div id="profileStats"></div>
 
-    <div class="section-title" data-i18n="profile.backupRestore">Backup &amp; Restore</div>
-    <p style="font-size:12.5px;margin-bottom:10px;" data-i18n="profile.backupHint">Save everything to a file you can keep in the cloud (Drive, iCloud, email) or move to a new phone.</p>
-    <button class="btn btn-outline" onclick="backupToFile()" data-i18n="profile.backupToFile">Backup to File</button>
-    <button class="btn btn-outline" style="margin-top:8px;" onclick="document.getElementById('restoreFileInput').click()" data-i18n="profile.restoreFromFile">Restore from File</button>
+    <div class="section-title">Backup & Restore</div>
+    <p style="font-size:12.5px;margin-bottom:10px;">Save everything to a file you can keep in the cloud (Drive, iCloud, email) or move to a new phone.</p>
+    <button class="btn btn-outline" onclick="backupToFile()">Backup to File</button>
+    <button class="btn btn-outline" style="margin-top:8px;" onclick="document.getElementById('restoreFileInput').click()">Restore from File</button>
     <input type="file" id="restoreFileInput" accept="application/json" style="display:none;" onchange="restoreFromFile(event)">
   </section>
 
@@ -691,42 +693,36 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   <section class="screen" id="screen-settings">
     <div class="backrow">
       <div class="iconbtn" onclick="nav('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
-      <h2 data-i18n="settings.title">Settings</h2>
+      <h2>Settings</h2>
     </div>
 
-    <div class="section-title" data-i18n="settings.appearance">Appearance</div>
+    <div class="section-title">Appearance</div>
     <div class="theme-toggle">
       <div>
         <div style="font-weight:600;font-size:14px;" id="themeLabel">Day Theme</div>
-        <p style="font-size:12px;" data-i18n="settings.themeHint">Switch between day and night mode</p>
+        <p style="font-size:12px;">Switch between day and night mode</p>
       </div>
       <div class="switch" onclick="toggleTheme()"><div class="knob" id="themeKnob">☀️</div></div>
     </div>
 
-    <div class="section-title" data-i18n="settings.units">Units</div>
+    <div class="section-title">Units</div>
     <div class="theme-toggle">
       <div>
         <div style="font-weight:600;font-size:14px;" id="unitsLabel">Nautical (kts / NM)</div>
-        <p style="font-size:12px;" data-i18n="settings.unitsHint">Default used throughout the app — you can still flip units for a single log entry while logging</p>
+        <p style="font-size:12px;">Default used throughout the app — you can still flip units for a single log entry while logging</p>
       </div>
       <div class="switch" onclick="toggleDefaultUnitSystem()"><div class="knob" id="unitsKnob">⚓</div></div>
     </div>
 
-    <div class="section-title" data-i18n="settings.language">Language</div>
-    <div class="chiprow" id="languageChips">
-      <div class="chip" data-lang="en" onclick="setLanguage('en')">English</div>
-      <div class="chip" data-lang="es" onclick="setLanguage('es')">Español</div>
-    </div>
-
     <div class="divider"></div>
-    <div class="link-plain" onclick="clearProfilePrompt()" style="color:var(--coral);" data-i18n="settings.clearProfile">Clear profile…</div>
+    <div class="link-plain" onclick="clearProfilePrompt()" style="color:var(--coral);">Clear profile…</div>
 
-    <div class="section-title" style="color:var(--coral);" data-i18n="settings.dangerZone">Danger Zone</div>
+    <div class="section-title" style="color:var(--coral);">Danger Zone</div>
     <div class="card" style="padding:16px;border:1px solid var(--coral);">
-      <p style="font-size:12.5px;margin-bottom:12px;" data-i18n="settings.resetHint">Permanently erases every trip, boat, crew member, and profile detail on this device. This can't be undone — back up first if you want to keep anything.</p>
+      <p style="font-size:12.5px;margin-bottom:12px;">Permanently erases every trip, boat, crew member, and profile detail on this device. This can't be undone — back up first if you want to keep anything.</p>
       <button class="btn btn-danger" onclick="openResetSheet()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16" style="vertical-align:-3px;margin-right:6px;"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg>
-        <span data-i18n="settings.resetApp">Reset App Data…</span>
+        Reset App Data…
       </button>
     </div>
   </section>
@@ -735,32 +731,32 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   <section class="screen" id="screen-resume">
     <div class="backrow">
       <div class="iconbtn" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
-      <h2 data-i18n="resume.title">Sailing Resume</h2>
+      <h2>Sailing Resume</h2>
     </div>
     <div class="chiprow" id="resumeChips">
-      <div class="chip active" data-r="all" onclick="setResumeRange('all')" data-i18n="resume.allTime">All Time</div>
-      <div class="chip" data-r="year" onclick="setResumeRange('year')" data-i18n="resume.thisYear">This Year</div>
-      <div class="chip" data-r="30" onclick="setResumeRange('30')" data-i18n="resume.last30">Last 30 Days</div>
-      <div class="chip" data-r="custom" onclick="setResumeRange('custom')" data-i18n="resume.custom">Custom</div>
+      <div class="chip active" data-r="all" onclick="setResumeRange('all')">All Time</div>
+      <div class="chip" data-r="year" onclick="setResumeRange('year')">This Year</div>
+      <div class="chip" data-r="30" onclick="setResumeRange('30')">Last 30 Days</div>
+      <div class="chip" data-r="custom" onclick="setResumeRange('custom')">Custom</div>
     </div>
     <div class="two-col" id="resumeCustomWrap" style="display:none;margin-top:8px;">
-      <div class="field"><label data-i18n="resume.from">From</label><input type="date" id="resumeFrom" onchange="renderResume()"></div>
-      <div class="field"><label data-i18n="resume.to">To</label><input type="date" id="resumeTo" onchange="renderResume()"></div>
+      <div class="field"><label>From</label><input type="date" id="resumeFrom" onchange="renderResume()"></div>
+      <div class="field"><label>To</label><input type="date" id="resumeTo" onchange="renderResume()"></div>
     </div>
 
     <div class="stat-card stat-grid" style="margin-top:10px;">
-      <div class="cell"><div class="stat-label" data-i18n="resume.totalSails">Total Sails</div><div class="stat-value" id="resSails">0</div></div>
-      <div class="cell"><div class="stat-label" data-i18n="resume.totalDistance">Total Distance</div><div class="stat-value" id="resDist">0<span class="stat-unit"> NM</span></div></div>
-      <div class="cell" style="margin-top:14px;"><div class="stat-label" data-i18n="resume.timeAtSea">Time at Sea</div><div class="stat-value" id="resTime" style="font-size:19px;">0h</div></div>
-      <div class="cell" style="margin-top:14px;"><div class="stat-label" data-i18n="stat.avgSpeed">Avg Speed</div><div class="stat-value" id="resAvg">0.0<span class="stat-unit"> kts</span></div></div>
+      <div class="cell"><div class="stat-label">Total Sails</div><div class="stat-value" id="resSails">0</div></div>
+      <div class="cell"><div class="stat-label">Total Distance</div><div class="stat-value" id="resDist">0<span class="stat-unit"> NM</span></div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">Time at Sea</div><div class="stat-value" id="resTime" style="font-size:19px;">0h</div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">Avg Speed</div><div class="stat-value" id="resAvg">0.0<span class="stat-unit"> kts</span></div></div>
     </div>
 
     <button class="btn btn-outline" style="margin-top:16px;" onclick="openCertificateSheet()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M9 13.5L7 22l5-3 5 3-2-8.5"/></svg>
-      <span data-i18n="resume.generateCert">Generate Certificate</span>
+      Generate Certificate
     </button>
 
-    <div class="section-title" data-i18n="resume.includedSails">Included Sails</div>
+    <div class="section-title">Included Sails</div>
     <div id="resumeList"></div>
   </section>
 
@@ -776,23 +772,23 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   <nav class="bottomnav" id="bottomNav">
     <div class="navitem" data-tab="home" onclick="nav('home')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
-      <span data-i18n="nav.home">Home</span>
+      <span>Home</span>
     </div>
     <div class="navitem" data-tab="history" onclick="nav('history')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-      <span data-i18n="nav.history">History</span>
+      <span>History</span>
     </div>
     <div class="navitem" data-tab="boats" onclick="nav('boats')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 16l1.5 4h15L21 16"/><path d="M5 16l1-9h12l1 9"/><path d="M12 3v4"/></svg>
-      <span data-i18n="home.fleet">Fleet</span>
+      <span>Fleet</span>
     </div>
     <div class="navitem" data-tab="crew" onclick="nav('crew')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.6.4 4.5 2.4 4.5 5.3"/></svg>
-      <span data-i18n="nav.crew">Crew</span>
+      <span>Crew</span>
     </div>
     <div class="navitem" data-tab="profile" onclick="nav('profile')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
-      <span data-i18n="profile.title">Profile</span>
+      <span>Profile</span>
     </div>
   </nav>
 </div>
@@ -802,35 +798,35 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 
   <div class="sheet" id="sheetStartJourney" style="display:none;">
     <div class="sheet-handle"></div>
-    <h3 data-i18n="sheet.startJourneyTitle">Start a New Journey</h3>
+    <h3>Start a New Journey</h3>
     <div class="field">
-      <label data-i18n="sheet.whichBoat">Which boat?</label>
+      <label>Which boat?</label>
       <select id="startBoatSelect"></select>
-      <p style="font-size:12px;margin-top:4px;" data-i18n="sheet.whichBoatHint">Choose which boat you're taking out — this gets saved with the log entry.</p>
+      <p style="font-size:12px;margin-top:4px;">Choose which boat you're taking out — this gets saved with the log entry.</p>
     </div>
-    <p style="font-size:12.5px;margin-bottom:16px;" data-i18n="sheet.gpsHint">We'll try to use your device's GPS to track your route, speed and distance live. If GPS isn't available, you can enter distance manually when you finish.</p>
-    <button class="btn btn-primary" onclick="beginJourney()" data-i18n="sheet.castOff">Cast Off</button>
+    <p style="font-size:12.5px;margin-bottom:16px;">We'll try to use your device's GPS to track your route, speed and distance live. If GPS isn't available, you can enter distance manually when you finish.</p>
+    <button class="btn btn-primary" onclick="beginJourney()">Cast Off</button>
   </div>
 
   <div class="sheet" id="sheetBoat" style="display:none;">
     <div class="sheet-handle"></div>
     <h3 id="boatSheetTitle">Add a Boat</h3>
-    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-muted);" data-i18n="sheet.boatPhotos">Photos <span style="text-transform:none;font-weight:500;" data-i18n="sheet.boatPhotosHint">— tap one to make it the default</span></label>
+    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-muted);">Photos <span style="text-transform:none;font-weight:500;">— tap one to make it the default</span></label>
     <div class="photo-strip" id="boatPhotoStrip">
-      <div class="add-photo-tile" onclick="document.getElementById('boatCameraInput').click()" title="Take Photo" data-i18n-title="action.takePhoto">
+      <div class="add-photo-tile" onclick="document.getElementById('boatCameraInput').click()" title="Take Photo">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
       </div>
-      <div class="add-photo-tile" onclick="document.getElementById('boatUploadInput').click()" title="Upload Photos" data-i18n-title="action.uploadPhotos">
+      <div class="add-photo-tile" onclick="document.getElementById('boatUploadInput').click()" title="Upload Photos">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
       </div>
     </div>
     <input type="file" id="boatCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleBoatPhoto(event)">
     <input type="file" id="boatUploadInput" accept="image/*" multiple style="display:none;" onchange="handleBoatPhoto(event)">
-    <div class="field"><label data-i18n="sheet.boatName">Name</label><input type="text" id="boatName" placeholder="e.g. Windswept" data-i18n-ph="sheet.boatNamePh"></div>
-    <div class="field"><label data-i18n="sheet.boatType">Type</label><input type="text" id="boatType" placeholder="e.g. Beneteau Oceanis 38" data-i18n-ph="sheet.boatTypePh"></div>
-    <div class="field"><label data-i18n="active.notes">Notes</label><textarea id="boatNotes" placeholder="Home marina, rig details, quirks…" data-i18n-ph="sheet.boatNotesPh"></textarea></div>
-    <button class="btn btn-primary" onclick="saveBoatForm()" data-i18n="sheet.saveBoat">Save Boat</button>
-    <button class="btn btn-ghost" id="deleteBoatBtn" style="display:none;color:var(--coral);" onclick="deleteBoatForm()" data-i18n="sheet.removeBoat">Remove Boat</button>
+    <div class="field"><label>Name</label><input type="text" id="boatName" placeholder="e.g. Windswept"></div>
+    <div class="field"><label>Type</label><input type="text" id="boatType" placeholder="e.g. Beneteau Oceanis 38"></div>
+    <div class="field"><label>Notes</label><textarea id="boatNotes" placeholder="Home marina, rig details, quirks…"></textarea></div>
+    <button class="btn btn-primary" onclick="saveBoatForm()">Save Boat</button>
+    <button class="btn btn-ghost" id="deleteBoatBtn" style="display:none;color:var(--coral);" onclick="deleteBoatForm()">Remove Boat</button>
   </div>
 
   <div class="sheet" id="sheetCrew" style="display:none;">
@@ -839,92 +835,92 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
     <div style="text-align:center;margin-bottom:10px;">
       <img id="crewPhotoPreview" src="" style="width:96px;height:96px;border-radius:50%;object-fit:cover;background:var(--bg-sunk);display:block;margin:0 auto 8px;">
       <div style="display:flex;gap:16px;justify-content:center;">
-        <div class="link-plain" onclick="document.getElementById('crewSelfieInput').click()" data-i18n="sheet.takeSelfie">Take Selfie</div>
-        <div class="link-plain" onclick="document.getElementById('crewPhotoInput').click()" data-i18n="sheet.addPhoto">Add Photo</div>
+        <div class="link-plain" onclick="document.getElementById('crewSelfieInput').click()">Take Selfie</div>
+        <div class="link-plain" onclick="document.getElementById('crewPhotoInput').click()">Add Photo</div>
       </div>
       <input type="file" id="crewSelfieInput" accept="image/*" capture="user" style="display:none;" onchange="handleCrewPhoto(event)">
       <input type="file" id="crewPhotoInput" accept="image/*" style="display:none;" onchange="handleCrewPhoto(event)">
     </div>
-    <div class="field"><label data-i18n="profile.name">Name</label><input type="text" id="crewName" placeholder="e.g. Alex" data-i18n-ph="sheet.crewNamePh"></div>
+    <div class="field"><label>Name</label><input type="text" id="crewName" placeholder="e.g. Alex"></div>
     <div class="two-col">
-      <div class="field"><label data-i18n="profile.phone">Phone</label><input type="tel" id="crewPhone" placeholder="e.g. +1 555 123 4567"></div>
-      <div class="field"><label data-i18n="profile.email">Email</label><input type="email" id="crewEmail" placeholder="e.g. alex@email.com" data-i18n-ph="sheet.crewEmailPh"></div>
+      <div class="field"><label>Phone</label><input type="tel" id="crewPhone" placeholder="e.g. +1 555 123 4567"></div>
+      <div class="field"><label>Email</label><input type="email" id="crewEmail" placeholder="e.g. alex@email.com"></div>
     </div>
-    <div class="field"><label data-i18n="profile.social">Social / Website</label><input type="text" id="crewSocial" placeholder="e.g. @alex or instagram.com/alex" data-i18n-ph="sheet.crewSocialPh"></div>
-    <div class="field"><label data-i18n="sheet.note">Note</label><textarea id="crewNote" placeholder="How you know them, role aboard…" data-i18n-ph="sheet.crewNotePh"></textarea></div>
-    <button class="btn btn-primary" onclick="saveCrewForm()" data-i18n="action.save">Save</button>
-    <button class="btn btn-ghost" id="deleteCrewBtn" style="display:none;color:var(--coral);" onclick="deleteCrewForm()" data-i18n="action.remove">Remove</button>
+    <div class="field"><label>Social / Website</label><input type="text" id="crewSocial" placeholder="e.g. @alex or instagram.com/alex"></div>
+    <div class="field"><label>Note</label><textarea id="crewNote" placeholder="How you know them, role aboard…"></textarea></div>
+    <button class="btn btn-primary" onclick="saveCrewForm()">Save</button>
+    <button class="btn btn-ghost" id="deleteCrewBtn" style="display:none;color:var(--coral);" onclick="deleteCrewForm()">Remove</button>
   </div>
 
   <div class="sheet" id="sheetCoverPick" style="display:none;">
     <div class="sheet-handle"></div>
-    <h3 data-i18n="sheet.coverPickTitle">Set a Cover Photo?</h3>
-    <p style="font-size:12.5px;margin-bottom:14px;" data-i18n="sheet.coverPickHint">Tap a photo to use it as the cover for this log entry, or skip and it'll show in your history without one.</p>
+    <h3>Set a Cover Photo?</h3>
+    <p style="font-size:12.5px;margin-bottom:14px;">Tap a photo to use it as the cover for this log entry, or skip and it'll show in your history without one.</p>
     <div class="photo-strip" id="coverPickStrip"></div>
-    <button class="btn btn-outline" style="margin-top:14px;" onclick="openCoverPhotoAdjuster()" data-i18n="sheet.adjustCrop">Adjust / Crop Selected Photo</button>
-    <button class="btn btn-primary" style="margin-top:10px;" onclick="confirmCoverPick()" data-i18n="sheet.setAsCover">Set as Cover</button>
-    <button class="btn btn-ghost" id="skipCoverPickBtn" onclick="skipCoverPick()" data-i18n="sheet.skipNoCover">Skip — No Cover</button>
+    <button class="btn btn-outline" style="margin-top:14px;" onclick="openCoverPhotoAdjuster()">Adjust / Crop Selected Photo</button>
+    <button class="btn btn-primary" style="margin-top:10px;" onclick="confirmCoverPick()">Set as Cover</button>
+    <button class="btn btn-ghost" id="skipCoverPickBtn" onclick="skipCoverPick()">Skip — No Cover</button>
   </div>
 
   <div class="sheet" id="sheetPdfPreview" style="display:none;">
     <div class="sheet-handle"></div>
-    <h3 data-i18n="sheet.previewPdf">Preview PDF</h3>
-    <p style="font-size:12.5px;margin-bottom:10px;" data-i18n="sheet.previewPdfHint">This is exactly how it'll look — one A4 page, ready to share.</p>
+    <h3>Preview PDF</h3>
+    <p style="font-size:12.5px;margin-bottom:10px;">This is exactly how it'll look — one A4 page, ready to share.</p>
     <div id="pdfPreviewScaleWrap" style="overflow:hidden;border-radius:10px;border:1px solid var(--border);background:#fff;">
       <div id="pdfPreviewInner"></div>
     </div>
     <button class="btn btn-primary" style="margin-top:14px;" onclick="generateAndShareTripPdf()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="vertical-align:-3px;margin-right:6px;"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
-      <span data-i18n="sheet.sharePdf">Share / Save PDF</span>
+      Share / Save PDF
     </button>
-    <button class="btn btn-ghost" onclick="closeSheets()" data-i18n="action.cancel">Cancel</button>
+    <button class="btn btn-ghost" onclick="closeSheets()">Cancel</button>
   </div>
 
   <div class="sheet" id="sheetSelectCrew" style="display:none;">
     <div class="sheet-handle"></div>
-    <h3 data-i18n="active.addCrewTitle">Add Crew</h3>
+    <h3>Add Crew</h3>
     <div id="crewPickList"></div>
-    <div class="link-plain" style="margin:12px 0 4px;" onclick="startAddCrewFromPicker()" data-i18n="active.addNewCrew">+ Add New Crew Member</div>
-    <button class="btn btn-primary" style="margin-top:10px;" onclick="confirmCrewPick()" data-i18n="action.done">Done</button>
+    <div class="link-plain" style="margin:12px 0 4px;" onclick="startAddCrewFromPicker()">+ Add New Crew Member</div>
+    <button class="btn btn-primary" style="margin-top:10px;" onclick="confirmCrewPick()">Done</button>
   </div>
 
   <div class="sheet" id="sheetSelectSkipper" style="display:none;">
     <div class="sheet-handle"></div>
-    <h3 data-i18n="active.chooseSkipper">Choose Skipper</h3>
+    <h3>Choose Skipper</h3>
     <div id="skipperPickList"></div>
-    <button class="btn btn-ghost" style="margin-top:10px;" onclick="clearSkipperPick()" data-i18n="active.noSkipper">No Skipper</button>
+    <button class="btn btn-ghost" style="margin-top:10px;" onclick="clearSkipperPick()">No Skipper</button>
   </div>
 
   <div class="sheet" id="sheetPhotoAdjust" style="display:none;">
     <div class="sheet-handle"></div>
-    <h3 data-i18n="sheet.adjustPhoto">Adjust Photo</h3>
-    <p style="font-size:12.5px;margin-bottom:14px;" data-i18n="sheet.adjustPhotoHint">Drag to reposition, use the slider to zoom.</p>
+    <h3>Adjust Photo</h3>
+    <p style="font-size:12.5px;margin-bottom:14px;">Drag to reposition, use the slider to zoom.</p>
     <div id="adjustViewport"><img id="adjustPreviewImg" src="" alt=""></div>
     <div class="adjust-zoom-row">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="6"/><path d="M21 21l-4.3-4.3"/></svg>
       <input type="range" id="adjustZoomSlider" min="1" max="3" step="0.01" value="1" oninput="onAdjustZoomInput()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
     </div>
-    <button class="btn btn-primary" style="margin-top:16px;" onclick="confirmPhotoAdjust()" data-i18n="sheet.usePhoto">Use Photo</button>
-    <button class="btn btn-ghost" onclick="cancelPhotoAdjust()" data-i18n="action.cancel">Cancel</button>
+    <button class="btn btn-primary" style="margin-top:16px;" onclick="confirmPhotoAdjust()">Use Photo</button>
+    <button class="btn btn-ghost" onclick="cancelPhotoAdjust()">Cancel</button>
   </div>
 
   <div class="sheet" id="sheetCertificate" style="display:none;">
     <div class="sheet-handle"></div>
-    <h3 data-i18n="sheet.certDetails">Certificate Details</h3>
-    <div class="field"><label data-i18n="sheet.certTitle">Certificate Title</label><input type="text" id="certTitle"></div>
-    <div class="field"><label data-i18n="sheet.sailorName">Sailor Name</label><input type="text" id="certName"></div>
-    <button class="btn btn-primary" onclick="renderCertificate()" data-i18n="sheet.generate">Generate</button>
+    <h3>Certificate Details</h3>
+    <div class="field"><label>Certificate Title</label><input type="text" id="certTitle" value="Certificate of Sea Time"></div>
+    <div class="field"><label>Sailor Name</label><input type="text" id="certName"></div>
+    <button class="btn btn-primary" onclick="renderCertificate()">Generate</button>
     <div id="certificateOutput"></div>
   </div>
 
   <div class="sheet" id="sheetReset" style="display:none;">
     <div class="sheet-handle"></div>
-    <h3 data-i18n="settings.resetApp2">Reset App Data</h3>
-    <p style="margin-bottom:18px;" data-i18n="sheet.resetConfirmHint">This permanently deletes all trips, boats, crew and your profile from this device. This can't be undone.</p>
-    <button class="btn btn-danger" onclick="resetAllData()" data-i18n="sheet.eraseEverything">Yes, erase everything</button>
+    <h3>Reset App Data</h3>
+    <p style="margin-bottom:18px;">This permanently deletes all trips, boats, crew and your profile from this device. This can't be undone.</p>
+    <button class="btn btn-danger" onclick="resetAllData()">Yes, erase everything</button>
     <div style="height:10px;"></div>
-    <button class="btn btn-ghost" onclick="closeSheets()" data-i18n="action.cancel">Cancel</button>
+    <button class="btn btn-ghost" onclick="closeSheets()">Cancel</button>
   </div>
 
 </div>
@@ -947,7 +943,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   <div class="lightbox-actions">
     <div class="lightbox-btn" onclick="shareLightboxPhoto()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
-      <span data-i18n="action.share">Share</span>
+      Share
     </div>
   </div>
 </div>
@@ -959,620 +955,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
    -> in-memory (last resort, session-only, shows a persistent warning)
    ============================================================ */
 const KEYS = { INDEX:'trip-index', BOATS:'boats', CREW:'crew', PROFILE:'profile' };
-const TRANSLATIONS = {
-  en: {
-  'action.cancel': 'Cancel',
-  'action.done': 'Done',
-  'action.edit': 'Edit',
-  'action.remove': 'Remove',
-  'action.save': 'Save',
-  'action.share': 'Share',
-  'action.takePhoto': 'Take Photo',
-  'action.upload': 'Upload',
-  'action.uploadPhotos': 'Upload Photos',
-  'active.addCrew': '+ Add Crew',
-  'active.addCrewTitle': 'Add Crew',
-  'active.addNewCrew': '+ Add New Crew Member',
-  'active.autoCalcHint': 'Optional — leave blank and these are worked out from distance ÷ duration.',
-  'active.boat': 'Boat',
-  'active.changeCover': 'Change Cover Photo…',
-  'active.checkingConnection': 'Checking connection…',
-  'active.chooseSkipper': 'Choose Skipper',
-  'active.coverBadge': 'COVER',
-  'active.crewAboard': 'Crew Aboard',
-  'active.dateTime': 'Date & time of sail',
-  'active.discardTitle': 'Discard journey',
-  'active.durationHrs': 'Duration (hrs)',
-  'active.durationMins': 'Duration (mins)',
-  'active.elapsedTime': 'Elapsed Time',
-  'active.endJourney': 'End Journey',
-  'active.gusts': 'Gusts',
-  'active.liveTrack': 'Live Track',
-  'active.logEntry': 'Log Entry',
-  'active.mapImage': 'Map Image',
-  'active.mapImageHint': '— optional, no GPS track for a past entry, so add a screenshot or photo of a chart if you have one',
-  'active.noSkipper': 'No Skipper',
-  'active.notes': 'Notes',
-  'active.photos': 'Photos',
-  'active.photosHint': '— tap a photo to make it the cover',
-  'active.place': 'Place',
-  'active.saveChanges': 'Save Changes',
-  'active.saveLogEntry': 'Save Log Entry',
-  'active.seaState': 'Sea State',
-  'active.skipper': 'Skipper',
-  'active.temperature': 'Temperature',
-  'active.title': 'Active Journey Log',
-  'active.unitsHint': 'Units for this log entry — flip anytime, doesn\'t change your default',
-  'active.waveDir': 'Wave Direction',
-  'active.waveHeight': 'Wave Height',
-  'active.windDir': 'Wind Direction',
-  'active.windSpeed': 'Wind Speed',
-  'active.youSuffix': '(You)',
-  'banner.recordingBoat': 'Recording — {boat}',
-  'banner.recordingJourney': 'Recording journey',
-  'banner.unsavedEdits': 'Unsaved edits to a log entry — tap to finish',
-  'banner.unsavedPastSail': 'Unsaved past-sail entry — tap to finish',
-  'boats.emptyHint': 'Add the boats you sail on to keep track of your fleet.',
-  'boats.emptyTitle': 'No boats yet',
-  'boats.sailsPlural': '{count} sails logged',
-  'boats.sailsSingular': '{count} sail logged',
-  'boats.title': 'Boat Fleet',
-  'cert.certifiesThat': 'This certifies that',
-  'cert.defaultTitle': 'Certificate of Sea Time',
-  'cert.generated': 'Generated',
-  'cert.hasLogged': 'has logged the following time at sea',
-  'cert.printSave': 'Print / Save as PDF',
-  'cert.sails': 'Sails',
-  'cert.to': 'to',
-  'common.avgShort': 'Avg',
-  'compass.E': 'E',
-  'compass.N': 'N',
-  'compass.NE': 'NE',
-  'compass.NW': 'NW',
-  'compass.S': 'S',
-  'compass.SE': 'SE',
-  'compass.SW': 'SW',
-  'compass.W': 'W',
-  'confirm.alreadyRecordingNew': 'You already have a journey being recorded. Return to it? (Starting a new one would discard the current recording.)',
-  'confirm.alreadyRecordingPast': 'You already have a journey being recorded. Return to it? (Starting a past-sail entry would discard the current recording.)',
-  'confirm.clearProfile': 'Clear your profile (name, role, license, contact info, bio, photo)? Your trips, boats, and crew stay untouched.',
-  'confirm.deleteTrip': 'Delete this trip permanently?',
-  'confirm.discardEdits': 'Discard these changes? The log entry will stay as it was. This can\'t be undone.',
-  'confirm.discardJourney': 'Discard this journey? Tracking will stop and none of it will be saved. This can\'t be undone.',
-  'confirm.discardManual': 'Discard this past-sail entry? Nothing will be saved. This can\'t be undone.',
-  'confirm.endJourney': 'End this journey and save it to your log?',
-  'confirm.removeBoat': 'Remove this boat from your fleet?',
-  'confirm.removeCrew': 'Remove this crew member?',
-  'confirm.restore': 'Restore "{name}"? This replaces all current trips, boats, crew, and profile on this device. This can\'t be undone.',
-  'confirm.saveChanges': 'Save changes to this log entry?',
-  'confirm.savePastSail': 'Save this past sail to your log?',
-  'crew.emptyHint': 'Add friends who sail with you to tag them on your logs.',
-  'crew.emptyTitle': 'No crew added',
-  'default.sailorName': 'Sailor',
-  'detail.duration': 'Duration',
-  'detail.elapsed': 'Elapsed',
-  'detail.exportPdf': 'Export as A4 PDF',
-  'detail.fromDir': 'from',
-  'detail.gustsShort': 'Gusts',
-  'detail.locked': 'Locked',
-  'detail.map': 'Map',
-  'detail.shareCrewSocial': 'Share with Crew / Social',
-  'detail.track': 'Track',
-  'detail.tripFallback': 'Trip',
-  'detail.unlocked': 'Unlocked',
-  'detail.weather': 'Weather',
-  'gps.live': 'Live',
-  'gps.noSignal': 'No signal',
-  'gps.searching': 'Searching…',
-  'gps.unavailable': 'Unavailable',
-  'greet.afternoon': 'Good afternoon',
-  'greet.evening': 'Good evening',
-  'greet.morning': 'Good morning',
-  'history.all': 'All',
-  'history.emptyHint': 'Start a new journey from Home to begin your logbook.',
-  'history.emptyTitle': 'No sails logged yet',
-  'history.recent': 'Recent',
-  'history.searchPh': 'Search logs (e.g., boat, place, notes)…',
-  'history.title': 'Trip History',
-  'history.withPhotos': 'With Photos',
-  'home.fleet': 'Fleet',
-  'home.distanceLogged': 'Distance Logged',
-  'home.logPastSail': 'Log a Past Sail',
-  'home.resume': 'Resume',
-  'home.startJourney': 'Start New Journey',
-  'home.viewHistory': 'View History',
-  'sheet.chooseBoatOpt': 'Choose your boat…',
-  'sheet.noBoatsOpt': 'No boats yet — add one from Fleet',
-  'map.liveMap': 'Live Map',
-  'map.offlineTrack': 'Offline Track (no connection)',
-  'nav.crew': 'Crew',
-  'nav.history': 'History',
-  'nav.home': 'Home',
-  'nav.settings': 'Settings',
-  'pdf.sailLogFallback': 'Sail Log',
-  'ph.auto': 'auto',
-  'ph.egDistance': 'e.g. 12.4',
-  'ph.egHours': 'e.g. 3',
-  'ph.egMinutes': 'e.g. 30',
-  'ph.egPlace': 'e.g. Chesapeake Bay',
-  'ph.notes': 'Conditions, what happened, what we learned…',
-  'profile.backupHint': 'Save everything to a file you can keep in the cloud (Drive, iCloud, email) or move to a new phone.',
-  'profile.backupRestore': 'Backup & Restore',
-  'profile.backupToFile': 'Backup to File',
-  'profile.bio': 'Bio',
-  'profile.bioPh': 'Tell your crew a bit about yourself and your sailing…',
-  'profile.boatsSailed': 'Boats Sailed',
-  'profile.email': 'Email',
-  'profile.license': 'License',
-  'profile.licensePh': 'e.g. RYA Day Skipper',
-  'profile.lifetimeStats': 'Lifetime Stats',
-  'profile.name': 'Name',
-  'profile.namePh': 'Your name',
-  'profile.phone': 'Phone',
-  'profile.restoreFromFile': 'Restore from File',
-  'profile.role': 'Role',
-  'profile.rolePh': 'e.g. Skipper',
-  'profile.save': 'Save Profile',
-  'profile.social': 'Social / Website',
-  'profile.title': 'Profile',
-  'resume.allTime': 'All Time',
-  'resume.custom': 'Custom',
-  'resume.emptyRange': 'No sails in this range yet.',
-  'resume.from': 'From',
-  'resume.generateCert': 'Generate Certificate',
-  'resume.includedSails': 'Included Sails',
-  'resume.last30': 'Last 30 Days',
-  'resume.thisYear': 'This Year',
-  'resume.timeAtSea': 'Time at Sea',
-  'resume.title': 'Sailing Resume',
-  'resume.to': 'To',
-  'resume.totalDistance': 'Total Distance',
-  'resume.totalSails': 'Total Sails',
-  'sea.calm': 'Calm',
-  'sea.moderate': 'Moderate',
-  'sea.rough': 'Rough',
-  'sea.slight': 'Slight',
-  'sea.veryRough': 'Very Rough',
-  'settings.appearance': 'Appearance',
-  'settings.clearProfile': 'Clear profile…',
-  'settings.dangerZone': 'Danger Zone',
-  'settings.dayTheme': 'Day Theme',
-  'settings.language': 'Language',
-  'settings.nightTheme': 'Night Theme',
-  'settings.resetApp': 'Reset App Data…',
-  'settings.resetApp2': 'Reset App Data',
-  'settings.resetHint': 'Permanently erases every trip, boat, crew member, and profile detail on this device. This can\'t be undone — back up first if you want to keep anything.',
-  'settings.themeHint': 'Switch between day and night mode',
-  'settings.title': 'Settings',
-  'settings.units': 'Units',
-  'settings.unitsHint': 'Default used throughout the app — you can still flip units for a single log entry while logging',
-  'share.tripSummary': '⛵ {title}\n{date}\n{distance} · {duration} · Avg {avgSpeed}\nLogged with Sail la Vie',
-  'sheet.addBoat': 'Add a Boat',
-  'sheet.addPhoto': 'Add Photo',
-  'sheet.adjustCrop': 'Adjust / Crop Selected Photo',
-  'sheet.adjustPhoto': 'Adjust Photo',
-  'sheet.adjustPhotoHint': 'Drag to reposition, use the slider to zoom.',
-  'sheet.boatName': 'Name',
-  'sheet.boatNamePh': 'e.g. Windswept',
-  'sheet.boatNotesPh': 'Home marina, rig details, quirks…',
-  'sheet.boatPhotos': 'Photos',
-  'sheet.boatPhotosHint': '— tap one to make it the default',
-  'sheet.boatType': 'Type',
-  'sheet.boatTypePh': 'e.g. Beneteau Oceanis 38',
-  'sheet.castOff': 'Cast Off',
-  'sheet.certDetails': 'Certificate Details',
-  'sheet.certTitle': 'Certificate Title',
-  'sheet.coverPickHint': 'Tap a photo to use it as the cover for this log entry, or skip and it\'ll show in your history without one.',
-  'sheet.coverPickTitle': 'Set a Cover Photo?',
-  'sheet.crewEmailPh': 'e.g. alex@email.com',
-  'sheet.crewNamePh': 'e.g. Alex',
-  'sheet.crewNotePh': 'How you know them, role aboard…',
-  'sheet.crewSocialPh': 'e.g. @alex or instagram.com/alex',
-  'sheet.defaultBadge': 'Default',
-  'sheet.editBoat': 'Edit Boat',
-  'sheet.editCrew': 'Edit Crew',
-  'sheet.eraseEverything': 'Yes, erase everything',
-  'sheet.generate': 'Generate',
-  'sheet.gpsHint': 'We\'ll try to use your device\'s GPS to track your route, speed and distance live. If GPS isn\'t available, you can enter distance manually when you finish.',
-  'sheet.note': 'Note',
-  'sheet.previewPdf': 'Preview PDF',
-  'sheet.previewPdfHint': 'This is exactly how it\'ll look — one A4 page, ready to share.',
-  'sheet.removeBoat': 'Remove Boat',
-  'sheet.resetConfirmHint': 'This permanently deletes all trips, boats, crew and your profile from this device. This can\'t be undone.',
-  'sheet.sailorName': 'Sailor Name',
-  'sheet.saveBoat': 'Save Boat',
-  'sheet.setAsCover': 'Set as Cover',
-  'sheet.sharePdf': 'Share / Save PDF',
-  'sheet.skipNoCover': 'Skip — No Cover',
-  'sheet.startJourneyTitle': 'Start a New Journey',
-  'sheet.takeSelfie': 'Take Selfie',
-  'sheet.usePhoto': 'Use Photo',
-  'sheet.whichBoat': 'Which boat?',
-  'sheet.whichBoatHint': 'Choose which boat you\'re taking out — this gets saved with the log entry.',
-  'stat.avgSpeed': 'Avg Speed',
-  'stat.distance': 'Distance',
-  'stat.gps': 'GPS',
-  'stat.maxSpeed': 'Max Speed',
-  'toast.addPhotoFirst': 'Add a photo first',
-  'toast.allDataErased': 'All data erased',
-  'toast.backupDownloaded': 'Backup downloaded',
-  'toast.backupReadFail': 'Could not read that backup file',
-  'toast.backupRestored': 'Backup restored ⚓',
-  'toast.boatSaved': 'Boat saved',
-  'toast.changesSaved': 'Changes saved ⚓',
-  'toast.copiedSummary': 'Copied trip summary to clipboard',
-  'toast.coverRemoved': 'Cover photo removed',
-  'toast.coverUpdated': 'Cover photo updated',
-  'toast.crewSaved': 'Crew saved',
-  'toast.draftKept': 'Draft kept — tap the banner to finish it',
-  'toast.editsKept': 'Edits kept — tap the banner to finish',
-  'toast.enterName': 'Enter a name',
-  'toast.finishOrDiscardFirst': 'Finish or discard your current journey/entry first',
-  'toast.giveBoatName': 'Give the boat a name',
-  'toast.invalidBackup': 'That doesn\'t look like a valid backup file',
-  'toast.journeySaved': 'Journey saved ⚓',
-  'toast.openTripFirst': 'Open a trip first',
-  'toast.pdfDownloaded': 'Single-page A4 PDF downloaded',
-  'toast.pdfGenFail': 'Could not generate the PDF — try again',
-  'toast.pdfNeedsConnection': 'PDF export needs a connection the first time (loading a small library) — try again once you\'re online.',
-  'toast.photoDownloaded': 'Photo downloaded — share it from your gallery',
-  'toast.photoProcessFail': 'Couldn\'t process that photo',
-  'toast.photoReadFail': 'Couldn\'t read that photo',
-  'toast.photoUpdated': 'Photo updated',
-  'toast.preparingPdf': 'Preparing single-page A4 PDF…',
-  'toast.profileCleared': 'Profile cleared',
-  'toast.profileSaved': 'Profile saved',
-  'toast.saveFailed': 'Save failed — trip kept on screen, try again',
-  'toast.stillRecording': 'Still recording — tap the banner to return',
-  'toast.tripDeleted': 'Trip deleted',
-  'toast.tripLoadFail': 'Could not load that trip',
-  'toast.unitsMetric': 'Default units: Metric (km/h, km)',
-  'toast.unitsNautical': 'Default units: Nautical (kts, NM)',
-  'unit.hourAbbr': 'h',
-  'unit.minAbbr': 'm',
-  'unit.metric': 'Metric (km/h / km)',
-  'unit.nautical': 'Nautical (kts / NM)',
-  'active.manualDistanceLabel': 'Distance covered — {unit} (manual entry, GPS unavailable)',
-  'active.distanceUnitLabel': 'Distance ({unit})',
-  'active.avgSpeedUnitLabel': 'Avg Speed ({unit})',
-  'active.maxSpeedUnitLabel': 'Max Speed ({unit})',
-},
-  es: {
-  'action.cancel': 'Cancelar',
-  'action.done': 'Listo',
-  'action.edit': 'Editar',
-  'action.remove': 'Eliminar',
-  'action.save': 'Guardar',
-  'action.share': 'Compartir',
-  'action.takePhoto': 'Tomar Foto',
-  'action.upload': 'Subir',
-  'action.uploadPhotos': 'Subir Fotos',
-  'active.addCrew': '+ Añadir Tripulante',
-  'active.addCrewTitle': 'Añadir Tripulante',
-  'active.addNewCrew': '+ Añadir Nuevo Tripulante',
-  'active.autoCalcHint': 'Opcional — déjalo en blanco y se calculan a partir de distancia ÷ duración.',
-  'active.boat': 'Embarcación',
-  'active.changeCover': 'Cambiar Foto de Portada…',
-  'active.checkingConnection': 'Comprobando conexión…',
-  'active.chooseSkipper': 'Elegir Patrón',
-  'active.coverBadge': 'PORTADA',
-  'active.crewAboard': 'Tripulación a Bordo',
-  'active.dateTime': 'Fecha y hora de la salida',
-  'active.discardTitle': 'Descartar travesía',
-  'active.durationHrs': 'Duración (h)',
-  'active.durationMins': 'Duración (min)',
-  'active.elapsedTime': 'Tiempo Transcurrido',
-  'active.endJourney': 'Finalizar Travesía',
-  'active.gusts': 'Rachas',
-  'active.liveTrack': 'Ruta en Vivo',
-  'active.logEntry': 'Registro de Navegación',
-  'active.mapImage': 'Imagen del Mapa',
-  'active.mapImageHint': '— opcional, no hay ruta GPS para una entrada pasada, así que añade una captura o foto de una carta si tienes una',
-  'active.noSkipper': 'Sin Patrón',
-  'active.notes': 'Notas',
-  'active.photos': 'Fotos',
-  'active.photosHint': '— toca una foto para hacerla la portada',
-  'active.place': 'Lugar',
-  'active.saveChanges': 'Guardar Cambios',
-  'active.saveLogEntry': 'Guardar Registro',
-  'active.seaState': 'Estado del Mar',
-  'active.skipper': 'Patrón',
-  'active.temperature': 'Temperatura',
-  'active.title': 'Registro de Travesía Activa',
-  'active.unitsHint': 'Unidades para este registro — cámbialas cuando quieras, no afecta tu valor predeterminado',
-  'active.waveDir': 'Dirección del Oleaje',
-  'active.waveHeight': 'Altura del Oleaje',
-  'active.windDir': 'Dirección del Viento',
-  'active.windSpeed': 'Velocidad del Viento',
-  'active.youSuffix': '(Tú)',
-  'banner.recordingBoat': 'Grabando — {boat}',
-  'banner.recordingJourney': 'Grabando travesía',
-  'banner.unsavedEdits': 'Cambios sin guardar en un registro — toca para terminar',
-  'banner.unsavedPastSail': 'Entrada pasada sin guardar — toca para terminar',
-  'boats.emptyHint': 'Añade las embarcaciones en las que navegas para llevar el control de tu flota.',
-  'boats.emptyTitle': 'Aún no hay embarcaciones',
-  'boats.sailsPlural': '{count} salidas registradas',
-  'boats.sailsSingular': '{count} salida registrada',
-  'boats.title': 'Flota de Embarcaciones',
-  'cert.certifiesThat': 'Esto certifica que',
-  'cert.defaultTitle': 'Certificado de Tiempo en el Mar',
-  'cert.generated': 'Generado el',
-  'cert.hasLogged': 'ha registrado el siguiente tiempo en el mar',
-  'cert.printSave': 'Imprimir / Guardar como PDF',
-  'cert.sails': 'Salidas',
-  'cert.to': 'al',
-  'common.avgShort': 'Prom.',
-  'compass.E': 'E',
-  'compass.N': 'N',
-  'compass.NE': 'NE',
-  'compass.NW': 'NO',
-  'compass.S': 'S',
-  'compass.SE': 'SE',
-  'compass.SW': 'SO',
-  'compass.W': 'O',
-  'confirm.alreadyRecordingNew': 'Ya tienes una travesía en grabación. ¿Volver a ella? (Empezar una nueva descartaría la grabación actual.)',
-  'confirm.alreadyRecordingPast': 'Ya tienes una travesía en grabación. ¿Volver a ella? (Empezar una entrada pasada descartaría la grabación actual.)',
-  'confirm.clearProfile': '¿Borrar tu perfil (nombre, rol, licencia, contacto, biografía, foto)? Tus travesías, embarcaciones y tripulación no se verán afectadas.',
-  'confirm.deleteTrip': '¿Eliminar esta travesía de forma permanente?',
-  'confirm.discardEdits': '¿Descartar estos cambios? El registro quedará como estaba. Esto no se puede deshacer.',
-  'confirm.discardJourney': '¿Descartar esta travesía? Se detendrá el seguimiento y nada se guardará. Esto no se puede deshacer.',
-  'confirm.discardManual': '¿Descartar esta entrada pasada? No se guardará nada. Esto no se puede deshacer.',
-  'confirm.endJourney': '¿Finalizar esta travesía y guardarla en tu registro?',
-  'confirm.removeBoat': '¿Eliminar esta embarcación de tu flota?',
-  'confirm.removeCrew': '¿Eliminar a este tripulante?',
-  'confirm.restore': '¿Restaurar "{name}"? Esto reemplaza todas las travesías, embarcaciones, tripulación y perfil actuales en este dispositivo. Esto no se puede deshacer.',
-  'confirm.saveChanges': '¿Guardar los cambios de este registro?',
-  'confirm.savePastSail': '¿Guardar esta salida pasada en tu registro?',
-  'crew.emptyHint': 'Añade a los amigos que navegan contigo para etiquetarlos en tus registros.',
-  'crew.emptyTitle': 'Aún no hay tripulación',
-  'default.sailorName': 'Marinero',
-  'detail.duration': 'Duración',
-  'detail.elapsed': 'Transcurrido',
-  'detail.exportPdf': 'Exportar como PDF A4',
-  'detail.fromDir': 'desde',
-  'detail.gustsShort': 'Rachas',
-  'detail.locked': 'Bloqueado',
-  'detail.map': 'Mapa',
-  'detail.shareCrewSocial': 'Compartir con Tripulación / Redes',
-  'detail.track': 'Ruta',
-  'detail.tripFallback': 'Travesía',
-  'detail.unlocked': 'Desbloqueado',
-  'detail.weather': 'Clima',
-  'gps.live': 'En vivo',
-  'gps.noSignal': 'Sin señal',
-  'gps.searching': 'Buscando…',
-  'gps.unavailable': 'No disponible',
-  'greet.afternoon': 'Buenas tardes',
-  'greet.evening': 'Buenas noches',
-  'greet.morning': 'Buenos días',
-  'history.all': 'Todas',
-  'history.emptyHint': 'Empieza una nueva travesía desde Inicio para comenzar tu cuaderno de bitácora.',
-  'history.emptyTitle': 'Aún no hay salidas registradas',
-  'history.recent': 'Recientes',
-  'history.searchPh': 'Buscar registros (ej. embarcación, lugar, notas)…',
-  'history.title': 'Historial de Travesías',
-  'history.withPhotos': 'Con Fotos',
-  'home.fleet': 'Flota',
-  'home.distanceLogged': 'Distancia Registrada',
-  'home.logPastSail': 'Registrar Salida Pasada',
-  'home.resume': 'Currículum',
-  'home.startJourney': 'Iniciar Nueva Travesía',
-  'home.viewHistory': 'Ver Historial',
-  'map.liveMap': 'Mapa en Vivo',
-  'map.offlineTrack': 'Ruta sin Conexión (sin conexión)',
-  'nav.crew': 'Tripulación',
-  'nav.history': 'Historial',
-  'nav.home': 'Inicio',
-  'nav.settings': 'Ajustes',
-  'pdf.sailLogFallback': 'Registro de Navegación',
-  'ph.auto': 'auto',
-  'ph.egDistance': 'ej. 12.4',
-  'ph.egHours': 'ej. 3',
-  'ph.egMinutes': 'ej. 30',
-  'ph.egPlace': 'ej. Bahía de Chesapeake',
-  'ph.notes': 'Condiciones, qué pasó, qué aprendimos…',
-  'profile.backupHint': 'Guarda todo en un archivo que puedas conservar en la nube (Drive, iCloud, correo) o pasar a un nuevo teléfono.',
-  'profile.backupRestore': 'Copia de Seguridad y Restauración',
-  'profile.backupToFile': 'Guardar Copia en Archivo',
-  'profile.bio': 'Biografía',
-  'profile.bioPh': 'Cuéntale a tu tripulación un poco sobre ti y tu navegación…',
-  'profile.boatsSailed': 'Embarcaciones Navegadas',
-  'profile.email': 'Correo Electrónico',
-  'profile.license': 'Licencia',
-  'profile.licensePh': 'ej. Patrón de Yate',
-  'profile.lifetimeStats': 'Estadísticas Totales',
-  'profile.name': 'Nombre',
-  'profile.namePh': 'Tu nombre',
-  'profile.phone': 'Teléfono',
-  'profile.restoreFromFile': 'Restaurar desde Archivo',
-  'profile.role': 'Rol',
-  'profile.rolePh': 'ej. Patrón',
-  'profile.save': 'Guardar Perfil',
-  'profile.social': 'Redes Sociales / Sitio Web',
-  'profile.title': 'Perfil',
-  'resume.allTime': 'Todo el Tiempo',
-  'resume.custom': 'Personalizado',
-  'resume.emptyRange': 'Aún no hay salidas en este rango.',
-  'resume.from': 'Desde',
-  'resume.generateCert': 'Generar Certificado',
-  'resume.includedSails': 'Salidas Incluidas',
-  'resume.last30': 'Últimos 30 Días',
-  'resume.thisYear': 'Este Año',
-  'resume.timeAtSea': 'Tiempo en el Mar',
-  'resume.title': 'Currículum de Navegación',
-  'resume.to': 'Hasta',
-  'resume.totalDistance': 'Distancia Total',
-  'resume.totalSails': 'Salidas Totales',
-  'sea.calm': 'Calma',
-  'sea.moderate': 'Moderado',
-  'sea.rough': 'Agitado',
-  'sea.slight': 'Ligero',
-  'sea.veryRough': 'Muy Agitado',
-  'settings.appearance': 'Apariencia',
-  'settings.clearProfile': 'Borrar perfil…',
-  'settings.dangerZone': 'Zona de Peligro',
-  'settings.dayTheme': 'Tema Diurno',
-  'settings.language': 'Idioma',
-  'settings.nightTheme': 'Tema Nocturno',
-  'settings.resetApp': 'Restablecer Datos de la App…',
-  'settings.resetApp2': 'Restablecer Datos de la App',
-  'settings.resetHint': 'Elimina de forma permanente cada travesía, embarcación, tripulante y detalle de perfil en este dispositivo. Esto no se puede deshacer — haz una copia de seguridad primero si quieres conservar algo.',
-  'settings.themeHint': 'Cambia entre modo diurno y nocturno',
-  'settings.title': 'Ajustes',
-  'settings.units': 'Unidades',
-  'settings.unitsHint': 'Valor predeterminado usado en toda la app — aún puedes cambiar las unidades para un solo registro mientras navegas',
-  'share.tripSummary': '⛵ {title}\n{date}\n{distance} · {duration} · Promedio {avgSpeed}\nRegistrado con Sail la Vie',
-  'sheet.addBoat': 'Añadir una Embarcación',
-  'sheet.addPhoto': 'Añadir Foto',
-  'sheet.adjustCrop': 'Ajustar / Recortar Foto Seleccionada',
-  'sheet.adjustPhoto': 'Ajustar Foto',
-  'sheet.adjustPhotoHint': 'Arrastra para reposicionar, usa el control deslizante para hacer zoom.',
-  'sheet.boatName': 'Nombre',
-  'sheet.boatNamePh': 'ej. Windswept',
-  'sheet.boatNotesPh': 'Marina base, detalles del aparejo, peculiaridades…',
-  'sheet.boatPhotos': 'Fotos',
-  'sheet.boatPhotosHint': '— toca una para hacerla la predeterminada',
-  'sheet.boatType': 'Tipo',
-  'sheet.boatTypePh': 'ej. Beneteau Oceanis 38',
-  'sheet.castOff': 'Zarpar',
-  'sheet.certDetails': 'Detalles del Certificado',
-  'sheet.certTitle': 'Título del Certificado',
-  'sheet.coverPickHint': 'Toca una foto para usarla como portada de este registro, o sáltalo y aparecerá en tu historial sin una.',
-  'sheet.coverPickTitle': '¿Establecer una Foto de Portada?',
-  'sheet.crewEmailPh': 'ej. alex@email.com',
-  'sheet.crewNamePh': 'ej. Alex',
-  'sheet.crewNotePh': 'Cómo lo conoces, rol a bordo…',
-  'sheet.crewSocialPh': 'ej. @alex o instagram.com/alex',
-  'sheet.defaultBadge': 'Predeterminada',
-  'sheet.editBoat': 'Editar Embarcación',
-  'sheet.editCrew': 'Editar Tripulante',
-  'sheet.eraseEverything': 'Sí, borrar todo',
-  'sheet.generate': 'Generar',
-  'sheet.gpsHint': 'Intentaremos usar el GPS de tu dispositivo para seguir tu ruta, velocidad y distancia en vivo. Si el GPS no está disponible, puedes introducir la distancia manualmente al terminar.',
-  'sheet.note': 'Nota',
-  'sheet.previewPdf': 'Vista Previa del PDF',
-  'sheet.previewPdfHint': 'Así se verá exactamente — una página A4, lista para compartir.',
-  'sheet.removeBoat': 'Eliminar Embarcación',
-  'sheet.resetConfirmHint': 'Esto elimina permanentemente todas las travesías, embarcaciones, tripulación y tu perfil de este dispositivo. Esto no se puede deshacer.',
-  'sheet.sailorName': 'Nombre del Marinero',
-  'sheet.saveBoat': 'Guardar Embarcación',
-  'sheet.setAsCover': 'Establecer como Portada',
-  'sheet.sharePdf': 'Compartir / Guardar PDF',
-  'sheet.skipNoCover': 'Omitir — Sin Portada',
-  'sheet.startJourneyTitle': 'Iniciar una Nueva Travesía',
-  'sheet.takeSelfie': 'Tomar Selfie',
-  'sheet.usePhoto': 'Usar Foto',
-  'sheet.whichBoat': '¿Qué embarcación?',
-  'sheet.whichBoatHint': 'Elige la embarcación que vas a usar — esto se guarda con el registro.',
-  'sheet.chooseBoatOpt': 'Elige tu embarcación…',
-  'sheet.noBoatsOpt': 'Aún no hay embarcaciones — añade una desde Flota',
-  'stat.avgSpeed': 'Vel. Media',
-  'stat.distance': 'Distancia',
-  'stat.gps': 'GPS',
-  'stat.maxSpeed': 'Vel. Máxima',
-  'toast.addPhotoFirst': 'Añade una foto primero',
-  'toast.allDataErased': 'Todos los datos borrados',
-  'toast.backupDownloaded': 'Copia de seguridad descargada',
-  'toast.backupReadFail': 'No se pudo leer ese archivo de copia de seguridad',
-  'toast.backupRestored': 'Copia de seguridad restaurada ⚓',
-  'toast.boatSaved': 'Embarcación guardada',
-  'toast.changesSaved': 'Cambios guardados ⚓',
-  'toast.copiedSummary': 'Resumen de la travesía copiado al portapapeles',
-  'toast.coverRemoved': 'Foto de portada eliminada',
-  'toast.coverUpdated': 'Foto de portada actualizada',
-  'toast.crewSaved': 'Tripulante guardado',
-  'toast.draftKept': 'Borrador guardado — toca el aviso para terminarlo',
-  'toast.editsKept': 'Cambios guardados — toca el aviso para terminar',
-  'toast.enterName': 'Introduce un nombre',
-  'toast.finishOrDiscardFirst': 'Termina o descarta tu travesía/registro actual primero',
-  'toast.giveBoatName': 'Dale un nombre a la embarcación',
-  'toast.invalidBackup': 'Eso no parece un archivo de copia de seguridad válido',
-  'toast.journeySaved': 'Travesía guardada ⚓',
-  'toast.openTripFirst': 'Abre una travesía primero',
-  'toast.pdfDownloaded': 'PDF de una página A4 descargado',
-  'toast.pdfGenFail': 'No se pudo generar el PDF — inténtalo de nuevo',
-  'toast.pdfNeedsConnection': 'Exportar a PDF necesita conexión la primera vez (carga una pequeña librería) — inténtalo de nuevo cuando estés en línea.',
-  'toast.photoDownloaded': 'Foto descargada — compártela desde tu galería',
-  'toast.photoProcessFail': 'No se pudo procesar esa foto',
-  'toast.photoReadFail': 'No se pudo leer esa foto',
-  'toast.photoUpdated': 'Foto actualizada',
-  'toast.preparingPdf': 'Preparando PDF de una página A4…',
-  'toast.profileCleared': 'Perfil borrado',
-  'toast.profileSaved': 'Perfil guardado',
-  'toast.saveFailed': 'Error al guardar — la travesía se mantiene en pantalla, inténtalo de nuevo',
-  'toast.stillRecording': 'Aún grabando — toca el aviso para volver',
-  'toast.tripDeleted': 'Travesía eliminada',
-  'toast.tripLoadFail': 'No se pudo cargar esa travesía',
-  'toast.unitsMetric': 'Unidades predeterminadas: Métrico (km/h, km)',
-  'toast.unitsNautical': 'Unidades predeterminadas: Náutico (kts, NM)',
-  'unit.hourAbbr': 'h',
-  'unit.minAbbr': 'm',
-  'unit.metric': 'Métrico (km/h / km)',
-  'unit.nautical': 'Náutico (kts / NM)',
-  'active.manualDistanceLabel': 'Distancia recorrida — {unit} (entrada manual, GPS no disponible)',
-  'active.distanceUnitLabel': 'Distancia ({unit})',
-  'active.avgSpeedUnitLabel': 'Vel. Media ({unit})',
-  'active.maxSpeedUnitLabel': 'Vel. Máxima ({unit})',
-}
-};
-
-/* ============================================================
-   i18n — translation lookup, DOM application, and language switching.
-   TRANSLATIONS holds one flat key->string dict per language. currentLang
-   drives both t() and date/time locale formatting (see currentLocale()).
-   Add a new language by adding another entry to TRANSLATIONS and a chip
-   in Settings — everything else picks it up automatically.
-   ============================================================ */
-let currentLang = 'en';
-function t(key, vars){
-  let str = (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS.en[key] || key;
-  if(vars){ Object.keys(vars).forEach(k=>{ str = str.split('{'+k+'}').join(vars[k]); }); }
-  return str;
-}
-function currentLocale(){ return currentLang==='es' ? 'es-ES' : 'en-US'; }
-const SEA_STATE_KEYS = {'Calm':'sea.calm','Slight':'sea.slight','Moderate':'sea.moderate','Rough':'sea.rough','Very Rough':'sea.veryRough'};
-function seaStateLabel(v){ return v ? (SEA_STATE_KEYS[v] ? t(SEA_STATE_KEYS[v]) : v) : ''; }
-function compassLabel(v){ return v ? t('compass.'+v) : ''; }
-// Walks every element tagged with data-i18n / data-i18n-ph / data-i18n-title
-// and sets its text/placeholder/title from the current language. Static
-// markup only — dynamic screens (history list, trip detail, etc.) re-render
-// themselves from JS and already call t() directly, so re-rendering the
-// current screen after this covers those.
-function applyStaticTranslations(){
-  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
-  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.getAttribute('data-i18n-ph')); });
-  document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title = t(el.getAttribute('data-i18n-title')); });
-  document.documentElement.lang = currentLang;
-  document.querySelectorAll('#languageChips .chip').forEach(el=>{ el.classList.toggle('active', el.getAttribute('data-lang')===currentLang); });
-}
-// Re-renders whichever dynamic screens/elements are currently live so a
-// language switch takes effect immediately without navigating away and back.
-function refreshDynamicScreensForLanguage(){
-  const activeScreen = document.querySelector('.screen.active');
-  const activeName = activeScreen ? activeScreen.id.replace('screen-','') : null;
-  greet(); renderHomeStats();
-  if(activeName==='history') renderHistory();
-  if(activeName==='boats') renderBoats();
-  if(activeName==='crew') renderCrew();
-  if(activeName==='resume') renderResume();
-  if(activeName==='detail' && openTripId) openTripDetail(openTripId);
-  if(currentTrip){
-    renderSkipperChip(); renderAddedCrewChips();
-    const label = document.getElementById('endJourneyBtnLabel');
-    if(label) label.textContent = currentTrip.isEditing ? t('active.saveChanges') : currentTrip.isManual ? t('active.saveLogEntry') : t('active.endJourney');
-    refreshLogUnitsUI();
-  }
-  updateRecordingBanner(activeName);
-}
-async function setLanguage(lang){
-  if(!TRANSLATIONS[lang]) return;
-  currentLang = lang;
-  state.profile.language = lang;
-  await storeSet(KEYS.PROFILE, state.profile);
-  applyStaticTranslations();
-  refreshDynamicScreensForLanguage();
-}
-
 const LS_PREFIX = 'sail-la-vie:';
 const IDB_NAME = 'sail-la-vie-db';
 const IDB_STORE = 'kv';
@@ -1742,7 +1124,7 @@ async function backupToFile(){
   a.href = url; a.download = `sail-la-vie-backup-${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
-  showToast(t('toast.backupDownloaded'));
+  showToast('Backup downloaded');
 }
 async function restoreFromFile(ev){
   const f = ev.target.files[0];
@@ -1750,8 +1132,8 @@ async function restoreFromFile(ev){
   if(!f) return;
   try{
     const data = JSON.parse(await f.text());
-    if(!data || !data.profile || !Array.isArray(data.trips)){ showToast(t('toast.invalidBackup')); return; }
-    if(!confirm(t('confirm.restore', {name: f.name}))) return;
+    if(!data || !data.profile || !Array.isArray(data.trips)){ showToast("That doesn't look like a valid backup file"); return; }
+    if(!confirm(`Restore "${f.name}"? This replaces all current trips, boats, crew, and profile on this device. This can't be undone.`)) return;
 
     await storeSet(KEYS.PROFILE, data.profile);
     await storeSet(KEYS.BOATS, data.boats||[]);
@@ -1765,16 +1147,14 @@ async function restoreFromFile(ev){
     state.tripIndex = data.tripIndex||[];
 
     document.documentElement.setAttribute('data-theme', state.profile.theme||'light');
-    currentLang = TRANSLATIONS[state.profile.language] ? state.profile.language : 'en';
-    applyStaticTranslations();
-    document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
+    document.getElementById('homeName').textContent = state.profile.name || 'Sailor';
     refreshAvatars();
-    showToast(t('toast.backupRestored'));
+    showToast('Backup restored ⚓');
     nav('home');
     renderHomeStats();
   }catch(e){
     console.error('restore failed', e);
-    showToast(t('toast.backupReadFail'));
+    showToast('Could not read that backup file');
   }
 }
 
@@ -1786,7 +1166,7 @@ let state = {
   tripIndex: [],   // lightweight list for History screen — NOT the full trip records (those are stored separately as 'trip:<id>')
   boats: [],
   crew: [],
-  profile: { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme:'light', unitSystem:'nautical', language:'en' },
+  profile: { name:'Sailor', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme:'light', unitSystem:'nautical' },
 };
 
 let currentTrip = null;   // the ONE journey/manual-entry/edit in progress right now; null when nothing's active — check this first if the active screen misbehaves
@@ -1809,16 +1189,14 @@ async function boot(){
   state.boats = boats || [];
   state.crew = crew || [];
   state.profile = profile || state.profile;
-  currentLang = TRANSLATIONS[state.profile.language] ? state.profile.language : 'en';
-  applyStaticTranslations();
 
   document.documentElement.setAttribute('data-theme', state.profile.theme || 'light');
   document.getElementById('themeKnob').textContent = (state.profile.theme==='dark') ? '🌙' : '☀️';
-  document.getElementById('themeLabel').textContent = (state.profile.theme==='dark') ? t('settings.nightTheme') : t('settings.dayTheme');
+  document.getElementById('themeLabel').textContent = (state.profile.theme==='dark') ? 'Night Theme' : 'Day Theme';
   renderUnitsSettingUI();
 
   refreshAvatars();
-  document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
+  document.getElementById('homeName').textContent = state.profile.name || 'Sailor';
   greet();
 
   document.getElementById('loadingScreen').style.display='none';
@@ -1828,7 +1206,7 @@ async function boot(){
 }
 function greet(){
   const h = new Date().getHours();
-  document.getElementById('homeGreeting').textContent = h<12 ? t('greet.morning') : h<18 ? t('greet.afternoon') : t('greet.evening');
+  document.getElementById('homeGreeting').textContent = h<12 ? 'Good morning' : h<18 ? 'Good afternoon' : 'Good evening';
 }
 function refreshAvatars(){
   const a = state.profile.avatar || placeholderAvatar();
@@ -1872,18 +1250,18 @@ function updateRecordingBanner(currentScreen){
   if(show){
     const boat = state.boats.find(b=>b.id===currentTrip.boatId);
     if(currentTrip.isEditing){
-      document.getElementById('recordingBannerText').textContent = t('banner.unsavedEdits');
+      document.getElementById('recordingBannerText').textContent = 'Unsaved edits to a log entry — tap to finish';
     } else if(currentTrip.isManual){
-      document.getElementById('recordingBannerText').textContent = t('banner.unsavedPastSail');
+      document.getElementById('recordingBannerText').textContent = 'Unsaved past-sail entry — tap to finish';
     } else {
-      document.getElementById('recordingBannerText').textContent = boat ? t('banner.recordingBoat', {boat: boat.name}) : t('banner.recordingJourney');
+      document.getElementById('recordingBannerText').textContent = boat ? `Recording — ${boat.name}` : 'Recording journey';
     }
   }
 }
 function showToast(msg){
-  const toastEl = document.getElementById('toast'); toastEl.textContent = msg; toastEl.classList.add('show');
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 2200);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
 }
 function closeSheets(){
   // Sheets (modals) are just divs toggled between display:none/block — hiding "all of them"
@@ -1941,7 +1319,7 @@ async function openPhotoAdjuster(file, target, returnSheetId, opts){
   if(!file) return;
   let dataUrl;
   try{ dataUrl = await readFileAsDataUrl(file); }
-  catch(e){ showToast(t('toast.photoReadFail')); return; }
+  catch(e){ showToast("Couldn't read that photo"); return; }
   startPhotoAdjuster(dataUrl, target, returnSheetId, opts);
 }
 // Same as openPhotoAdjuster but for a photo that's already a dataURL (e.g. one
@@ -1972,7 +1350,7 @@ function startPhotoAdjuster(dataUrl, target, returnSheetId, opts){
     openSheet('sheetPhotoAdjust');
     setupAdjustDrag();
   };
-  img.onerror = ()=> showToast(t('toast.photoReadFail'));
+  img.onerror = ()=> showToast("Couldn't read that photo");
   img.src = dataUrl;
 }
 // Applies the current zoom/position to the actual <img> element in the viewport —
@@ -2046,7 +1424,7 @@ async function confirmPhotoAdjust(){
     state.profile.avatar = dataUrl;
     await storeSet(KEYS.PROFILE, state.profile);
     refreshAvatars();
-    showToast(t('toast.photoUpdated'));
+    showToast('Photo updated');
   } else if(s.target==='crew'){
     pendingCrewPhoto = dataUrl;
     document.getElementById('crewPhotoPreview').src = dataUrl;
@@ -2076,8 +1454,8 @@ function renderHomeStats(){
   const nm = state.tripIndex.reduce((s,t)=>s+(t.distanceNm||0),0);
   const secs = state.tripIndex.reduce((s,t)=>s+(t.elapsedSeconds||0),0);
   el.innerHTML = `<div class="stat-card stat-grid">
-    <div class="cell"><div class="stat-label">${t('resume.totalSails')}</div><div class="stat-value">${state.tripIndex.length}</div></div>
-    <div class="cell"><div class="stat-label">${t('home.distanceLogged')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
+    <div class="cell"><div class="stat-label">Total Sails</div><div class="stat-value">${state.tripIndex.length}</div></div>
+    <div class="cell"><div class="stat-label">Distance Logged</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
   </div>`;
 }
 
@@ -2090,14 +1468,14 @@ function renderHomeStats(){
    ============================================================ */
 function populateBoatSelects(){
   const opts = state.boats.length
-    ? `<option value="" disabled selected>${t('sheet.chooseBoatOpt')}</option>` + state.boats.map(b=>`<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('')
-    : `<option value="">${t('sheet.noBoatsOpt')}</option>`;
+    ? `<option value="" disabled selected>Choose your boat…</option>` + state.boats.map(b=>`<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('')
+    : `<option value="">No boats yet — add one from Fleet</option>`;
   document.getElementById('startBoatSelect').innerHTML = opts;
   document.getElementById('activeBoatSelect').innerHTML = opts;
 }
 function openStartJourneySheet(){
   if(currentTrip){
-    if(confirm(t('confirm.alreadyRecordingNew'))){
+    if(confirm('You already have a journey being recorded. Return to it? (Starting a new one would discard the current recording.)')){
       nav('active');
       return;
     }
@@ -2161,7 +1539,7 @@ function updateLiveStatDisplays(){
 // after seeding activeUnitSystem at the start of a journey/entry/edit.
 function refreshLogUnitsUI(){
   const sys = activeUnitSystem;
-  const label = sys==='metric' ? t('unit.metric') : t('unit.nautical');
+  const label = sys==='metric' ? 'Metric (km/h / km)' : 'Nautical (kts / NM)';
   const knob = sys==='metric' ? '🌍' : '⚓';
   // Two visible instances of the same toggle — one under the live stat-grid, one
   // under the manual/edit distance field — both drive the same activeUnitSystem.
@@ -2169,10 +1547,10 @@ function refreshLogUnitsUI(){
   document.getElementById('logUnitsLabelLive').textContent = label;
   document.getElementById('logUnitsKnobPast').textContent = knob;
   document.getElementById('logUnitsLabelPast').textContent = label;
-  document.getElementById('manualDistanceLabel').textContent = t('active.manualDistanceLabel', {unit: distUnitLabel(sys)});
-  document.getElementById('pastDistanceLabel').textContent = t('active.distanceUnitLabel', {unit: distUnitLabel(sys)});
-  document.getElementById('pastAvgSpeedLabel').textContent = t('active.avgSpeedUnitLabel', {unit: speedUnitLabel(sys)});
-  document.getElementById('pastMaxSpeedLabel').textContent = t('active.maxSpeedUnitLabel', {unit: speedUnitLabel(sys)});
+  document.getElementById('manualDistanceLabel').textContent = `Distance covered — ${distUnitLabel(sys)} (manual entry, GPS unavailable)`;
+  document.getElementById('pastDistanceLabel').textContent = `Distance (${distUnitLabel(sys)})`;
+  document.getElementById('pastAvgSpeedLabel').textContent = `Avg Speed (${speedUnitLabel(sys)})`;
+  document.getElementById('pastMaxSpeedLabel').textContent = `Max Speed (${speedUnitLabel(sys)})`;
   updateWindSpeedLabel();
   updateGustsLabel();
   updateLiveStatDisplays();
@@ -2231,7 +1609,7 @@ function startAddCrewFromPicker(){
 const SKIPPER_SELF_ID = 'self'; // sentinel id for "me" (state.profile), distinct from any crew uid()
 function skipperById(id){
   if(!id) return null;
-  if(id===SKIPPER_SELF_ID) return { name: state.profile.name||t('default.sailorName'), photo: state.profile.avatar||'' };
+  if(id===SKIPPER_SELF_ID) return { name: state.profile.name||'Sailor', photo: state.profile.avatar||'' };
   return state.crew.find(c=>c.id===id) || null;
 }
 function renderSkipperChip(){
@@ -2257,7 +1635,7 @@ function renderSkipperPickList(){
   const selfRow = `
     <div class="crew-pick-row${currentTrip.skipperId===SKIPPER_SELF_ID?' selected':''}" data-id="${SKIPPER_SELF_ID}" onclick="selectSkipper('${SKIPPER_SELF_ID}')">
       <img src="${state.profile.avatar||placeholderAvatar()}">
-      <div class="name">${escapeHtml(state.profile.name||t('default.sailorName'))} ${t('active.youSuffix')}</div>
+      <div class="name">${escapeHtml(state.profile.name||'Sailor')} (You)</div>
       <div class="crew-pick-check"></div>
     </div>`;
   const crewRows = [...state.crew].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`
@@ -2317,7 +1695,7 @@ function beginJourney(){
   nav('active');
   document.getElementById('liveStatsBlock').style.display = 'block';
   document.getElementById('pastStatsBlock').style.display = 'none';
-  document.getElementById('endJourneyBtnLabel').textContent = t('active.endJourney');
+  document.getElementById('endJourneyBtnLabel').textContent = 'End Journey';
   resetActiveFormFields();
   // BUG FIX: the boat chosen in the Start Journey sheet never used to carry
   // over to the log form's own boat select — it silently sat on whatever the
@@ -2337,9 +1715,9 @@ function beginJourney(){
 // currentTrip.isEditing to overwrite the original instead of creating a new trip.
 function editTrip(){
   const trip = window._detailTrip;
-  if(!trip){ showToast(t('toast.openTripFirst')); return; }
+  if(!trip){ showToast('Open a trip first'); return; }
   if(currentTrip){
-    showToast(t('toast.finishOrDiscardFirst'));
+    showToast('Finish or discard your current journey/entry first');
     return;
   }
   currentTrip = JSON.parse(JSON.stringify(trip)); // deep clone so cancel never touches the saved version
@@ -2350,7 +1728,7 @@ function editTrip(){
   nav('active');
   document.getElementById('liveStatsBlock').style.display = 'none';
   document.getElementById('pastStatsBlock').style.display = 'block';
-  document.getElementById('endJourneyBtnLabel').textContent = t('active.saveChanges');
+  document.getElementById('endJourneyBtnLabel').textContent = 'Save Changes';
 
   document.getElementById('tripPlace').value = trip.place || '';
   document.getElementById('activeBoatSelect').value = trip.boatId || '';
@@ -2394,7 +1772,7 @@ function editTrip(){
 // person fills in date, duration, and distance by hand instead.
 function beginManualJourney(){
   if(currentTrip){
-    if(confirm(t('confirm.alreadyRecordingPast'))){
+    if(confirm('You already have a journey being recorded. Return to it? (Starting a past-sail entry would discard the current recording.)')){
       nav('active');
     }
     return;
@@ -2416,7 +1794,7 @@ function beginManualJourney(){
   nav('active');
   document.getElementById('liveStatsBlock').style.display = 'none';
   document.getElementById('pastStatsBlock').style.display = 'block';
-  document.getElementById('endJourneyBtnLabel').textContent = t('active.saveLogEntry');
+  document.getElementById('endJourneyBtnLabel').textContent = 'Save Log Entry';
   resetActiveFormFields();
   refreshLogUnitsUI();
   // default the date/time picker to now, in local time, formatted for datetime-local
@@ -2454,16 +1832,16 @@ function startGPS(){
   const gpsEl = document.getElementById('gpsStatus');
   renderLiveTrack();
   if(!('geolocation' in navigator)){
-    gpsEl.textContent = t('gps.unavailable'); gpsEl.style.color='var(--coral)';
+    gpsEl.textContent = 'Unavailable'; gpsEl.style.color='var(--coral)';
     document.getElementById('manualDistanceWrap').style.display='block';
     return;
   }
-  gpsEl.textContent = t('gps.searching');
+  gpsEl.textContent = 'Searching…';
   watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
 }
 function onFix(pos){
   const gpsEl = document.getElementById('gpsStatus');
-  gpsEl.textContent = t('gps.live'); gpsEl.style.color='var(--navy)';
+  gpsEl.textContent = 'Live'; gpsEl.style.color='var(--navy)';
   const point = { lat: pos.coords.latitude, lng: pos.coords.longitude, t: Date.now() };
   const prev = currentTrip.path[currentTrip.path.length-1];
   currentTrip.path.push(point);
@@ -2485,7 +1863,7 @@ function onFix(pos){
 }
 function onGpsError(){
   const gpsEl = document.getElementById('gpsStatus');
-  gpsEl.textContent = t('gps.noSignal'); gpsEl.style.color='var(--coral)';
+  gpsEl.textContent = 'No signal'; gpsEl.style.color='var(--coral)';
   document.getElementById('manualDistanceWrap').style.display='block';
   renderLiveTrack();
 }
@@ -2498,14 +1876,14 @@ function confirmLeaveActive(){
   // Leaving the screen no longer stops tracking — GPS/timer keep running in the
   // background. The journey only ends when "End Journey" / "Save Log Entry" / "Save Changes" is pressed.
   nav('home');
-  showToast(currentTrip.isEditing ? t('toast.editsKept') : currentTrip.isManual ? t('toast.draftKept') : t('toast.stillRecording'));
+  showToast(currentTrip.isEditing ? "Edits kept — tap the banner to finish" : currentTrip.isManual ? "Draft kept — tap the banner to finish it" : 'Still recording — tap the banner to return');
 }
 function discardJourney(){
   const msg = currentTrip.isEditing
-    ? t('confirm.discardEdits')
+    ? "Discard these changes? The log entry will stay as it was. This can't be undone."
     : currentTrip.isManual
-    ? t('confirm.discardManual')
-    : t('confirm.discardJourney');
+    ? "Discard this past-sail entry? Nothing will be saved. This can't be undone."
+    : "Discard this journey? Tracking will stop and none of it will be saved. This can't be undone.";
   if(confirm(msg)){
     stopGPS();
     const wasEditing = currentTrip.isEditing, editedId = currentTrip.id;
@@ -2538,7 +1916,7 @@ async function handleActivePhotos(ev){
       const dataUrl = await resizeImage(f, 900, 0.72);
       currentTrip.photos.push(dataUrl);
       if(!currentTrip.coverPhoto) currentTrip.coverPhoto = dataUrl;
-    }catch(e){ showToast(t('toast.photoProcessFail')); }
+    }catch(e){ showToast("Couldn't process that photo"); }
   }
   renderActivePhotoStrip();
   ev.target.value='';
@@ -2549,7 +1927,7 @@ function renderActivePhotoStrip(){
   currentTrip.photos.forEach((p,i)=>{
     const div = document.createElement('div'); div.className='photo-thumb';
     div.innerHTML = `<img src="${p}" onclick="setActiveCover(${i})">
-      ${currentTrip.coverPhoto===p?`<div class="cover-badge">${t('active.coverBadge')}</div>`:''}
+      ${currentTrip.coverPhoto===p?'<div class="cover-badge">COVER</div>':''}
       <div class="rm" onclick="removeActivePhoto(${i})">✕</div>`;
     strip.insertBefore(div, strip.firstChild);
   });
@@ -2570,7 +1948,7 @@ function removeActivePhoto(i){
 // into currentTrip, converting distance to canonical NM if the log was in metric.
 // Then either prompts for a cover photo (if any were added) or saves straight away.
 async function endJourney(){
-  const confirmMsg = currentTrip.isEditing ? t('confirm.saveChanges') : currentTrip.isManual ? t('confirm.savePastSail') : t('confirm.endJourney');
+  const confirmMsg = currentTrip.isEditing ? 'Save changes to this log entry?' : currentTrip.isManual ? 'Save this past sail to your log?' : 'End this journey and save it to your log?';
   if(!confirm(confirmMsg)) return;
 
   if(currentTrip.isManual){
@@ -2628,7 +2006,7 @@ async function endJourney(){
 let coverPickMode = 'onSave'; // 'onSave' (part of finishing a new entry) | 'swap' (changing the cover mid-edit, doesn't save)
 function openCoverPickSheet(mode){
   coverPickMode = mode || 'onSave';
-  if(!currentTrip.photos || !currentTrip.photos.length){ showToast(t('toast.addPhotoFirst')); return; }
+  if(!currentTrip.photos || !currentTrip.photos.length){ showToast('Add a photo first'); return; }
   // Default the selection to whatever's already the cover (editing) or the first photo, so
   // "Adjust Cover" has something sensible to work on even before the person taps a thumbnail.
   const existingIdx = currentTrip.photos.indexOf(currentTrip.coverPhoto);
@@ -2668,7 +2046,7 @@ function confirmCoverPick(){
   delete currentTrip._coverAdjusted;
   closeSheets();
   if(coverPickMode==='onSave'){ finalizeSaveTrip(); }
-  else { renderActivePhotoStrip(); showToast(t('toast.coverUpdated')); }
+  else { renderActivePhotoStrip(); showToast('Cover photo updated'); }
 }
 function skipCoverPick(){
   currentTrip.coverPhoto = null;
@@ -2676,14 +2054,14 @@ function skipCoverPick(){
   delete currentTrip._coverAdjusted;
   closeSheets();
   if(coverPickMode==='onSave'){ finalizeSaveTrip(); }
-  else { renderActivePhotoStrip(); showToast(t('toast.coverRemoved')); }
+  else { renderActivePhotoStrip(); showToast('Cover photo removed'); }
 }
 // The actual write to storage — shared by all three modes. Branches on
 // isEditing to decide whether to overwrite the existing tripIndex entry in
 // place or add a new one, since editing must never duplicate the trip.
 async function finalizeSaveTrip(){
   const ok = await storeSet('trip:'+currentTrip.id, currentTrip);
-  if(!ok){ showToast(t('toast.saveFailed')); return; }
+  if(!ok){ showToast('Save failed — trip kept on screen, try again'); return; }
 
   const indexEntry = {
     id: currentTrip.id, title: currentTrip.title, date: currentTrip.date,
@@ -2700,7 +2078,7 @@ async function finalizeSaveTrip(){
     state.tripIndex.unshift(indexEntry);
   }
   await storeSet(KEYS.INDEX, state.tripIndex);
-  showToast(currentTrip.isEditing ? t('toast.changesSaved') : t('toast.journeySaved'));
+  showToast(currentTrip.isEditing ? 'Changes saved ⚓' : 'Journey saved ⚓');
   const savedId = currentTrip.id;
   currentTrip = null;
   nav('home');
@@ -2717,12 +2095,12 @@ function setHistoryFilter(f){ historyFilter=f; document.querySelectorAll('#histo
 // NOT full trip records — that's why this doesn't need to be async).
 function renderHistory(){
   const q = (document.getElementById('historySearch').value||'').toLowerCase();
-  let list = state.tripIndex.filter(trip=>{
-    const boat = state.boats.find(b=>b.id===trip.boatId);
-    const hay = (trip.title+' '+(trip.notes||'')+' '+(trip.place||'')+' '+(boat?boat.name:'')).toLowerCase();
+  let list = state.tripIndex.filter(t=>{
+    const boat = state.boats.find(b=>b.id===t.boatId);
+    const hay = (t.title+' '+(t.notes||'')+' '+(t.place||'')+' '+(boat?boat.name:'')).toLowerCase();
     if(q && !hay.includes(q)) return false;
-    if(historyFilter==='recent'){ const days=(Date.now()-new Date(trip.date))/86400000; if(days>30) return false; }
-    if(historyFilter==='photos' && !trip.hasPhotos) return false;
+    if(historyFilter==='recent'){ const days=(Date.now()-new Date(t.date))/86400000; if(days>30) return false; }
+    if(historyFilter==='photos' && !t.hasPhotos) return false;
     return true;
   });
   // Order by the date of the sail itself (most recent first), not by
@@ -2733,27 +2111,27 @@ function renderHistory(){
   if(!list.length){
     el.innerHTML = `<div class="empty">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18l9-15 9 15z"/></svg>
-      <h3>${t('history.emptyTitle')}</h3><p>${t('history.emptyHint')}</p></div>`;
+      <h3>No sails logged yet</h3><p>Start a new journey from Home to begin your logbook.</p></div>`;
     return;
   }
-  el.innerHTML = list.map(trip=>{
-    const d = new Date(trip.date);
-    const dateStr = d.toLocaleDateString(currentLocale(),{month:'short',day:'numeric',year:'numeric'});
-    const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
-    const dur = fmtDuration(trip.elapsedSeconds);
-    return `<div class="trip-card" onclick="openTripDetail('${trip.id}')">
-      ${trip.coverPhoto
-        ? `<div class="trip-cover-wrap"><img class="trip-cover" src="${trip.coverPhoto}">
+  el.innerHTML = list.map(t=>{
+    const d = new Date(t.date);
+    const dateStr = d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+    const timeStr = d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+    const dur = fmtDuration(t.elapsedSeconds);
+    return `<div class="trip-card" onclick="openTripDetail('${t.id}')">
+      ${t.coverPhoto
+        ? `<div class="trip-cover-wrap"><img class="trip-cover" src="${t.coverPhoto}">
             <div class="trip-cover-overlay">
               <div class="trip-cover-date">${dateStr} · ${timeStr}</div>
-              ${trip.place ? `<div class="trip-cover-place">📍 ${escapeHtml(trip.place)}</div>` : ''}
+              ${t.place ? `<div class="trip-cover-place">📍 ${escapeHtml(t.place)}</div>` : ''}
             </div>
           </div>`
         : `<div class="trip-cover placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18l9-15 9 15z"/></svg></div>`}
       <div class="trip-body">
-        <div class="trip-title">${escapeHtml(trip.title)}</div>
-        <div class="trip-meta">${trip.coverPhoto ? '' : `<span>📅 ${dateStr}</span>`}${trip.place && !trip.coverPhoto ? `<span>📍 ${escapeHtml(trip.place)}</span>` : ''}<span>⏱ ${dur}</span></div>
-        <div class="trip-meta"><span>📏 <b>${fmtDistance(trip.distanceNm||0)}</b></span><span>⚓ ${t('common.avgShort')} <b>${fmtSpeed(trip.avgSpeed||0)}</b></span></div>
+        <div class="trip-title">${escapeHtml(t.title)}</div>
+        <div class="trip-meta">${t.coverPhoto ? '' : `<span>📅 ${dateStr}</span>`}${t.place && !t.coverPhoto ? `<span>📍 ${escapeHtml(t.place)}</span>` : ''}<span>⏱ ${dur}</span></div>
+        <div class="trip-meta"><span>📏 <b>${fmtDistance(t.distanceNm||0)}</b></span><span>⚓ Avg <b>${fmtSpeed(t.avgSpeed||0)}</b></span></div>
       </div>
     </div>`;
   }).join('');
@@ -2761,7 +2139,7 @@ function renderHistory(){
 function fmtDuration(secs){
   secs = secs||0;
   const h = Math.floor(secs/3600), m = Math.floor((secs%3600)/60);
-  return h>0 ? `${h}${t('unit.hourAbbr')} ${m}${t('unit.minAbbr')}` : `${m}${t('unit.minAbbr')}`;
+  return h>0 ? `${h}h ${m}m` : `${m}m`;
 }
 
 /* ============================================================
@@ -2774,9 +2152,9 @@ let openTripId = null;
 async function openTripDetail(id){
   openTripId = id;
   const trip = await storeGet('trip:'+id);
-  if(!trip){ showToast(t('toast.tripLoadFail')); return; }
+  if(!trip){ showToast('Could not load that trip'); return; }
   const boat = state.boats.find(b=>b.id===trip.boatId);
-  document.getElementById('detailTitle').textContent = trip.title||t('detail.tripFallback');
+  document.getElementById('detailTitle').textContent = trip.title||'Trip';
   const tripCrew = (trip.crewIds||[]).map(cid=>state.crew.find(x=>x.id===cid)).filter(Boolean);
   const crewNames = tripCrew.map(c=>c.name); // still used by shareTrip()'s plain-text summary
   const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
@@ -2787,50 +2165,50 @@ async function openTripDetail(id){
       ? `<div class="trip-cover-wrap" style="border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);cursor:pointer;" onclick="openTripCoverLightbox()">
           <img class="trip-cover" src="${trip.coverPhoto}" style="height:200px;">
           <div class="trip-cover-overlay">
-            <div class="trip-cover-date">${d.toLocaleDateString(currentLocale(),{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · ${d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'})}</div>
+            <div class="trip-cover-date">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · ${d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}</div>
             ${trip.place || boat ? `<div class="trip-cover-place">${trip.place?'📍 '+escapeHtml(trip.place):''}${trip.place&&boat?' · ':''}${boat?escapeHtml(boat.name):''}</div>` : ''}
           </div>
         </div>`
-      : `<p style="margin-top:12px;font-size:13px;">${d.toLocaleDateString(currentLocale(),{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · ${d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'})}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</p>`}
+      : `<p style="margin-top:12px;font-size:13px;">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · ${d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</p>`}
 
     <div class="stat-card stat-grid" style="margin-top:14px;">
-      <div class="cell"><div class="stat-label">${t('detail.elapsed')}</div><div class="stat-value" style="font-size:19px;">${fmtDuration(trip.elapsedSeconds)}</div></div>
-      <div class="cell"><div class="stat-label">${t('stat.distance')}</div><div class="stat-value">${fmtDistance(trip.distanceNm||0)}</div></div>
-      <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('stat.avgSpeed')}</div><div class="stat-value">${fmtSpeed(trip.avgSpeed||0)}</div></div>
-      <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('stat.maxSpeed')}</div><div class="stat-value">${fmtSpeed(trip.maxSpeed||0)}</div></div>
+      <div class="cell"><div class="stat-label">Elapsed</div><div class="stat-value" style="font-size:19px;">${fmtDuration(trip.elapsedSeconds)}</div></div>
+      <div class="cell"><div class="stat-label">Distance</div><div class="stat-value">${fmtDistance(trip.distanceNm||0)}</div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">Avg Speed</div><div class="stat-value">${fmtSpeed(trip.avgSpeed||0)}</div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">Max Speed</div><div class="stat-value">${fmtSpeed(trip.maxSpeed||0)}</div></div>
     </div>
 
     <div id="detailMapArea"></div>
 
-    <div class="section-title">${t('detail.weather')}</div>
+    <div class="section-title">Weather</div>
     <div class="card" style="padding:16px;">
       <div class="trip-meta">
-        <span>💨 ${compassLabel(trip.weather?.windDir)||'—'} ${trip.weather?.windSpeed!=null?fmtSpeed(trip.weather.windSpeed):''}</span>
-        <span>${trip.weather?.gusts?`${t('detail.gustsShort')} ${fmtSpeed(trip.weather.gusts)}`:''}</span>
-        <span>🌊 ${seaStateLabel(trip.weather?.seaState)||'—'}${trip.weather?.waveHeight?` (${trip.weather.waveHeight}m)`:''}${trip.weather?.waveDir?` ${t('detail.fromDir')} ${compassLabel(trip.weather.waveDir)}`:''}</span>
+        <span>💨 ${trip.weather?.windDir||'—'} ${trip.weather?.windSpeed!=null?fmtSpeed(trip.weather.windSpeed):''}</span>
+        <span>${trip.weather?.gusts?`Gusts ${fmtSpeed(trip.weather.gusts)}`:''}</span>
+        <span>🌊 ${trip.weather?.seaState||'—'}${trip.weather?.waveHeight?` (${trip.weather.waveHeight}m)`:''}${trip.weather?.waveDir?` from ${trip.weather.waveDir}`:''}</span>
         <span>🌡 ${trip.weather?.temp?trip.weather.temp+'°C':'—'}</span>
       </div>
     </div>
 
-    ${trip.notes ? `<div class="section-title">${t('active.notes')}</div><div class="card" style="padding:16px;"><p style="color:var(--ink);">${escapeHtml(trip.notes)}</p></div>` : ''}
+    ${trip.notes ? `<div class="section-title">Notes</div><div class="card" style="padding:16px;"><p style="color:var(--ink);">${escapeHtml(trip.notes)}</p></div>` : ''}
 
-    ${tripSkipper ? `<div class="section-title">${t('active.skipper')}</div><div class="crew-chip-row">
+    ${tripSkipper ? `<div class="section-title">Skipper</div><div class="crew-chip-row">
       <div class="crew-chip active"><img src="${tripSkipper.photo||placeholderAvatar()}"><span>${escapeHtml(tripSkipper.name)}</span></div></div>` : ''}
 
-    ${tripCrew.length ? `<div class="section-title">${t('active.crewAboard')}</div><div class="crew-chip-row">${tripCrew.map(c=>`
+    ${tripCrew.length ? `<div class="section-title">Crew</div><div class="crew-chip-row">${tripCrew.map(c=>`
       <div class="crew-chip active"><img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
 
-    ${trip.photos && trip.photos.length ? `<div class="section-title">${t('active.photos')}</div><div class="photo-strip">${trip.photos.map((p,i)=>`<div class="photo-thumb" onclick="openTripPhotoLightbox(${i})"><img src="${p}"></div>`).join('')}</div>` : ''}
+    ${trip.photos && trip.photos.length ? `<div class="section-title">Photos</div><div class="photo-strip">${trip.photos.map((p,i)=>`<div class="photo-thumb" onclick="openTripPhotoLightbox(${i})"><img src="${p}"></div>`).join('')}</div>` : ''}
 
     <div style="height:8px;"></div>
     <button class="btn btn-outline" onclick="shareTrip('${trip.id}')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
-      ${t('detail.shareCrewSocial')}
+      Share with Crew / Social
     </button>
     <div style="height:10px;"></div>
     <button class="btn btn-outline" onclick="openTripPdfPreview()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
-      ${t('detail.exportPdf')}
+      Export as A4 PDF
     </button>
   `;
   window._detailTrip = trip;
@@ -2847,18 +2225,18 @@ async function renderTripDetailMap(trip){
 
   if(trip.path && trip.path.length>1){
     area.innerHTML = `
-      <div class="stat-label" style="text-align:center;margin-top:16px;">${t('detail.track')}</div>
+      <div class="stat-label" style="text-align:center;margin-top:16px;">Track</div>
       <div style="position:relative;">
         <div class="live-map" id="detailLeaflet" style="display:none;"></div>
         <div class="porthole" id="detailPorthole"></div>
         <div class="map-stats-overlay" id="detailMapStatsOverlay" style="display:none;">
-          <div><b>${fmtDistance(trip.distanceNm||0)}</b><span>${t('stat.distance')}</span></div>
-          <div><b>${fmtSpeed(trip.avgSpeed||0)}</b><span>${t('stat.avgSpeed')}</span></div>
-          <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>${t('detail.duration')}</span></div>
+          <div><b>${fmtDistance(trip.distanceNm||0)}</b><span>Distance</span></div>
+          <div><b>${fmtSpeed(trip.avgSpeed||0)}</b><span>Avg Speed</span></div>
+          <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>Duration</span></div>
         </div>
         <div class="map-lock-toggle" id="detailMapLockToggle" style="display:none;" onclick="toggleDetailMapLock()">
           <svg id="detailMapLockIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-          <span id="detailMapLockLabel">${t('detail.locked')}</span>
+          <span id="detailMapLockLabel">Locked</span>
         </div>
       </div>
       <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:4px;">${portholeCoordsCaption(trip.path)}</div>`;
@@ -2898,13 +2276,13 @@ async function renderTripDetailMap(trip){
     }
   } else if(trip.mapImage){
     area.innerHTML = `
-      <div class="stat-label" style="text-align:center;margin-top:16px;">${t('detail.map')}</div>
+      <div class="stat-label" style="text-align:center;margin-top:16px;">Map</div>
       <div style="position:relative;cursor:pointer;" onclick="openLightbox([window._detailTrip.mapImage],0)">
         <img src="${trip.mapImage}" style="width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);display:block;">
         <div class="map-stats-overlay">
-          <div><b>${fmtDistance(trip.distanceNm||0)}</b><span>${t('stat.distance')}</span></div>
-          <div><b>${fmtSpeed(trip.avgSpeed||0)}</b><span>${t('stat.avgSpeed')}</span></div>
-          <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>${t('detail.duration')}</span></div>
+          <div><b>${fmtDistance(trip.distanceNm||0)}</b><span>Distance</span></div>
+          <div><b>${fmtSpeed(trip.avgSpeed||0)}</b><span>Avg Speed</span></div>
+          <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>Duration</span></div>
         </div>
       </div>`;
   }
@@ -2925,7 +2303,7 @@ function toggleDetailMapLock(){
   const icon = document.getElementById('detailMapLockIcon');
   const label = document.getElementById('detailMapLockLabel');
   if(toggle) toggle.classList.toggle('unlocked', !detailMapLocked);
-  if(label) label.textContent = detailMapLocked ? t('detail.locked') : t('detail.unlocked');
+  if(label) label.textContent = detailMapLocked ? 'Locked' : 'Unlocked';
   if(icon) icon.innerHTML = detailMapLocked
     ? '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'
     : '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-1"/>';
@@ -3034,7 +2412,7 @@ function setLiveMapMode(online){
   if(!badge) return; // not on the active screen right now
   if(online){
     badge.className = 'map-mode-badge live';
-    text.textContent = t('map.liveMap');
+    text.textContent = 'Live Map';
     leafletEl.style.display='block';
     porthole.style.display='none';
     initLiveLeafletMap();
@@ -3042,7 +2420,7 @@ function setLiveMapMode(online){
     if(currentTrip && currentTrip.path.length) updateLiveLeafletTrack(currentTrip.path);
   } else {
     badge.className = 'map-mode-badge offline';
-    text.textContent = t('map.offlineTrack');
+    text.textContent = 'Offline Track (no connection)';
     leafletEl.style.display='none';
     porthole.style.display='block';
   }
@@ -3140,26 +2518,23 @@ function renderLiveTrack(){
 }
 async function deleteTripPrompt(){
   if(!openTripId) return;
-  if(!confirm(t('confirm.deleteTrip'))) return;
+  if(!confirm('Delete this trip permanently?')) return;
   await storeDelete('trip:'+openTripId);
   state.tripIndex = state.tripIndex.filter(t=>t.id!==openTripId);
   await storeSet(KEYS.INDEX, state.tripIndex);
-  showToast(t('toast.tripDeleted'));
+  showToast('Trip deleted');
   nav('history'); renderHomeStats();
 }
 // Native share sheet if the browser supports it (navigator.share), otherwise
 // falls back to copying a text summary to the clipboard.
 function shareTrip(id){
-  const trip = window._detailTrip;
-  const text = t('share.tripSummary', {
-    title: trip.title, date: new Date(trip.date).toLocaleDateString(currentLocale()),
-    distance: fmtDistance(trip.distanceNm||0), duration: fmtDuration(trip.elapsedSeconds), avgSpeed: fmtSpeed(trip.avgSpeed||0)
-  });
+  const t = window._detailTrip;
+  const text = `⛵ ${t.title}\n${new Date(t.date).toLocaleDateString()}\n${fmtDistance(t.distanceNm||0)} · ${fmtDuration(t.elapsedSeconds)} · Avg ${fmtSpeed(t.avgSpeed||0)}\nLogged with Sail la Vie`;
   if(navigator.share){
-    navigator.share({ title: trip.title, text }).catch(()=>{});
+    navigator.share({ title: t.title, text }).catch(()=>{});
   } else {
     navigator.clipboard?.writeText(text);
-    showToast(t('toast.copiedSummary'));
+    showToast('Copied trip summary to clipboard');
   }
 }
 
@@ -3177,7 +2552,7 @@ function openBoatSheet(boat){
   // Backward compatible with older boats saved before multi-photo support (single `photo` field, no `photos` array)
   pendingBoatPhotos = boat ? (boat.photos && boat.photos.length ? [...boat.photos] : (boat.photo ? [boat.photo] : [])) : [];
   pendingBoatPhoto = boat ? (boat.photo || pendingBoatPhotos[0] || null) : null;
-  document.getElementById('boatSheetTitle').textContent = boat ? t('sheet.editBoat') : t('sheet.addBoat');
+  document.getElementById('boatSheetTitle').textContent = boat ? 'Edit Boat' : 'Add a Boat';
   document.getElementById('boatName').value = boat ? boat.name : '';
   document.getElementById('boatType').value = boat ? boat.type : '';
   document.getElementById('boatNotes').value = boat ? boat.notes : '';
@@ -3213,7 +2588,7 @@ function renderBoatPhotoStrip(){
     const div = document.createElement('div');
     div.className = 'photo-thumb';
     div.innerHTML = `<img src="${p}" onclick="setBoatDefaultPhoto(${i})">
-      ${p===pendingBoatPhoto ? `<div class="cover-badge">${t('sheet.defaultBadge')}</div>` : ''}
+      ${p===pendingBoatPhoto ? `<div class="cover-badge">Default</div>` : ''}
       <div class="rm" onclick="removeBoatPhoto(${i})">✕</div>`;
     strip.insertBefore(div, strip.firstChild);
   });
@@ -3227,7 +2602,7 @@ function removeBoatPhoto(i){
 }
 async function saveBoatForm(){
   const name = document.getElementById('boatName').value.trim();
-  if(!name){ showToast(t('toast.giveBoatName')); return; }
+  if(!name){ showToast('Give the boat a name'); return; }
   const type = document.getElementById('boatType').value, notes = document.getElementById('boatNotes').value;
   if(editingBoatId){
     const b = state.boats.find(x=>x.id===editingBoatId);
@@ -3236,10 +2611,10 @@ async function saveBoatForm(){
     state.boats.push({ id:uid(), name, type, notes, photos:[...pendingBoatPhotos], photo:pendingBoatPhoto });
   }
   const ok = await storeSet(KEYS.BOATS, state.boats);
-  if(ok){ showToast(t('toast.boatSaved')); closeSheets(); renderBoats(); }
+  if(ok){ showToast('Boat saved'); closeSheets(); renderBoats(); }
 }
 async function deleteBoatForm(){
-  if(!confirm(t('confirm.removeBoat'))) return;
+  if(!confirm('Remove this boat from your fleet?')) return;
   state.boats = state.boats.filter(b=>b.id!==editingBoatId);
   await storeSet(KEYS.BOATS, state.boats);
   closeSheets(); renderBoats();
@@ -3249,16 +2624,15 @@ function renderBoats(){
   if(!state.boats.length){
     el.innerHTML = `<div class="empty">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 16l1.5 4h15L21 16"/><path d="M5 16l1-9h12l1 9"/></svg>
-      <h3>${t('boats.emptyTitle')}</h3><p>${t('boats.emptyHint')}</p></div>`;
+      <h3>No boats yet</h3><p>Add the boats you sail on to keep track of your fleet.</p></div>`;
     return;
   }
   // Alphabetical by name — [...array] copies so .sort() doesn't reorder state.boats itself
   el.innerHTML = [...state.boats].sort((a,b)=>a.name.localeCompare(b.name)).map(b=>{
-    const trips = state.tripIndex.filter(trip=>trip.boatId===b.id).length;
-    const sailsLabel = trips===1 ? t('boats.sailsSingular',{count:trips}) : t('boats.sailsPlural',{count:trips});
+    const trips = state.tripIndex.filter(t=>t.boatId===b.id).length;
     return `<div class="row-card" onclick='openBoatSheet(${JSON.stringify(b).replace(/'/g,"&apos;")})'>
       <img class="row-photo" src="${b.photo||placeholderAvatar()}">
-      <div class="row-info"><div class="name">${escapeHtml(b.name)}</div><div class="sub">${escapeHtml(b.type||'')}${b.type?' · ':''}${sailsLabel}</div></div>
+      <div class="row-info"><div class="name">${escapeHtml(b.name)}</div><div class="sub">${escapeHtml(b.type||'')}${b.type?' · ':''}${trips} sail${trips!==1?'s':''} logged</div></div>
     </div>`;
   }).join('');
 }
@@ -3271,7 +2645,7 @@ let pendingCrewPhoto = null;
 function openCrewSheet(member){
   editingCrewId = member ? member.id : null;
   pendingCrewPhoto = member ? member.photo : null;
-  document.getElementById('crewSheetTitle').textContent = member ? t('sheet.editCrew') : t('active.addCrewTitle');
+  document.getElementById('crewSheetTitle').textContent = member ? 'Edit Crew' : 'Add Crew';
   document.getElementById('crewName').value = member ? member.name : '';
   document.getElementById('crewPhone').value = member ? (member.phone||'') : '';
   document.getElementById('crewEmail').value = member ? (member.email||'') : '';
@@ -3293,7 +2667,7 @@ async function handleCrewPhoto(ev){
 // already selected, instead of going back to the Crew tab.
 async function saveCrewForm(){
   const name = document.getElementById('crewName').value.trim();
-  if(!name){ showToast(t('toast.enterName')); return; }
+  if(!name){ showToast('Enter a name'); return; }
   let newId = null;
   const phone = document.getElementById('crewPhone').value.trim();
   const email = document.getElementById('crewEmail').value.trim();
@@ -3308,7 +2682,7 @@ async function saveCrewForm(){
   }
   const ok = await storeSet(KEYS.CREW, state.crew);
   if(!ok) return;
-  showToast(t('toast.crewSaved'));
+  showToast('Crew saved');
   if(crewPickerActive){
     crewPickerActive = false;
     if(newId) crewPickTempIds.push(newId);
@@ -3319,7 +2693,7 @@ async function saveCrewForm(){
   }
 }
 async function deleteCrewForm(){
-  if(!confirm(t('confirm.removeCrew'))) return;
+  if(!confirm('Remove this crew member?')) return;
   state.crew = state.crew.filter(c=>c.id!==editingCrewId);
   await storeSet(KEYS.CREW, state.crew);
   closeSheets(); renderCrew();
@@ -3329,7 +2703,7 @@ function renderCrew(){
   if(!state.crew.length){
     el.innerHTML = `<div class="empty">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
-      <h3>${t('crew.emptyTitle')}</h3><p>${t('crew.emptyHint')}</p></div>`;
+      <h3>No crew added</h3><p>Add friends who sail with you to tag them on your logs.</p></div>`;
     return;
   }
   // Alphabetical by name — [...array] copies so .sort() doesn't reorder state.crew itself
@@ -3361,10 +2735,10 @@ function renderProfileScreen(){
   const nm = state.tripIndex.reduce((s,t)=>s+(t.distanceNm||0),0);
   const secs = state.tripIndex.reduce((s,t)=>s+(t.elapsedSeconds||0),0);
   document.getElementById('profileStats').innerHTML = `<div class="stat-card stat-grid">
-    <div class="cell"><div class="stat-label">${t('resume.totalSails')}</div><div class="stat-value">${state.tripIndex.length}</div></div>
-    <div class="cell"><div class="stat-label">${t('resume.totalDistance')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
-    <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('resume.timeAtSea')}</div><div class="stat-value" style="font-size:18px;">${fmtDuration(secs)}</div></div>
-    <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('profile.boatsSailed')}</div><div class="stat-value">${state.boats.length}</div></div>
+    <div class="cell"><div class="stat-label">Total Sails</div><div class="stat-value">${state.tripIndex.length}</div></div>
+    <div class="cell"><div class="stat-label">Total Distance</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
+    <div class="cell" style="margin-top:14px;"><div class="stat-label">Time at Sea</div><div class="stat-value" style="font-size:18px;">${fmtDuration(secs)}</div></div>
+    <div class="cell" style="margin-top:14px;"><div class="stat-label">Boats Sailed</div><div class="stat-value">${state.boats.length}</div></div>
   </div>`;
 }
 async function handleAvatarUpload(ev){
@@ -3373,7 +2747,7 @@ async function handleAvatarUpload(ev){
   openPhotoAdjuster(f, 'profile', null);
 }
 async function saveProfileForm(){
-  state.profile.name = document.getElementById('profileName').value.trim() || t('default.sailorName');
+  state.profile.name = document.getElementById('profileName').value.trim() || 'Sailor';
   state.profile.role = document.getElementById('profileRole').value.trim();
   state.profile.license = document.getElementById('profileLicense').value.trim();
   state.profile.phone = document.getElementById('profilePhone').value.trim();
@@ -3381,18 +2755,16 @@ async function saveProfileForm(){
   state.profile.social = document.getElementById('profileSocial').value.trim();
   state.profile.bio = document.getElementById('profileBio').value;
   const ok = await storeSet(KEYS.PROFILE, state.profile);
-  if(ok){ showToast(t('toast.profileSaved')); document.getElementById('homeName').textContent = state.profile.name; }
+  if(ok){ showToast('Profile saved'); document.getElementById('homeName').textContent = state.profile.name; }
 }
 async function clearProfilePrompt(){
-  if(!confirm(t('confirm.clearProfile'))) return;
-  const theme = state.profile.theme; // keep the current theme, units, and language choices
-  const unitSystem = state.profile.unitSystem;
-  const language = state.profile.language;
-  state.profile = { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme, unitSystem, language };
+  if(!confirm('Clear your profile (name, role, license, contact info, bio, photo)? Your trips, boats, and crew stay untouched.')) return;
+  const theme = state.profile.theme; // keep the current theme choice
+  state.profile = { name:'Sailor', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme };
   const ok = await storeSet(KEYS.PROFILE, state.profile);
   if(ok){
-    showToast(t('toast.profileCleared'));
-    document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
+    showToast('Profile cleared');
+    document.getElementById('homeName').textContent = state.profile.name;
     renderProfileScreen();
     refreshAvatars();
   }
@@ -3401,7 +2773,7 @@ async function toggleTheme(){
   const next = document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   document.getElementById('themeKnob').textContent = next==='dark' ? '🌙' : '☀️';
-  document.getElementById('themeLabel').textContent = next==='dark' ? t('settings.nightTheme') : t('settings.dayTheme');
+  document.getElementById('themeLabel').textContent = next==='dark' ? 'Night Theme' : 'Day Theme';
   state.profile.theme = next;
   await storeSet(KEYS.PROFILE, state.profile);
 }
@@ -3414,24 +2786,22 @@ async function toggleDefaultUnitSystem(){
   state.profile.unitSystem = next;
   renderUnitsSettingUI();
   await storeSet(KEYS.PROFILE, state.profile);
-  showToast(next==='metric' ? t('toast.unitsMetric') : t('toast.unitsNautical'));
+  showToast(next==='metric' ? 'Default units: Metric (km/h, km)' : 'Default units: Nautical (kts, NM)');
 }
 function renderUnitsSettingUI(){
   const sys = appUnitSystem();
   const knob = document.getElementById('unitsKnob');
   const label = document.getElementById('unitsLabel');
   if(knob) knob.textContent = sys==='metric' ? '🌍' : '⚓';
-  if(label) label.textContent = sys==='metric' ? t('unit.metric') : t('unit.nautical');
+  if(label) label.textContent = sys==='metric' ? 'Metric (km/h / km)' : 'Nautical (kts / NM)';
 }
 function openResetSheet(){ openSheet('sheetReset'); }
 async function resetAllData(){
   for(const t of state.tripIndex){ await storeDelete('trip:'+t.id); }
   await storeDelete(KEYS.INDEX); await storeDelete(KEYS.BOATS); await storeDelete(KEYS.CREW); await storeDelete(KEYS.PROFILE);
-  state = { tripIndex:[], boats:[], crew:[], profile:{name:'',role:'',license:'',phone:'',email:'',social:'',bio:'',avatar:'',theme:'light',unitSystem:'nautical',language:'en'} };
-  currentLang = 'en';
+  state = { tripIndex:[], boats:[], crew:[], profile:{name:'Sailor',role:'',license:'',phone:'',email:'',social:'',bio:'',avatar:'',theme:'light',unitSystem:'nautical'} };
   document.documentElement.setAttribute('data-theme','light');
-  applyStaticTranslations();
-  closeSheets(); showToast(t('toast.allDataErased'));
+  closeSheets(); showToast('All data erased');
   refreshAvatars(); nav('home'); renderHomeStats();
 }
 
@@ -3474,12 +2844,12 @@ function renderResume(){
   document.getElementById('resTime').textContent = fmtDuration(secs);
   document.getElementById('resAvg').innerHTML = fmtSpeed(avg).replace(' ', '<span class="stat-unit"> ')+'</span>';
   const el = document.getElementById('resumeList');
-  el.innerHTML = trips.length ? trips.map(trip=>`<div class="trip-card" style="margin-top:12px;" onclick="openTripDetail('${trip.id}')">
+  el.innerHTML = trips.length ? trips.map(t=>`<div class="trip-card" style="margin-top:12px;" onclick="openTripDetail('${t.id}')">
       <div class="trip-body">
-        <div class="trip-title">${escapeHtml(trip.title)}</div>
-        <div class="trip-meta"><span>📅 ${new Date(trip.date).toLocaleDateString(currentLocale())}</span><span>📏 ${fmtDistance(trip.distanceNm||0)}</span><span>⏱ ${fmtDuration(trip.elapsedSeconds)}</span></div>
+        <div class="trip-title">${escapeHtml(t.title)}</div>
+        <div class="trip-meta"><span>📅 ${new Date(t.date).toLocaleDateString()}</span><span>📏 ${fmtDistance(t.distanceNm||0)}</span><span>⏱ ${fmtDuration(t.elapsedSeconds)}</span></div>
       </div></div>`).join('')
-    : `<p style="margin-top:10px;">${t('resume.emptyRange')}</p>`;
+    : `<p style="margin-top:10px;">No sails in this range yet.</p>`;
   window._resumeStats = { count:trips.length, nm, secs, avg };
 }
 function openCertificateSheet(){
@@ -3489,24 +2859,24 @@ function openCertificateSheet(){
 }
 function renderCertificate(){
   const s = window._resumeStats || {count:0,nm:0,secs:0};
-  const title = document.getElementById('certTitle').value || t('cert.defaultTitle');
-  const name = document.getElementById('certName').value || t('default.sailorName');
-  const rangeLabel = resumeRange==='all' ? t('resume.allTime') : resumeRange==='year' ? new Date().getFullYear() : resumeRange==='30' ? t('resume.last30') :
-    `${document.getElementById('resumeFrom').value||'…'} ${t('cert.to')} ${document.getElementById('resumeTo').value||'…'}`;
+  const title = document.getElementById('certTitle').value || 'Certificate of Sea Time';
+  const name = document.getElementById('certName').value || 'Sailor';
+  const rangeLabel = resumeRange==='all' ? 'All Time' : resumeRange==='year' ? new Date().getFullYear() : resumeRange==='30' ? 'Last 30 Days' :
+    `${document.getElementById('resumeFrom').value||'…'} to ${document.getElementById('resumeTo').value||'…'}`;
   const html = `<div class="certificate" id="certBlock">
     <div class="cert-title">Sail la Vie · ${escapeHtml(String(rangeLabel))}</div>
     <h2>${escapeHtml(title)}</h2>
-    <p style="font-size:12px;">${t('cert.certifiesThat')}</p>
+    <p style="font-size:12px;">This certifies that</p>
     <div class="cert-name">${escapeHtml(name)}</div>
-    <p style="font-size:12px;">${t('cert.hasLogged')}</p>
+    <p style="font-size:12px;">has logged the following time at sea</p>
     <div class="cert-stats">
-      <div><span>${s.count}</span><small>${t('cert.sails')}</small></div>
+      <div><span>${s.count}</span><small>Sails</small></div>
       <div><span>${appUnitSystem()==='metric' ? (s.nm*NM_TO_KM).toFixed(1) : s.nm.toFixed(1)}</span><small>${distUnitLabel()}</small></div>
-      <div><span>${fmtDuration(s.secs)}</span><small>${t('resume.timeAtSea')}</small></div>
+      <div><span>${fmtDuration(s.secs)}</span><small>Time at Sea</small></div>
     </div>
-    <div class="cert-foot">${t('cert.generated')} ${new Date().toLocaleDateString(currentLocale())} · Sail la Vie Logbook</div>
+    <div class="cert-foot">Generated ${new Date().toLocaleDateString()} · Sail la Vie Logbook</div>
   </div>
-  <button class="btn btn-outline" style="margin-top:14px;" onclick="printCertificate()">${t('cert.printSave')}</button>`;
+  <button class="btn btn-outline" style="margin-top:14px;" onclick="printCertificate()">Print / Save as PDF</button>`;
   document.getElementById('certificateOutput').innerHTML = html;
 }
 // Printing trick: build the certificate's HTML, drop it into the otherwise-
@@ -3533,44 +2903,41 @@ function printCertificate(){
 function buildTripPdfHtml(trip){
   const boat = state.boats.find(b=>b.id===trip.boatId);
   const tripCrew = (trip.crewIds||[]).map(cid=>state.crew.find(x=>x.id===cid)).filter(Boolean);
-  const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
   const d = new Date(trip.date);
-  const dateStr = d.toLocaleDateString(currentLocale(),{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
+  const dateStr = d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const timeStr = d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
   const photos = (trip.photos||[]);
   let notes = trip.notes || '';
   if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
 
   return `<div class="pdf-sheet" id="pdfTripBlock">
-    <h1>${escapeHtml(trip.title||t('pdf.sailLogFallback'))}</h1>
+    <h1>${escapeHtml(trip.title||'Sail Log')}</h1>
     <div class="pdf-sub">${dateStr} · ${timeStr}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</div>
 
     <div class="pdf-top-row">
       ${trip.coverPhoto ? `<div class="pdf-cover-cell"><img src="${trip.coverPhoto}"></div>` : ''}
       <div class="pdf-top-right">
         <div class="pdf-stats-grid">
-          <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>${t('detail.elapsed')}</span></div>
-          <div><b>${fmtDistance(trip.distanceNm||0)}</b><span>${t('stat.distance')}</span></div>
-          <div><b>${fmtSpeed(trip.avgSpeed||0)}</b><span>${t('stat.avgSpeed')}</span></div>
-          <div><b>${fmtSpeed(trip.maxSpeed||0)}</b><span>${t('stat.maxSpeed')}</span></div>
+          <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>Elapsed</span></div>
+          <div><b>${fmtDistance(trip.distanceNm||0)}</b><span>Distance</span></div>
+          <div><b>${fmtSpeed(trip.avgSpeed||0)}</b><span>Avg Speed</span></div>
+          <div><b>${fmtSpeed(trip.maxSpeed||0)}</b><span>Max Speed</span></div>
         </div>
         <p class="pdf-weather-line">
-          💨 ${escapeHtml(compassLabel(trip.weather?.windDir)||'—')} ${trip.weather?.windSpeed!=null?fmtSpeed(trip.weather.windSpeed):''}${trip.weather?.gusts?` · ${t('detail.gustsShort')} ${fmtSpeed(trip.weather.gusts)}`:''}<br>
-          🌊 ${escapeHtml(seaStateLabel(trip.weather?.seaState)||'—')}${trip.weather?.waveHeight?` (${escapeHtml(String(trip.weather.waveHeight))} m)`:''}${trip.weather?.waveDir?` ${t('detail.fromDir')} ${escapeHtml(compassLabel(trip.weather.waveDir))}`:''}
+          💨 ${escapeHtml(trip.weather?.windDir||'—')} ${trip.weather?.windSpeed!=null?fmtSpeed(trip.weather.windSpeed):''}${trip.weather?.gusts?` · Gusts ${fmtSpeed(trip.weather.gusts)}`:''}<br>
+          🌊 ${escapeHtml(trip.weather?.seaState||'—')}${trip.weather?.waveHeight?` (${escapeHtml(String(trip.weather.waveHeight))} m)`:''}${trip.weather?.waveDir?` from ${escapeHtml(trip.weather.waveDir)}`:''}
           ${trip.weather?.temp?` · 🌡 ${escapeHtml(String(trip.weather.temp))}°C`:''}
         </p>
       </div>
     </div>
 
-    ${notes ? `<div class="pdf-section-title">${t('active.notes')}</div><p>${escapeHtml(notes)}</p>` : ''}
+    ${notes ? `<div class="pdf-section-title">Notes</div><p>${escapeHtml(notes)}</p>` : ''}
 
-    ${tripSkipper ? `<div class="pdf-section-title">${t('active.skipper')}</div><div class="pdf-crew-grid"><div class="pdf-crew-chip"><img src="${tripSkipper.photo||placeholderAvatar()}"><span>${escapeHtml(tripSkipper.name)}</span></div></div>` : ''}
+    ${tripCrew.length ? `<div class="pdf-section-title">Crew</div><div class="pdf-crew-grid">${tripCrew.map(c=>`<div class="pdf-crew-chip"><img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
 
-    ${tripCrew.length ? `<div class="pdf-section-title">${t('active.crewAboard')}</div><div class="pdf-crew-grid">${tripCrew.map(c=>`<div class="pdf-crew-chip"><img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
+    ${photos.length ? `<div class="pdf-section-title">Photos</div><div class="pdf-photos-grid">${photos.map(p=>`<div class="pdf-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
 
-    ${photos.length ? `<div class="pdf-section-title">${t('active.photos')}</div><div class="pdf-photos-grid">${photos.map(p=>`<div class="pdf-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
-
-    <div class="pdf-foot">Sail la Vie Logbook · ${t('cert.generated')} ${new Date().toLocaleDateString(currentLocale())}</div>
+    <div class="pdf-foot">Sail la Vie Logbook · Generated ${new Date().toLocaleDateString()}</div>
   </div>`;
 }
 // Waits for every <img> inside a container to finish loading AND decoding
@@ -3598,7 +2965,7 @@ function waitForImagesToLoad(container){
 // Preview and export are both true single-page A4 portrait shrink-to-fit.
 function openTripPdfPreview(){
   const trip = window._detailTrip;
-  if(!trip){ showToast(t('toast.openTripFirst')); return; }
+  if(!trip){ showToast('Open a trip first'); return; }
   const inner = document.getElementById('pdfPreviewInner');
   inner.innerHTML = buildTripPdfHtml(trip);
   inner.style.transform = 'none';
@@ -3629,11 +2996,11 @@ async function generateAndShareTripPdf(){
   const trip = window._detailTrip;
   if(!trip) return;
   if(typeof window.jspdf==='undefined' || typeof html2canvas==='undefined'){
-    showToast(t('toast.pdfNeedsConnection'));
+    showToast("PDF export needs a connection the first time (loading a small library) — try again once you're online.");
     return;
   }
 
-  showToast(t('toast.preparingPdf'));
+  showToast('Preparing single-page A4 PDF…');
   const inner = document.getElementById('pdfPreviewInner');
   const prevTransform = inner.style.transform;
   const prevWidth = inner.style.width;
@@ -3711,12 +3078,12 @@ async function generateAndShareTripPdf(){
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      showToast(t('toast.pdfDownloaded'));
+      showToast('Single-page A4 PDF downloaded');
     }
     closeSheets();
   }catch(e){
     if(e && e.name==='AbortError'){ /* user cancelled the native share sheet */ }
-    else { console.error('PDF generation failed', e); showToast(t('toast.pdfGenFail')); }
+    else { console.error('PDF generation failed', e); showToast('Could not generate the PDF — try again'); }
   } finally {
     inner.style.transform = prevTransform;
     inner.style.width = prevWidth;
@@ -3786,7 +3153,7 @@ async function shareLightboxPhoto(){
   a.href = url;
   a.download = 'sail-la-vie-photo.jpg';
   document.body.appendChild(a); a.click(); a.remove();
-  showToast(t('toast.photoDownloaded'));
+  showToast('Photo downloaded — share it from your gallery');
 }
 (function setupLightboxSwipe(){
   const img = document.getElementById('lightboxImg');
