@@ -197,30 +197,10 @@
     width:100%; background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-sm);
     padding:13px 14px; font-size:14.5px; font-family:var(--font-body); color:var(--ink); }
   textarea{ resize:vertical; min-height:80px; }
-  input[type=range]{ width:100%; accent-color:var(--navy); touch-action:pan-y; }
+  input[type=range]{ width:100%; accent-color:var(--navy); }
   html[data-theme="dark"] input[type=range]{ accent-color:var(--gold); }
   .range-value{ font-size:13px; font-weight:600; color:var(--navy); margin-top:4px; display:block; }
   html[data-theme="dark"] .range-value{ color:var(--gold); }
-  /* ---------- guarded sliders ----------
-     Weather sliders sit inline in a long scrolling form, so a thumb resting
-     under a finger while the person scrolls the page used to drag the value
-     by accident. Until explicitly tapped ("armed"), the slider ignores touch
-     entirely and a "Tap to adjust" strip sits on top so a scroll gesture just
-     scrolls. Tapping arms it (removes the hint, the real slider becomes
-     touchable); releasing the thumb (native 'change') re-locks it, so the
-     next scroll past it is safe again without another explicit tap. */
-  .slider-guard{ position:relative; touch-action:pan-y; }
-  .slider-guard input[type=range]{ display:block; position:relative; z-index:1; }
-  .slider-guard:not(.armed) input[type=range]{ pointer-events:none; }
-  .slider-guard .slider-tap-hint{
-    position:absolute; inset:-14px 0; z-index:2; touch-action:pan-y;
-    display:flex; align-items:center; justify-content:center; cursor:pointer;
-  }
-  .slider-guard.armed .slider-tap-hint{ display:none; }
-  .slider-guard .slider-tap-hint span{
-    font-size:11px; font-weight:600; color:var(--ink-faint);
-    background:var(--bg-sunk); border:1px solid var(--border); padding:3px 10px; border-radius:999px;
-  }
   .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 
   /* ---------- photo strip ---------- */
@@ -540,10 +520,6 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <select id="activeBoatSelect"></select>
     </div>
     <div class="field">
-      <label data-i18n="active.sailName">Sail Name</label>
-      <input type="text" id="tripTitle" placeholder="e.g. Sunset Cruise" data-i18n-ph="ph.egSailName">
-    </div>
-    <div class="field">
       <label data-i18n="active.place">Place</label>
       <input type="text" id="tripPlace" placeholder="e.g. Chesapeake Bay" data-i18n-ph="ph.egPlace">
     </div>
@@ -559,25 +535,16 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </div>
     <div class="field">
       <label data-i18n="active.windSpeed">Wind Speed <span class="range-value" id="windSpeedVal">12 kts</span></label>
-      <div class="slider-guard" id="windSpeedGuard">
-        <input type="range" id="windSpeed" min="0" max="19" value="8" oninput="updateWindSpeedLabel()" onchange="disarmSlider('windSpeedGuard')">
-        <div class="slider-tap-hint" onclick="armSlider('windSpeedGuard')"><span data-i18n="active.tapToAdjust">Tap to adjust</span></div>
-      </div>
+      <input type="range" id="windSpeed" min="0" max="19" value="8" oninput="updateWindSpeedLabel()">
     </div>
     <div class="field">
       <label data-i18n="active.gusts">Gusts <span class="range-value" id="gustsVal">10 kts</span></label>
-      <div class="slider-guard" id="gustsGuard">
-        <input type="range" id="gusts" min="0" max="40" step="1" value="10" oninput="updateGustsLabel()" onchange="disarmSlider('gustsGuard')">
-        <div class="slider-tap-hint" onclick="armSlider('gustsGuard')"><span data-i18n="active.tapToAdjust">Tap to adjust</span></div>
-      </div>
+      <input type="range" id="gusts" min="0" max="40" step="1" value="10" oninput="updateGustsLabel()">
     </div>
     <div class="two-col">
       <div class="field">
         <label data-i18n="active.waveHeight">Wave Height <span class="range-value" id="waveHeightVal">0.5 m</span></label>
-        <div class="slider-guard" id="waveHeightGuard">
-          <input type="range" id="waveHeight" min="0" max="5" step="0.1" value="0.5" oninput="updateWaveHeightLabel()" onchange="disarmSlider('waveHeightGuard')">
-          <div class="slider-tap-hint" onclick="armSlider('waveHeightGuard')"><span data-i18n="active.tapToAdjust">Tap to adjust</span></div>
-        </div>
+        <input type="range" id="waveHeight" min="0" max="5" step="0.1" value="0.5" oninput="updateWaveHeightLabel()">
       </div>
       <div class="field">
         <label data-i18n="active.waveDir">Wave Direction</label>
@@ -586,10 +553,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </div>
     <div class="field">
       <label data-i18n="active.temperature">Temperature <span class="range-value" id="tempVal">20°C</span></label>
-      <div class="slider-guard" id="tempGuard">
-        <input type="range" id="temp" min="0" max="50" step="1" value="20" oninput="updateTempLabel()" onchange="disarmSlider('tempGuard')">
-        <div class="slider-tap-hint" onclick="armSlider('tempGuard')"><span data-i18n="active.tapToAdjust">Tap to adjust</span></div>
-      </div>
+      <input type="range" id="temp" min="0" max="50" step="1" value="20" oninput="updateTempLabel()">
     </div>
     <div class="field">
       <label data-i18n="active.notes">Notes</label>
@@ -1047,12 +1011,10 @@ const TRANSLATIONS = {
   'active.photos': 'Photos',
   'active.photosHint': '— tap a photo to make it the cover',
   'active.place': 'Place',
-  'active.sailName': 'Sail Name',
   'active.saveChanges': 'Save Changes',
   'active.saveLogEntry': 'Save Log Entry',
   'active.seaState': 'Sea State',
   'active.skipper': 'Skipper',
-  'active.tapToAdjust': 'Tap to adjust',
   'active.temperature': 'Temperature',
   'active.title': 'Active Journey Log',
   'active.unitsHint': 'Units for this log entry — flip anytime, doesn\'t change your default',
@@ -1148,7 +1110,6 @@ const TRANSLATIONS = {
   'ph.egHours': 'e.g. 3',
   'ph.egMinutes': 'e.g. 30',
   'ph.egPlace': 'e.g. Chesapeake Bay',
-  'ph.egSailName': 'e.g. Sunset Cruise',
   'ph.notes': 'Conditions, what happened, what we learned…',
   'profile.backupHint': 'Save everything to a file you can keep in the cloud (Drive, iCloud, email) or move to a new phone.',
   'profile.backupRestore': 'Backup & Restore',
@@ -1329,12 +1290,10 @@ const TRANSLATIONS = {
   'active.photos': 'Fotos',
   'active.photosHint': '— toca una foto para hacerla la portada',
   'active.place': 'Lugar',
-  'active.sailName': 'Nombre de la Travesía',
   'active.saveChanges': 'Guardar Cambios',
   'active.saveLogEntry': 'Guardar Registro',
   'active.seaState': 'Estado del Mar',
   'active.skipper': 'Patrón',
-  'active.tapToAdjust': 'Toca para ajustar',
   'active.temperature': 'Temperatura',
   'active.title': 'Registro de Travesía Activa',
   'active.unitsHint': 'Unidades para este registro — cámbialas cuando quieras, no afecta tu valor predeterminado',
@@ -1428,7 +1387,6 @@ const TRANSLATIONS = {
   'ph.egHours': 'ej. 3',
   'ph.egMinutes': 'ej. 30',
   'ph.egPlace': 'ej. Bahía de Chesapeake',
-  'ph.egSailName': 'ej. Paseo al Atardecer',
   'ph.notes': 'Condiciones, qué pasó, qué aprendimos…',
   'profile.backupHint': 'Guarda todo en un archivo que puedas conservar en la nube (Drive, iCloud, correo) o pasar a un nuevo teléfono.',
   'profile.backupRestore': 'Copia de Seguridad y Restauración',
@@ -1615,12 +1573,10 @@ const TRANSLATIONS = {
   'active.photos': 'תמונות',
   'active.photosHint': '— הקישו על תמונה כדי להפוך אותה לתמונת הנושא',
   'active.place': 'מיקום',
-  'active.sailName': 'שם השיט',
   'active.saveChanges': 'שמירת שינויים',
   'active.saveLogEntry': 'שמירת רישום',
   'active.seaState': 'מצב הים',
   'active.skipper': 'רב חובל',
-  'active.tapToAdjust': 'הקישו כדי לשנות',
   'active.temperature': 'טמפרטורה',
   'active.title': 'רישום שיט פעיל',
   'active.unitsHint': 'יחידות לרישום זה — ניתן להחליף בכל עת, זה לא משנה את ברירת המחדל שלכם',
@@ -1716,7 +1672,6 @@ const TRANSLATIONS = {
   'ph.egHours': 'למשל 3',
   'ph.egMinutes': 'למשל 30',
   'ph.egPlace': 'למשל מפרץ חיפה',
-  'ph.egSailName': 'למשל שיט שקיעה',
   'ph.notes': 'תנאים, מה קרה, מה למדנו…',
   'profile.backupHint': 'שמרו הכול לקובץ שתוכלו לשמור בענן (Drive, iCloud, אימייל) או להעביר לטלפון חדש.',
   'profile.backupRestore': 'גיבוי ושחזור',
@@ -2470,33 +2425,6 @@ function updateGustsLabel(){
   const kts = parseFloat(document.getElementById('gusts').value)||0;
   document.getElementById('gustsVal').textContent = fmtSpeed(kts, activeUnitSystem);
 }
-/* ---- guarded sliders ----
-   The weather sliders live inline in a long scrolling form, so a thumb
-   resting under a finger while the page scrolls used to drag the value by
-   accident. Each slider starts "disarmed" (pointer-events:none, a "Tap to
-   adjust" strip on top) so a scroll gesture just scrolls; tapping the strip
-   arms it for one drag, and releasing the thumb re-locks it automatically. */
-let armedSliderGuardId = null;
-function armSlider(guardId){
-  if(armedSliderGuardId && armedSliderGuardId!==guardId) disarmSlider(armedSliderGuardId);
-  const guard = document.getElementById(guardId);
-  if(!guard) return;
-  guard.classList.add('armed');
-  armedSliderGuardId = guardId;
-}
-function disarmSlider(guardId){
-  const id = guardId || armedSliderGuardId;
-  const guard = id && document.getElementById(id);
-  if(guard) guard.classList.remove('armed');
-  if(!guardId || guardId===armedSliderGuardId) armedSliderGuardId = null;
-}
-function disarmAllSliderGuards(){
-  document.querySelectorAll('.slider-guard.armed').forEach(g=>g.classList.remove('armed'));
-  armedSliderGuardId = null;
-}
-// Scrolling away (or navigating between screens) re-locks any slider left
-// armed without a value change, so it never lingers "hot".
-window.addEventListener('scroll', disarmAllSliderGuards, {passive:true, capture:true});
 // The little ⚓/🌍 switch on the log screen. Unlike the sliders (which stay in
 // kts and only relabel), the distance fields hold whatever unit is currently
 // selected — so flipping here has to actually convert their typed values,
@@ -2550,18 +2478,9 @@ function refreshLogUnitsUI(){
 }
 /* ---- crew picker: only crew explicitly added to THIS trip show on the log
    screen (not the whole roster) — see renderAddedCrewChips vs renderCrewPickList ---- */
-const SKIPPER_SELF_ID = 'self'; // sentinel id for "me" (state.profile), distinct from any crew uid()
-// Resolves a crewIds/skipperId entry to a displayable {name,photo}. Handles
-// the SKIPPER_SELF_ID sentinel (the profile owner, offered as a locked pick
-// in both the crew and skipper pickers) as well as real saved crew members.
-function crewMemberById(id){
-  if(!id) return null;
-  if(id===SKIPPER_SELF_ID) return { name: state.profile.name||t('default.sailorName'), photo: state.profile.avatar||'' };
-  return state.crew.find(c=>c.id===id) || null;
-}
 function renderAddedCrewChips(){
   const row = document.getElementById('addedCrewRow');
-  const added = (currentTrip?.crewIds||[]).map(id=>{ const m = crewMemberById(id); return m ? {...m, id} : null; }).filter(Boolean);
+  const added = (currentTrip?.crewIds||[]).map(id=>state.crew.find(c=>c.id===id)).filter(Boolean);
   if(!added.length){ row.innerHTML = `<p style="font-size:12.5px;">No crew added yet — tap "+ Add Crew" below.</p>`; return; }
   row.innerHTML = added.map(c=>`
     <div class="crew-chip active">
@@ -2582,24 +2501,13 @@ function openSelectCrewSheet(){
 }
 function renderCrewPickList(){
   const el = document.getElementById('crewPickList');
-  // The profile owner is always offered here — even before any crew has been
-  // added — as a locked, non-editable row, so they can mark themselves as
-  // aboard without it looking like they weren't on the sail. It only ever
-  // appears in this picker, never in the managed Crew roster (renderCrew),
-  // and there's no way to edit or delete it from here.
-  const selfRow = `
-    <div class="crew-pick-row${crewPickTempIds.includes(SKIPPER_SELF_ID)?' selected':''}" data-id="${SKIPPER_SELF_ID}" onclick="toggleCrewPick('${SKIPPER_SELF_ID}')">
-      <img src="${state.profile.avatar||placeholderAvatar()}">
-      <div class="name">${escapeHtml(state.profile.name||t('default.sailorName'))} ${t('active.youSuffix')}</div>
-      <div class="crew-pick-check"></div>
-    </div>`;
-  const crewRows = [...state.crew].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`
+  if(!state.crew.length){ el.innerHTML = `<p style="font-size:12.5px;">No crew saved yet — add one below.</p>`; return; }
+  el.innerHTML = [...state.crew].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`
     <div class="crew-pick-row${crewPickTempIds.includes(c.id)?' selected':''}" data-id="${c.id}" onclick="toggleCrewPick('${c.id}')">
       <img src="${c.photo||placeholderAvatar()}">
       <div class="name">${escapeHtml(c.name)}</div>
       <div class="crew-pick-check"></div>
     </div>`).join('');
-  el.innerHTML = selfRow + crewRows;
 }
 function toggleCrewPick(id){
   if(crewPickTempIds.includes(id)) crewPickTempIds = crewPickTempIds.filter(x=>x!==id);
@@ -2619,7 +2527,12 @@ function startAddCrewFromPicker(){
 /* ---- skipper picker: single-select from the crew roster (plus the app's
    own profile, since the person logging the sail is often the skipper too),
    shown on this same shared screen for both live and manual/edit entries ---- */
-function skipperById(id){ return crewMemberById(id); }
+const SKIPPER_SELF_ID = 'self'; // sentinel id for "me" (state.profile), distinct from any crew uid()
+function skipperById(id){
+  if(!id) return null;
+  if(id===SKIPPER_SELF_ID) return { name: state.profile.name||t('default.sailorName'), photo: state.profile.avatar||'' };
+  return state.crew.find(c=>c.id===id) || null;
+}
 function renderSkipperChip(){
   const row = document.getElementById('skipperChipRow');
   const skipper = currentTrip?.skipperId ? skipperById(currentTrip.skipperId) : null;
@@ -2668,7 +2581,6 @@ function clearSkipperPick(){
 // Shared field-reset used by both a fresh live journey and a fresh manual entry
 // (NOT used by editTrip, which pre-fills from the existing trip instead).
 function resetActiveFormFields(){
-  document.getElementById('tripTitle').value = '';
   document.getElementById('tripPlace').value = '';
   document.getElementById('windSpeed').value = 8; updateWindSpeedLabel();
   document.getElementById('waveHeight').value = 0.5; updateWaveHeightLabel();
@@ -2739,7 +2651,6 @@ function editTrip(){
   document.getElementById('pastStatsBlock').style.display = 'block';
   document.getElementById('endJourneyBtnLabel').textContent = t('active.saveChanges');
 
-  document.getElementById('tripTitle').value = trip._customTitle ? trip.title : '';
   document.getElementById('tripPlace').value = trip.place || '';
   document.getElementById('activeBoatSelect').value = trip.boatId || '';
   document.getElementById('windDir').value = trip.weather?.windDir || 'N';
@@ -3000,9 +2911,7 @@ async function endJourney(){
   currentTrip.notes = document.getElementById('tripNotes').value;
   const boat = state.boats.find(b=>b.id===document.getElementById('activeBoatSelect').value);
   currentTrip.boatId = boat ? boat.id : null;
-  const typedTitle = document.getElementById('tripTitle').value.trim();
-  currentTrip._customTitle = !!typedTitle;
-  currentTrip.title = typedTitle || (boat ? `Sail aboard ${boat.name}` : 'Untitled Sail');
+  currentTrip.title = boat ? `Sail aboard ${boat.name}` : 'Untitled Sail';
 
   if(currentTrip.isEditing){
     // Editing keeps whatever cover was already set — no forced re-pick. Use the
@@ -3167,7 +3076,7 @@ async function openTripDetail(id){
   if(!trip){ showToast(t('toast.tripLoadFail')); return; }
   const boat = state.boats.find(b=>b.id===trip.boatId);
   document.getElementById('detailTitle').textContent = trip.title||t('detail.tripFallback');
-  const tripCrew = (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
+  const tripCrew = (trip.crewIds||[]).map(cid=>state.crew.find(x=>x.id===cid)).filter(Boolean);
   const crewNames = tripCrew.map(c=>c.name); // still used by shareTrip()'s plain-text summary
   const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
   const d = new Date(trip.date);
@@ -3922,7 +3831,7 @@ function printCertificate(){
 // details; notes are capped so a very long one can't push it onto a 2nd page.
 function buildTripPdfHtml(trip){
   const boat = state.boats.find(b=>b.id===trip.boatId);
-  const tripCrew = (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
+  const tripCrew = (trip.crewIds||[]).map(cid=>state.crew.find(x=>x.id===cid)).filter(Boolean);
   const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
   const d = new Date(trip.date);
   const dateStr = d.toLocaleDateString(currentLocale(),{weekday:'long',month:'long',day:'numeric',year:'numeric'});
