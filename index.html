@@ -558,14 +558,14 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       </div>
     </div>
     <div class="field">
-      <label data-i18n="active.windSpeed">Wind Speed <span class="range-value" id="windSpeedVal">12 kts</span></label>
+      <label><span data-i18n="active.windSpeed">Wind Speed</span> <span class="range-value" id="windSpeedVal">12 kts</span></label>
       <div class="slider-guard" id="windSpeedGuard">
         <input type="range" id="windSpeed" min="0" max="19" value="8" oninput="updateWindSpeedLabel()" onchange="disarmSlider('windSpeedGuard')">
         <div class="slider-tap-hint" onclick="armSlider('windSpeedGuard')"><span data-i18n="active.tapToAdjust">Tap to adjust</span></div>
       </div>
     </div>
     <div class="field">
-      <label data-i18n="active.gusts">Gusts <span class="range-value" id="gustsVal">10 kts</span></label>
+      <label><span data-i18n="active.gusts">Gusts</span> <span class="range-value" id="gustsVal">10 kts</span></label>
       <div class="slider-guard" id="gustsGuard">
         <input type="range" id="gusts" min="0" max="40" step="1" value="10" oninput="updateGustsLabel()" onchange="disarmSlider('gustsGuard')">
         <div class="slider-tap-hint" onclick="armSlider('gustsGuard')"><span data-i18n="active.tapToAdjust">Tap to adjust</span></div>
@@ -573,7 +573,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </div>
     <div class="two-col">
       <div class="field">
-        <label data-i18n="active.waveHeight">Wave Height <span class="range-value" id="waveHeightVal">0.5 m</span></label>
+        <label><span data-i18n="active.waveHeight">Wave Height</span> <span class="range-value" id="waveHeightVal">0.5 m</span></label>
         <div class="slider-guard" id="waveHeightGuard">
           <input type="range" id="waveHeight" min="0" max="5" step="0.1" value="0.5" oninput="updateWaveHeightLabel()" onchange="disarmSlider('waveHeightGuard')">
           <div class="slider-tap-hint" onclick="armSlider('waveHeightGuard')"><span data-i18n="active.tapToAdjust">Tap to adjust</span></div>
@@ -585,7 +585,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       </div>
     </div>
     <div class="field">
-      <label data-i18n="active.temperature">Temperature <span class="range-value" id="tempVal">20°C</span></label>
+      <label><span data-i18n="active.temperature">Temperature</span> <span class="range-value" id="tempVal">20°C</span></label>
       <div class="slider-guard" id="tempGuard">
         <input type="range" id="temp" min="0" max="50" step="1" value="20" oninput="updateTempLabel()" onchange="disarmSlider('tempGuard')">
         <div class="slider-tap-hint" onclick="armSlider('tempGuard')"><span data-i18n="active.tapToAdjust">Tap to adjust</span></div>
@@ -2756,6 +2756,8 @@ function editTrip(){
   document.getElementById('temp').value = trip.weather?.temp || 20;
   document.getElementById('tripNotes').value = trip.notes || '';
   refreshLogUnitsUI();
+  updateWindSpeedLabel();
+  updateGustsLabel();
   updateWaveHeightLabel();
   updateTempLabel();
 
