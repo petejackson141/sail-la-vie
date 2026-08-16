@@ -745,13 +745,13 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </div>
 
     <div class="section-title" data-i18n="settings.appearance">Appearance</div>
-    <div class="theme-toggle">
-      <div>
-        <div style="font-weight:600;font-size:14px;" id="themeLabel">Day Theme</div>
-        <p style="font-size:12px;" data-i18n="settings.themeHint">Switch between day and night mode</p>
-      </div>
-      <div class="switch" onclick="toggleTheme()"><div class="knob" id="themeKnob">☀️</div></div>
+    <p style="font-size:12px;margin-bottom:10px;" data-i18n="settings.themeHint">Choose Day, Night, or Auto to switch based on your local sunrise and sunset</p>
+    <div class="chiprow" id="themeChips">
+      <div class="chip" data-theme-choice="light" onclick="setThemeChoice('light')" data-i18n="settings.dayTheme">Day Theme</div>
+      <div class="chip" data-theme-choice="dark" onclick="setThemeChoice('dark')" data-i18n="settings.nightTheme">Night Theme</div>
+      <div class="chip" data-theme-choice="auto" onclick="setThemeChoice('auto')" data-i18n="settings.autoTheme">Auto Theme</div>
     </div>
+    <p id="autoThemeStatus" style="font-size:11.5px;margin-top:8px;display:none;"></p>
 
     <div class="section-title" data-i18n="settings.units">Units</div>
     <div class="theme-toggle">
@@ -766,6 +766,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div class="chiprow" id="languageChips">
       <div class="chip" data-lang="en" onclick="setLanguage('en')">English</div>
       <div class="chip" data-lang="es" onclick="setLanguage('es')">Español</div>
+      <div class="chip" data-lang="pt" onclick="setLanguage('pt')">Português</div>
       <div class="chip" data-lang="he" onclick="setLanguage('he')">עברית</div>
     </div>
 
@@ -1188,6 +1189,8 @@ const TRANSLATIONS = {
   'sea.slight': 'Slight',
   'sea.veryRough': 'Very Rough',
   'settings.appearance': 'Appearance',
+  'settings.autoNowLabel': 'Auto — right now: {theme}',
+  'settings.autoTheme': 'Auto Theme',
   'settings.clearProfile': 'Clear profile…',
   'settings.dangerZone': 'Danger Zone',
   'settings.dayTheme': 'Day Theme',
@@ -1196,7 +1199,7 @@ const TRANSLATIONS = {
   'settings.resetApp': 'Reset App Data…',
   'settings.resetApp2': 'Reset App Data',
   'settings.resetHint': 'Permanently erases every trip, boat, crew member, and profile detail on this device. This can\'t be undone — back up first if you want to keep anything.',
-  'settings.themeHint': 'Switch between day and night mode',
+  'settings.themeHint': 'Choose Day, Night, or Auto to switch based on your local sunrise and sunset',
   'settings.title': 'Settings',
   'settings.units': 'Units',
   'settings.unitsHint': 'Default used throughout the app — you can still flip units for a single log entry while logging',
@@ -1265,6 +1268,7 @@ const TRANSLATIONS = {
   'toast.giveBoatName': 'Give the boat a name',
   'toast.invalidBackup': 'That doesn\'t look like a valid backup file',
   'toast.journeySaved': 'Journey saved ⚓',
+  'toast.locationUnavailable': 'Couldn\'t get your location — using a default day/night schedule instead',
   'toast.openTripFirst': 'Open a trip first',
   'toast.pdfDownloaded': 'Single-page A4 PDF downloaded',
   'toast.pdfGenFail': 'Could not generate the PDF — try again',
@@ -1468,6 +1472,8 @@ const TRANSLATIONS = {
   'sea.slight': 'Ligero',
   'sea.veryRough': 'Muy Agitado',
   'settings.appearance': 'Apariencia',
+  'settings.autoNowLabel': 'Automático — ahora mismo: {theme}',
+  'settings.autoTheme': 'Tema Automático',
   'settings.clearProfile': 'Borrar perfil…',
   'settings.dangerZone': 'Zona de Peligro',
   'settings.dayTheme': 'Tema Diurno',
@@ -1476,7 +1482,7 @@ const TRANSLATIONS = {
   'settings.resetApp': 'Restablecer Datos de la App…',
   'settings.resetApp2': 'Restablecer Datos de la App',
   'settings.resetHint': 'Elimina de forma permanente cada travesía, embarcación, tripulante y detalle de perfil en este dispositivo. Esto no se puede deshacer — haz una copia de seguridad primero si quieres conservar algo.',
-  'settings.themeHint': 'Cambia entre modo diurno y nocturno',
+  'settings.themeHint': 'Elige Diurno, Nocturno o Automático para cambiar según tu amanecer y atardecer locales',
   'settings.title': 'Ajustes',
   'settings.units': 'Unidades',
   'settings.unitsHint': 'Valor predeterminado usado en toda la app — aún puedes cambiar las unidades para un solo registro mientras navegas',
@@ -1547,6 +1553,7 @@ const TRANSLATIONS = {
   'toast.giveBoatName': 'Dale un nombre a la embarcación',
   'toast.invalidBackup': 'Eso no parece un archivo de copia de seguridad válido',
   'toast.journeySaved': 'Travesía guardada ⚓',
+  'toast.locationUnavailable': 'No se pudo obtener tu ubicación — usando un horario día/noche predeterminado',
   'toast.openTripFirst': 'Abre una travesía primero',
   'toast.pdfDownloaded': 'PDF de una página A4 descargado',
   'toast.pdfGenFail': 'No se pudo generar el PDF — inténtalo de nuevo',
@@ -1756,6 +1763,8 @@ const TRANSLATIONS = {
   'sea.slight': 'קל',
   'sea.veryRough': 'סוער מאוד',
   'settings.appearance': 'מראה',
+  'settings.autoNowLabel': 'אוטומטי — כרגע: {theme}',
+  'settings.autoTheme': 'מצב אוטומטי',
   'settings.clearProfile': 'מחיקת פרופיל…',
   'settings.dangerZone': 'אזור סכנה',
   'settings.dayTheme': 'מצב יום',
@@ -1764,7 +1773,7 @@ const TRANSLATIONS = {
   'settings.resetApp': 'איפוס נתוני האפליקציה…',
   'settings.resetApp2': 'איפוס נתוני האפליקציה',
   'settings.resetHint': 'מוחק לצמיתות כל שיט, כלי שיט, איש צוות ופרט פרופיל במכשיר זה. לא ניתן לבטל פעולה זו — גבו קודם אם ברצונכם לשמור משהו.',
-  'settings.themeHint': 'החלפה בין מצב יום למצב לילה',
+  'settings.themeHint': 'בחרו יום, לילה או אוטומטי כדי להחליף לפי הזריחה והשקיעה במיקום שלכם',
   'settings.title': 'הגדרות',
   'settings.units': 'יחידות',
   'settings.unitsHint': 'ברירת המחדל בכל האפליקציה — עדיין ניתן להחליף יחידות לרישום בודד תוך כדי שיט',
@@ -1835,6 +1844,7 @@ const TRANSLATIONS = {
   'toast.giveBoatName': 'תנו שם לכלי השיט',
   'toast.invalidBackup': 'זה לא נראה כמו קובץ גיבוי תקין',
   'toast.journeySaved': 'השיט נשמר ⚓',
+  'toast.locationUnavailable': 'לא ניתן היה לאתר את המיקום שלכם — משתמשים בלוח זמנים יום/לילה כברירת מחדל',
   'toast.openTripFirst': 'פתחו שיט קודם',
   'toast.pdfDownloaded': 'PDF בעמוד A4 אחד הורד',
   'toast.pdfGenFail': 'לא ניתן היה ליצור את ה-PDF — נסו שוב',
@@ -1856,6 +1866,291 @@ const TRANSLATIONS = {
   'unit.metric': 'מטרי (קמ"ש / ק"מ)',
   'unit.minAbbr': 'ד',
   'unit.nautical': 'ימי (קשר / מייל ימי)',
+},
+  pt: {
+  'action.cancel': 'Cancelar',
+  'action.done': 'Concluído',
+  'action.edit': 'Editar',
+  'action.remove': 'Remover',
+  'action.save': 'Guardar',
+  'action.share': 'Partilhar',
+  'action.takePhoto': 'Tirar Foto',
+  'action.upload': 'Carregar',
+  'action.uploadPhotos': 'Carregar Fotos',
+  'active.addCrew': '+ Adicionar Tripulante',
+  'active.addCrewTitle': 'Adicionar Tripulante',
+  'active.addNewCrew': '+ Adicionar Novo Tripulante',
+  'active.autoCalcHint': 'Opcional — deixa em branco e são calculados a partir da distância ÷ duração.',
+  'active.boat': 'Embarcação',
+  'active.changeCover': 'Mudar Foto de Capa…',
+  'active.checkingConnection': 'A verificar ligação…',
+  'active.chooseSkipper': 'Escolher Comandante',
+  'active.coverBadge': 'CAPA',
+  'active.crewAboard': 'Tripulação a Bordo',
+  'active.dateTime': 'Data e hora da saída',
+  'active.discardTitle': 'Descartar travessia',
+  'active.durationHrs': 'Duração (h)',
+  'active.durationMins': 'Duração (min)',
+  'active.elapsedTime': 'Tempo Decorrido',
+  'active.endJourney': 'Terminar Travessia',
+  'active.gusts': 'Rajadas',
+  'active.liveTrack': 'Rota em Direto',
+  'active.logEntry': 'Registo de Navegação',
+  'active.mapImage': 'Imagem do Mapa',
+  'active.mapImageHint': '— opcional, sem rota GPS para uma entrada passada, por isso adiciona uma captura de ecrã ou foto de uma carta se tiveres uma',
+  'active.noSkipper': 'Sem Comandante',
+  'active.notes': 'Notas',
+  'active.photos': 'Fotos',
+  'active.photosHint': '— toca numa foto para a tornar a capa',
+  'active.place': 'Local',
+  'active.sailName': 'Nome da Saída',
+  'active.saveChanges': 'Guardar Alterações',
+  'active.saveLogEntry': 'Guardar Registo',
+  'active.seaState': 'Estado do Mar',
+  'active.skipper': 'Comandante',
+  'active.tapToAdjust': 'Toca para ajustar',
+  'active.temperature': 'Temperatura',
+  'active.title': 'Registo de Travessia Ativa',
+  'active.unitsHint': 'Unidades para este registo — muda-as quando quiseres, não altera o teu padrão',
+  'active.waveDir': 'Direção da Ondulação',
+  'active.waveHeight': 'Altura da Ondulação',
+  'active.windDir': 'Direção do Vento',
+  'active.windSpeed': 'Velocidade do Vento',
+  'active.youSuffix': '(Tu)',
+  'banner.recordingBoat': 'A gravar — {boat}',
+  'banner.recordingJourney': 'A gravar travessia',
+  'banner.unsavedEdits': 'Alterações não guardadas num registo — toca para terminar',
+  'banner.unsavedPastSail': 'Entrada passada não guardada — toca para terminar',
+  'boats.emptyHint': 'Adiciona as embarcações em que navegas para acompanhar a tua frota.',
+  'boats.emptyTitle': 'Ainda sem embarcações',
+  'boats.sailsPlural': '{count} saídas registadas',
+  'boats.sailsSingular': '{count} saída registada',
+  'boats.title': 'Frota de Embarcações',
+  'cert.certifiesThat': 'Isto certifica que',
+  'cert.defaultTitle': 'Certificado de Tempo no Mar',
+  'cert.generated': 'Gerado em',
+  'cert.hasLogged': 'registou o seguinte tempo no mar',
+  'cert.printSave': 'Imprimir / Guardar como PDF',
+  'cert.sails': 'Saídas',
+  'cert.to': 'a',
+  'common.avgShort': 'Méd.',
+  'compass.E': 'E',
+  'compass.N': 'N',
+  'compass.NE': 'NE',
+  'compass.NW': 'NO',
+  'compass.S': 'S',
+  'compass.SE': 'SE',
+  'compass.SW': 'SO',
+  'compass.W': 'O',
+  'confirm.alreadyRecordingNew': 'Já tens uma travessia a ser gravada. Voltar a ela? (Iniciar uma nova descartaria a gravação atual.)',
+  'confirm.alreadyRecordingPast': 'Já tens uma travessia a ser gravada. Voltar a ela? (Iniciar uma entrada passada descartaria a gravação atual.)',
+  'confirm.clearProfile': 'Limpar o teu perfil (nome, função, licença, contactos, biografia, foto)? As tuas travessias, embarcações e tripulação não são afetadas.',
+  'confirm.deleteTrip': 'Eliminar esta travessia permanentemente?',
+  'confirm.discardEdits': 'Descartar estas alterações? O registo fica como estava. Isto não pode ser desfeito.',
+  'confirm.discardJourney': 'Descartar esta travessia? O registo vai parar e nada será guardado. Isto não pode ser desfeito.',
+  'confirm.discardManual': 'Descartar esta entrada passada? Nada será guardado. Isto não pode ser desfeito.',
+  'confirm.endJourney': 'Terminar esta travessia e guardá-la no teu registo?',
+  'confirm.removeBoat': 'Remover esta embarcação da tua frota?',
+  'confirm.removeCrew': 'Remover este tripulante?',
+  'confirm.restore': 'Restaurar "{name}"? Isto substitui todas as travessias, embarcações, tripulação e perfil atuais neste dispositivo. Isto não pode ser desfeito.',
+  'confirm.saveChanges': 'Guardar as alterações a este registo?',
+  'confirm.savePastSail': 'Guardar esta saída passada no teu registo?',
+  'crew.emptyHint': 'Adiciona os amigos que navegam contigo para os marcares nos teus registos.',
+  'crew.emptyTitle': 'Sem tripulação adicionada',
+  'default.sailorName': 'Marinheiro',
+  'detail.duration': 'Duração',
+  'detail.elapsed': 'Decorrido',
+  'detail.exportPdf': 'Exportar como PDF A4',
+  'detail.fromDir': 'de',
+  'detail.gustsShort': 'Rajadas',
+  'detail.locked': 'Bloqueado',
+  'detail.map': 'Mapa',
+  'detail.shareCrewSocial': 'Partilhar com Tripulação / Redes Sociais',
+  'detail.track': 'Rota',
+  'detail.tripFallback': 'Travessia',
+  'detail.unlocked': 'Desbloqueado',
+  'detail.weather': 'Clima',
+  'gps.live': 'Em direto',
+  'gps.noSignal': 'Sem sinal',
+  'gps.searching': 'A procurar…',
+  'gps.unavailable': 'Indisponível',
+  'greet.afternoon': 'Boa tarde',
+  'greet.evening': 'Boa noite',
+  'greet.morning': 'Bom dia',
+  'history.all': 'Todas',
+  'history.emptyHint': 'Inicia uma nova travessia a partir do Início para começares o teu diário de bordo.',
+  'history.emptyTitle': 'Ainda sem saídas registadas',
+  'history.recent': 'Recentes',
+  'history.searchPh': 'Pesquisar registos (ex.: embarcação, local, notas)…',
+  'history.title': 'Histórico de Travessias',
+  'history.withPhotos': 'Com Fotos',
+  'home.fleet': 'Frota',
+  'home.distanceLogged': 'Distância Registada',
+  'home.logPastSail': 'Registar Saída Passada',
+  'home.resume': 'Currículo',
+  'home.startJourney': 'Iniciar Nova Travessia',
+  'home.viewHistory': 'Ver Histórico',
+  'sheet.chooseBoatOpt': 'Escolhe a tua embarcação…',
+  'sheet.noBoatsOpt': 'Ainda sem embarcações — adiciona uma em Frota',
+  'map.liveMap': 'Mapa em Direto',
+  'map.offlineTrack': 'Rota Offline (sem ligação)',
+  'nav.crew': 'Tripulação',
+  'nav.history': 'Histórico',
+  'nav.home': 'Início',
+  'nav.settings': 'Definições',
+  'pdf.sailLogFallback': 'Registo de Navegação',
+  'ph.auto': 'auto',
+  'ph.egDistance': 'ex. 12,4',
+  'ph.egHours': 'ex. 3',
+  'ph.egMinutes': 'ex. 30',
+  'ph.egPlace': 'ex. Baía de Chesapeake',
+  'ph.egSailName': 'ex. Passeio ao Pôr do Sol',
+  'ph.notes': 'Condições, o que aconteceu, o que aprendemos…',
+  'profile.backupHint': 'Guarda tudo num ficheiro que podes manter na nuvem (Drive, iCloud, e-mail) ou passar para um novo telemóvel.',
+  'profile.backupRestore': 'Cópia de Segurança e Restauro',
+  'profile.backupToFile': 'Criar Cópia de Segurança',
+  'profile.bio': 'Biografia',
+  'profile.bioPh': 'Conta à tua tripulação um pouco sobre ti e a tua navegação…',
+  'profile.boatsSailed': 'Embarcações Navegadas',
+  'profile.email': 'E-mail',
+  'profile.license': 'Licença',
+  'profile.licensePh': 'ex. Carta de Patrão de Alto Mar',
+  'profile.lifetimeStats': 'Estatísticas Totais',
+  'profile.name': 'Nome',
+  'profile.namePh': 'O teu nome',
+  'profile.phone': 'Telefone',
+  'profile.restoreFromFile': 'Restaurar a partir de Ficheiro',
+  'profile.role': 'Função',
+  'profile.rolePh': 'ex. Comandante',
+  'profile.save': 'Guardar Perfil',
+  'profile.social': 'Redes Sociais / Site',
+  'profile.title': 'Perfil',
+  'resume.allTime': 'Todo o Período',
+  'resume.custom': 'Personalizado',
+  'resume.emptyRange': 'Ainda sem saídas neste período.',
+  'resume.from': 'De',
+  'resume.generateCert': 'Gerar Certificado',
+  'resume.includedSails': 'Saídas Incluídas',
+  'resume.last30': 'Últimos 30 Dias',
+  'resume.thisYear': 'Este Ano',
+  'resume.timeAtSea': 'Tempo no Mar',
+  'resume.title': 'Currículo de Navegação',
+  'resume.to': 'Até',
+  'resume.totalDistance': 'Distância Total',
+  'resume.totalSails': 'Saídas Totais',
+  'sea.calm': 'Calmo',
+  'sea.moderate': 'Moderado',
+  'sea.rough': 'Agitado',
+  'sea.slight': 'Ligeiro',
+  'sea.veryRough': 'Muito Agitado',
+  'settings.appearance': 'Aparência',
+  'settings.autoNowLabel': 'Automático — agora mesmo: {theme}',
+  'settings.autoTheme': 'Tema Automático',
+  'settings.clearProfile': 'Limpar perfil…',
+  'settings.dangerZone': 'Zona de Perigo',
+  'settings.dayTheme': 'Tema Diurno',
+  'settings.language': 'Idioma',
+  'settings.nightTheme': 'Tema Noturno',
+  'settings.resetApp': 'Repor Dados da App…',
+  'settings.resetApp2': 'Repor Dados da App',
+  'settings.resetHint': 'Apaga permanentemente todas as travessias, embarcações, tripulantes e dados de perfil neste dispositivo. Isto não pode ser desfeito — faz uma cópia de segurança primeiro se quiseres guardar algo.',
+  'settings.themeHint': 'Escolhe Diurno, Noturno ou Automático para mudar consoante o nascer e o pôr do sol locais',
+  'settings.title': 'Definições',
+  'settings.units': 'Unidades',
+  'settings.unitsHint': 'Valor padrão usado em toda a app — ainda podes mudar as unidades para um único registo enquanto navegas',
+  'share.tripSummary': '⛵ {title}\n{date}\n{distance} · {duration} · Média {avgSpeed}\nRegistado com Sail la Vie',
+  'sheet.addBoat': 'Adicionar uma Embarcação',
+  'sheet.addPhoto': 'Adicionar Foto',
+  'sheet.adjustCrop': 'Ajustar / Recortar Foto Selecionada',
+  'sheet.adjustPhoto': 'Ajustar Foto',
+  'sheet.adjustPhotoHint': 'Arrasta para reposicionar, usa o cursor para ampliar.',
+  'sheet.boatName': 'Nome',
+  'sheet.boatNamePh': 'ex. Windswept',
+  'sheet.boatNotesPh': 'Marina de origem, detalhes da aparelhagem, particularidades…',
+  'sheet.boatPhotos': 'Fotos',
+  'sheet.boatPhotosHint': '— toca numa para a tornar a predefinida',
+  'sheet.boatType': 'Tipo',
+  'sheet.boatTypePh': 'ex. Beneteau Oceanis 38',
+  'sheet.castOff': 'Largar Amarras',
+  'sheet.certDetails': 'Detalhes do Certificado',
+  'sheet.certTitle': 'Título do Certificado',
+  'sheet.coverPickHint': 'Toca numa foto para a usar como capa deste registo, ou salta e aparecerá no teu histórico sem uma.',
+  'sheet.coverPickTitle': 'Definir uma Foto de Capa?',
+  'sheet.crewEmailPh': 'ex. alex@email.com',
+  'sheet.crewNamePh': 'ex. Alex',
+  'sheet.crewNotePh': 'Como o/a conheces, função a bordo…',
+  'sheet.crewSocialPh': 'ex. @alex ou instagram.com/alex',
+  'sheet.defaultBadge': 'Predefinida',
+  'sheet.editBoat': 'Editar Embarcação',
+  'sheet.editCrew': 'Editar Tripulante',
+  'sheet.eraseEverything': 'Sim, apagar tudo',
+  'sheet.generate': 'Gerar',
+  'sheet.gpsHint': 'Vamos tentar usar o GPS do teu dispositivo para seguir a tua rota, velocidade e distância em direto. Se o GPS não estiver disponível, podes introduzir a distância manualmente no final.',
+  'sheet.note': 'Nota',
+  'sheet.previewPdf': 'Pré-visualizar PDF',
+  'sheet.previewPdfHint': 'É exatamente assim que vai ficar — uma página A4, pronta a partilhar.',
+  'sheet.removeBoat': 'Remover Embarcação',
+  'sheet.resetConfirmHint': 'Isto apaga permanentemente todas as travessias, embarcações, tripulação e o teu perfil deste dispositivo. Isto não pode ser desfeito.',
+  'sheet.sailorName': 'Nome do Marinheiro',
+  'sheet.saveBoat': 'Guardar Embarcação',
+  'sheet.setAsCover': 'Definir como Capa',
+  'sheet.sharePdf': 'Partilhar / Guardar PDF',
+  'sheet.skipNoCover': 'Saltar — Sem Capa',
+  'sheet.startJourneyTitle': 'Iniciar uma Nova Travessia',
+  'sheet.takeSelfie': 'Tirar Selfie',
+  'sheet.usePhoto': 'Usar Foto',
+  'sheet.whichBoat': 'Qual embarcação?',
+  'sheet.whichBoatHint': 'Escolhe a embarcação que vais usar — isto é guardado com o registo.',
+  'stat.avgSpeed': 'Vel. Média',
+  'stat.distance': 'Distância',
+  'stat.gps': 'GPS',
+  'stat.maxSpeed': 'Vel. Máxima',
+  'toast.addPhotoFirst': 'Adiciona uma foto primeiro',
+  'toast.allDataErased': 'Todos os dados apagados',
+  'toast.backupDownloaded': 'Cópia de segurança descarregada',
+  'toast.backupReadFail': 'Não foi possível ler esse ficheiro de cópia de segurança',
+  'toast.backupRestored': 'Cópia de segurança restaurada ⚓',
+  'toast.boatSaved': 'Embarcação guardada',
+  'toast.changesSaved': 'Alterações guardadas ⚓',
+  'toast.copiedSummary': 'Resumo da travessia copiado para a área de transferência',
+  'toast.coverRemoved': 'Foto de capa removida',
+  'toast.coverUpdated': 'Foto de capa atualizada',
+  'toast.crewSaved': 'Tripulante guardado',
+  'toast.draftKept': 'Rascunho guardado — toca no aviso para terminar',
+  'toast.editsKept': 'Alterações guardadas — toca no aviso para terminar',
+  'toast.enterName': 'Introduz um nome',
+  'toast.finishOrDiscardFirst': 'Termina ou descarta a tua travessia/registo atual primeiro',
+  'toast.giveBoatName': 'Dá um nome à embarcação',
+  'toast.invalidBackup': 'Isso não parece um ficheiro de cópia de segurança válido',
+  'toast.journeySaved': 'Travessia guardada ⚓',
+  'toast.locationUnavailable': 'Não foi possível obter a tua localização — a usar um horário dia/noite padrão',
+  'toast.openTripFirst': 'Abre uma travessia primeiro',
+  'toast.pdfDownloaded': 'PDF de uma página A4 descarregado',
+  'toast.pdfGenFail': 'Não foi possível gerar o PDF — tenta novamente',
+  'toast.pdfNeedsConnection': 'A exportação para PDF precisa de ligação da primeira vez (carrega uma pequena biblioteca) — tenta novamente quando estiveres online.',
+  'toast.photoDownloaded': 'Foto descarregada — partilha-a a partir da tua galeria',
+  'toast.photoProcessFail': 'Não foi possível processar essa foto',
+  'toast.photoReadFail': 'Não foi possível ler essa foto',
+  'toast.photoUpdated': 'Foto atualizada',
+  'toast.preparingPdf': 'A preparar PDF de uma página A4…',
+  'toast.profileCleared': 'Perfil limpo',
+  'toast.profileSaved': 'Perfil guardado',
+  'toast.saveFailed': 'Falha ao guardar — a travessia mantém-se no ecrã, tenta novamente',
+  'toast.stillRecording': 'Ainda a gravar — toca no aviso para voltar',
+  'toast.tripDeleted': 'Travessia eliminada',
+  'toast.tripLoadFail': 'Não foi possível carregar essa travessia',
+  'toast.unitsMetric': 'Unidades padrão: Métrico (km/h, km)',
+  'toast.unitsNautical': 'Unidades padrão: Náutico (kts, NM)',
+  'unit.hourAbbr': 'h',
+  'unit.minAbbr': 'm',
+  'unit.metric': 'Métrico (km/h / km)',
+  'unit.nautical': 'Náutico (kts / NM)',
+  'active.manualDistanceLabel': 'Distância percorrida — {unit} (entrada manual, GPS indisponível)',
+  'active.distanceUnitLabel': 'Distância ({unit})',
+  'active.avgSpeedUnitLabel': 'Vel. Média ({unit})',
+  'active.maxSpeedUnitLabel': 'Vel. Máxima ({unit})',
+  'map.gotPosition': 'Já temos a tua posição — a traçar a rota enquanto te moves…',
+  'map.waitingGps': 'A aguardar sinal GPS…',
 }
 };
 
@@ -1872,7 +2167,7 @@ function t(key, vars){
   if(vars){ Object.keys(vars).forEach(k=>{ str = str.split('{'+k+'}').join(vars[k]); }); }
   return str;
 }
-function currentLocale(){ return currentLang==='es' ? 'es-ES' : 'en-US'; }
+function currentLocale(){ return currentLang==='es' ? 'es-ES' : currentLang==='pt' ? 'pt-PT' : 'en-US'; }
 const SEA_STATE_KEYS = {'Calm':'sea.calm','Slight':'sea.slight','Moderate':'sea.moderate','Rough':'sea.rough','Very Rough':'sea.veryRough'};
 function seaStateLabel(v){ return v ? (SEA_STATE_KEYS[v] ? t(SEA_STATE_KEYS[v]) : v) : ''; }
 function compassLabel(v){ return v ? t('compass.'+v) : ''; }
@@ -1888,6 +2183,7 @@ function applyStaticTranslations(){
   document.documentElement.lang = currentLang;
   document.documentElement.dir = (currentLang==='he') ? 'rtl' : 'ltr';
   document.querySelectorAll('#languageChips .chip').forEach(el=>{ el.classList.toggle('active', el.getAttribute('data-lang')===currentLang); });
+  renderThemeSettingUI(document.documentElement.getAttribute('data-theme')||'light');
 }
 // Re-renders whichever dynamic screens/elements are currently live so a
 // language switch takes effect immediately without navigating away and back.
@@ -2108,9 +2404,9 @@ async function restoreFromFile(ev){
     state.crew = data.crew||[];
     state.tripIndex = data.tripIndex||[];
 
-    document.documentElement.setAttribute('data-theme', state.profile.theme||'light');
     currentLang = TRANSLATIONS[state.profile.language] ? state.profile.language : 'en';
     applyStaticTranslations();
+    await applyThemePreference();
     document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
     refreshAvatars();
     showToast(t('toast.backupRestored'));
@@ -2156,9 +2452,7 @@ async function boot(){
   currentLang = TRANSLATIONS[state.profile.language] ? state.profile.language : 'en';
   applyStaticTranslations();
 
-  document.documentElement.setAttribute('data-theme', state.profile.theme || 'light');
-  document.getElementById('themeKnob').textContent = (state.profile.theme==='dark') ? '🌙' : '☀️';
-  document.getElementById('themeLabel').textContent = (state.profile.theme==='dark') ? t('settings.nightTheme') : t('settings.dayTheme');
+  await applyThemePreference();
   renderUnitsSettingUI();
 
   refreshAvatars();
@@ -3789,13 +4083,138 @@ async function clearProfilePrompt(){
     refreshAvatars();
   }
 }
-async function toggleTheme(){
-  const next = document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  document.getElementById('themeKnob').textContent = next==='dark' ? '🌙' : '☀️';
-  document.getElementById('themeLabel').textContent = next==='dark' ? t('settings.nightTheme') : t('settings.dayTheme');
-  state.profile.theme = next;
+/* ============================================================
+   THEME — Day / Night / Auto.
+   state.profile.theme holds the person's CHOICE: 'light' | 'dark' | 'auto'.
+   applyThemePreference() resolves that choice to the actual data-theme
+   attribute on <html>. For 'auto' it works out sunrise/sunset for the
+   device's current location (via the sunTimes() formula below — no
+   network call needed) and applies Day from 30 min after sunrise until
+   30 min before sunset, Night otherwise. If location isn't available it
+   falls back to a fixed 07:00–19:00 "daytime" window. A 15-minute
+   interval keeps auto mode current while the app is left open across
+   a sunrise/sunset boundary.
+   ============================================================ */
+let autoThemeTimerId = null;
+let cachedThemeCoords = null; // {lat, lon} — cached for the session once geolocation succeeds once
+let autoThemeLocationDenied = false; // avoids re-prompting every recheck once the user has said no
+
+function stopAutoThemeWatch(){
+  if(autoThemeTimerId){ clearInterval(autoThemeTimerId); autoThemeTimerId = null; }
+}
+
+// Approximate sunrise/sunset (accurate to within a minute or two) using the
+// classic US Naval Observatory / "Sunrise Equation" algorithm. Returns
+// {sunrise, sunset} as Date objects in local time, or null values for a
+// given key on days where the sun doesn't rise/set at that latitude
+// (polar day/night) — callers fall back to the fixed-hours heuristic then.
+function sunTimes(date, lat, lon){
+  const rad = Math.PI/180;
+  const startOfYear = new Date(Date.UTC(date.getFullYear(),0,0));
+  const dayOfYear = Math.floor((Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()) - startOfYear.getTime()) / 86400000);
+  const lngHour = lon/15;
+  function calc(isRise){
+    const tt = dayOfYear + ((isRise?6:18) - lngHour)/24;
+    const M = (0.9856*tt) - 3.289;
+    let L = M + (1.916*Math.sin(rad*M)) + (0.020*Math.sin(2*rad*M)) + 282.634;
+    L = ((L%360)+360)%360;
+    let RA = (1/rad)*Math.atan(0.91764*Math.tan(rad*L));
+    RA = ((RA%360)+360)%360;
+    const Lq = Math.floor(L/90)*90, RAq = Math.floor(RA/90)*90;
+    RA = (RA + (Lq-RAq)) / 15;
+    const sinDec = 0.39782*Math.sin(rad*L);
+    const cosDec = Math.cos(Math.asin(sinDec));
+    const cosH = (Math.cos(rad*90.833) - (sinDec*Math.sin(rad*lat))) / (cosDec*Math.cos(rad*lat));
+    if(cosH>1 || cosH<-1) return null; // sun never rises, or never sets, at this latitude today
+    let H = isRise ? (360 - (1/rad)*Math.acos(cosH)) : ((1/rad)*Math.acos(cosH));
+    H = H/15;
+    const T = H + RA - (0.06571*tt) - 6.622;
+    let UT = ((T - lngHour)%24 + 24)%24;
+    return UT; // hours, UTC
+  }
+  function toDate(utHours){
+    if(utHours==null) return null;
+    const d = new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate(),0,0,0,0));
+    d.setUTCMilliseconds(utHours*3600000);
+    return d;
+  }
+  return { sunrise: toDate(calc(true)), sunset: toDate(calc(false)) };
+}
+
+async function getCoordsForAutoTheme(){
+  if(cachedThemeCoords) return cachedThemeCoords;
+  if(autoThemeLocationDenied || !navigator.geolocation) return null;
+  try{
+    const pos = await new Promise((resolve,reject)=>{
+      navigator.geolocation.getCurrentPosition(resolve, reject, {maximumAge:30*60000, timeout:8000});
+    });
+    cachedThemeCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+    return cachedThemeCoords;
+  }catch(e){
+    autoThemeLocationDenied = true;
+    showToast(t('toast.locationUnavailable'));
+    return null;
+  }
+}
+
+// Resolves the actual theme ('light'|'dark') that Auto mode should show
+// right now, given today's sunrise/sunset (or null if unavailable).
+function computeEffectiveAutoTheme(times){
+  const now = new Date();
+  if(!times || !times.sunrise || !times.sunset){
+    const h = now.getHours();
+    return (h>=7 && h<19) ? 'light' : 'dark';
+  }
+  const lightStart = new Date(times.sunrise.getTime() + 30*60000);
+  const darkStart = new Date(times.sunset.getTime() - 30*60000);
+  if(darkStart > lightStart){
+    return (now>=lightStart && now<darkStart) ? 'light' : 'dark';
+  }
+  // Degenerate case (very high latitude, short day) — same comparison still holds.
+  return (now>=lightStart || now<darkStart) ? 'light' : 'dark';
+}
+
+async function updateAutoTheme(){
+  const coords = await getCoordsForAutoTheme();
+  const times = coords ? sunTimes(new Date(), coords.lat, coords.lon) : null;
+  const effective = computeEffectiveAutoTheme(times);
+  document.documentElement.setAttribute('data-theme', effective);
+  renderThemeSettingUI(effective);
+  if(!autoThemeTimerId){ autoThemeTimerId = setInterval(updateAutoTheme, 15*60000); }
+}
+
+// Applies whatever the person has chosen (state.profile.theme) to the page.
+async function applyThemePreference(){
+  const pref = state.profile.theme || 'light';
+  if(pref === 'auto'){
+    await updateAutoTheme();
+  } else {
+    stopAutoThemeWatch();
+    document.documentElement.setAttribute('data-theme', pref);
+    renderThemeSettingUI(pref);
+  }
+}
+
+function renderThemeSettingUI(effective){
+  document.querySelectorAll('#themeChips .chip').forEach(el=>{
+    el.classList.toggle('active', el.getAttribute('data-theme-choice')===(state.profile.theme||'light'));
+  });
+  const status = document.getElementById('autoThemeStatus');
+  if(!status) return;
+  if((state.profile.theme||'light') === 'auto'){
+    const label = effective==='dark' ? t('settings.nightTheme') : t('settings.dayTheme');
+    status.textContent = t('settings.autoNowLabel', {theme: label});
+    status.style.display = 'block';
+  } else {
+    status.style.display = 'none';
+  }
+}
+
+async function setThemeChoice(choice){
+  if(choice!=='light' && choice!=='dark' && choice!=='auto') return;
+  state.profile.theme = choice;
   await storeSet(KEYS.PROFILE, state.profile);
+  await applyThemePreference();
 }
 // Sets the DEFAULT unit system used app-wide (History, trip detail, PDF,
 // certificate) and as the starting point for new log entries. This is
@@ -3821,8 +4240,12 @@ async function resetAllData(){
   await storeDelete(KEYS.INDEX); await storeDelete(KEYS.BOATS); await storeDelete(KEYS.CREW); await storeDelete(KEYS.PROFILE);
   state = { tripIndex:[], boats:[], crew:[], profile:{name:'',role:'',license:'',phone:'',email:'',social:'',bio:'',avatar:'',theme:'light',unitSystem:'nautical',language:'en'} };
   currentLang = 'en';
+  stopAutoThemeWatch();
+  cachedThemeCoords = null;
+  autoThemeLocationDenied = false;
   document.documentElement.setAttribute('data-theme','light');
   applyStaticTranslations();
+  renderThemeSettingUI('light');
   closeSheets(); showToast(t('toast.allDataErased'));
   refreshAvatars(); nav('home'); renderHomeStats();
 }
