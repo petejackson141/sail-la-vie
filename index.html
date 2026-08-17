@@ -435,11 +435,26 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-nautical .n-photo-cell{ height:97px; border-radius:3px; overflow:hidden; background:var(--n-cream-line); }
 .pdf-theme-nautical .n-photo-cell img{ width:100%; height:100%; object-fit:cover; display:block; }
 
+/* Continuation ("more photos") pages: same masthead/footer language as the
+   cover page, but a taller full-bleed grid since there's no hero/stats/info
+   competing for space. Used whenever a trip has more photos than fit in the
+   cover page's fixed 4x2 grid — see buildNauticalPages(). */
+.pdf-theme-nautical .n-contpage-header{ background:var(--n-navy); padding:26px 26px 22px; display:flex; align-items:center; gap:16px; }
+.pdf-theme-nautical .n-contpage-title{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:20px; line-height:1.15; color:#fff; text-transform:uppercase; letter-spacing:.01em; }
+.pdf-theme-nautical .n-contpage-sub{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--n-gold-light); font-weight:700; margin-top:6px; }
+.pdf-theme-nautical .n-photos.n-photos-cont{ grid-template-rows:none; grid-auto-rows:220px; align-content:flex-start; padding:22px 26px 0; }
+.pdf-theme-nautical .n-photos.n-photos-cont .n-photo-cell{ height:220px; }
+
 .pdf-theme-nautical .n-footer{ display:flex; flex-direction:column; align-items:center; padding:18px 26px 20px; }
 .pdf-theme-nautical .n-footer-motif{ display:flex; align-items:center; gap:8px; width:100%; max-width:340px; }
 .pdf-theme-nautical .n-footer-motif .n-footer-line{ flex:1; height:1.2px; background:var(--n-gold); }
 .pdf-theme-nautical .n-footer-motif .n-footer-dot{ width:11px; height:11px; border-radius:50%; border:1.2px solid var(--n-gold); flex:0 0 11px; }
 .pdf-theme-nautical .n-footer-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8px; color:var(--n-body); text-align:center; margin-top:8px; letter-spacing:.02em; }
+
+/* Stacked multi-page PDF preview — each page is its own fixed-size sheet;
+   this just gives visual separation between them in the scrollable preview. */
+.pdf-page-wrap{ margin-bottom:14px; }
+.pdf-page-wrap:last-child{ margin-bottom:0; }
 .lightbox{ position:fixed; inset:0; background:rgba(10,20,30,.95); z-index:2000; display:none; align-items:center; justify-content:center; flex-direction:column; padding:20px; }
 .lightbox.show{ display:flex; }
 .lightbox img{ max-width:92vw; max-height:70vh; object-fit:contain; border-radius:10px; }
@@ -1237,6 +1252,8 @@ const TRANSLATIONS = {
   'pdf.themeNautical': 'Nautical Magazine',
   'pdf.formatA4': 'A4 portrait',
   'pdf.formatPoster': 'Poster · 8.5 × 12.75"',
+  'pdf.morePhotos': 'More From The Day',
+  'pdf.pageOf': 'Page {page} of {total}',
   'sheet.chooseTheme': 'Theme',
   'ph.auto': 'auto',
   'ph.egDistance': 'e.g. 12.4',
@@ -4454,7 +4471,8 @@ const PDF_THEMES = {
     contentWidthPx: 612,
     formatLabel: 'pdf.formatPoster',
     sheetClass: 'pdf-theme-nautical',
-    build: buildTripPdfHtmlNautical
+    build: buildTripPdfHtmlNautical,
+    buildPages: buildNauticalPages // multi-page: cover + "more photos" continuation pages
   }
 };
 let currentPdfTheme = localStorage.getItem('pdfTheme') || 'nautical';
@@ -4558,7 +4576,29 @@ const PDF_ICON_SVG = {
   pin: `<svg viewBox="0 0 20 24" width="13" height="15"><path d="M10 0a7 7 0 0 0-7 7c0 5.2 7 15 7 15s7-9.8 7-15a7 7 0 0 0-7-7z" fill="currentColor"/><circle cx="10" cy="7" r="2.6" fill="#F8F4EE"/></svg>`,
   gauge: `<svg viewBox="0 0 20 20" width="14" height="14"><path d="M3 15A7 7 0 0 1 17 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><line x1="10" y1="15" x2="14" y2="9.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
 };
-function buildTripPdfHtmlNautical(trip){
+// Shared by both cover and continuation pages: the little navy ribbon at the
+// bottom of every nautical-theme page. Carries a "Page X of N" indicator
+// whenever the trip spilled onto more than one page, so the set still reads
+// as one document when printed or flipped through.
+function nauticalFooter(pageNum, totalPages){
+  const pageLabel = totalPages>1 ? ' · ' + t('pdf.pageOf',{page:pageNum, total:totalPages}) : '';
+  return `<div class="n-footer">
+      <div class="n-footer-motif"><span class="n-footer-line"></span><span class="n-footer-dot"></span><span class="n-footer-dot"></span><span class="n-footer-line"></span></div>
+      <div class="n-footer-text">Sail la Vie Logbook · ${t('cert.generated')} ${new Date().toLocaleDateString(currentLocale())}${pageLabel}</div>
+    </div>`;
+}
+// The map "porthole": a real drawn track when GPS was recorded, otherwise
+// whatever map/chart image the person attached to the entry, and only if
+// neither exists do we fall back to the empty-compass placeholder.
+function nauticalMapInner(trip){
+  if(trip.path && trip.path.length>1) return buildPortholeSvg(trip.path, false, appUnitSystem());
+  if(trip.mapImage) return `<img src="${trip.mapImage}">`;
+  return `<div class="n-map-empty">${t('pdf.noTrack')}</div><div class="n-map-compass">${navCompassSvg(30,'rgba(12,42,74,.55)','rgba(12,42,74,.7)')}</div>`;
+}
+const PDF_PHOTOS_COVER_MAX = 8;   // fits the cover page's fixed 4x2 grid alongside hero/stats/info
+const PDF_PHOTOS_CONT_MAX = 12;   // fits a continuation page's taller full-bleed 4x3 grid
+
+function buildTripPdfHtmlNauticalCover(trip, photos, pageNum, totalPages){
   const boat = state.boats.find(b=>b.id===trip.boatId);
   const tripCrew = (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
   const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
@@ -4568,7 +4608,6 @@ function buildTripPdfHtmlNautical(trip){
   const dateLabel = d.toLocaleDateString(currentLocale(),{weekday:'long'}).toUpperCase();
   const dateValue = d.toLocaleDateString(currentLocale(),{day:'numeric',month:'long',year:'numeric'}).toUpperCase();
   const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
-  const photos = (trip.photos||[]).slice(0,8);
   let notes = trip.notes || '';
   if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
   const paragraphs = notes ? notes.split(/\n+/).filter(Boolean) : [];
@@ -4587,10 +4626,6 @@ function buildTripPdfHtmlNautical(trip){
     {value:fmtSpeed(trip.avgSpeed||0).split(' ')[0], unit:speedUnitLabel(), label:t('stat.avgSpeed'), icon:'gauge'},
     {value:fmtSpeed(trip.maxSpeed||0).split(' ')[0], unit:speedUnitLabel(), label:t('stat.maxSpeed'), icon:'gauge'},
   ];
-
-  const mapInner = (trip.path && trip.path.length>1)
-    ? buildPortholeSvg(trip.path, false, appUnitSystem())
-    : `<div class="n-map-empty">${t('pdf.noTrack')}</div><div class="n-map-compass">${navCompassSvg(30,'rgba(12,42,74,.55)','rgba(12,42,74,.7)')}</div>`;
 
   return `<div class="pdf-sheet" id="pdfTripBlock">
     <div class="n-hero">
@@ -4636,17 +4671,58 @@ function buildTripPdfHtmlNautical(trip){
         ${paragraphs.length ? `<div class="n-heading">${t('pdf.theDay')}</div><div class="n-quote-mark">&ldquo;</div><div class="n-story">${paragraphs.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div>` : ''}
       </div>
       <div class="n-col-map">
-        <div class="n-map-box">${mapInner}</div>
+        <div class="n-map-box">${nauticalMapInner(trip)}</div>
       </div>
     </div>
 
     ${photos.length ? `<div class="n-photos">${photos.map(p=>`<div class="n-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
 
-    <div class="n-footer">
-      <div class="n-footer-motif"><span class="n-footer-line"></span><span class="n-footer-dot"></span><span class="n-footer-dot"></span><span class="n-footer-line"></span></div>
-      <div class="n-footer-text">Sail la Vie Logbook · ${t('cert.generated')} ${new Date().toLocaleDateString(currentLocale())}</div>
-    </div>
+    ${nauticalFooter(pageNum, totalPages)}
   </div>`;
+}
+
+// A "more from the day" continuation sheet: same masthead language and
+// footer as the cover, but the whole page is given over to a bigger photo
+// grid. Built only when a trip has more photos than the cover page's 4x2
+// grid holds — see buildNauticalPages().
+function buildTripPdfHtmlNauticalContinuation(trip, photos, pageNum, totalPages){
+  return `<div class="pdf-sheet" id="pdfTripBlock">
+    <div class="n-contpage-header">
+      <div class="n-compass">${navCompassSvg(44,'#F8F4EE','#D3AD7A')}</div>
+      <div>
+        <div class="n-contpage-title">${escapeHtml(trip.title||t('pdf.sailLogFallback'))}</div>
+        <div class="n-contpage-sub">${t('pdf.morePhotos')}</div>
+      </div>
+    </div>
+
+    <div class="n-photos n-photos-cont">${photos.map(p=>`<div class="n-photo-cell"><img src="${p}"></div>`).join('')}</div>
+
+    ${nauticalFooter(pageNum, totalPages)}
+  </div>`;
+}
+
+// Splits a trip into however many nautical-theme pages it needs: one cover
+// page (hero/stats/conditions/story/map + up to 8 photos), then as many
+// "more from the day" continuation pages as it takes to fit the rest of the
+// photos, 12 to a page. Returns an array of page HTML strings in order.
+function buildNauticalPages(trip){
+  const allPhotos = trip.photos || [];
+  const coverPhotos = allPhotos.slice(0, PDF_PHOTOS_COVER_MAX);
+  const overflowPhotos = allPhotos.slice(PDF_PHOTOS_COVER_MAX);
+  const contPhotoSets = [];
+  for(let i=0; i<overflowPhotos.length; i+=PDF_PHOTOS_CONT_MAX){
+    contPhotoSets.push(overflowPhotos.slice(i, i+PDF_PHOTOS_CONT_MAX));
+  }
+  const totalPages = 1 + contPhotoSets.length;
+  const pages = [ buildTripPdfHtmlNauticalCover(trip, coverPhotos, 1, totalPages) ];
+  contPhotoSets.forEach((photos, i)=> pages.push(buildTripPdfHtmlNauticalContinuation(trip, photos, i+2, totalPages)));
+  return pages;
+}
+// Kept for any caller that only wants a single representative page (e.g. a
+// thumbnail) — the full, possibly multi-page export always goes through
+// buildNauticalPages()/theme.buildPages instead.
+function buildTripPdfHtmlNautical(trip){
+  return buildNauticalPages(trip)[0];
 }
 
 // Waits for every <img> inside a container to finish loading AND decoding
@@ -4678,9 +4754,14 @@ function openTripPdfPreview(){
   const theme = PDF_THEMES[currentPdfTheme];
   const inner = document.getElementById('pdfPreviewInner');
   inner.className = theme.sheetClass;
-  inner.innerHTML = theme.build(trip);
+  // A theme may build more than one page (e.g. nautical spills extra photos
+  // onto "more from the day" pages) — stack every page in the preview so
+  // what's shown always matches what generateAndShareTripPdf() will export.
+  const pages = theme.buildPages ? theme.buildPages(trip) : [theme.build(trip)];
+  inner.innerHTML = pages.map(p=>`<div class="pdf-page-wrap">${p}</div>`).join('');
   inner.style.transform = 'none';
   inner.style.width = theme.contentWidthPx + 'px';
+  inner.style.height = 'auto';
   renderPdfThemePicker();
   openSheet('sheetPdfPreview');
   waitForImagesToLoad(inner).then(()=>{
@@ -4688,12 +4769,10 @@ function openTripPdfPreview(){
     const wrap = document.getElementById('pdfPreviewScaleWrap');
     const naturalHeight = inner.scrollHeight;
     const wrapWidth = wrap.clientWidth;
-    const pageHeight = wrapWidth * (theme.pageH / theme.pageW);
     const margin = 12;
-    const scale = Math.min(
-      (wrapWidth - margin * 2) / theme.contentWidthPx,
-      (pageHeight - margin * 2) / naturalHeight
-    );
+    // Multiple stacked pages read as a scrollable document, so only fit to
+    // width here (no single-page height cap the way a one-page export used to).
+    const scale = (wrapWidth - margin * 2) / theme.contentWidthPx;
     inner.style.transformOrigin = 'top left';
     inner.style.transform = `scale(${scale})`;
     wrap.style.height = Math.ceil(naturalHeight * scale + margin * 2) + 'px';
@@ -4702,9 +4781,11 @@ function openTripPdfPreview(){
 }
 
 // IMPORTANT: Do not use jsPDF.doc.html() here. Its HTML renderer can paginate
-// tall content. We first render the COMPLETE log into one canvas, then place
-// that one image onto one page sized to the active theme. This guarantees
-// exactly one PDF page.
+// tall content in ways we don't control. Instead, each logical page (from
+// theme.buildPages, or the single page from theme.build for themes that
+// don't paginate) is rendered into its own canvas and placed onto its own
+// PDF page at the active theme's fixed size — one canvas per page, never a
+// single canvas split across pages.
 async function generateAndShareTripPdf(){
   const trip = window._detailTrip;
   if(!trip) return;
@@ -4716,6 +4797,7 @@ async function generateAndShareTripPdf(){
 
   showToast(t('toast.preparingPdf'));
   const inner = document.getElementById('pdfPreviewInner');
+  const prevClassName = inner.className;
   const prevTransform = inner.style.transform;
   const prevWidth = inner.style.width;
   const prevHeight = inner.style.height;
@@ -4723,32 +4805,11 @@ async function generateAndShareTripPdf(){
 
   try{
     // Rebuild defensively so the exported file always matches the theme
-    // currently selected, even if the preview sheet wasn't reopened.
-    inner.className = theme.sheetClass;
-    inner.innerHTML = theme.build(trip);
-    inner.style.transform = 'none';
-    inner.style.width = theme.contentWidthPx + 'px';
-    inner.style.height = 'auto';
-    inner.style.overflow = 'visible';
-
-    // Wait for every photo to actually finish loading/decoding, then let
-    // fonts/layout settle before measuring/capturing. Racing html2canvas
-    // against still-loading images was the root cause of photos coming out
-    // the wrong/inconsistent size in the shared PDF.
-    await waitForImagesToLoad(inner);
-    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-    const canvas = await html2canvas(inner, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      width: theme.contentWidthPx,
-      height: inner.scrollHeight,
-      windowWidth: theme.contentWidthPx,
-      scrollX: 0,
-      scrollY: 0
-    });
+    // currently selected, even if the preview sheet wasn't reopened. A theme
+    // may return more than one page (nautical spills extra photos onto
+    // "more from the day" pages) — each one is captured and added as its
+    // own PDF page, same format throughout.
+    const pages = theme.buildPages ? theme.buildPages(trip) : [theme.build(trip)];
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({
@@ -4764,21 +4825,46 @@ async function generateAndShareTripPdf(){
     const availableW = pageW - margin * 2;
     const availableH = pageH - margin * 2;
 
-    // Fit the COMPLETE canvas into the printable page rectangle, preserving ratio.
-    const scale = Math.min(availableW / canvas.width, availableH / canvas.height);
-    const renderW = canvas.width * scale;
-    const renderH = canvas.height * scale;
-    const x = (pageW - renderW) / 2;
-    const y = margin;
+    for(let i=0; i<pages.length; i++){
+      inner.className = theme.sheetClass;
+      inner.innerHTML = pages[i];
+      inner.style.transform = 'none';
+      inner.style.width = theme.contentWidthPx + 'px';
+      inner.style.height = 'auto';
+      inner.style.overflow = 'visible';
 
-    doc.addImage(
-      canvas.toDataURL('image/jpeg', 0.92),
-      'JPEG', x, y, renderW, renderH, undefined, 'FAST'
-    );
+      // Wait for every photo to actually finish loading/decoding, then let
+      // fonts/layout settle before measuring/capturing. Racing html2canvas
+      // against still-loading images was the root cause of photos coming out
+      // the wrong/inconsistent size in the shared PDF.
+      await waitForImagesToLoad(inner);
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-    // There should only ever be one page. Keep this defensive guard in place.
-    while(doc.getNumberOfPages() > 1){
-      doc.deletePage(doc.getNumberOfPages());
+      const canvas = await html2canvas(inner, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: theme.contentWidthPx,
+        height: inner.scrollHeight,
+        windowWidth: theme.contentWidthPx,
+        scrollX: 0,
+        scrollY: 0
+      });
+
+      // Fit the COMPLETE canvas into the printable page rectangle, preserving ratio.
+      const scale = Math.min(availableW / canvas.width, availableH / canvas.height);
+      const renderW = canvas.width * scale;
+      const renderH = canvas.height * scale;
+      const x = (pageW - renderW) / 2;
+      const y = margin;
+
+      if(i > 0) doc.addPage([theme.pageW, theme.pageH], theme.pageH >= theme.pageW ? 'portrait' : 'landscape');
+
+      doc.addImage(
+        canvas.toDataURL('image/jpeg', 0.92),
+        'JPEG', x, y, renderW, renderH, undefined, 'FAST'
+      );
     }
 
     const blob = doc.output('blob');
@@ -4803,6 +4889,7 @@ async function generateAndShareTripPdf(){
     if(e && e.name==='AbortError'){ /* user cancelled the native share sheet */ }
     else { console.error('PDF generation failed', e); showToast(t('toast.pdfGenFail')); }
   } finally {
+    inner.className = prevClassName;
     inner.style.transform = prevTransform;
     inner.style.width = prevWidth;
     inner.style.height = prevHeight;
