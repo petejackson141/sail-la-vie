@@ -339,8 +339,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-sheet h1{ font-family:var(--font-display); font-size:22px; margin:0 0 3px; }
 .pdf-sheet .pdf-sub{ font-size:10.5px; color:#555; margin-bottom:10px; }
 .pdf-top-row{ display:flex; gap:14px; margin-bottom:10px; align-items:flex-start; }
-.pdf-sheet .pdf-cover-cell{ width:270px; height:190px; border-radius:7px; flex:0 0 270px; overflow:hidden; display:block; }
-.pdf-sheet .pdf-cover-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+.pdf-sheet .pdf-cover-cell{ width:270px; height:190px; border-radius:7px; flex:0 0 270px; overflow:hidden; display:block; background-size:cover; background-position:center; background-color:#e3ebf0; }
 .pdf-top-right{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; }
 .pdf-stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:9px; }
 .pdf-stats-grid div{ border:1px solid #ddd; border-radius:6px; padding:7px 4px; text-align:center; min-width:0; }
@@ -352,14 +351,14 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-sheet p{ font-size:10px; line-height:1.4; margin:2px 0; }
 .pdf-crew-grid{ display:flex; flex-wrap:wrap; gap:6px 8px; margin-top:4px; }
 .pdf-crew-chip{ display:flex; align-items:center; gap:6px; padding:4px 9px 4px 4px; border:1px solid #ddd; border-radius:999px; background:#f5f7f8; font-size:9.5px; font-weight:600; color:#444; }
-.pdf-crew-chip img{ width:24px; height:24px; border-radius:50%; object-fit:cover; display:block; background:#e3ebf0; flex:0 0 24px; }
+.pdf-crew-chip .pdf-crew-avatar{ width:24px; height:24px; border-radius:50%; background-size:cover; background-position:center; display:block; background-color:#e3ebf0; flex:0 0 24px; }
 .pdf-photos-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-top:5px; align-items:start; }
-/* Fixed-size cells (not width:100%/height:auto/max-height on the <img> itself) —
-   that combo is ambiguous replaced-element sizing that html2canvas rasterizes
-   inconsistently (see generateAndShareTripPdf notes). A cell with an explicit
-   height and object-fit:cover on the img gives every renderer the same box. */
-.pdf-photos-grid .pdf-photo-cell{ width:100%; height:145px; border-radius:6px; overflow:hidden; display:block; background:#f0f0f0; }
-.pdf-photos-grid .pdf-photo-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+/* Fixed-size cells with a CSS background-image (not an <img> with
+   object-fit) — html2canvas ignores object-fit on real <img> elements and
+   stretches them to fill their box instead of cropping; background-size:cover
+   on the cell itself is what actually gets captured correctly. See
+   waitForImagesToLoad/pdfPhotoDiv notes below. */
+.pdf-photos-grid .pdf-photo-cell{ width:100%; height:145px; border-radius:6px; overflow:hidden; display:block; background:#f0f0f0; background-size:cover; background-position:center; }
 .pdf-foot{ margin-top:10px; font-size:8.5px; color:#999; text-align:center; }
 
 /* ---------- PDF export: theme picker (segmented control in the preview sheet) ---------- */
@@ -384,8 +383,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   --n-cream:#F8F4EE; --n-cream-line:#E3DACB; --n-ink:#16324F; --n-body:#5B6672;
   --n-water:#BBD8EE; --n-land:#EFE3C8;
 }
-.pdf-theme-nautical .n-hero{ position:relative; width:612px; height:308px; overflow:hidden; background:var(--n-navy); }
-.pdf-theme-nautical .n-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+.pdf-theme-nautical .n-hero{ position:relative; width:612px; height:308px; overflow:hidden; background:var(--n-navy); background-size:cover; background-position:center; }
 .pdf-theme-nautical .n-hero-noimg{ width:100%; height:100%; background:linear-gradient(160deg,var(--n-navy),var(--n-navy-dark)); }
 .pdf-theme-nautical .n-hero::after{
   content:''; position:absolute; inset:0;
@@ -421,19 +419,19 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-nautical .n-cond-value{ font-size:9.4px; font-weight:700; color:var(--n-ink); }
 .pdf-theme-nautical .n-crew-list{ margin-top:2px; }
 .pdf-theme-nautical .n-crew-item{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
-.pdf-theme-nautical .n-crew-photo{ width:30px; height:30px; border-radius:50%; border:1px solid var(--n-gold); object-fit:cover; display:block; background:var(--n-cream-line); flex:0 0 30px; }
+.pdf-theme-nautical .n-crew-photo{ width:30px; height:30px; border-radius:50%; border:1px solid var(--n-gold); background-size:cover; background-position:center; display:block; background-color:var(--n-cream-line); flex:0 0 30px; }
 .pdf-theme-nautical .n-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.4px; color:var(--n-body); font-weight:700; text-transform:uppercase; display:block; letter-spacing:.03em; }
 .pdf-theme-nautical .n-crew-name{ font-family:'Playfair Display',Georgia,serif; font-size:12px; font-weight:700; color:var(--n-ink); }
 .pdf-theme-nautical .n-quote-mark{ font-family:'Playfair Display',Georgia,serif; font-size:32px; color:var(--n-gold); line-height:1; margin:0 0 2px; }
 .pdf-theme-nautical .n-story p{ font-size:10px; line-height:1.55; margin:0 0 9px; color:var(--n-ink); font-family:'Libre Baskerville',Georgia,serif; }
 .pdf-theme-nautical .n-map-box{ position:relative; width:100%; height:200px; border-radius:6px; overflow:hidden; border:1.2px solid var(--n-gold); background:var(--n-water); }
-.pdf-theme-nautical .n-map-box svg, .pdf-theme-nautical .n-map-box img{ width:100%; height:100%; object-fit:cover; display:block; }
+.pdf-theme-nautical .n-map-box svg{ width:100%; height:100%; display:block; }
+.pdf-theme-nautical .n-map-box .n-map-photo{ width:100%; height:100%; background-size:cover; background-position:center; display:block; }
 .pdf-theme-nautical .n-map-compass{ position:absolute; left:10px; top:10px; opacity:.85; }
 .pdf-theme-nautical .n-map-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--n-navy); opacity:.6; }
 
 .pdf-theme-nautical .n-photos{ display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(2,1fr); gap:6px; padding:20px 26px 0; }
-.pdf-theme-nautical .n-photo-cell{ height:97px; border-radius:3px; overflow:hidden; background:var(--n-cream-line); }
-.pdf-theme-nautical .n-photo-cell img{ width:100%; height:100%; object-fit:cover; display:block; }
+.pdf-theme-nautical .n-photo-cell{ height:97px; border-radius:3px; overflow:hidden; background:var(--n-cream-line); background-size:cover; background-position:center; }
 
 /* Continuation ("more photos") pages: same masthead/footer language as the
    cover page, but a taller full-bleed grid since there's no hero/stats/info
@@ -4517,7 +4515,7 @@ function buildTripPdfHtmlClassic(trip){
     <div class="pdf-sub">${dateStr} · ${timeStr}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</div>
 
     <div class="pdf-top-row">
-      ${trip.coverPhoto ? `<div class="pdf-cover-cell"><img src="${trip.coverPhoto}"></div>` : ''}
+      ${trip.coverPhoto ? `<div class="pdf-cover-cell"${pdfBgDivAttrs(trip.coverPhoto)}></div>` : ''}
       <div class="pdf-top-right">
         <div class="pdf-stats-grid">
           <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>${t('detail.elapsed')}</span></div>
@@ -4535,11 +4533,11 @@ function buildTripPdfHtmlClassic(trip){
 
     ${notes ? `<div class="pdf-section-title">${t('active.notes')}</div><p>${escapeHtml(notes)}</p>` : ''}
 
-    ${tripSkipper ? `<div class="pdf-section-title">${t('active.skipper')}</div><div class="pdf-crew-grid"><div class="pdf-crew-chip"><img src="${tripSkipper.photo||placeholderAvatar()}"><span>${escapeHtml(tripSkipper.name)}</span></div></div>` : ''}
+    ${tripSkipper ? `<div class="pdf-section-title">${t('active.skipper')}</div><div class="pdf-crew-grid"><div class="pdf-crew-chip"><div class="pdf-crew-avatar"${pdfBgDivAttrs(tripSkipper.photo||placeholderAvatar())}></div><span>${escapeHtml(tripSkipper.name)}</span></div></div>` : ''}
 
-    ${tripCrew.length ? `<div class="pdf-section-title">${t('active.crewAboard')}</div><div class="pdf-crew-grid">${tripCrew.map(c=>`<div class="pdf-crew-chip"><img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
+    ${tripCrew.length ? `<div class="pdf-section-title">${t('active.crewAboard')}</div><div class="pdf-crew-grid">${tripCrew.map(c=>`<div class="pdf-crew-chip"><div class="pdf-crew-avatar"${pdfBgDivAttrs(c.photo||placeholderAvatar())}></div><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
 
-    ${photos.length ? `<div class="pdf-section-title">${t('active.photos')}</div><div class="pdf-photos-grid">${photos.map(p=>`<div class="pdf-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
+    ${photos.length ? `<div class="pdf-section-title">${t('active.photos')}</div><div class="pdf-photos-grid">${photos.map(p=>`<div class="pdf-photo-cell"${pdfBgDivAttrs(p)}></div>`).join('')}</div>` : ''}
 
     <div class="pdf-foot">Sail la Vie Logbook · ${t('cert.generated')} ${new Date().toLocaleDateString(currentLocale())}</div>
   </div>`;
@@ -4576,6 +4574,18 @@ const PDF_ICON_SVG = {
   pin: `<svg viewBox="0 0 20 24" width="13" height="15"><path d="M10 0a7 7 0 0 0-7 7c0 5.2 7 15 7 15s7-9.8 7-15a7 7 0 0 0-7-7z" fill="currentColor"/><circle cx="10" cy="7" r="2.6" fill="#F8F4EE"/></svg>`,
   gauge: `<svg viewBox="0 0 20 20" width="14" height="14"><path d="M3 15A7 7 0 0 1 17 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><line x1="10" y1="15" x2="14" y2="9.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
 };
+// Renders a photo as a CSS background-image (with an inline background-size
+// so it crops to fill, never stretches) instead of an <img src>. html2canvas
+// — used to rasterize every PDF page — ignores object-fit on real <img>
+// elements and just stretches them to fill their box; it renders
+// background-image + background-size correctly, so this is what every
+// photo in the PDF export goes through. data-bg-url duplicates the URL so
+// waitForImagesToLoad can find and await it before the page is captured.
+function pdfBgDivAttrs(url){
+  if(!url) return '';
+  const safe = escapeHtml(url);
+  return ` style="background-image:url('${safe}')" data-bg-url="${safe}"`;
+}
 // Shared by both cover and continuation pages: the little navy ribbon at the
 // bottom of every nautical-theme page. Carries a "Page X of N" indicator
 // whenever the trip spilled onto more than one page, so the set still reads
@@ -4592,7 +4602,7 @@ function nauticalFooter(pageNum, totalPages){
 // neither exists do we fall back to the empty-compass placeholder.
 function nauticalMapInner(trip){
   if(trip.path && trip.path.length>1) return buildPortholeSvg(trip.path, false, appUnitSystem());
-  if(trip.mapImage) return `<img src="${trip.mapImage}">`;
+  if(trip.mapImage) return `<div class="n-map-photo"${pdfBgDivAttrs(trip.mapImage)}></div>`;
   return `<div class="n-map-empty">${t('pdf.noTrack')}</div><div class="n-map-compass">${navCompassSvg(30,'rgba(12,42,74,.55)','rgba(12,42,74,.7)')}</div>`;
 }
 const PDF_PHOTOS_COVER_MAX = 8;   // fits the cover page's fixed 4x2 grid alongside hero/stats/info
@@ -4628,8 +4638,8 @@ function buildTripPdfHtmlNauticalCover(trip, photos, pageNum, totalPages){
   ];
 
   return `<div class="pdf-sheet" id="pdfTripBlock">
-    <div class="n-hero">
-      ${trip.coverPhoto ? `<img src="${trip.coverPhoto}">` : `<div class="n-hero-noimg"></div>`}
+    <div class="n-hero"${trip.coverPhoto ? pdfBgDivAttrs(trip.coverPhoto) : ''}>
+      ${!trip.coverPhoto ? `<div class="n-hero-noimg"></div>` : ''}
       <div class="n-hero-content">
         <div class="n-hero-left">
           <div class="n-compass">${navCompassSvg(46,'#F8F4EE','#D3AD7A')}</div>
@@ -4663,7 +4673,7 @@ function buildTripPdfHtmlNauticalCover(trip, photos, pageNum, totalPages){
           </div>`).join('')}` : ''}
         ${crewList.length ? `<div class="n-heading" style="margin-top:18px;">${t('nav.crew')}</div><div class="n-crew-list">${crewList.map(m=>`
           <div class="n-crew-item">
-            <img class="n-crew-photo" src="${m.photo||placeholderAvatar()}">
+            <div class="n-crew-photo"${pdfBgDivAttrs(m.photo||placeholderAvatar())}></div>
             <div><span class="n-crew-role">${escapeHtml(m.role)}</span><span class="n-crew-name">${escapeHtml(m.name)}</span></div>
           </div>`).join('')}</div>` : ''}
       </div>
@@ -4675,7 +4685,7 @@ function buildTripPdfHtmlNauticalCover(trip, photos, pageNum, totalPages){
       </div>
     </div>
 
-    ${photos.length ? `<div class="n-photos">${photos.map(p=>`<div class="n-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
+    ${photos.length ? `<div class="n-photos">${photos.map(p=>`<div class="n-photo-cell"${pdfBgDivAttrs(p)}></div>`).join('')}</div>` : ''}
 
     ${nauticalFooter(pageNum, totalPages)}
   </div>`;
@@ -4695,7 +4705,7 @@ function buildTripPdfHtmlNauticalContinuation(trip, photos, pageNum, totalPages)
       </div>
     </div>
 
-    <div class="n-photos n-photos-cont">${photos.map(p=>`<div class="n-photo-cell"><img src="${p}"></div>`).join('')}</div>
+    <div class="n-photos n-photos-cont">${photos.map(p=>`<div class="n-photo-cell"${pdfBgDivAttrs(p)}></div>`).join('')}</div>
 
     ${nauticalFooter(pageNum, totalPages)}
   </div>`;
@@ -4725,14 +4735,19 @@ function buildTripPdfHtmlNautical(trip){
   return buildNauticalPages(trip)[0];
 }
 
-// Waits for every <img> inside a container to finish loading AND decoding
-// before we measure or rasterize it. Without this, html2canvas can snapshot
-// mid-load images at the wrong size (or blank), which is what produced the
-// inconsistent photo sizes people saw after the PDF was re-opened/re-rendered
-// by WhatsApp's own preview — the capture, not the sharing step, was the bug.
+// Waits for every <img>, AND every element using a CSS background-image
+// (see pdfBgDivAttrs — used instead of <img> for anything that needs
+// object-fit:cover in the PDF, since html2canvas ignores object-fit on
+// real <img> elements and stretches them to fill their box instead;
+// background-size:cover is captured correctly), to finish loading/decoding
+// before we measure or rasterize the container. Without this, html2canvas
+// can snapshot mid-load images at the wrong size (or blank), which is what
+// produced the inconsistent photo sizes people saw after the PDF was
+// re-opened/re-rendered by WhatsApp's own preview — the capture, not the
+// sharing step, was the bug.
 function waitForImagesToLoad(container){
   const imgs = Array.from(container.querySelectorAll('img'));
-  return Promise.all(imgs.map(img=>{
+  const imgPromises = imgs.map(img=>{
     if(img.complete && img.naturalWidth>0){
       return img.decode ? img.decode().catch(()=>{}) : Promise.resolve();
     }
@@ -4741,7 +4756,22 @@ function waitForImagesToLoad(container){
       img.addEventListener('load',done);
       img.addEventListener('error',done);
     }).then(()=> img.decode ? img.decode().catch(()=>{}) : Promise.resolve());
-  }));
+  });
+
+  const bgEls = Array.from(container.querySelectorAll('[data-bg-url]'));
+  const bgPromises = bgEls.map(el=>{
+    const url = el.getAttribute('data-bg-url');
+    if(!url) return Promise.resolve();
+    return new Promise(resolve=>{
+      const probe = new Image();
+      probe.onload = ()=> resolve(probe.decode ? probe.decode().catch(()=>{}).then(resolve) : resolve());
+      probe.onerror = resolve;
+      probe.src = url;
+      if(probe.complete) resolve();
+    });
+  });
+
+  return Promise.all([...imgPromises, ...bgPromises]);
 }
 // Renders the preview sheet at true A4 proportions (794px ≈ 210mm at 96dpi),
 // then scales it down to fit the sheet's width — an accurate shrink-to-fit
