@@ -340,7 +340,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-sheet .pdf-sub{ font-size:10.5px; color:#555; margin-bottom:10px; }
 .pdf-top-row{ display:flex; gap:14px; margin-bottom:10px; align-items:flex-start; }
 .pdf-sheet .pdf-cover-cell{ width:270px; height:190px; border-radius:7px; flex:0 0 270px; overflow:hidden; display:block; }
-.pdf-sheet .pdf-cover-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+.pdf-sheet .pdf-cover-cell img{ width:100%; height:100%; object-fit:contain; object-position:center; display:block; background:#e9eef2; }
 .pdf-top-right{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; }
 .pdf-stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:9px; }
 .pdf-stats-grid div{ border:1px solid #ddd; border-radius:6px; padding:7px 4px; text-align:center; min-width:0; }
@@ -352,20 +352,20 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-sheet p{ font-size:10px; line-height:1.4; margin:2px 0; }
 .pdf-crew-grid{ display:flex; flex-wrap:wrap; gap:6px 8px; margin-top:4px; }
 .pdf-crew-chip{ display:flex; align-items:center; gap:6px; padding:4px 9px 4px 4px; border:1px solid #ddd; border-radius:999px; background:#f5f7f8; font-size:9.5px; font-weight:600; color:#444; }
-.pdf-crew-chip img{ width:24px; height:24px; border-radius:50%; object-fit:cover; display:block; background:#e3ebf0; flex:0 0 24px; }
+.pdf-crew-chip img{ width:24px; height:24px; border-radius:50%; object-fit:contain; display:block; background:#e3ebf0; flex:0 0 24px; }
 .pdf-photos-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-top:5px; align-items:start; }
 /* Fixed-size cells (not width:100%/height:auto/max-height on the <img> itself) —
    that combo is ambiguous replaced-element sizing that html2canvas rasterizes
    inconsistently (see generateAndShareTripPdf notes). A cell with an explicit
    height and object-fit:cover on the img gives every renderer the same box. */
 .pdf-photos-grid .pdf-photo-cell{ width:100%; height:145px; border-radius:6px; overflow:hidden; display:block; background:#f0f0f0; }
-.pdf-photos-grid .pdf-photo-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+.pdf-photos-grid .pdf-photo-cell img{ width:100%; height:100%; object-fit:contain; object-position:center; display:block; background:#e9eef2; }
 .pdf-foot{ margin-top:10px; font-size:8.5px; color:#999; text-align:center; }
 
 /* ---------- PDF export: theme picker (segmented control in the preview sheet) ---------- */
-.pdf-theme-picker{ display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.pdf-theme-picker{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin-bottom:12px; }
 .pdf-theme-opt{
-  flex:1 1 auto; min-width:120px; display:flex; align-items:center; gap:8px;
+  display:flex; align-items:center; gap:8px; min-height:44px;
   padding:9px 12px; border-radius:12px; border:1.5px solid var(--border);
   background:var(--bg-elevated); cursor:pointer; font-family:var(--font-body);
   font-size:12.5px; font-weight:600; color:var(--ink-muted); transition:border-color .15s,color .15s,background .15s;
@@ -378,14 +378,14 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
    Canvas is laid out at 612x918 "px" — the same numeric grid as the poster
    spec (612x918pt) — so positions/sizes map 1:1 onto the final PDF page. */
 .pdf-theme-nautical .pdf-sheet{
-  width:612px; height:918px; padding:0; overflow:hidden; position:relative;
+  width:612px; padding:0; position:relative;
   background:var(--n-cream); color:var(--n-ink); font-family:'Libre Baskerville',Georgia,serif;
   --n-navy:#0C2A4A; --n-navy-dark:#081D33; --n-gold:#B8905A; --n-gold-light:#D3AD7A;
   --n-cream:#F8F4EE; --n-cream-line:#E3DACB; --n-ink:#16324F; --n-body:#5B6672;
   --n-water:#BBD8EE; --n-land:#EFE3C8;
 }
 .pdf-theme-nautical .n-hero{ position:relative; width:612px; height:308px; overflow:hidden; background:var(--n-navy); }
-.pdf-theme-nautical .n-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+.pdf-theme-nautical .n-hero img{ width:100%; height:100%; object-fit:contain; object-position:center; display:block; background:var(--n-navy-dark); }
 .pdf-theme-nautical .n-hero-noimg{ width:100%; height:100%; background:linear-gradient(160deg,var(--n-navy),var(--n-navy-dark)); }
 .pdf-theme-nautical .n-hero::after{
   content:''; position:absolute; inset:0;
@@ -421,7 +421,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-nautical .n-cond-value{ font-size:9.4px; font-weight:700; color:var(--n-ink); }
 .pdf-theme-nautical .n-crew-list{ margin-top:2px; }
 .pdf-theme-nautical .n-crew-item{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
-.pdf-theme-nautical .n-crew-photo{ width:30px; height:30px; border-radius:50%; border:1px solid var(--n-gold); object-fit:cover; display:block; background:var(--n-cream-line); flex:0 0 30px; }
+.pdf-theme-nautical .n-crew-photo{ width:30px; height:30px; border-radius:50%; border:1px solid var(--n-gold); object-fit:contain; display:block; background:var(--n-cream-line); flex:0 0 30px; }
 .pdf-theme-nautical .n-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.4px; color:var(--n-body); font-weight:700; text-transform:uppercase; display:block; letter-spacing:.03em; }
 .pdf-theme-nautical .n-crew-name{ font-family:'Playfair Display',Georgia,serif; font-size:12px; font-weight:700; color:var(--n-ink); }
 .pdf-theme-nautical .n-quote-mark{ font-family:'Playfair Display',Georgia,serif; font-size:32px; color:var(--n-gold); line-height:1; margin:0 0 2px; }
@@ -433,7 +433,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 
 .pdf-theme-nautical .n-photos{ display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(2,1fr); gap:6px; padding:20px 26px 0; }
 .pdf-theme-nautical .n-photo-cell{ height:97px; border-radius:3px; overflow:hidden; background:var(--n-cream-line); }
-.pdf-theme-nautical .n-photo-cell img{ width:100%; height:100%; object-fit:cover; display:block; }
+.pdf-theme-nautical .n-photo-cell img{ width:100%; height:100%; object-fit:contain; display:block; background:var(--n-cream-line); }
 
 .pdf-theme-nautical .n-footer{ display:flex; flex-direction:column; align-items:center; padding:18px 26px 20px; }
 .pdf-theme-nautical .n-footer-motif{ display:flex; align-items:center; gap:8px; width:100%; max-width:340px; }
@@ -449,7 +449,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
    and stay inside the double border frame, which is drawn as an absolute
    z-index overlay so it always sits on top of the full-bleed bands. */
 .pdf-theme-story .pdf-sheet{
-  width:612px; height:918px; padding:0; overflow:hidden; position:relative;
+  width:612px; padding:0; position:relative;
   background:var(--s-cream); color:var(--s-ink); font-family:'Times New Roman',Georgia,serif;
   display:flex; flex-direction:column;
   --s-navy:#122F4E; --s-navy-deep:#0B2038; --s-gold:#B4884F; --s-gold-deep:#9C7440;
@@ -476,14 +476,14 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-story .ss-meta-time{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.6px; color:var(--s-navy); }
 .pdf-theme-story .ss-meta-anchor{ margin-top:14px; color:var(--s-gold); display:flex; justify-content:flex-end; }
 
-.pdf-theme-story .ss-route-bar{ background:var(--s-navy); color:#fff; height:26px; display:flex; align-items:center; justify-content:center; gap:9px; margin-top:12px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; font-weight:700; letter-spacing:.02em; padding:0 16px; flex:0 0 auto; }
+.pdf-theme-story .ss-route-bar{ background:var(--s-navy); color:#fff; height:26px; display:flex; align-items:center; justify-content:center; gap:9px; margin:12px 22px 0; border-radius:3px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; font-weight:700; letter-spacing:.02em; padding:0 16px; flex:0 0 auto; }
 .pdf-theme-story .ss-route-num{ width:15px; height:15px; border-radius:50%; border:1px solid var(--s-gold); color:var(--s-gold); font-family:'Times New Roman',serif; font-weight:700; font-size:8.5px; display:flex; align-items:center; justify-content:center; flex:0 0 15px; }
 .pdf-theme-story .ss-route-arrow{ color:var(--s-gold); font-weight:700; }
 
-.pdf-theme-story .ss-legs{ display:flex; height:150px; flex:0 0 auto; }
+.pdf-theme-story .ss-legs{ display:flex; height:150px; margin:6px 22px 0; border-radius:3px; overflow:hidden; flex:0 0 auto; }
 .pdf-theme-story .ss-legs .ss-leg-cell{ flex:1; overflow:hidden; background:var(--s-cream-line); min-width:0; }
 .pdf-theme-story .ss-legs .ss-leg-cell + .ss-leg-cell{ margin-left:3px; }
-.pdf-theme-story .ss-legs .ss-leg-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+.pdf-theme-story .ss-legs .ss-leg-cell img{ width:100%; height:100%; object-fit:contain; object-position:center; display:block; background:var(--s-cream-line); }
 
 .pdf-theme-story .ss-sail-heading{ display:flex; align-items:center; justify-content:center; gap:16px; margin:20px 34px 0; flex:0 0 auto; }
 .pdf-theme-story .ss-sail-heading .ss-sail-line{ flex:1; height:0.7px; background:var(--s-gold); max-width:170px; }
@@ -511,13 +511,13 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-story .ss-day-boat{ display:flex; justify-content:flex-end; margin-top:8px; opacity:.85; }
 .pdf-theme-story .ss-crew-item{ text-align:center; padding-bottom:14px; margin-bottom:14px; border-bottom:1px dotted var(--s-gold); }
 .pdf-theme-story .ss-crew-item:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
-.pdf-theme-story .ss-crew-photo{ width:44px; height:44px; border-radius:50%; border:1.1px solid var(--s-gold); object-fit:cover; object-position:center; display:block; margin:0 auto 8px; background:var(--s-cream-line); }
+.pdf-theme-story .ss-crew-photo{ width:44px; height:44px; border-radius:50%; border:1.1px solid var(--s-gold); object-fit:contain; object-position:center; display:block; margin:0 auto 8px; background:var(--s-cream-line); }
 .pdf-theme-story .ss-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.6px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--s-body); display:block; margin-bottom:2px; }
 .pdf-theme-story .ss-crew-name{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:19px; color:var(--s-navy); }
 
-.pdf-theme-story .ss-photos{ display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(2,1fr); gap:2.5px; margin:16px 30px 0; border:1px solid var(--s-gold); height:190px; flex:0 0 auto; }
+.pdf-theme-story .ss-photos{ display:grid; grid-auto-rows:95px; gap:2.5px; margin:16px 30px 0; border:1px solid var(--s-gold); flex:0 0 auto; }
 .pdf-theme-story .ss-photo-cell{ overflow:hidden; background:var(--s-cream-line); }
-.pdf-theme-story .ss-photo-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+.pdf-theme-story .ss-photo-cell img{ width:100%; height:100%; object-fit:contain; object-position:center; display:block; background:var(--s-cream-line); }
 
 .pdf-theme-story .ss-footer{ display:flex; flex-direction:column; align-items:center; padding:14px 30px 26px; flex:0 0 auto; }
 .pdf-theme-story .ss-footer-heart{ color:var(--s-gold); margin-bottom:6px; display:flex; }
@@ -1322,6 +1322,7 @@ const TRANSLATIONS = {
   'pdf.themeNautical': 'Nautical Magazine',
   'pdf.themeSailingStory': 'Sailing Story',
   'pdf.theSail': 'The Sail',
+  'pdf.pages': 'pages',
   'pdf.formatA4': 'A4 portrait',
   'pdf.formatPoster': 'Poster · 8.5 × 12.75"',
   'sheet.chooseTheme': 'Theme',
@@ -4524,6 +4525,11 @@ function printCertificate(){
    new entry here plus its `.pdf-theme-<id>` CSS block — nothing else in the
    export pipeline needs to change.
    ============================================================ */
+function hexToRgbTuple(hex){
+  const h = (hex||'#ffffff').replace('#','');
+  const n = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
+  return [(n>>16)&255, (n>>8)&255, n&255];
+}
 const PDF_THEMES = {
   classic: {
     label: 'pdf.themeClassic',
@@ -4541,6 +4547,7 @@ const PDF_THEMES = {
     contentWidthPx: 612,
     formatLabel: 'pdf.formatPoster',
     sheetClass: 'pdf-theme-nautical',
+    paginate: true, pageBg: '#F8F4EE',
     build: buildTripPdfHtmlNautical
   },
   story: {
@@ -4550,6 +4557,7 @@ const PDF_THEMES = {
     contentWidthPx: 612,
     formatLabel: 'pdf.formatPoster',
     sheetClass: 'pdf-theme-story',
+    paginate: true, pageBg: '#FAF6EF',
     build: buildTripPdfHtmlStory
   }
 };
@@ -4776,7 +4784,7 @@ function buildTripPdfHtmlStory(trip){
   const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
   const allPhotos = trip.photos||[];
   const legPhotos = allPhotos.slice(0,4);
-  const gridPhotos = allPhotos.slice(0,8);
+  const gridPhotos = allPhotos.slice(4,12); // never repeat a leg-strip photo in the grid below
   let notes = trip.notes || '';
   if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
   const paragraphs = notes ? notes.split(/\n+/).filter(Boolean) : [];
@@ -4860,7 +4868,7 @@ function buildTripPdfHtmlStory(trip){
       </div>
     </div>
 
-    ${gridPhotos.length ? `<div class="ss-photos">${gridPhotos.map(p=>`<div class="ss-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
+    ${gridPhotos.length ? `<div class="ss-photos" style="grid-template-columns:repeat(${Math.min(4,gridPhotos.length)},1fr);">${gridPhotos.map(p=>`<div class="ss-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
 
     <div class="ss-footer">
       <div class="ss-footer-heart">${PDF_ICON_SVG.heart}</div>
@@ -4914,12 +4922,24 @@ function openTripPdfPreview(){
     const wrap = document.getElementById('pdfPreviewScaleWrap');
     const naturalHeight = inner.scrollHeight;
     const wrapWidth = wrap.clientWidth;
-    const pageHeight = wrapWidth * (theme.pageH / theme.pageW);
     const margin = 12;
-    const scale = Math.min(
-      (wrapWidth - margin * 2) / theme.contentWidthPx,
-      (pageHeight - margin * 2) / naturalHeight
-    );
+    let scale;
+    if(theme.paginate){
+      // Content can span more than one physical page — fit to width and let
+      // the preview grow to whatever height that produces, rather than
+      // capping it to a single page's aspect ratio.
+      scale = (wrapWidth - margin * 2) / theme.contentWidthPx;
+      const pageHeightPx = theme.contentWidthPx * (theme.pageH / theme.pageW);
+      const pages = Math.max(1, Math.ceil(naturalHeight / pageHeightPx));
+      const fmt = document.getElementById('pdfThemeFormat');
+      if(fmt) fmt.textContent = t(theme.formatLabel) + (pages>1 ? ` · ${pages} ${t('pdf.pages')}` : '');
+    } else {
+      const pageHeight = wrapWidth * (theme.pageH / theme.pageW);
+      scale = Math.min(
+        (wrapWidth - margin * 2) / theme.contentWidthPx,
+        (pageHeight - margin * 2) / naturalHeight
+      );
+    }
     inner.style.transformOrigin = 'top left';
     inner.style.transform = `scale(${scale})`;
     wrap.style.height = Math.ceil(naturalHeight * scale + margin * 2) + 'px';
@@ -4927,10 +4947,13 @@ function openTripPdfPreview(){
   });
 }
 
-// IMPORTANT: Do not use jsPDF.doc.html() here. Its HTML renderer can paginate
-// tall content. We first render the COMPLETE log into one canvas, then place
-// that one image onto one page sized to the active theme. This guarantees
-// exactly one PDF page.
+// IMPORTANT: Do not use jsPDF.doc.html() here (it paginates unpredictably).
+// We render the COMPLETE log into one tall canvas first. Themes that are
+// designed to always fit one page (theme.paginate is falsy) get shrunk to
+// fit that single page, same as before. Themes that can legitimately run
+// long (theme.paginate: true) get sliced into as many full-size pages as
+// the content needs, instead of squeezing everything onto one page or
+// silently clipping the overflow.
 async function generateAndShareTripPdf(){
   const trip = window._detailTrip;
   if(!trip) return;
@@ -4967,7 +4990,7 @@ async function generateAndShareTripPdf(){
     const canvas = await html2canvas(inner, {
       scale: 2,
       useCORS: true,
-      backgroundColor: '#ffffff',
+      backgroundColor: theme.pageBg || '#ffffff',
       logging: false,
       width: theme.contentWidthPx,
       height: inner.scrollHeight,
@@ -4984,27 +5007,57 @@ async function generateAndShareTripPdf(){
       compress: true
     });
 
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const margin = 18;
-    const availableW = pageW - margin * 2;
-    const availableH = pageH - margin * 2;
+    if(theme.paginate){
+      // Slice the single tall capture into consecutive page-height chunks —
+      // each chunk becomes its own full-bleed page at the theme's native
+      // size, preserving the image's own pixel aspect (never stretched).
+      const pageHeightCanvasPx = canvas.width * (theme.pageH / theme.pageW);
+      const numPages = Math.max(1, Math.ceil(canvas.height / pageHeightCanvasPx));
+      for(let i=0; i<numPages; i++){
+        if(i>0) doc.addPage([theme.pageW, theme.pageH]);
+        if(theme.pageBg){
+          // Fill the full physical page first — the last page's image can be
+          // shorter than a full page (trailing content), so this guarantees
+          // no white gap below it.
+          const bg = hexToRgbTuple(theme.pageBg);
+          doc.setFillColor(bg[0], bg[1], bg[2]);
+          doc.rect(0, 0, theme.pageW, theme.pageH, 'F');
+        }
+        const sliceH = Math.min(pageHeightCanvasPx, canvas.height - i*pageHeightCanvasPx);
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceH;
+        const sctx = sliceCanvas.getContext('2d');
+        sctx.fillStyle = theme.pageBg || '#ffffff';
+        sctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+        sctx.drawImage(canvas, 0, i*pageHeightCanvasPx, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+        const imgW = theme.pageW;
+        const imgH = imgW * (sliceH / canvas.width);
+        doc.addImage(sliceCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');
+      }
+    } else {
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 18;
+      const availableW = pageW - margin * 2;
+      const availableH = pageH - margin * 2;
 
-    // Fit the COMPLETE canvas into the printable page rectangle, preserving ratio.
-    const scale = Math.min(availableW / canvas.width, availableH / canvas.height);
-    const renderW = canvas.width * scale;
-    const renderH = canvas.height * scale;
-    const x = (pageW - renderW) / 2;
-    const y = margin;
+      // Fit the COMPLETE canvas into the printable page rectangle, preserving ratio.
+      const scale = Math.min(availableW / canvas.width, availableH / canvas.height);
+      const renderW = canvas.width * scale;
+      const renderH = canvas.height * scale;
+      const x = (pageW - renderW) / 2;
+      const y = margin;
 
-    doc.addImage(
-      canvas.toDataURL('image/jpeg', 0.92),
-      'JPEG', x, y, renderW, renderH, undefined, 'FAST'
-    );
+      doc.addImage(
+        canvas.toDataURL('image/jpeg', 0.92),
+        'JPEG', x, y, renderW, renderH, undefined, 'FAST'
+      );
 
-    // There should only ever be one page. Keep this defensive guard in place.
-    while(doc.getNumberOfPages() > 1){
-      doc.deletePage(doc.getNumberOfPages());
+      // This theme is designed to always fit one page. Keep this defensive guard.
+      while(doc.getNumberOfPages() > 1){
+        doc.deletePage(doc.getNumberOfPages());
+      }
     }
 
     const blob = doc.output('blob');
