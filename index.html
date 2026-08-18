@@ -30,7 +30,7 @@
 -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;900&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;900&family=Libre+Baskerville:wght@400;700&family=Alex+Brush&display=swap" rel="stylesheet">
 <!-- Leaflet: only used for the live/real map when there's a connection (see
      buildPortholeSvg's notes) — the browser caches this after first load, so
      it doesn't cost anything offline beyond the very first time the app runs. -->
@@ -339,7 +339,8 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-sheet h1{ font-family:var(--font-display); font-size:22px; margin:0 0 3px; }
 .pdf-sheet .pdf-sub{ font-size:10.5px; color:#555; margin-bottom:10px; }
 .pdf-top-row{ display:flex; gap:14px; margin-bottom:10px; align-items:flex-start; }
-.pdf-sheet .pdf-cover-cell{ width:270px; height:190px; border-radius:7px; flex:0 0 270px; overflow:hidden; display:block; background-size:cover; background-position:center; background-color:#e3ebf0; }
+.pdf-sheet .pdf-cover-cell{ width:270px; height:190px; border-radius:7px; flex:0 0 270px; overflow:hidden; display:block; }
+.pdf-sheet .pdf-cover-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
 .pdf-top-right{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; }
 .pdf-stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:9px; }
 .pdf-stats-grid div{ border:1px solid #ddd; border-radius:6px; padding:7px 4px; text-align:center; min-width:0; }
@@ -351,14 +352,14 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-sheet p{ font-size:10px; line-height:1.4; margin:2px 0; }
 .pdf-crew-grid{ display:flex; flex-wrap:wrap; gap:6px 8px; margin-top:4px; }
 .pdf-crew-chip{ display:flex; align-items:center; gap:6px; padding:4px 9px 4px 4px; border:1px solid #ddd; border-radius:999px; background:#f5f7f8; font-size:9.5px; font-weight:600; color:#444; }
-.pdf-crew-chip .pdf-crew-avatar{ width:24px; height:24px; border-radius:50%; background-size:cover; background-position:center; display:block; background-color:#e3ebf0; flex:0 0 24px; }
+.pdf-crew-chip img{ width:24px; height:24px; border-radius:50%; object-fit:cover; display:block; background:#e3ebf0; flex:0 0 24px; }
 .pdf-photos-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-top:5px; align-items:start; }
-/* Fixed-size cells with a CSS background-image (not an <img> with
-   object-fit) — html2canvas ignores object-fit on real <img> elements and
-   stretches them to fill their box instead of cropping; background-size:cover
-   on the cell itself is what actually gets captured correctly. See
-   waitForImagesToLoad/pdfPhotoDiv notes below. */
-.pdf-photos-grid .pdf-photo-cell{ width:100%; height:145px; border-radius:6px; overflow:hidden; display:block; background:#f0f0f0; background-size:cover; background-position:center; }
+/* Fixed-size cells (not width:100%/height:auto/max-height on the <img> itself) —
+   that combo is ambiguous replaced-element sizing that html2canvas rasterizes
+   inconsistently (see generateAndShareTripPdf notes). A cell with an explicit
+   height and object-fit:cover on the img gives every renderer the same box. */
+.pdf-photos-grid .pdf-photo-cell{ width:100%; height:145px; border-radius:6px; overflow:hidden; display:block; background:#f0f0f0; }
+.pdf-photos-grid .pdf-photo-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
 .pdf-foot{ margin-top:10px; font-size:8.5px; color:#999; text-align:center; }
 
 /* ---------- PDF export: theme picker (segmented control in the preview sheet) ---------- */
@@ -383,7 +384,8 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   --n-cream:#F8F4EE; --n-cream-line:#E3DACB; --n-ink:#16324F; --n-body:#5B6672;
   --n-water:#BBD8EE; --n-land:#EFE3C8;
 }
-.pdf-theme-nautical .n-hero{ position:relative; width:612px; height:308px; overflow:hidden; background:var(--n-navy); background-size:cover; background-position:center; }
+.pdf-theme-nautical .n-hero{ position:relative; width:612px; height:308px; overflow:hidden; background:var(--n-navy); }
+.pdf-theme-nautical .n-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
 .pdf-theme-nautical .n-hero-noimg{ width:100%; height:100%; background:linear-gradient(160deg,var(--n-navy),var(--n-navy-dark)); }
 .pdf-theme-nautical .n-hero::after{
   content:''; position:absolute; inset:0;
@@ -419,29 +421,19 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-nautical .n-cond-value{ font-size:9.4px; font-weight:700; color:var(--n-ink); }
 .pdf-theme-nautical .n-crew-list{ margin-top:2px; }
 .pdf-theme-nautical .n-crew-item{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
-.pdf-theme-nautical .n-crew-photo{ width:30px; height:30px; border-radius:50%; border:1px solid var(--n-gold); background-size:cover; background-position:center; display:block; background-color:var(--n-cream-line); flex:0 0 30px; }
+.pdf-theme-nautical .n-crew-photo{ width:30px; height:30px; border-radius:50%; border:1px solid var(--n-gold); object-fit:cover; display:block; background:var(--n-cream-line); flex:0 0 30px; }
 .pdf-theme-nautical .n-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.4px; color:var(--n-body); font-weight:700; text-transform:uppercase; display:block; letter-spacing:.03em; }
 .pdf-theme-nautical .n-crew-name{ font-family:'Playfair Display',Georgia,serif; font-size:12px; font-weight:700; color:var(--n-ink); }
 .pdf-theme-nautical .n-quote-mark{ font-family:'Playfair Display',Georgia,serif; font-size:32px; color:var(--n-gold); line-height:1; margin:0 0 2px; }
 .pdf-theme-nautical .n-story p{ font-size:10px; line-height:1.55; margin:0 0 9px; color:var(--n-ink); font-family:'Libre Baskerville',Georgia,serif; }
 .pdf-theme-nautical .n-map-box{ position:relative; width:100%; height:200px; border-radius:6px; overflow:hidden; border:1.2px solid var(--n-gold); background:var(--n-water); }
-.pdf-theme-nautical .n-map-box svg{ width:100%; height:100%; display:block; }
-.pdf-theme-nautical .n-map-box .n-map-photo{ width:100%; height:100%; background-size:cover; background-position:center; display:block; }
+.pdf-theme-nautical .n-map-box svg, .pdf-theme-nautical .n-map-box img{ width:100%; height:100%; object-fit:cover; display:block; }
 .pdf-theme-nautical .n-map-compass{ position:absolute; left:10px; top:10px; opacity:.85; }
 .pdf-theme-nautical .n-map-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--n-navy); opacity:.6; }
 
 .pdf-theme-nautical .n-photos{ display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(2,1fr); gap:6px; padding:20px 26px 0; }
-.pdf-theme-nautical .n-photo-cell{ height:97px; border-radius:3px; overflow:hidden; background:var(--n-cream-line); background-size:cover; background-position:center; }
-
-/* Continuation ("more photos") pages: same masthead/footer language as the
-   cover page, but a taller full-bleed grid since there's no hero/stats/info
-   competing for space. Used whenever a trip has more photos than fit in the
-   cover page's fixed 4x2 grid — see buildNauticalPages(). */
-.pdf-theme-nautical .n-contpage-header{ background:var(--n-navy); padding:26px 26px 22px; display:flex; align-items:center; gap:16px; }
-.pdf-theme-nautical .n-contpage-title{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:20px; line-height:1.15; color:#fff; text-transform:uppercase; letter-spacing:.01em; }
-.pdf-theme-nautical .n-contpage-sub{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--n-gold-light); font-weight:700; margin-top:6px; }
-.pdf-theme-nautical .n-photos.n-photos-cont{ grid-template-rows:none; grid-auto-rows:220px; align-content:flex-start; padding:22px 26px 0; }
-.pdf-theme-nautical .n-photos.n-photos-cont .n-photo-cell{ height:220px; }
+.pdf-theme-nautical .n-photo-cell{ height:97px; border-radius:3px; overflow:hidden; background:var(--n-cream-line); }
+.pdf-theme-nautical .n-photo-cell img{ width:100%; height:100%; object-fit:cover; display:block; }
 
 .pdf-theme-nautical .n-footer{ display:flex; flex-direction:column; align-items:center; padding:18px 26px 20px; }
 .pdf-theme-nautical .n-footer-motif{ display:flex; align-items:center; gap:8px; width:100%; max-width:340px; }
@@ -449,10 +441,90 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-nautical .n-footer-motif .n-footer-dot{ width:11px; height:11px; border-radius:50%; border:1.2px solid var(--n-gold); flex:0 0 11px; }
 .pdf-theme-nautical .n-footer-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8px; color:var(--n-body); text-align:center; margin-top:8px; letter-spacing:.02em; }
 
-/* Stacked multi-page PDF preview — each page is its own fixed-size sheet;
-   this just gives visual separation between them in the scrollable preview. */
-.pdf-page-wrap{ margin-bottom:14px; }
-.pdf-page-wrap:last-child{ margin-bottom:0; }
+/* ---------- Sailing Story theme ----------
+   Ported from the reportlab poster mockup (same 612x918 grid convention as
+   the Nautical theme). No hero photo — identity comes from the compass +
+   script/serif masthead, a numbered route bar, and an edge-to-edge leg-photo
+   strip. All photos use object-fit:cover (crop-to-fill, never stretched)
+   and stay inside the double border frame, which is drawn as an absolute
+   z-index overlay so it always sits on top of the full-bleed bands. */
+.pdf-theme-story .pdf-sheet{
+  width:612px; height:918px; padding:0; overflow:hidden; position:relative;
+  background:var(--s-cream); color:var(--s-ink); font-family:'Times New Roman',Georgia,serif;
+  display:flex; flex-direction:column;
+  --s-navy:#122F4E; --s-navy-deep:#0B2038; --s-gold:#B4884F; --s-gold-deep:#9C7440;
+  --s-cream:#FAF6EF; --s-cream-line:#EFE6D5; --s-ink:#17324F; --s-body:#5B6672;
+}
+.pdf-theme-story .ss-frame, .pdf-theme-story .ss-frame-inner{ position:absolute; pointer-events:none; z-index:5; }
+.pdf-theme-story .ss-frame{ inset:14px; border:1.1px solid var(--s-navy); border-radius:4px; }
+.pdf-theme-story .ss-frame-inner{ inset:18px; border:0.6px solid var(--s-navy); border-radius:3px; }
+
+.pdf-theme-story .ss-header{ padding:30px 34px 0; display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex:0 0 auto; }
+.pdf-theme-story .ss-compass{ flex:0 0 auto; margin-top:4px; }
+.pdf-theme-story .ss-title-block{ flex:1; text-align:center; padding-top:2px; min-width:0; }
+.pdf-theme-story .ss-title-lead{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:28px; color:var(--s-gold-deep); line-height:1; margin-bottom:2px; }
+.pdf-theme-story .ss-title-main{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:29px; color:var(--s-navy); text-transform:uppercase; line-height:1.05; letter-spacing:.01em; }
+.pdf-theme-story .ss-title-rule{ display:flex; align-items:center; justify-content:center; gap:8px; margin:10px auto 8px; max-width:230px; }
+.pdf-theme-story .ss-title-rule .ss-rule-line{ flex:1; height:1px; background:var(--s-gold); }
+.pdf-theme-story .ss-title-rule .ss-rule-heart{ color:var(--s-gold); display:flex; }
+.pdf-theme-story .ss-subtitle{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--s-navy); margin-bottom:2px; }
+.pdf-theme-story .ss-meta{ flex:0 0 auto; text-align:right; padding-top:2px; min-width:110px; }
+.pdf-theme-story .ss-meta-row{ display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-bottom:2px; }
+.pdf-theme-story .ss-meta-row b{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; font-weight:700; color:var(--s-navy); }
+.pdf-theme-story .ss-meta-icon{ color:var(--s-gold-deep); display:flex; }
+.pdf-theme-story .ss-meta-sub{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.2px; color:var(--s-navy); margin:0 0 10px; }
+.pdf-theme-story .ss-meta-time{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.6px; color:var(--s-navy); }
+.pdf-theme-story .ss-meta-anchor{ margin-top:14px; color:var(--s-gold); display:flex; justify-content:flex-end; }
+
+.pdf-theme-story .ss-route-bar{ background:var(--s-navy); color:#fff; height:26px; display:flex; align-items:center; justify-content:center; gap:9px; margin-top:12px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; font-weight:700; letter-spacing:.02em; padding:0 16px; flex:0 0 auto; }
+.pdf-theme-story .ss-route-num{ width:15px; height:15px; border-radius:50%; border:1px solid var(--s-gold); color:var(--s-gold); font-family:'Times New Roman',serif; font-weight:700; font-size:8.5px; display:flex; align-items:center; justify-content:center; flex:0 0 15px; }
+.pdf-theme-story .ss-route-arrow{ color:var(--s-gold); font-weight:700; }
+
+.pdf-theme-story .ss-legs{ display:flex; height:150px; flex:0 0 auto; }
+.pdf-theme-story .ss-legs .ss-leg-cell{ flex:1; overflow:hidden; background:var(--s-cream-line); min-width:0; }
+.pdf-theme-story .ss-legs .ss-leg-cell + .ss-leg-cell{ margin-left:3px; }
+.pdf-theme-story .ss-legs .ss-leg-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+
+.pdf-theme-story .ss-sail-heading{ display:flex; align-items:center; justify-content:center; gap:16px; margin:20px 34px 0; flex:0 0 auto; }
+.pdf-theme-story .ss-sail-heading .ss-sail-line{ flex:1; height:0.7px; background:var(--s-gold); max-width:170px; }
+.pdf-theme-story .ss-sail-heading .ss-sail-star{ color:var(--s-gold); display:flex; }
+.pdf-theme-story .ss-sail-heading .ss-sail-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:13px; font-weight:700; letter-spacing:.06em; color:var(--s-navy); white-space:nowrap; }
+
+.pdf-theme-story .ss-stats{ display:flex; align-items:center; justify-content:space-around; height:60px; margin:14px 30px 0; flex:0 0 auto; }
+.pdf-theme-story .ss-stat{ display:flex; align-items:center; gap:8px; position:relative; padding:0 12px; }
+.pdf-theme-story .ss-stat + .ss-stat::before{ content:''; position:absolute; left:-1px; top:12%; bottom:12%; width:0; border-left:1px dotted var(--s-gold); }
+.pdf-theme-story .ss-stat-icon{ color:var(--s-navy); display:flex; }
+.pdf-theme-story .ss-stat b{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:17px; color:var(--s-navy); }
+.pdf-theme-story .ss-stat .ss-stat-unit{ font-size:9px; font-weight:700; color:var(--s-gold-deep); margin-left:2px; font-family:'Helvetica Neue',Arial,sans-serif; }
+.pdf-theme-story .ss-stat .ss-stat-label{ display:block; font-size:7.3px; letter-spacing:.05em; text-transform:uppercase; color:var(--s-body); font-family:'Helvetica Neue',Arial,sans-serif; margin-top:1px; }
+.pdf-theme-story .ss-stats-rule{ height:1px; background:#DCD0BC; margin:8px 30px 0; flex:0 0 auto; }
+
+.pdf-theme-story .ss-info{ display:flex; gap:20px; padding:18px 30px 0; flex:1 1 auto; min-height:0; }
+.pdf-theme-story .ss-col{ flex:1 1 0; min-width:0; }
+.pdf-theme-story .ss-col-day{ flex:1.15 1 0; }
+.pdf-theme-story .ss-heading{ text-align:center; font-family:'Helvetica Neue',Arial,sans-serif; font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--s-navy); padding-bottom:6px; margin-bottom:10px; border-bottom:0.8px solid var(--s-gold); }
+.pdf-theme-story .ss-cond-row{ display:flex; align-items:center; justify-content:space-between; padding:5px 2px; }
+.pdf-theme-story .ss-cond-label{ display:flex; align-items:center; gap:6px; font-size:8.2px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--s-body); font-family:'Helvetica Neue',Arial,sans-serif; }
+.pdf-theme-story .ss-cond-icon{ color:var(--s-gold-deep); display:flex; }
+.pdf-theme-story .ss-cond-value{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:9.4px; color:var(--s-navy); }
+.pdf-theme-story .ss-day-text p{ font-family:'Times New Roman',Georgia,serif; font-size:9.6px; line-height:1.5; color:var(--s-ink); margin:0 0 8px; }
+.pdf-theme-story .ss-day-boat{ display:flex; justify-content:flex-end; margin-top:8px; opacity:.85; }
+.pdf-theme-story .ss-crew-item{ text-align:center; padding-bottom:14px; margin-bottom:14px; border-bottom:1px dotted var(--s-gold); }
+.pdf-theme-story .ss-crew-item:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
+.pdf-theme-story .ss-crew-photo{ width:44px; height:44px; border-radius:50%; border:1.1px solid var(--s-gold); object-fit:cover; object-position:center; display:block; margin:0 auto 8px; background:var(--s-cream-line); }
+.pdf-theme-story .ss-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.6px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--s-body); display:block; margin-bottom:2px; }
+.pdf-theme-story .ss-crew-name{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:19px; color:var(--s-navy); }
+
+.pdf-theme-story .ss-photos{ display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(2,1fr); gap:2.5px; margin:16px 30px 0; border:1px solid var(--s-gold); height:190px; flex:0 0 auto; }
+.pdf-theme-story .ss-photo-cell{ overflow:hidden; background:var(--s-cream-line); }
+.pdf-theme-story .ss-photo-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+
+.pdf-theme-story .ss-footer{ display:flex; flex-direction:column; align-items:center; padding:14px 30px 26px; flex:0 0 auto; }
+.pdf-theme-story .ss-footer-heart{ color:var(--s-gold); margin-bottom:6px; display:flex; }
+.pdf-theme-story .ss-footer-row{ display:flex; align-items:center; gap:8px; width:100%; max-width:420px; }
+.pdf-theme-story .ss-footer-row .ss-footer-anchor{ color:var(--s-gold); flex:0 0 auto; display:flex; }
+.pdf-theme-story .ss-footer-row .ss-footer-line{ flex:1; height:0; border-top:1px dotted var(--s-gold); }
+.pdf-theme-story .ss-footer-row .ss-footer-text{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:15px; color:var(--s-navy); white-space:nowrap; padding:0 8px; }
 .lightbox{ position:fixed; inset:0; background:rgba(10,20,30,.95); z-index:2000; display:none; align-items:center; justify-content:center; flex-direction:column; padding:20px; }
 .lightbox.show{ display:flex; }
 .lightbox img{ max-width:92vw; max-height:70vh; object-fit:contain; border-radius:10px; }
@@ -1248,10 +1320,10 @@ const TRANSLATIONS = {
   'pdf.noTrack': 'No GPS track recorded',
   'pdf.themeClassic': 'Classic',
   'pdf.themeNautical': 'Nautical Magazine',
+  'pdf.themeSailingStory': 'Sailing Story',
+  'pdf.theSail': 'The Sail',
   'pdf.formatA4': 'A4 portrait',
   'pdf.formatPoster': 'Poster · 8.5 × 12.75"',
-  'pdf.morePhotos': 'More From The Day',
-  'pdf.pageOf': 'Page {page} of {total}',
   'sheet.chooseTheme': 'Theme',
   'ph.auto': 'auto',
   'ph.egDistance': 'e.g. 12.4',
@@ -4469,8 +4541,16 @@ const PDF_THEMES = {
     contentWidthPx: 612,
     formatLabel: 'pdf.formatPoster',
     sheetClass: 'pdf-theme-nautical',
-    build: buildTripPdfHtmlNautical,
-    buildPages: buildNauticalPages // multi-page: cover + "more photos" continuation pages
+    build: buildTripPdfHtmlNautical
+  },
+  story: {
+    label: 'pdf.themeSailingStory',
+    swatch: '#122F4E',
+    pageW: 612, pageH: 918, // 8.5" x 12.75" poster
+    contentWidthPx: 612,
+    formatLabel: 'pdf.formatPoster',
+    sheetClass: 'pdf-theme-story',
+    build: buildTripPdfHtmlStory
   }
 };
 let currentPdfTheme = localStorage.getItem('pdfTheme') || 'nautical';
@@ -4515,7 +4595,7 @@ function buildTripPdfHtmlClassic(trip){
     <div class="pdf-sub">${dateStr} · ${timeStr}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</div>
 
     <div class="pdf-top-row">
-      ${trip.coverPhoto ? `<div class="pdf-cover-cell"${pdfBgDivAttrs(trip.coverPhoto)}></div>` : ''}
+      ${trip.coverPhoto ? `<div class="pdf-cover-cell"><img src="${trip.coverPhoto}"></div>` : ''}
       <div class="pdf-top-right">
         <div class="pdf-stats-grid">
           <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>${t('detail.elapsed')}</span></div>
@@ -4533,11 +4613,11 @@ function buildTripPdfHtmlClassic(trip){
 
     ${notes ? `<div class="pdf-section-title">${t('active.notes')}</div><p>${escapeHtml(notes)}</p>` : ''}
 
-    ${tripSkipper ? `<div class="pdf-section-title">${t('active.skipper')}</div><div class="pdf-crew-grid"><div class="pdf-crew-chip"><div class="pdf-crew-avatar"${pdfBgDivAttrs(tripSkipper.photo||placeholderAvatar())}></div><span>${escapeHtml(tripSkipper.name)}</span></div></div>` : ''}
+    ${tripSkipper ? `<div class="pdf-section-title">${t('active.skipper')}</div><div class="pdf-crew-grid"><div class="pdf-crew-chip"><img src="${tripSkipper.photo||placeholderAvatar()}"><span>${escapeHtml(tripSkipper.name)}</span></div></div>` : ''}
 
-    ${tripCrew.length ? `<div class="pdf-section-title">${t('active.crewAboard')}</div><div class="pdf-crew-grid">${tripCrew.map(c=>`<div class="pdf-crew-chip"><div class="pdf-crew-avatar"${pdfBgDivAttrs(c.photo||placeholderAvatar())}></div><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
+    ${tripCrew.length ? `<div class="pdf-section-title">${t('active.crewAboard')}</div><div class="pdf-crew-grid">${tripCrew.map(c=>`<div class="pdf-crew-chip"><img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
 
-    ${photos.length ? `<div class="pdf-section-title">${t('active.photos')}</div><div class="pdf-photos-grid">${photos.map(p=>`<div class="pdf-photo-cell"${pdfBgDivAttrs(p)}></div>`).join('')}</div>` : ''}
+    ${photos.length ? `<div class="pdf-section-title">${t('active.photos')}</div><div class="pdf-photos-grid">${photos.map(p=>`<div class="pdf-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
 
     <div class="pdf-foot">Sail la Vie Logbook · ${t('cert.generated')} ${new Date().toLocaleDateString(currentLocale())}</div>
   </div>`;
@@ -4573,42 +4653,11 @@ const PDF_ICON_SVG = {
   clock: `<svg viewBox="0 0 20 20" width="13" height="13"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="10" y1="10" x2="10" y2="5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="10" y1="10" x2="13.5" y2="11.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`,
   pin: `<svg viewBox="0 0 20 24" width="13" height="15"><path d="M10 0a7 7 0 0 0-7 7c0 5.2 7 15 7 15s7-9.8 7-15a7 7 0 0 0-7-7z" fill="currentColor"/><circle cx="10" cy="7" r="2.6" fill="#F8F4EE"/></svg>`,
   gauge: `<svg viewBox="0 0 20 20" width="14" height="14"><path d="M3 15A7 7 0 0 1 17 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><line x1="10" y1="15" x2="14" y2="9.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
+  anchor: `<svg viewBox="0 0 20 20" width="15" height="15"><circle cx="10" cy="4" r="2" fill="none" stroke="currentColor" stroke-width="1.4"/><line x1="10" y1="6" x2="10" y2="16" stroke="currentColor" stroke-width="1.4"/><line x1="5" y1="9" x2="15" y2="9" stroke="currentColor" stroke-width="1.4"/><path d="M4 12a6 6 0 0 0 5 6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M16 12a6 6 0 0 1-5 6" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>`,
+  heart: `<svg viewBox="0 0 20 20" width="11" height="11"><path d="M10 17s-6.5-4.35-8.5-8.1C0.2 6.2 2 3 5.3 3c1.9 0 3.3 1.05 4.2 2.55C10.4 4.05 11.8 3 13.7 3 17 3 18.8 6.2 18.5 8.9 16.5 12.65 10 17 10 17z" fill="currentColor"/></svg>`,
+  star: `<svg viewBox="0 0 20 20" width="10" height="10"><path d="M10 1l2.4 6.2 6.6.4-5.2 4.2 1.8 6.4L10 14.6 4.4 18.2l1.8-6.4L1 7.6l6.6-.4z" fill="currentColor"/></svg>`,
 };
-// Renders a photo as a CSS background-image (with an inline background-size
-// so it crops to fill, never stretches) instead of an <img src>. html2canvas
-// — used to rasterize every PDF page — ignores object-fit on real <img>
-// elements and just stretches them to fill their box; it renders
-// background-image + background-size correctly, so this is what every
-// photo in the PDF export goes through. data-bg-url duplicates the URL so
-// waitForImagesToLoad can find and await it before the page is captured.
-function pdfBgDivAttrs(url){
-  if(!url) return '';
-  const safe = escapeHtml(url);
-  return ` style="background-image:url('${safe}')" data-bg-url="${safe}"`;
-}
-// Shared by both cover and continuation pages: the little navy ribbon at the
-// bottom of every nautical-theme page. Carries a "Page X of N" indicator
-// whenever the trip spilled onto more than one page, so the set still reads
-// as one document when printed or flipped through.
-function nauticalFooter(pageNum, totalPages){
-  const pageLabel = totalPages>1 ? ' · ' + t('pdf.pageOf',{page:pageNum, total:totalPages}) : '';
-  return `<div class="n-footer">
-      <div class="n-footer-motif"><span class="n-footer-line"></span><span class="n-footer-dot"></span><span class="n-footer-dot"></span><span class="n-footer-line"></span></div>
-      <div class="n-footer-text">Sail la Vie Logbook · ${t('cert.generated')} ${new Date().toLocaleDateString(currentLocale())}${pageLabel}</div>
-    </div>`;
-}
-// The map "porthole": a real drawn track when GPS was recorded, otherwise
-// whatever map/chart image the person attached to the entry, and only if
-// neither exists do we fall back to the empty-compass placeholder.
-function nauticalMapInner(trip){
-  if(trip.path && trip.path.length>1) return buildPortholeSvg(trip.path, false, appUnitSystem());
-  if(trip.mapImage) return `<div class="n-map-photo"${pdfBgDivAttrs(trip.mapImage)}></div>`;
-  return `<div class="n-map-empty">${t('pdf.noTrack')}</div><div class="n-map-compass">${navCompassSvg(30,'rgba(12,42,74,.55)','rgba(12,42,74,.7)')}</div>`;
-}
-const PDF_PHOTOS_COVER_MAX = 8;   // fits the cover page's fixed 4x2 grid alongside hero/stats/info
-const PDF_PHOTOS_CONT_MAX = 12;   // fits a continuation page's taller full-bleed 4x3 grid
-
-function buildTripPdfHtmlNauticalCover(trip, photos, pageNum, totalPages){
+function buildTripPdfHtmlNautical(trip){
   const boat = state.boats.find(b=>b.id===trip.boatId);
   const tripCrew = (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
   const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
@@ -4618,6 +4667,7 @@ function buildTripPdfHtmlNauticalCover(trip, photos, pageNum, totalPages){
   const dateLabel = d.toLocaleDateString(currentLocale(),{weekday:'long'}).toUpperCase();
   const dateValue = d.toLocaleDateString(currentLocale(),{day:'numeric',month:'long',year:'numeric'}).toUpperCase();
   const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
+  const photos = (trip.photos||[]).slice(0,8);
   let notes = trip.notes || '';
   if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
   const paragraphs = notes ? notes.split(/\n+/).filter(Boolean) : [];
@@ -4637,9 +4687,13 @@ function buildTripPdfHtmlNauticalCover(trip, photos, pageNum, totalPages){
     {value:fmtSpeed(trip.maxSpeed||0).split(' ')[0], unit:speedUnitLabel(), label:t('stat.maxSpeed'), icon:'gauge'},
   ];
 
+  const mapInner = (trip.path && trip.path.length>1)
+    ? buildPortholeSvg(trip.path, false, appUnitSystem())
+    : `<div class="n-map-empty">${t('pdf.noTrack')}</div><div class="n-map-compass">${navCompassSvg(30,'rgba(12,42,74,.55)','rgba(12,42,74,.7)')}</div>`;
+
   return `<div class="pdf-sheet" id="pdfTripBlock">
-    <div class="n-hero"${trip.coverPhoto ? pdfBgDivAttrs(trip.coverPhoto) : ''}>
-      ${!trip.coverPhoto ? `<div class="n-hero-noimg"></div>` : ''}
+    <div class="n-hero">
+      ${trip.coverPhoto ? `<img src="${trip.coverPhoto}">` : `<div class="n-hero-noimg"></div>`}
       <div class="n-hero-content">
         <div class="n-hero-left">
           <div class="n-compass">${navCompassSvg(46,'#F8F4EE','#D3AD7A')}</div>
@@ -4673,7 +4727,7 @@ function buildTripPdfHtmlNauticalCover(trip, photos, pageNum, totalPages){
           </div>`).join('')}` : ''}
         ${crewList.length ? `<div class="n-heading" style="margin-top:18px;">${t('nav.crew')}</div><div class="n-crew-list">${crewList.map(m=>`
           <div class="n-crew-item">
-            <div class="n-crew-photo"${pdfBgDivAttrs(m.photo||placeholderAvatar())}></div>
+            <img class="n-crew-photo" src="${m.photo||placeholderAvatar()}">
             <div><span class="n-crew-role">${escapeHtml(m.role)}</span><span class="n-crew-name">${escapeHtml(m.name)}</span></div>
           </div>`).join('')}</div>` : ''}
       </div>
@@ -4681,73 +4735,154 @@ function buildTripPdfHtmlNauticalCover(trip, photos, pageNum, totalPages){
         ${paragraphs.length ? `<div class="n-heading">${t('pdf.theDay')}</div><div class="n-quote-mark">&ldquo;</div><div class="n-story">${paragraphs.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div>` : ''}
       </div>
       <div class="n-col-map">
-        <div class="n-map-box">${nauticalMapInner(trip)}</div>
+        <div class="n-map-box">${mapInner}</div>
       </div>
     </div>
 
-    ${photos.length ? `<div class="n-photos">${photos.map(p=>`<div class="n-photo-cell"${pdfBgDivAttrs(p)}></div>`).join('')}</div>` : ''}
+    ${photos.length ? `<div class="n-photos">${photos.map(p=>`<div class="n-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
 
-    ${nauticalFooter(pageNum, totalPages)}
+    <div class="n-footer">
+      <div class="n-footer-motif"><span class="n-footer-line"></span><span class="n-footer-dot"></span><span class="n-footer-dot"></span><span class="n-footer-line"></span></div>
+      <div class="n-footer-text">Sail la Vie Logbook · ${t('cert.generated')} ${new Date().toLocaleDateString(currentLocale())}</div>
+    </div>
   </div>`;
 }
 
-// A "more from the day" continuation sheet: same masthead language and
-// footer as the cover, but the whole page is given over to a bigger photo
-// grid. Built only when a trip has more photos than the cover page's 4x2
-// grid holds — see buildNauticalPages().
-function buildTripPdfHtmlNauticalContinuation(trip, photos, pageNum, totalPages){
+/* ---------- Sailing Story theme ---------- */
+function ssSailboatSvg(w, h, color){
+  const mastX = w*0.42, waterY = h*0.88, boomY = h*0.80, mastTopY = h*0.10, jibBaseX = w*0.06;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block;">
+    <path d="M ${w*0.08} ${waterY} Q ${w*0.5} ${waterY+h*0.10} ${w*0.94} ${waterY}" fill="none" stroke="${color}" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="${mastX}" y1="${boomY}" x2="${mastX}" y2="${mastTopY}" stroke="${color}" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M ${mastX} ${mastTopY} L ${mastX+w*0.30} ${boomY} L ${mastX} ${boomY} Z" fill="none" stroke="${color}" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M ${mastX} ${boomY-h*0.42} L ${jibBaseX} ${boomY} L ${mastX} ${boomY} Z" fill="none" stroke="${color}" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M ${w*0.60} ${h*0.20} q 4 3 8 0 M ${w*0.74} ${h*0.14} q 4 3 8 0 M ${w*0.52} ${h*0.28} q 4 3 8 0" fill="none" stroke="${color}" stroke-width="0.9" stroke-linecap="round"/>
+  </svg>`;
+}
+function ssSplitTitle(title){
+  const words = (title||'').trim().split(/\s+/).filter(Boolean);
+  if(words.length<=2) return {lead:'', main: words.join(' ').toUpperCase()};
+  return {lead: words.slice(0,2).join(' '), main: words.slice(2).join(' ').toUpperCase()};
+}
+function buildTripPdfHtmlStory(trip){
+  const boat = state.boats.find(b=>b.id===trip.boatId);
+  const tripCrew = (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
+  const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
+  const crewList = [ ...(tripSkipper ? [{...tripSkipper, role:t('active.skipper')}] : []),
+                      ...tripCrew.map(c=>({...c, role:t('nav.crew')})) ];
+  const d = new Date(trip.date);
+  const dateLabel = d.toLocaleDateString(currentLocale(),{weekday:'long'}).toUpperCase();
+  const dateValue = d.toLocaleDateString(currentLocale(),{day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+  const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
+  const allPhotos = trip.photos||[];
+  const legPhotos = allPhotos.slice(0,4);
+  const gridPhotos = allPhotos.slice(0,8);
+  let notes = trip.notes || '';
+  if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
+  const paragraphs = notes ? notes.split(/\n+/).filter(Boolean) : [];
+  const { lead, main } = ssSplitTitle(trip.title||t('pdf.sailLogFallback'));
+  // The data model has no discrete route waypoints (only a continuous GPS
+  // path + a single free-text place) — reuse `place` as a single "stop" so
+  // the numbered route bar still renders meaningfully instead of inventing
+  // waypoints that were never recorded.
+  const routeItems = trip.place ? [trip.place] : [];
+
+  const w = trip.weather || {};
+  const condRows = [];
+  if(w.windDir || w.windSpeed!=null) condRows.push({icon:'wind', label:t('pdf.condWind'), value:`${escapeHtml(compassLabel(w.windDir)||'')} ${w.windSpeed!=null?fmtSpeed(w.windSpeed):''}`.trim()});
+  if(w.gusts) condRows.push({icon:'wind', label:t('pdf.condGusts'), value:fmtSpeed(w.gusts)});
+  if(w.seaState) condRows.push({icon:'wave', label:t('pdf.condSea'), value:escapeHtml(seaStateLabel(w.seaState))});
+  if(w.waveHeight) condRows.push({icon:'wave', label:t('pdf.condWaves'), value:`${escapeHtml(String(w.waveHeight))} m`});
+  if(w.temp) condRows.push({icon:'thermo', label:t('pdf.condTemp'), value:`${escapeHtml(String(w.temp))}°C`});
+
+  const stats = [
+    {value:fmtDistance(trip.distanceNm||0).split(' ')[0], unit:distUnitLabel(), label:t('stat.distance'), icon:'pin'},
+    {value:fmtDuration(trip.elapsedSeconds), unit:'', label:t('detail.elapsed'), icon:'clock'},
+    {value:fmtSpeed(trip.avgSpeed||0).split(' ')[0], unit:speedUnitLabel(), label:t('stat.avgSpeed'), icon:'gauge'},
+    {value:fmtSpeed(trip.maxSpeed||0).split(' ')[0], unit:speedUnitLabel(), label:t('stat.maxSpeed'), icon:'gauge'},
+  ];
+
   return `<div class="pdf-sheet" id="pdfTripBlock">
-    <div class="n-contpage-header">
-      <div class="n-compass">${navCompassSvg(44,'#F8F4EE','#D3AD7A')}</div>
-      <div>
-        <div class="n-contpage-title">${escapeHtml(trip.title||t('pdf.sailLogFallback'))}</div>
-        <div class="n-contpage-sub">${t('pdf.morePhotos')}</div>
+    <div class="ss-frame"></div><div class="ss-frame-inner"></div>
+
+    <div class="ss-header">
+      <div class="ss-compass">${navCompassSvg(46,'#122F4E','#B4884F')}</div>
+      <div class="ss-title-block">
+        ${lead ? `<div class="ss-title-lead">${escapeHtml(lead)}</div>` : ''}
+        <div class="ss-title-main">${escapeHtml(main)}</div>
+        <div class="ss-title-rule"><span class="ss-rule-line"></span><span class="ss-rule-heart">${PDF_ICON_SVG.heart}</span><span class="ss-rule-line"></span></div>
+        ${trip.place ? `<div class="ss-subtitle">${escapeHtml(trip.place)}</div>` : ''}
+      </div>
+      <div class="ss-meta">
+        <div class="ss-meta-row">${PDF_ICON_SVG.calendar}<b>${dateLabel}</b></div>
+        <div class="ss-meta-sub">${dateValue}</div>
+        <div class="ss-meta-row ss-meta-time"><span class="ss-meta-icon">${PDF_ICON_SVG.clock}</span><span>${timeStr}</span></div>
+        <div class="ss-meta-anchor">${PDF_ICON_SVG.anchor}</div>
       </div>
     </div>
 
-    <div class="n-photos n-photos-cont">${photos.map(p=>`<div class="n-photo-cell"${pdfBgDivAttrs(p)}></div>`).join('')}</div>
+    ${routeItems.length ? `<div class="ss-route-bar">${routeItems.map((r,i)=>`<span class="ss-route-num">${i+1}</span><span>${escapeHtml(r.toUpperCase())}</span>`).join('<span class="ss-route-arrow">→</span>')}</div>` : ''}
 
-    ${nauticalFooter(pageNum, totalPages)}
+    ${legPhotos.length ? `<div class="ss-legs">${legPhotos.map(p=>`<div class="ss-leg-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
+
+    <div class="ss-sail-heading">
+      <span class="ss-sail-line"></span><span class="ss-sail-star">${PDF_ICON_SVG.star}</span>
+      <span class="ss-sail-text">${t('pdf.theSail').toUpperCase()}</span>
+      <span class="ss-sail-star">${PDF_ICON_SVG.star}</span><span class="ss-sail-line"></span>
+    </div>
+
+    <div class="ss-stats">
+      ${stats.map(s=>`<div class="ss-stat">
+        <span class="ss-stat-icon">${PDF_ICON_SVG[s.icon]}</span>
+        <span class="ss-stat-text"><b>${s.value}</b>${s.unit?`<span class="ss-stat-unit">${s.unit}</span>`:''}<span class="ss-stat-label">${s.label}</span></span>
+      </div>`).join('')}
+    </div>
+    <div class="ss-stats-rule"></div>
+
+    <div class="ss-info">
+      <div class="ss-col ss-col-conditions">
+        ${condRows.length ? `<div class="ss-heading">${t('pdf.conditions')}</div>${condRows.map(r=>`
+          <div class="ss-cond-row">
+            <span class="ss-cond-label"><span class="ss-cond-icon">${PDF_ICON_SVG[r.icon]}</span>${escapeHtml(r.label)}</span>
+            <span class="ss-cond-value">${r.value}</span>
+          </div>`).join('')}` : ''}
+      </div>
+      <div class="ss-col ss-col-day">
+        ${paragraphs.length ? `<div class="ss-heading">${t('pdf.theDay')}</div><div class="ss-day-text">${paragraphs.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div><div class="ss-day-boat">${ssSailboatSvg(64,40,'#8FA4BE')}</div>` : ''}
+      </div>
+      <div class="ss-col ss-col-crew">
+        ${crewList.length ? `<div class="ss-heading">${t('nav.crew')}</div>${crewList.map(m=>`
+          <div class="ss-crew-item">
+            <img class="ss-crew-photo" src="${m.photo||placeholderAvatar()}">
+            <span class="ss-crew-role">${escapeHtml(m.role)}</span>
+            <span class="ss-crew-name">${escapeHtml(m.name)}</span>
+          </div>`).join('')}` : ''}
+      </div>
+    </div>
+
+    ${gridPhotos.length ? `<div class="ss-photos">${gridPhotos.map(p=>`<div class="ss-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
+
+    <div class="ss-footer">
+      <div class="ss-footer-heart">${PDF_ICON_SVG.heart}</div>
+      <div class="ss-footer-row">
+        <span class="ss-footer-anchor">${PDF_ICON_SVG.anchor}</span>
+        <span class="ss-footer-line"></span>
+        <span class="ss-footer-text">Sail la Vie Logbook · ${t('cert.generated')} ${new Date().toLocaleDateString(currentLocale())}</span>
+        <span class="ss-footer-line"></span>
+        <span class="ss-footer-anchor">${PDF_ICON_SVG.anchor}</span>
+      </div>
+    </div>
   </div>`;
 }
 
-// Splits a trip into however many nautical-theme pages it needs: one cover
-// page (hero/stats/conditions/story/map + up to 8 photos), then as many
-// "more from the day" continuation pages as it takes to fit the rest of the
-// photos, 12 to a page. Returns an array of page HTML strings in order.
-function buildNauticalPages(trip){
-  const allPhotos = trip.photos || [];
-  const coverPhotos = allPhotos.slice(0, PDF_PHOTOS_COVER_MAX);
-  const overflowPhotos = allPhotos.slice(PDF_PHOTOS_COVER_MAX);
-  const contPhotoSets = [];
-  for(let i=0; i<overflowPhotos.length; i+=PDF_PHOTOS_CONT_MAX){
-    contPhotoSets.push(overflowPhotos.slice(i, i+PDF_PHOTOS_CONT_MAX));
-  }
-  const totalPages = 1 + contPhotoSets.length;
-  const pages = [ buildTripPdfHtmlNauticalCover(trip, coverPhotos, 1, totalPages) ];
-  contPhotoSets.forEach((photos, i)=> pages.push(buildTripPdfHtmlNauticalContinuation(trip, photos, i+2, totalPages)));
-  return pages;
-}
-// Kept for any caller that only wants a single representative page (e.g. a
-// thumbnail) — the full, possibly multi-page export always goes through
-// buildNauticalPages()/theme.buildPages instead.
-function buildTripPdfHtmlNautical(trip){
-  return buildNauticalPages(trip)[0];
-}
-
-// Waits for every <img>, AND every element using a CSS background-image
-// (see pdfBgDivAttrs — used instead of <img> for anything that needs
-// object-fit:cover in the PDF, since html2canvas ignores object-fit on
-// real <img> elements and stretches them to fill their box instead;
-// background-size:cover is captured correctly), to finish loading/decoding
-// before we measure or rasterize the container. Without this, html2canvas
-// can snapshot mid-load images at the wrong size (or blank), which is what
-// produced the inconsistent photo sizes people saw after the PDF was
-// re-opened/re-rendered by WhatsApp's own preview — the capture, not the
-// sharing step, was the bug.
+// Waits for every <img> inside a container to finish loading AND decoding
+// before we measure or rasterize it. Without this, html2canvas can snapshot
+// mid-load images at the wrong size (or blank), which is what produced the
+// inconsistent photo sizes people saw after the PDF was re-opened/re-rendered
+// by WhatsApp's own preview — the capture, not the sharing step, was the bug.
 function waitForImagesToLoad(container){
   const imgs = Array.from(container.querySelectorAll('img'));
-  const imgPromises = imgs.map(img=>{
+  return Promise.all(imgs.map(img=>{
     if(img.complete && img.naturalWidth>0){
       return img.decode ? img.decode().catch(()=>{}) : Promise.resolve();
     }
@@ -4756,22 +4891,7 @@ function waitForImagesToLoad(container){
       img.addEventListener('load',done);
       img.addEventListener('error',done);
     }).then(()=> img.decode ? img.decode().catch(()=>{}) : Promise.resolve());
-  });
-
-  const bgEls = Array.from(container.querySelectorAll('[data-bg-url]'));
-  const bgPromises = bgEls.map(el=>{
-    const url = el.getAttribute('data-bg-url');
-    if(!url) return Promise.resolve();
-    return new Promise(resolve=>{
-      const probe = new Image();
-      probe.onload = ()=> resolve(probe.decode ? probe.decode().catch(()=>{}).then(resolve) : resolve());
-      probe.onerror = resolve;
-      probe.src = url;
-      if(probe.complete) resolve();
-    });
-  });
-
-  return Promise.all([...imgPromises, ...bgPromises]);
+  }));
 }
 // Renders the preview sheet at true A4 proportions (794px ≈ 210mm at 96dpi),
 // then scales it down to fit the sheet's width — an accurate shrink-to-fit
@@ -4784,14 +4904,9 @@ function openTripPdfPreview(){
   const theme = PDF_THEMES[currentPdfTheme];
   const inner = document.getElementById('pdfPreviewInner');
   inner.className = theme.sheetClass;
-  // A theme may build more than one page (e.g. nautical spills extra photos
-  // onto "more from the day" pages) — stack every page in the preview so
-  // what's shown always matches what generateAndShareTripPdf() will export.
-  const pages = theme.buildPages ? theme.buildPages(trip) : [theme.build(trip)];
-  inner.innerHTML = pages.map(p=>`<div class="pdf-page-wrap">${p}</div>`).join('');
+  inner.innerHTML = theme.build(trip);
   inner.style.transform = 'none';
   inner.style.width = theme.contentWidthPx + 'px';
-  inner.style.height = 'auto';
   renderPdfThemePicker();
   openSheet('sheetPdfPreview');
   waitForImagesToLoad(inner).then(()=>{
@@ -4799,10 +4914,12 @@ function openTripPdfPreview(){
     const wrap = document.getElementById('pdfPreviewScaleWrap');
     const naturalHeight = inner.scrollHeight;
     const wrapWidth = wrap.clientWidth;
+    const pageHeight = wrapWidth * (theme.pageH / theme.pageW);
     const margin = 12;
-    // Multiple stacked pages read as a scrollable document, so only fit to
-    // width here (no single-page height cap the way a one-page export used to).
-    const scale = (wrapWidth - margin * 2) / theme.contentWidthPx;
+    const scale = Math.min(
+      (wrapWidth - margin * 2) / theme.contentWidthPx,
+      (pageHeight - margin * 2) / naturalHeight
+    );
     inner.style.transformOrigin = 'top left';
     inner.style.transform = `scale(${scale})`;
     wrap.style.height = Math.ceil(naturalHeight * scale + margin * 2) + 'px';
@@ -4811,11 +4928,9 @@ function openTripPdfPreview(){
 }
 
 // IMPORTANT: Do not use jsPDF.doc.html() here. Its HTML renderer can paginate
-// tall content in ways we don't control. Instead, each logical page (from
-// theme.buildPages, or the single page from theme.build for themes that
-// don't paginate) is rendered into its own canvas and placed onto its own
-// PDF page at the active theme's fixed size — one canvas per page, never a
-// single canvas split across pages.
+// tall content. We first render the COMPLETE log into one canvas, then place
+// that one image onto one page sized to the active theme. This guarantees
+// exactly one PDF page.
 async function generateAndShareTripPdf(){
   const trip = window._detailTrip;
   if(!trip) return;
@@ -4827,7 +4942,6 @@ async function generateAndShareTripPdf(){
 
   showToast(t('toast.preparingPdf'));
   const inner = document.getElementById('pdfPreviewInner');
-  const prevClassName = inner.className;
   const prevTransform = inner.style.transform;
   const prevWidth = inner.style.width;
   const prevHeight = inner.style.height;
@@ -4835,11 +4949,32 @@ async function generateAndShareTripPdf(){
 
   try{
     // Rebuild defensively so the exported file always matches the theme
-    // currently selected, even if the preview sheet wasn't reopened. A theme
-    // may return more than one page (nautical spills extra photos onto
-    // "more from the day" pages) — each one is captured and added as its
-    // own PDF page, same format throughout.
-    const pages = theme.buildPages ? theme.buildPages(trip) : [theme.build(trip)];
+    // currently selected, even if the preview sheet wasn't reopened.
+    inner.className = theme.sheetClass;
+    inner.innerHTML = theme.build(trip);
+    inner.style.transform = 'none';
+    inner.style.width = theme.contentWidthPx + 'px';
+    inner.style.height = 'auto';
+    inner.style.overflow = 'visible';
+
+    // Wait for every photo to actually finish loading/decoding, then let
+    // fonts/layout settle before measuring/capturing. Racing html2canvas
+    // against still-loading images was the root cause of photos coming out
+    // the wrong/inconsistent size in the shared PDF.
+    await waitForImagesToLoad(inner);
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    const canvas = await html2canvas(inner, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: theme.contentWidthPx,
+      height: inner.scrollHeight,
+      windowWidth: theme.contentWidthPx,
+      scrollX: 0,
+      scrollY: 0
+    });
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({
@@ -4855,46 +4990,21 @@ async function generateAndShareTripPdf(){
     const availableW = pageW - margin * 2;
     const availableH = pageH - margin * 2;
 
-    for(let i=0; i<pages.length; i++){
-      inner.className = theme.sheetClass;
-      inner.innerHTML = pages[i];
-      inner.style.transform = 'none';
-      inner.style.width = theme.contentWidthPx + 'px';
-      inner.style.height = 'auto';
-      inner.style.overflow = 'visible';
+    // Fit the COMPLETE canvas into the printable page rectangle, preserving ratio.
+    const scale = Math.min(availableW / canvas.width, availableH / canvas.height);
+    const renderW = canvas.width * scale;
+    const renderH = canvas.height * scale;
+    const x = (pageW - renderW) / 2;
+    const y = margin;
 
-      // Wait for every photo to actually finish loading/decoding, then let
-      // fonts/layout settle before measuring/capturing. Racing html2canvas
-      // against still-loading images was the root cause of photos coming out
-      // the wrong/inconsistent size in the shared PDF.
-      await waitForImagesToLoad(inner);
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    doc.addImage(
+      canvas.toDataURL('image/jpeg', 0.92),
+      'JPEG', x, y, renderW, renderH, undefined, 'FAST'
+    );
 
-      const canvas = await html2canvas(inner, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        width: theme.contentWidthPx,
-        height: inner.scrollHeight,
-        windowWidth: theme.contentWidthPx,
-        scrollX: 0,
-        scrollY: 0
-      });
-
-      // Fit the COMPLETE canvas into the printable page rectangle, preserving ratio.
-      const scale = Math.min(availableW / canvas.width, availableH / canvas.height);
-      const renderW = canvas.width * scale;
-      const renderH = canvas.height * scale;
-      const x = (pageW - renderW) / 2;
-      const y = margin;
-
-      if(i > 0) doc.addPage([theme.pageW, theme.pageH], theme.pageH >= theme.pageW ? 'portrait' : 'landscape');
-
-      doc.addImage(
-        canvas.toDataURL('image/jpeg', 0.92),
-        'JPEG', x, y, renderW, renderH, undefined, 'FAST'
-      );
+    // There should only ever be one page. Keep this defensive guard in place.
+    while(doc.getNumberOfPages() > 1){
+      doc.deletePage(doc.getNumberOfPages());
     }
 
     const blob = doc.output('blob');
@@ -4919,7 +5029,6 @@ async function generateAndShareTripPdf(){
     if(e && e.name==='AbortError'){ /* user cancelled the native share sheet */ }
     else { console.error('PDF generation failed', e); showToast(t('toast.pdfGenFail')); }
   } finally {
-    inner.className = prevClassName;
     inner.style.transform = prevTransform;
     inner.style.width = prevWidth;
     inner.style.height = prevHeight;
