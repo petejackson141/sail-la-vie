@@ -326,8 +326,8 @@ html[data-theme="dark"] .certificate .cert-name{ color:var(--gold); }
 html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .certificate .cert-stats div small{ font-size:10.5px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em; }
 .certificate .cert-foot{ font-size:11px; color:var(--ink-faint); margin-top:16px; }
-#loadingScreen{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:var(--bg); z-index:999; flex-direction:column; gap:14px; }
-.spinner{ width:34px; height:34px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--navy); animation:spin .8s linear infinite; }
+#loadingScreen{ position:fixed; inset:0; display:flex; align-items:flex-end; justify-content:center; background:#0E2338 url('images/splash.jpg') center/cover no-repeat; z-index:999; flex-direction:column; gap:14px; padding-bottom:14%; }
+.spinner{ width:30px; height:30px; border-radius:50%; border:3px solid rgba(255,255,255,.28); border-top-color:#fff; animation:spin .8s linear infinite; }
 @keyframes spin{ to{ transform:rotate(360deg); } }
 @media print{
   body *{ visibility:hidden; }
@@ -707,7 +707,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 </head>
 <body>
 
-<div id="loadingScreen"><div class="spinner"></div><p style="color:var(--ink-muted);font-size:13px;">Loading your logbook…</p></div>
+<div id="loadingScreen"><div class="spinner"></div><p style="color:#fff;font-size:13px;text-shadow:0 1px 4px rgba(0,0,0,.35);">Loading your logbook…</p></div>
 
 <div id="app" style="display:none;">
   <div id="watermark" aria-hidden="true"></div>
