@@ -29,6 +29,16 @@
     storageTier    — which storage backend is actually active: 'idb' | 'localStorage' | 'memory'
 -->
 
+<!-- PWA: makes the app installable to a home screen and enables offline app-shell caching via sw.js -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#16324F">
+<link rel="icon" type="image/png" sizes="192x192" href="images/icon-192.png">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sail la Vie">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;900&family=Libre+Baskerville:wght@400;700&family=Alex+Brush&display=swap" rel="stylesheet">
 <!-- Leaflet: only used for the live/real map when there's a connection (see
@@ -5601,6 +5611,16 @@ function speedUnitLabel(sys){ return (sys||appUnitSystem())==='metric' ? 'km/h' 
 function distUnitLabel(sys){ return (sys||appUnitSystem())==='metric' ? 'km' : 'NM'; }
 
 boot();
+
+// Register service worker for offline app-shell caching + installability.
+// Requires https (or localhost) — it will silently no-op over plain http/file://.
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(err=>{
+      console.warn('Service worker registration failed (expected on http:// or file://):', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
