@@ -14,7 +14,7 @@
   Bump CACHE_NAME whenever index.html/manifest/icons change, so old caches
   get cleared and the new shell is fetched.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v1';
+const CACHE_NAME = 'sail-la-vie-shell-v2';
 
 const APP_SHELL = [
   './',
