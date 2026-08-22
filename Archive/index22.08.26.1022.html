@@ -278,42 +278,32 @@
   /* Stats overlay on top of a track map, matching the "distance / avg speed /
      duration" banner style from the reference screenshot Pete shared. */
   .map-stats-overlay{ position:absolute; top:10px; left:10px; right:10px; background:rgba(20,43,68,.82);
-    border-radius:12px; padding:10px 6px; display:flex; z-index:1100; }
+    border-radius:12px; padding:10px 6px; display:flex; z-index:5; }
   .map-stats-overlay div{ text-align:center; flex:1; }
   .map-stats-overlay div b{ display:block; font-family:var(--font-display); font-weight:700; font-size:15px; color:#fff; }
   .map-stats-overlay div span{ font-size:8.5px; text-transform:uppercase; letter-spacing:.03em; color:rgba(255,255,255,.75); }
   /* Read-only history map: dragging/zoom start OFF so a scroll gesture that
      starts on the map keeps scrolling the page instead of panning the map.
      This little pill lets someone explicitly opt in to pan/zoom the map itself. */
-  .map-lock-toggle{ position:absolute; bottom:10px; right:10px; z-index:1100; display:flex; align-items:center; gap:5px;
+  .map-lock-toggle{ position:absolute; bottom:10px; right:10px; z-index:6; display:flex; align-items:center; gap:5px;
     background:rgba(20,43,68,.82); color:#fff; border-radius:999px; padding:7px 12px 7px 9px; font-size:11px; font-weight:600;
     cursor:pointer; box-shadow:var(--shadow); }
   .map-lock-toggle svg{ width:13px; height:13px; flex:0 0 auto; }
   .map-lock-toggle.unlocked{ background:var(--navy-soft); }
   /* Base-layer switcher for the live/detail maps (Standard / Nautical / Satellite / Dark).
      Same pill look as .map-lock-toggle; ".left" variant is for the detail map, where the
-     lock toggle already sits bottom-right. z-index is set well above Leaflet's own panes
-     and controls (which run up to z-index:1000) — without that, the map tiles themselves
-     paint over any plain sibling overlay regardless of DOM order. */
-  .map-style-toggle{ position:absolute; top:10px; right:10px; z-index:1200; display:flex; align-items:center; gap:5px;
+     lock toggle already sits bottom-right. */
+  .map-style-toggle{ position:absolute; top:10px; right:10px; z-index:6; display:flex; align-items:center; gap:5px;
     background:rgba(20,43,68,.82); color:#fff; border-radius:999px; padding:7px 12px 7px 9px; font-size:11px; font-weight:600;
     cursor:pointer; box-shadow:var(--shadow); }
   .map-style-toggle svg{ width:13px; height:13px; flex:0 0 auto; }
   .map-style-toggle.left{ top:auto; bottom:10px; left:10px; right:auto; }
-  .map-style-menu{ position:absolute; top:42px; right:10px; z-index:1200; background:var(--bg-elevated); border:1px solid var(--border);
+  .map-style-menu{ position:absolute; top:42px; right:10px; z-index:7; background:var(--bg-elevated); border:1px solid var(--border);
     border-radius:var(--radius-md); box-shadow:var(--shadow); padding:5px; min-width:132px; display:none; }
   .map-style-menu.open{ display:block; }
   .map-style-menu.left{ top:auto; bottom:44px; left:10px; right:auto; }
   .map-style-opt{ padding:8px 10px; border-radius:8px; font-size:12.5px; font-weight:600; color:var(--ink); cursor:pointer; }
   .map-style-opt.active{ background:var(--navy-soft); color:var(--navy); }
-  /* Re-center button for the live map: appears once the sailor pans/zooms away from
-     the boat's own position (auto-follow pauses so their drag doesn't get fought),
-     tapping it jumps back and resumes auto-follow. */
-  .map-recenter-btn{ position:absolute; bottom:10px; right:10px; z-index:1200; width:40px; height:40px; border-radius:50%;
-    background:rgba(20,43,68,.88); color:#fff; border:none; display:none; align-items:center; justify-content:center;
-    box-shadow:var(--shadow); cursor:pointer; }
-  .map-recenter-btn svg{ width:20px; height:20px; }
-  .map-recenter-btn.show{ display:flex; }
   /* Leaflet divIcons default to a white box + border — strip that so only our SVG shows. */
   .yacht-marker-icon{ background:transparent; border:none; }
 
@@ -835,9 +825,6 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
             <span id="liveMapStyleLabel">Standard</span>
           </div>
           <div class="map-style-menu" id="liveMapStyleMenu"></div>
-          <button type="button" class="map-recenter-btn" id="liveMapRecenterBtn" onclick="recenterLiveMap()" aria-label="Re-center on boat">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
-          </button>
         </div>
         <div class="porthole" id="liveTrackPorthole"></div>
         <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:4px;" id="liveTrackCoords"></div>
@@ -1669,8 +1656,6 @@ const TRANSLATIONS = {
   'mapStyle.standard': 'Standard',
   'mapStyle.nautical': 'Nautical',
   'mapStyle.satellite': 'Satellite',
-  'mapStyle.light': 'Light',
-  'mapStyle.voyager': 'Colorful',
   'mapStyle.dark': 'Dark',
   'toast.tripDeleted': 'Trip deleted',
   'toast.tripLoadFail': 'Could not load that trip',
@@ -1961,8 +1946,6 @@ const TRANSLATIONS = {
   'mapStyle.standard': 'Estándar',
   'mapStyle.nautical': 'Náutico',
   'mapStyle.satellite': 'Satélite',
-  'mapStyle.light': 'Claro',
-  'mapStyle.voyager': 'Colorido',
   'mapStyle.dark': 'Oscuro',
   'toast.tripDeleted': 'Travesía eliminada',
   'toast.tripLoadFail': 'No se pudo cargar esa travesía',
@@ -2259,8 +2242,6 @@ const TRANSLATIONS = {
   'mapStyle.standard': 'רגיל',
   'mapStyle.nautical': 'ימי',
   'mapStyle.satellite': 'לוויין',
-  'mapStyle.light': 'בהיר',
-  'mapStyle.voyager': 'צבעוני',
   'mapStyle.dark': 'כהה',
   'toast.tripDeleted': 'השיט נמחק',
   'toast.tripLoadFail': 'לא ניתן היה לטעון את השיט הזה',
@@ -2545,8 +2526,6 @@ const TRANSLATIONS = {
   'mapStyle.standard': 'Padrão',
   'mapStyle.nautical': 'Náutico',
   'mapStyle.satellite': 'Satélite',
-  'mapStyle.light': 'Claro',
-  'mapStyle.voyager': 'Colorido',
   'mapStyle.dark': 'Escuro',
   'toast.tripDeleted': 'Travessia eliminada',
   'toast.tripLoadFail': 'Não foi possível carregar essa travessia',
@@ -4110,14 +4089,13 @@ async function renderTripDetailMap(trip){
 }
 let detailLeafletMap = null, detailMapLocked = true;
 
-/* ---------- map base-layer styles: Standard / Nautical / Satellite / Light / Voyager / Dark ----------
+/* ---------- map base-layer styles: Standard / Nautical / Satellite / Dark ----------
    All free, no-API-key tile sources so this stays consistent with the rest of the
    app (no backend, no credentials to manage). "Nautical" is OSM's standard base
    layer with the OpenSeaMap seamarks overlay on top (buoys, lights, depth areas —
-   genuinely useful on the water, not just a different color scheme). Light/Voyager/Dark
-   are all CARTO's basemap family, so they share one consistent visual style at three
-   brightness levels rather than being three unrelated looks. Picked style is remembered
-   in localStorage and applied to both the live map and any trip's detail map. */
+   genuinely useful on the water, not just a different color scheme). Picked style
+   is remembered in localStorage and applied to both the live map and any trip's
+   detail map. */
 const MAP_STYLES = {
   standard: { labelKey:'mapStyle.standard', base:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution:'© OpenStreetMap contributors', maxZoom:19 },
@@ -4126,10 +4104,6 @@ const MAP_STYLES = {
     attribution:'© OpenStreetMap contributors, seamarks © OpenSeaMap', maxZoom:18 },
   satellite: { labelKey:'mapStyle.satellite', base:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics', maxZoom:19 },
-  light: { labelKey:'mapStyle.light', base:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19 },
-  voyager: { labelKey:'mapStyle.voyager', base:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19 },
   dark: { labelKey:'mapStyle.dark', base:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19 },
 };
@@ -4235,9 +4209,6 @@ let liveLeafletMap=null, liveLeafletPolyline=null, liveLeafletMarker=null;
 let liveMapIsOnline = false;
 let liveConnCheckInterval = null;
 let liveMarkerHeading = 0; // degrees, last known — kept steady between fixes when the boat's barely moving
-let liveMapFollowing = true;   // true = auto-recenter/zoom on every fix (default); false once the sailor pans/zooms it themselves
-let liveMapProgrammaticMove = false; // guards our own setView calls so they don't get mistaken for a user drag/zoom below
-let liveLastLatLng = null;     // last known boat position, so the re-center button has somewhere to jump back to
 
 // Small top-down sailboat glyph used as the live-tracking marker (bow = 0°/north,
 // rotated to the boat's heading between GPS fixes). Built as a divIcon so plain
@@ -4285,32 +4256,8 @@ function initLiveLeafletMap(){
   liveMarkerHeading = 0;
   liveLeafletMarker = L.marker([0,0], {icon: yachtDivIcon(liveMarkerHeading)}).addTo(liveLeafletMap);
   liveLeafletMap.setView([0,0], 13);
-  liveMapFollowing = true;
-  const recenterBtn = document.getElementById('liveMapRecenterBtn');
-  if(recenterBtn) recenterBtn.classList.remove('show');
-  // 'dragstart'/'zoomstart' fire for BOTH a real touch/mouse gesture and our own
-  // setView() calls below — liveMapProgrammaticMove distinguishes the two, so only
-  // an actual pan/pinch from the sailor breaks auto-follow.
-  liveLeafletMap.on('dragstart zoomstart', ()=>{
-    if(liveMapProgrammaticMove) return;
-    liveMapFollowing = false;
-    if(recenterBtn) recenterBtn.classList.add('show');
-  });
   const toggle = document.getElementById('liveMapStyleToggle');
   if(toggle){ toggle.style.display = 'flex'; renderMapStyleMenu('live'); }
-}
-// Jumps back to the boat's last known position and turns auto-follow back on —
-// the recenter button's tap handler.
-function recenterLiveMap(){
-  if(!liveLeafletMap) return;
-  liveMapFollowing = true;
-  const recenterBtn = document.getElementById('liveMapRecenterBtn');
-  if(recenterBtn) recenterBtn.classList.remove('show');
-  if(liveLastLatLng){
-    liveMapProgrammaticMove = true;
-    liveLeafletMap.setView(liveLastLatLng, Math.max(liveLeafletMap.getZoom(), 14));
-    liveMapProgrammaticMove = false;
-  }
 }
 function updateLiveLeafletTrack(path){
   if(!liveLeafletMap || !path.length) return;
@@ -4327,14 +4274,7 @@ function updateLiveLeafletTrack(path){
     }
   }
   liveLeafletMarker.setLatLng(last);
-  liveLastLatLng = last;
-  // Only auto-recenter/zoom while following — if the sailor's panned or zoomed the
-  // map themselves, leave it exactly where they put it until they tap "re-center".
-  if(liveMapFollowing){
-    liveMapProgrammaticMove = true;
-    liveLeafletMap.setView(last, Math.max(liveLeafletMap.getZoom(), 14));
-    liveMapProgrammaticMove = false;
-  }
+  liveLeafletMap.setView(last, Math.max(liveLeafletMap.getZoom(), 14));
 }
 // Switches the visible UI between the real map and the offline porthole —
 // called whenever a connectivity check's result changes.
