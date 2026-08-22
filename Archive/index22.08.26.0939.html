@@ -268,7 +268,7 @@
   /* Real Leaflet map, shown instead of the porthole when there's a connection —
      a rounded rectangle rather than a circle so Leaflet's zoom/attribution
      controls have normal corners to sit in. */
-  .live-map{ width:100%; height:min(58vh, 520px); min-height:320px; border-radius:var(--radius-lg); border:1px solid var(--border);
+  .live-map{ width:100%; height:260px; border-radius:var(--radius-lg); border:1px solid var(--border);
     box-shadow:var(--shadow); overflow:hidden; margin:6px 0; background:var(--bg-sunk); }
   .map-mode-badge{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; text-transform:uppercase;
     letter-spacing:.04em; color:var(--ink-muted); margin:2px auto 4px; justify-content:center; width:100%; }
@@ -1337,7 +1337,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
    Tiered storage: IndexedDB (largest quota) -> localStorage (fallback)
    -> in-memory (last resort, session-only, shows a persistent warning)
    ============================================================ */
-const KEYS = { INDEX:'trip-index', BOATS:'boats', CREW:'crew', PROFILE:'profile', ACTIVE_TRIP:'active-trip' };
+const KEYS = { INDEX:'trip-index', BOATS:'boats', CREW:'crew', PROFILE:'profile' };
 const TRANSLATIONS = {
   en: {
   'action.cancel': 'Cancel',
@@ -1631,7 +1631,6 @@ const TRANSLATIONS = {
   'toast.profileSaved': 'Profile saved',
   'toast.saveFailed': 'Save failed — trip kept on screen, try again',
   'toast.stillRecording': 'Still recording — tap the banner to return',
-  'toast.tripResumed': 'Picked up your journey where it left off — tracking is running again',
   'toast.tripDeleted': 'Trip deleted',
   'toast.tripLoadFail': 'Could not load that trip',
   'toast.unitsMetric': 'Default units: Metric (km/h, km)',
@@ -1917,7 +1916,6 @@ const TRANSLATIONS = {
   'toast.profileSaved': 'Perfil guardado',
   'toast.saveFailed': 'Error al guardar — la travesía se mantiene en pantalla, inténtalo de nuevo',
   'toast.stillRecording': 'Aún grabando — toca el aviso para volver',
-  'toast.tripResumed': 'Retomamos tu travesía donde se quedó — el seguimiento está activo de nuevo',
   'toast.tripDeleted': 'Travesía eliminada',
   'toast.tripLoadFail': 'No se pudo cargar esa travesía',
   'toast.unitsMetric': 'Unidades predeterminadas: Métrico (km/h, km)',
@@ -2209,7 +2207,6 @@ const TRANSLATIONS = {
   'toast.profileSaved': 'הפרופיל נשמר',
   'toast.saveFailed': 'השמירה נכשלה — השיט נשאר על המסך, נסו שוב',
   'toast.stillRecording': 'עדיין מקליט — הקישו על ההודעה כדי לחזור',
-  'toast.tripResumed': 'המשכנו את השיט מהנקודה שבה נעצר — המעקב פעיל שוב',
   'toast.tripDeleted': 'השיט נמחק',
   'toast.tripLoadFail': 'לא ניתן היה לטעון את השיט הזה',
   'toast.unitsMetric': 'יחידות ברירת מחדל: מטרי (קמ"ש, ק"מ)',
@@ -2489,7 +2486,6 @@ const TRANSLATIONS = {
   'toast.profileSaved': 'Perfil guardado',
   'toast.saveFailed': 'Falha ao guardar — a travessia mantém-se no ecrã, tenta novamente',
   'toast.stillRecording': 'Ainda a gravar — toca no aviso para voltar',
-  'toast.tripResumed': 'Retomámos a tua travessia de onde ficou — o registo está ativo outra vez',
   'toast.tripDeleted': 'Travessia eliminada',
   'toast.tripLoadFail': 'Não foi possível carregar essa travessia',
   'toast.unitsMetric': 'Unidades padrão: Métrico (km/h, km)',
@@ -2787,28 +2783,6 @@ let watchId = null;       // navigator.geolocation.watchPosition() handle, so st
 let timerId = null;       // setInterval() handle for the elapsed-time ticker
 let startedAt = null;     // Date.now() when the current live journey began, used to compute elapsed time
 let lastFixTime = null;
-let wakeLock = null;      // Screen Wake Lock, held while a live journey is running to reduce the chance
-                           // of the OS suspending/killing the tab when the screen would otherwise sleep
-
-// Persists currentTrip + startedAt to storage so a killed/reloaded tab can pick the
-// journey back up instead of silently losing it. Called after every GPS fix, every
-// tick of the timer, and on any state-changing action while a trip is active.
-// Cheap (small JSON) so it's safe to call this often; storeSet is fire-and-forget here.
-function saveActiveTripCheckpoint(){
-  if(!currentTrip) return;
-  storeSet(KEYS.ACTIVE_TRIP, { trip: currentTrip, startedAt });
-}
-function clearActiveTripCheckpoint(){
-  storeDelete(KEYS.ACTIVE_TRIP);
-}
-async function requestWakeLock(){
-  try{
-    if('wakeLock' in navigator){ wakeLock = await navigator.wakeLock.request('screen'); }
-  }catch(e){ /* not fatal — recovery-on-reload is the real safety net */ }
-}
-function releaseWakeLock(){
-  if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
-}
 
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 
@@ -2836,8 +2810,7 @@ async function boot(){
 
   document.getElementById('loadingScreen').style.display='none';
   document.getElementById('app').style.display='flex';
-  const resumed = await resumeActiveTripIfAny();
-  if(!resumed) nav('home');
+  nav('home');
   renderHomeStats();
 }
 function greet(){
@@ -3387,8 +3360,6 @@ function beginJourney(){
   timerId = setInterval(tickTimer, 1000);
   startGPS();
   startLiveConnCheck();
-  requestWakeLock();
-  saveActiveTripCheckpoint();
 }
 // MODE 3: editing an existing trip. Deep-clones it into currentTrip (so
 // discarding never touches the saved copy) and pre-fills every field, reusing
@@ -3452,71 +3423,6 @@ function editTrip(){
   renderAddedCrewChips();
   renderActivePhotoStrip();
 }
-// Runs once on boot, before the home screen shows. If a journey/manual-entry/edit
-// was still active when the tab last closed (screen-lock kill, browser reclaiming
-// memory, accidental tab close, etc.), this restores it from the checkpoint saved by
-// saveActiveTripCheckpoint() instead of silently losing it. For a live GPS journey,
-// elapsed time is recomputed from the original startedAt (real wall-clock time), and
-// the GPS watch + timer are restarted so tracking picks straight back up.
-async function resumeActiveTripIfAny(){
-  let ckpt;
-  try{ ckpt = await storeGet(KEYS.ACTIVE_TRIP); }catch(e){ ckpt = null; }
-  if(!ckpt || !ckpt.trip) return false;
-  currentTrip = ckpt.trip;
-  startedAt = ckpt.startedAt || Date.now();
-  activeUnitSystem = appUnitSystem();
-  populateBoatSelects();
-  nav('active');
-  const isLive = !currentTrip.isManual;
-  document.getElementById('liveStatsBlock').style.display = isLive ? 'block' : 'none';
-  document.getElementById('pastStatsBlock').style.display = isLive ? 'none' : 'block';
-  document.getElementById('endJourneyBtnLabel').textContent = currentTrip.isEditing ? t('active.saveChanges') : currentTrip.isManual ? t('active.saveLogEntry') : t('active.endJourney');
-
-  document.getElementById('tripTitle').value = currentTrip._customTitle ? currentTrip.title : '';
-  document.getElementById('tripPlace').value = currentTrip.place || '';
-  document.getElementById('activeBoatSelect').value = currentTrip.boatId || '';
-  document.getElementById('windDir').value = currentTrip.weather?.windDir || 'N';
-  document.getElementById('windSpeed').value = currentTrip.weather?.windSpeed ?? 8;
-  document.getElementById('gusts').value = currentTrip.weather?.gusts ?? 10;
-  document.getElementById('waveDir').value = currentTrip.weather?.waveDir || 'N';
-  document.getElementById('seaState').value = currentTrip.weather?.seaState || 'Moderate';
-  document.getElementById('waveHeight').value = currentTrip.weather?.waveHeight || 0.5;
-  document.getElementById('temp').value = currentTrip.weather?.temp || 20;
-  document.getElementById('tripNotes').value = currentTrip.notes || '';
-  refreshLogUnitsUI();
-  updateWindSpeedLabel(); updateGustsLabel(); updateWaveHeightLabel(); updateTempLabel();
-  if(currentTrip.mapImage){
-    document.getElementById('mapImagePreview').src = currentTrip.mapImage;
-    document.getElementById('mapImagePreviewWrap').style.display = 'block';
-  }
-  renderSkipperChip();
-  renderAddedCrewChips();
-  renderActivePhotoStrip();
-
-  if(isLive){
-    updateLiveStatDisplays();
-    timerId = setInterval(tickTimer, 1000);
-    startGPS();
-    startLiveConnCheck();
-    requestWakeLock();
-  } else {
-    // Not a live journey (manual entry or edit draft): the duration/distance/speed
-    // inputs on this screen aren't bound to currentTrip until Save is pressed, so
-    // repopulate them the same way editTrip() does, from whatever was on currentTrip.
-    const d = new Date(currentTrip.date);
-    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-    document.getElementById('pastDate').value = d.toISOString().slice(0,16);
-    const totalMin = Math.round((currentTrip.elapsedSeconds||0)/60);
-    document.getElementById('pastHours').value = Math.floor(totalMin/60);
-    document.getElementById('pastMinutes').value = totalMin%60;
-    const distNm = currentTrip.distanceNm || 0;
-    document.getElementById('pastDistance').value = (activeUnitSystem==='metric' ? distNm*NM_TO_KM : distNm).toFixed(1);
-    document.getElementById('pastAvgSpeed').value = fmtSpeed(currentTrip.avgSpeed||0, activeUnitSystem).split(' ')[0];
-    document.getElementById('pastMaxSpeed').value = fmtSpeed(currentTrip.maxSpeed||0, activeUnitSystem).split(' ')[0];
-  }
-  showToast(t('toast.tripResumed'));
-  return true;
-}
 // MODE 2: manually logging a sail that already happened. No GPS/timer — the
 // person fills in date, duration, and distance by hand instead.
 function beginManualJourney(){
@@ -3566,9 +3472,6 @@ function tickTimer(){
   document.getElementById('elapsedDisplay').textContent = `${h}:${m}:${s}`;
   const bannerTime = document.getElementById('recordingBannerTime');
   if(bannerTime) bannerTime.textContent = `${h}:${m}:${s}`;
-  // Checkpoint every ~10s even without a GPS fix (e.g. anchored, weak signal) so
-  // elapsed time is never more than ~10s stale if the tab gets killed.
-  if(secs % 10 === 0) saveActiveTripCheckpoint();
 }
 // Great-circle distance between two lat/lng points, in nautical miles.
 function haversineNm(a,b){
@@ -3612,7 +3515,6 @@ function onFix(pos){
   currentTrip.avgSpeed = elapsedH>0 ? currentTrip.distanceNm/elapsedH : 0;
   updateLiveStatDisplays();
   renderLiveTrack();
-  saveActiveTripCheckpoint();
 }
 function onGpsError(){
   const gpsEl = document.getElementById('gpsStatus');
@@ -3624,7 +3526,6 @@ function stopGPS(){
   if(watchId!==null && 'geolocation' in navigator){ navigator.geolocation.clearWatch(watchId); watchId=null; }
   if(timerId){ clearInterval(timerId); timerId=null; }
   stopLiveConnCheck();
-  releaseWakeLock();
 }
 function confirmLeaveActive(){
   // Leaving the screen no longer stops tracking — GPS/timer keep running in the
@@ -3642,7 +3543,6 @@ function discardJourney(){
     stopGPS();
     const wasEditing = currentTrip.isEditing, editedId = currentTrip.id;
     currentTrip = null;
-    clearActiveTripCheckpoint();
     document.getElementById('recordingBanner').classList.remove('show');
     if(wasEditing){ nav('history'); openTripDetail(editedId); } else { nav('home'); }
   }
@@ -3838,7 +3738,6 @@ async function finalizeSaveTrip(){
   showToast(currentTrip.isEditing ? t('toast.changesSaved') : t('toast.journeySaved'));
   const savedId = currentTrip.id;
   currentTrip = null;
-  clearActiveTripCheckpoint();
   nav('home');
   renderHomeStats();
   openTripDetail(savedId);
@@ -4140,7 +4039,7 @@ function initLiveLeafletMap(){
   liveLeafletPolyline = L.polyline([], {color:'#16324F', weight:3}).addTo(liveLeafletMap);
   liveMarkerHeading = 0;
   liveLeafletMarker = L.marker([0,0], {icon: yachtDivIcon(liveMarkerHeading)}).addTo(liveLeafletMap);
-  liveLeafletMap.setView([0,0], 13);
+  liveLeafletMap.setView([0,0], 14);
 }
 function updateLiveLeafletTrack(path){
   if(!liveLeafletMap || !path.length) return;
@@ -4157,7 +4056,7 @@ function updateLiveLeafletTrack(path){
     }
   }
   liveLeafletMarker.setLatLng(last);
-  liveLeafletMap.setView(last, Math.max(liveLeafletMap.getZoom(), 14));
+  liveLeafletMap.setView(last, Math.max(liveLeafletMap.getZoom(), 15));
 }
 // Switches the visible UI between the real map and the offline porthole —
 // called whenever a connectivity check's result changes.
@@ -5711,14 +5610,6 @@ function fmtDistance(nm, sys){
 function speedUnitLabel(sys){ return (sys||appUnitSystem())==='metric' ? 'km/h' : 'kts'; }
 function distUnitLabel(sys){ return (sys||appUnitSystem())==='metric' ? 'km' : 'NM'; }
 
-// Wake locks are released automatically by the browser whenever the tab is hidden
-// and do NOT reacquire on their own — re-request it here so a live journey keeps
-// trying to hold the lock every time the sailor switches back to the tab.
-document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState==='visible' && currentTrip && !currentTrip.isManual && watchId!==null){
-    requestWakeLock();
-  }
-});
 boot();
 
 // Register service worker for offline app-shell caching + installability.
