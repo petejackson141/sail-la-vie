@@ -290,6 +290,20 @@
     cursor:pointer; box-shadow:var(--shadow); }
   .map-lock-toggle svg{ width:13px; height:13px; flex:0 0 auto; }
   .map-lock-toggle.unlocked{ background:var(--navy-soft); }
+  /* Base-layer switcher for the live/detail maps (Standard / Nautical / Satellite / Dark).
+     Same pill look as .map-lock-toggle; ".left" variant is for the detail map, where the
+     lock toggle already sits bottom-right. */
+  .map-style-toggle{ position:absolute; top:10px; right:10px; z-index:6; display:flex; align-items:center; gap:5px;
+    background:rgba(20,43,68,.82); color:#fff; border-radius:999px; padding:7px 12px 7px 9px; font-size:11px; font-weight:600;
+    cursor:pointer; box-shadow:var(--shadow); }
+  .map-style-toggle svg{ width:13px; height:13px; flex:0 0 auto; }
+  .map-style-toggle.left{ top:auto; bottom:10px; left:10px; right:auto; }
+  .map-style-menu{ position:absolute; top:42px; right:10px; z-index:7; background:var(--bg-elevated); border:1px solid var(--border);
+    border-radius:var(--radius-md); box-shadow:var(--shadow); padding:5px; min-width:132px; display:none; }
+  .map-style-menu.open{ display:block; }
+  .map-style-menu.left{ top:auto; bottom:44px; left:10px; right:auto; }
+  .map-style-opt{ padding:8px 10px; border-radius:8px; font-size:12.5px; font-weight:600; color:var(--ink); cursor:pointer; }
+  .map-style-opt.active{ background:var(--navy-soft); color:var(--navy); }
   /* Leaflet divIcons default to a white box + border — strip that so only our SVG shows. */
   .yacht-marker-icon{ background:transparent; border:none; }
 
@@ -804,7 +818,14 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <div class="stat-label" style="text-align:center;margin-top:16px;" data-i18n="active.liveTrack">Live Track</div>
       <div id="liveTrackWrap">
         <div class="map-mode-badge offline" id="liveMapModeBadge"><span class="dot"></span><span id="liveMapModeText" data-i18n="active.checkingConnection">Checking connection…</span></div>
-        <div class="live-map" id="liveTrackLeaflet" style="display:none;"></div>
+        <div style="position:relative;">
+          <div class="live-map" id="liveTrackLeaflet" style="display:none;"></div>
+          <div class="map-style-toggle" id="liveMapStyleToggle" style="display:none;" onclick="toggleMapStyleMenu('live')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+            <span id="liveMapStyleLabel">Standard</span>
+          </div>
+          <div class="map-style-menu" id="liveMapStyleMenu"></div>
+        </div>
         <div class="porthole" id="liveTrackPorthole"></div>
         <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:4px;" id="liveTrackCoords"></div>
       </div>
@@ -1632,6 +1653,10 @@ const TRANSLATIONS = {
   'toast.saveFailed': 'Save failed — trip kept on screen, try again',
   'toast.stillRecording': 'Still recording — tap the banner to return',
   'toast.tripResumed': 'Picked up your journey where it left off — tracking is running again',
+  'mapStyle.standard': 'Standard',
+  'mapStyle.nautical': 'Nautical',
+  'mapStyle.satellite': 'Satellite',
+  'mapStyle.dark': 'Dark',
   'toast.tripDeleted': 'Trip deleted',
   'toast.tripLoadFail': 'Could not load that trip',
   'toast.unitsMetric': 'Default units: Metric (km/h, km)',
@@ -1918,6 +1943,10 @@ const TRANSLATIONS = {
   'toast.saveFailed': 'Error al guardar — la travesía se mantiene en pantalla, inténtalo de nuevo',
   'toast.stillRecording': 'Aún grabando — toca el aviso para volver',
   'toast.tripResumed': 'Retomamos tu travesía donde se quedó — el seguimiento está activo de nuevo',
+  'mapStyle.standard': 'Estándar',
+  'mapStyle.nautical': 'Náutico',
+  'mapStyle.satellite': 'Satélite',
+  'mapStyle.dark': 'Oscuro',
   'toast.tripDeleted': 'Travesía eliminada',
   'toast.tripLoadFail': 'No se pudo cargar esa travesía',
   'toast.unitsMetric': 'Unidades predeterminadas: Métrico (km/h, km)',
@@ -2210,6 +2239,10 @@ const TRANSLATIONS = {
   'toast.saveFailed': 'השמירה נכשלה — השיט נשאר על המסך, נסו שוב',
   'toast.stillRecording': 'עדיין מקליט — הקישו על ההודעה כדי לחזור',
   'toast.tripResumed': 'המשכנו את השיט מהנקודה שבה נעצר — המעקב פעיל שוב',
+  'mapStyle.standard': 'רגיל',
+  'mapStyle.nautical': 'ימי',
+  'mapStyle.satellite': 'לוויין',
+  'mapStyle.dark': 'כהה',
   'toast.tripDeleted': 'השיט נמחק',
   'toast.tripLoadFail': 'לא ניתן היה לטעון את השיט הזה',
   'toast.unitsMetric': 'יחידות ברירת מחדל: מטרי (קמ"ש, ק"מ)',
@@ -2490,6 +2523,10 @@ const TRANSLATIONS = {
   'toast.saveFailed': 'Falha ao guardar — a travessia mantém-se no ecrã, tenta novamente',
   'toast.stillRecording': 'Ainda a gravar — toca no aviso para voltar',
   'toast.tripResumed': 'Retomámos a tua travessia de onde ficou — o registo está ativo outra vez',
+  'mapStyle.standard': 'Padrão',
+  'mapStyle.nautical': 'Náutico',
+  'mapStyle.satellite': 'Satélite',
+  'mapStyle.dark': 'Escuro',
   'toast.tripDeleted': 'Travessia eliminada',
   'toast.tripLoadFail': 'Não foi possível carregar essa travessia',
   'toast.unitsMetric': 'Unidades padrão: Métrico (km/h, km)',
@@ -3992,6 +4029,11 @@ async function renderTripDetailMap(trip){
           <div><b>${fmtSpeed(trip.avgSpeed||0)}</b><span>${t('stat.avgSpeed')}</span></div>
           <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>${t('detail.duration')}</span></div>
         </div>
+        <div class="map-style-toggle left" id="detailMapStyleToggle" style="display:none;" onclick="toggleMapStyleMenu('detail')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+          <span id="detailMapStyleLabel">Standard</span>
+        </div>
+        <div class="map-style-menu left" id="detailMapStyleMenu"></div>
         <div class="map-lock-toggle" id="detailMapLockToggle" style="display:none;" onclick="toggleDetailMapLock()">
           <svg id="detailMapLockIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
           <span id="detailMapLockLabel">${t('detail.locked')}</span>
@@ -4016,9 +4058,9 @@ async function renderTripDetailMap(trip){
         dragging:false, touchZoom:false, scrollWheelZoom:false,
         doubleClickZoom:false, boxZoom:false, keyboard:false, tap:false
       });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom:19, attribution:'© OpenStreetMap contributors'
-      }).addTo(map);
+      detailStyleLayers = applyMapStyle(map, currentMapStyle);
+      const styleToggle = document.getElementById('detailMapStyleToggle');
+      if(styleToggle){ styleToggle.style.display = 'flex'; renderMapStyleMenu('detail'); }
       const latlngs = trip.path.map(p=>[p.lat,p.lng]);
       const poly = L.polyline(latlngs, {color:'#16324F', weight:3}).addTo(map);
       L.circleMarker(latlngs[0], {radius:6, color:'#fff', weight:2, fillColor:'#2E8B57', fillOpacity:1}).addTo(map);
@@ -4046,6 +4088,81 @@ async function renderTripDetailMap(trip){
   }
 }
 let detailLeafletMap = null, detailMapLocked = true;
+
+/* ---------- map base-layer styles: Standard / Nautical / Satellite / Dark ----------
+   All free, no-API-key tile sources so this stays consistent with the rest of the
+   app (no backend, no credentials to manage). "Nautical" is OSM's standard base
+   layer with the OpenSeaMap seamarks overlay on top (buoys, lights, depth areas —
+   genuinely useful on the water, not just a different color scheme). Picked style
+   is remembered in localStorage and applied to both the live map and any trip's
+   detail map. */
+const MAP_STYLES = {
+  standard: { labelKey:'mapStyle.standard', base:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution:'© OpenStreetMap contributors', maxZoom:19 },
+  nautical: { labelKey:'mapStyle.nautical', base:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    overlay:'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
+    attribution:'© OpenStreetMap contributors, seamarks © OpenSeaMap', maxZoom:18 },
+  satellite: { labelKey:'mapStyle.satellite', base:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics', maxZoom:19 },
+  dark: { labelKey:'mapStyle.dark', base:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19 },
+};
+let currentMapStyle = localStorage.getItem('mapStyle') || 'standard';
+if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'standard';
+let liveStyleLayers = null, detailStyleLayers = null; // {base, overlay?} L.tileLayer instances currently attached to each map
+
+// Removes whatever base/overlay tile layers are on `map` and adds fresh ones for
+// styleId, returning the new layer refs so the caller can track them (needed so
+// swapping styles again later removes the RIGHT layers, not just "whatever's on it").
+function applyMapStyle(map, styleId){
+  if(!map) return null;
+  const style = MAP_STYLES[styleId] || MAP_STYLES.standard;
+  const layers = {};
+  layers.base = L.tileLayer(style.base, {maxZoom: style.maxZoom, attribution: style.attribution}).addTo(map);
+  if(style.overlay) layers.overlay = L.tileLayer(style.overlay, {maxZoom: style.maxZoom}).addTo(map);
+  return layers;
+}
+function removeMapStyleLayers(map, layers){
+  if(!map || !layers) return;
+  if(layers.base) map.removeLayer(layers.base);
+  if(layers.overlay) map.removeLayer(layers.overlay);
+}
+function renderMapStyleMenu(which){
+  const menu = document.getElementById(which==='live' ? 'liveMapStyleMenu' : 'detailMapStyleMenu');
+  if(!menu) return;
+  menu.innerHTML = Object.keys(MAP_STYLES).map(id=>
+    `<div class="map-style-opt${id===currentMapStyle?' active':''}" onclick="selectMapStyle('${which}','${id}')">${t(MAP_STYLES[id].labelKey)}</div>`
+  ).join('');
+  const label = document.getElementById(which==='live' ? 'liveMapStyleLabel' : 'detailMapStyleLabel');
+  if(label) label.textContent = t(MAP_STYLES[currentMapStyle].labelKey);
+}
+function toggleMapStyleMenu(which){
+  const menu = document.getElementById(which==='live' ? 'liveMapStyleMenu' : 'detailMapStyleMenu');
+  if(!menu) return;
+  const opening = !menu.classList.contains('open');
+  document.querySelectorAll('.map-style-menu').forEach(m=>m.classList.remove('open'));
+  if(opening){ renderMapStyleMenu(which); menu.classList.add('open'); }
+}
+// Applies the chosen style everywhere at once (both maps, if currently built) and
+// remembers it for next time, since it's a single global preference rather than a
+// per-map setting.
+function selectMapStyle(which, id){
+  if(!MAP_STYLES[id]) return;
+  currentMapStyle = id;
+  localStorage.setItem('mapStyle', id);
+  if(liveLeafletMap){ removeMapStyleLayers(liveLeafletMap, liveStyleLayers); liveStyleLayers = applyMapStyle(liveLeafletMap, id); }
+  if(detailLeafletMap){ removeMapStyleLayers(detailLeafletMap, detailStyleLayers); detailStyleLayers = applyMapStyle(detailLeafletMap, id); }
+  document.querySelectorAll('.map-style-menu').forEach(m=>m.classList.remove('open'));
+  const liveLabel = document.getElementById('liveMapStyleLabel'); if(liveLabel) liveLabel.textContent = t(MAP_STYLES[id].labelKey);
+  const detailLabel = document.getElementById('detailMapStyleLabel'); if(detailLabel) detailLabel.textContent = t(MAP_STYLES[id].labelKey);
+}
+// Closes an open style menu on any outside tap, same pattern as sheets/dropdowns elsewhere.
+document.addEventListener('click', (e)=>{
+  if(e.target.closest('.map-style-toggle') || e.target.closest('.map-style-menu')) return;
+  document.querySelectorAll('.map-style-menu').forEach(m=>m.classList.remove('open'));
+});
+
+
 // Flips the read-only history map between "locked" (page scroll wins, map
 // ignores touches) and "unlocked" (map handles its own pan/zoom) — see the
 // dragging:false etc. set when the map is first created above.
@@ -4134,13 +4251,13 @@ function checkTilesAvailable(){
 function initLiveLeafletMap(){
   if(liveLeafletMap || typeof L==='undefined') return;
   liveLeafletMap = L.map('liveTrackLeaflet', {attributionControl:true});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom:19, attribution:'© OpenStreetMap contributors'
-  }).addTo(liveLeafletMap);
+  liveStyleLayers = applyMapStyle(liveLeafletMap, currentMapStyle);
   liveLeafletPolyline = L.polyline([], {color:'#16324F', weight:3}).addTo(liveLeafletMap);
   liveMarkerHeading = 0;
   liveLeafletMarker = L.marker([0,0], {icon: yachtDivIcon(liveMarkerHeading)}).addTo(liveLeafletMap);
   liveLeafletMap.setView([0,0], 13);
+  const toggle = document.getElementById('liveMapStyleToggle');
+  if(toggle){ toggle.style.display = 'flex'; renderMapStyleMenu('live'); }
 }
 function updateLiveLeafletTrack(path){
   if(!liveLeafletMap || !path.length) return;
