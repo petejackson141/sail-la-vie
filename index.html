@@ -4129,7 +4129,8 @@ const MAP_STYLES = {
   light: { labelKey:'mapStyle.light', base:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
     attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19 },
   voyager: { labelKey:'mapStyle.voyager', base:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19 },
+    attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19,
+    filter:'saturate(1.6) contrast(1.1)' }, // the tile server's own colors are fairly muted — boost them client-side, no extra requests
   dark: { labelKey:'mapStyle.dark', base:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19 },
 };
@@ -4146,6 +4147,8 @@ function applyMapStyle(map, styleId){
   const layers = {};
   layers.base = L.tileLayer(style.base, {maxZoom: style.maxZoom, attribution: style.attribution}).addTo(map);
   if(style.overlay) layers.overlay = L.tileLayer(style.overlay, {maxZoom: style.maxZoom}).addTo(map);
+  const tilePane = map.getPane('tilePane');
+  if(tilePane) tilePane.style.filter = style.filter || '';
   return layers;
 }
 function removeMapStyleLayers(map, layers){
