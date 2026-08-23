@@ -15,7 +15,7 @@
     1. style     — all CSS. Note: #app{} closes almost immediately after its
                    own layout rules; nearly everything else is top-level CSS,
                    not nested inside #app. This matters because #printArea
-                   and #loadingScreen are DOM siblings of #app, not children.
+                   is a DOM sibling of #app, not a child.
     2. body      — one <section class="screen" id="screen-X"> per page, only
                    one visible at a time (see nav() in the script). Modals
                    ("sheets") and the photo lightbox are separate overlays.
@@ -360,7 +360,6 @@ html[data-theme="dark"] .certificate .cert-name{ color:var(--gold); }
 html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .certificate .cert-stats div small{ font-size:10.5px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em; }
 .certificate .cert-foot{ font-size:11px; color:var(--ink-faint); margin-top:16px; }
-#loadingScreen{ position:fixed; inset:0; display:flex; align-items:flex-end; justify-content:center; background:#0E2338 url('images/splash.jpg') center/cover no-repeat; z-index:999; flex-direction:column; gap:14px; padding-bottom:14%; }
 .spinner{ width:30px; height:30px; border-radius:50%; border:3px solid rgba(255,255,255,.28); border-top-color:#fff; animation:spin .8s linear infinite; }
 @keyframes spin{ to{ transform:rotate(360deg); } }
 @media print{
@@ -741,9 +740,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 </head>
 <body>
 
-<div id="loadingScreen"><div class="spinner"></div><p style="color:#fff;font-size:13px;text-shadow:0 1px 4px rgba(0,0,0,.35);">Loading your logbook…</p></div>
-
-<div id="app" style="display:none;">
+<div id="app" style="display:flex;">
   <div id="watermark" aria-hidden="true"></div>
 
   <!-- ============ HOME ============ -->
@@ -1121,6 +1118,9 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <div class="switch" onclick="toggleDefaultUnitSystem()"><div class="knob" id="unitsKnob">⚓</div></div>
     </div>
 
+    <!-- Language picker hidden for now (Spanish/Portuguese/Hebrew put on hold) — the
+         TRANSLATIONS dictionaries for es/pt/he are still intact further down in this
+         file, untouched, so re-enabling this is just uncommenting the block below.
     <div class="section-title" data-i18n="settings.language">Language</div>
     <div class="chiprow" id="languageChips">
       <div class="chip" data-lang="en" onclick="setLanguage('en')">English</div>
@@ -1128,6 +1128,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <div class="chip" data-lang="pt" onclick="setLanguage('pt')">Português</div>
       <div class="chip" data-lang="he" onclick="setLanguage('he')">עברית</div>
     </div>
+    -->
 
     <div class="divider"></div>
     <div class="link-plain" onclick="clearProfilePrompt()" style="color:var(--coral);" data-i18n="settings.clearProfile">Clear profile…</div>
@@ -1669,10 +1670,8 @@ const TRANSLATIONS = {
   'mapStyle.standard': 'Standard',
   'mapStyle.nautical': 'Nautical',
   'mapStyle.satellite': 'Satellite',
-  'mapStyle.light': 'Light',
   'mapStyle.voyager': 'Colorful',
-  'mapStyle.dark': 'Dark',
-  'mapStyle.custom': 'Custom',  'toast.tripDeleted': 'Trip deleted',
+  'toast.tripDeleted': 'Trip deleted',
   'toast.tripLoadFail': 'Could not load that trip',
   'toast.unitsMetric': 'Default units: Metric (km/h, km)',
   'toast.unitsNautical': 'Default units: Nautical (kts, NM)',
@@ -2818,7 +2817,7 @@ async function restoreFromFile(ev){
     state.crew = data.crew||[];
     state.tripIndex = data.tripIndex||[];
 
-    currentLang = TRANSLATIONS[state.profile.language] ? state.profile.language : 'en';
+    currentLang = 'en'; // language picker hidden for now — es/pt/he dictionaries kept intact for later
     applyStaticTranslations();
     await applyThemePreference();
     document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
@@ -2885,7 +2884,7 @@ async function boot(){
   state.boats = boats || [];
   state.crew = crew || [];
   state.profile = profile || state.profile;
-  currentLang = TRANSLATIONS[state.profile.language] ? state.profile.language : 'en';
+  currentLang = 'en'; // language picker hidden for now — es/pt/he dictionaries kept intact for later
   applyStaticTranslations();
 
   await applyThemePreference();
@@ -2895,8 +2894,6 @@ async function boot(){
   document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
   greet();
 
-  document.getElementById('loadingScreen').style.display='none';
-  document.getElementById('app').style.display='flex';
   const resumed = await resumeActiveTripIfAny();
   if(!resumed) nav('home');
   renderHomeStats();
@@ -4113,16 +4110,15 @@ async function renderTripDetailMap(trip){
 }
 let detailLeafletMap = null, detailMapLocked = true;
 
-/* ---------- map base-layer styles: Standard / Nautical / Satellite / Light / Colorful / Dark ----------
+/* ---------- map base-layer styles: Standard / Nautical / Satellite / Colorful ----------
    All free, no-API-key tile sources so this stays consistent with the rest of the
    app (no backend, no credentials to manage). "Nautical" is OSM's standard base
    layer with the OpenSeaMap seamarks overlay on top (buoys, lights, depth areas —
    genuinely useful on the water, not just a different color scheme). "Colorful" is
-   Esri's World Street Map — picked over CARTO's own colorful style (Voyager) after
-   a side-by-side comparison, since Esri's palette reads bolder without needing a
-   client-side filter. Light/Dark are CARTO's basemap family. Picked style is
-   remembered in localStorage and applied to both the live map and any trip's
-   detail map; Colorful is the default for anyone who hasn't picked yet. */
+   Esri's World Street Map — picked after a side-by-side comparison against several
+   other free options. Picked style is remembered in localStorage and applied to
+   both the live map and any trip's detail map; Colorful is the default for anyone
+   who hasn't picked yet. */
 const MAP_STYLES = {
   standard: { labelKey:'mapStyle.standard', base:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution:'© OpenStreetMap contributors', maxZoom:19 },
@@ -4131,22 +4127,11 @@ const MAP_STYLES = {
     attribution:'© OpenStreetMap contributors, seamarks © OpenSeaMap', maxZoom:18 },
   satellite: { labelKey:'mapStyle.satellite', base:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics', maxZoom:19 },
-  light: { labelKey:'mapStyle.light', base:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19 },
   voyager: { labelKey:'mapStyle.voyager', base:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
     attribution:'Tiles © Esri — Source: Esri, HERE, Garmin, FAO, NOAA, USGS', maxZoom:19 },
-  dark: { labelKey:'mapStyle.dark', base:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19 },
-  // Custom style built in the MapTiler style editor (maptiler.com/maps) — needs a
-  // MapTiler API key (free tier: 100,000 requests/month, no card required; maps just
-  // pause for the rest of the month if the quota is hit rather than generating a bill).
-  // Raster tiles use ~10-16 requests per view vs ~4 for vector, so this uses quota
-  // faster than a vector map would, but 100k/month is still very generous for one app.
-  custom: { labelKey:'mapStyle.custom', base:'https://api.maptiler.com/maps/01a02d4e-7857-790e-b61e-25c9028e2dc9/256/{z}/{x}/{y}.png?key=ZpTDYI83xl3YTWg4MdV9',
-    attribution:'Tiles © MapTiler © OpenStreetMap contributors', maxZoom:20 },
 };
-let currentMapStyle = localStorage.getItem('mapStyle') || 'custom';
-if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'custom';
+let currentMapStyle = localStorage.getItem('mapStyle') || 'voyager';
+if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'voyager';
 let liveStyleLayers = null, detailStyleLayers = null; // {base, overlay?} L.tileLayer instances currently attached to each map
 
 // Removes whatever base/overlay tile layers are on `map` and adds fresh ones for
