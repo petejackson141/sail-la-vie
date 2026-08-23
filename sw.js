@@ -14,7 +14,7 @@
   Bump CACHE_NAME whenever index.html/manifest/icons change, so old caches
   get cleared and the new shell is fetched.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v2';
+const CACHE_NAME = 'sail-la-vie-shell-v3';
 
 const APP_SHELL = [
   './',
@@ -23,7 +23,16 @@ const APP_SHELL = [
   './images/icon-192.png',
   './images/icon-512.png',
   './images/icon-512-maskable.png',
-  './images/Logo.png'
+  './images/Logo.png',
+  './js/i18n.js',
+  './js/storage.js',
+  './js/state-core.js',
+  './js/journey.js',
+  './js/history-maps.js',
+  './js/boats-crew.js',
+  './js/profile-settings.js',
+  './js/pdf-export.js',
+  './js/units.js'
 ];
 
 self.addEventListener('install', (event) => {
