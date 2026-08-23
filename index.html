@@ -40,7 +40,7 @@
 <meta name="apple-mobile-web-app-title" content="Sail la Vie">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;900&family=Libre+Baskerville:wght@400;700&family=Alex+Brush&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Libre+Baskerville:wght@400;700&family=Alex+Brush&display=swap" rel="stylesheet">
 <!-- Leaflet: only used for the live/real map when there's a connection (see
      buildPortholeSvg's notes) — the browser caches this after first load, so
      it doesn't cost anything offline beyond the very first time the app runs. -->
@@ -94,6 +94,7 @@
   @media (prefers-reduced-motion: reduce){ .screen{animation:none;} }
 
   h1,h2,h3{ font-family:var(--font-display); margin:0; letter-spacing:-0.01em; color:var(--ink); }
+  .app-title{ font-family:'Playfair Display',serif; font-style:italic; font-weight:700; letter-spacing:normal; }
   .eyebrow{ font-family:var(--font-display); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-muted); }
   p{ margin:0; color:var(--ink-muted); line-height:1.5; }
 
@@ -139,8 +140,8 @@
   .stat-unit{ font-size:13px; font-weight:500; color:var(--ink-muted); }
 
   /* ---------- quick links row ---------- */
-  .quicklinks{ display:flex; gap:12px; margin-top:8px; }
-  .quicklink{ flex:1; background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md);
+  .quicklinks{ display:flex; flex-wrap:wrap; gap:12px; margin-top:8px; }
+  .quicklink{ flex:1 1 calc(50% - 6px); background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md);
     padding:14px 10px; text-align:center; cursor:pointer; box-shadow:var(--shadow); }
   .quicklink svg{ width:22px; height:22px; color:var(--navy); margin-bottom:6px; }
   html[data-theme="dark"] .quicklink svg{ color:var(--gold); }
@@ -243,6 +244,12 @@
     display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; cursor:pointer; }
   .photo-thumb.pickable{ cursor:pointer; box-sizing:border-box; }
   .photo-thumb.pickable.selected{ border:3px solid var(--gold); }
+  .gallery-date-group{ margin-bottom:26px; }
+  .gallery-date-heading{ font-family:var(--font-display); font-weight:700; font-size:14px; color:var(--ink); margin-bottom:2px; }
+  .gallery-date-sub{ font-family:var(--font-body); font-weight:500; font-size:12.5px; color:var(--ink-muted); }
+  .gallery-photo-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
+  .gallery-photo-cell{ position:relative; aspect-ratio:1/1; border-radius:12px; overflow:hidden; border:1px solid var(--border); cursor:pointer; }
+  .gallery-photo-cell img{ width:100%; height:100%; object-fit:cover; display:block; }
   .add-photo-tile{ flex:0 0 auto; width:78px; height:78px; border-radius:14px; border:1.5px dashed var(--border);
     display:flex; align-items:center; justify-content:center; color:var(--ink-faint); cursor:pointer; }
 
@@ -713,6 +720,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .lightbox.show{ display:flex; }
 .lightbox img{ max-width:92vw; max-height:70vh; object-fit:contain; border-radius:10px; }
 .lightbox-actions{ display:flex; gap:12px; margin-top:20px; }
+.lightbox-btn.danger{ background:rgba(214,90,74,.22); border-color:rgba(214,90,74,.55); color:#F3B4AB; }
 .lightbox-btn{ display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.25);
   border-radius:999px; padding:11px 20px; font-weight:600; font-size:14px; cursor:pointer; }
 .lightbox-close{ position:absolute; top:18px; right:18px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.14);
@@ -755,7 +763,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       </div>
     </div>
 
-    <h1 style="text-align:center;font-size:22px;letter-spacing:.06em;margin-top:6px;">SAIL LA VIE</h1>
+    <h1 class="app-title" style="text-align:center;font-size:30px;margin-top:6px;">Sail la Vie</h1>
 
 <div class="compass-wrap" style="width: 220px; height: 220px; border-radius: 50%; overflow: hidden; box-shadow: 0 14px 24px rgba(20,43,68,.28); margin: 20px auto 40px auto;">
       <img src="images/Logo.png" alt="Sail la Vie Logo" style="width: 100%; height: 100%; object-fit: cover; display: block;">
@@ -787,6 +795,10 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <div class="quicklink" onclick="nav('resume')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3h8l3 4v14H5V7z"/><path d="M8 3v4H5"/><path d="M9 13h6M9 17h6"/></svg>
         <span data-i18n="home.resume">Resume</span>
+      </div>
+      <div class="quicklink" onclick="nav('gallery')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="9.5" r="1.75"/><path d="M21 16l-5.5-5.5L5 21"/></svg>
+        <span data-i18n="home.gallery">Gallery</span>
       </div>
     </div>
 
@@ -1010,6 +1022,15 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <div class="iconbtn" onclick="deleteTripPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
     </div>
     <div id="detailBody"></div>
+  </section>
+
+  <!-- ============ GALLERY ============ -->
+  <section class="screen" id="screen-gallery">
+    <div class="backrow">
+      <div class="iconbtn back-icon" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2 data-i18n="gallery.title">Photo Gallery</h2>
+    </div>
+    <div id="galleryContent"></div>
   </section>
 
   <!-- ============ BOATS ============ -->
@@ -1362,6 +1383,10 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div class="lightbox-btn" onclick="shareLightboxPhoto()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
       <span data-i18n="action.share">Share</span>
+    </div>
+    <div class="lightbox-btn danger" id="lightboxDeleteBtn" style="display:none;" onclick="deleteLightboxPhoto()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      <span data-i18n="action.delete">Delete</span>
     </div>
   </div>
 </div>

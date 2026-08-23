@@ -273,7 +273,7 @@ function resetActiveFormFields(){
 // MODE 1: live GPS journey. Creates a fresh currentTrip, starts the timer and
 // GPS watch immediately. See beginManualJourney() and editTrip() for the other
 // two ways this same screen gets used.
-function beginJourney(){
+async function beginJourney(){
   const boatId = document.getElementById('startBoatSelect').value;
   currentTrip = {
     id: uid(),
@@ -306,7 +306,10 @@ function beginJourney(){
   startGPS();
   startLiveConnCheck();
   requestWakeLock();
-  saveActiveTripCheckpoint();
+  // Awaited deliberately, unlike the per-tick/per-fix checkpoints below: this is the
+  // one-time "a journey now exists" write, and it's the only thing standing between
+  // an instant crash right after tapping Cast Off and losing the journey entirely.
+  await saveActiveTripCheckpoint();
 }
 // MODE 3: editing an existing trip. Deep-clones it into currentTrip (so
 // discarding never touches the saved copy) and pre-fills every field, reusing

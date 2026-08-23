@@ -56,6 +56,54 @@ function fmtDuration(secs){
 }
 
 /* ============================================================
+   GALLERY
+   All photos across every sail, grouped by the log entry they came from and
+   headed with that entry's sail date — NOT upload/insertion order, since
+   back-logged manual entries are often added well after the sail itself.
+   Full trip records (photos only live there, not the lightweight tripIndex)
+   are cached in galleryTripsCache so tapping a photo — and deleting one —
+   doesn't need another round-trip to storage.
+   ============================================================ */
+let galleryTripsCache = {};
+async function renderGallery(){
+  const el = document.getElementById('galleryContent');
+  if(!el) return;
+  const withPhotos = state.tripIndex.filter(t=>t.hasPhotos);
+  if(!withPhotos.length){
+    el.innerHTML = `<div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <h3>${t('gallery.emptyTitle')}</h3><p>${t('gallery.emptyHint')}</p></div>`;
+    return;
+  }
+  // Ordered by the sail date of the entry (most recent first), same convention as History.
+  const ordered = withPhotos.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const trips = await Promise.all(ordered.map(idxEntry=>storeGet('trip:'+idxEntry.id)));
+  // Bail if the person navigated away while these were loading.
+  if(!document.getElementById('screen-gallery')?.classList.contains('active')) return;
+  galleryTripsCache = {};
+  const html = trips.map(trip=>{
+    if(!trip || !trip.photos || !trip.photos.length) return '';
+    galleryTripsCache[trip.id] = trip;
+    const d = new Date(trip.date);
+    const dateStr = d.toLocaleDateString(currentLocale(),{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    return `<div class="gallery-date-group">
+      <div class="gallery-date-heading">${dateStr}${trip.title?`<span class="gallery-date-sub"> · ${escapeHtml(trip.title)}</span>`:''}</div>
+      <div class="gallery-photo-grid">${trip.photos.map((p,pi)=>
+        `<div class="gallery-photo-cell" onclick="openGalleryPhotoLightbox('${trip.id}',${pi})"><img src="${p}" loading="lazy"></div>`
+      ).join('')}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML = html || `<div class="empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+    <h3>${t('gallery.emptyTitle')}</h3><p>${t('gallery.emptyHint')}</p></div>`;
+}
+function openGalleryPhotoLightbox(tripId, index){
+  const trip = galleryTripsCache[tripId];
+  if(!trip || !trip.photos) return;
+  openLightbox(trip.photos, index, tripId);
+}
+
+/* ============================================================
    ENTRY DETAIL
    ============================================================ */
 let openTripId = null;

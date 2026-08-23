@@ -23,7 +23,10 @@ let wakeLock = null;      // Screen Wake Lock, held while a live journey is runn
 // Cheap (small JSON) so it's safe to call this often; storeSet is fire-and-forget here.
 function saveActiveTripCheckpoint(){
   if(!currentTrip) return;
-  storeSet(KEYS.ACTIVE_TRIP, { trip: currentTrip, startedAt });
+  // Returns the storeSet promise (rather than fire-and-forget internally) so the one
+  // call site that needs a guarantee — beginJourney(), right after Cast Off — can
+  // await it. Every other call site just calls this without awaiting, same as before.
+  return storeSet(KEYS.ACTIVE_TRIP, { trip: currentTrip, startedAt });
 }
 function clearActiveTripCheckpoint(){
   storeDelete(KEYS.ACTIVE_TRIP);
@@ -90,6 +93,7 @@ function nav(name){
   if(name==='crew') renderCrew();
   if(name==='profile') renderProfileScreen();
   if(name==='resume') renderResume();
+  if(name==='gallery') renderGallery();
   if(name==='active' && liveLeafletMap){
     // Leaflet sizes itself incorrectly if it was updated while its container was
     // hidden behind another screen (backgrounded journey) — fix it up now that

@@ -821,18 +821,24 @@ function openTripCoverLightbox(){
   if(!trip || !trip.coverPhoto) return;
   const photos = (trip.photos && trip.photos.length) ? trip.photos : [trip.coverPhoto];
   const idx = Math.max(0, photos.indexOf(trip.coverPhoto));
-  openLightbox(photos, idx);
+  openLightbox(photos, idx, trip.id);
 }
 function openTripPhotoLightbox(i){
   const trip = window._detailTrip;
   if(!trip || !trip.photos) return;
-  openLightbox(trip.photos, i);
+  openLightbox(trip.photos, i, trip.id);
 }
 let lightboxPhotos = [];
 let lightboxIndex = 0;
-function openLightbox(photos, index){
+// Set only when the lightbox is showing a trip's own photo set (trip detail or
+// the Gallery) — this is what gates the delete button and tells it which trip
+// record to save back to. Left null for contexts with nothing to delete, like
+// the single manually-uploaded map image opened from the trip detail screen.
+let lightboxTripId = null;
+function openLightbox(photos, index, tripId){
   lightboxPhotos = (photos||[]).filter(Boolean);
   lightboxIndex = Math.max(0, Math.min(index||0, lightboxPhotos.length-1));
+  lightboxTripId = tripId || null;
   renderLightboxImage();
   document.getElementById('photoLightbox').classList.add('show');
 }
@@ -842,6 +848,8 @@ function renderLightboxImage(){
   document.querySelectorAll('.lightbox-nav').forEach(el=> el.style.display = multi ? 'flex' : 'none');
   const counter = document.getElementById('lightboxCounter');
   counter.textContent = multi ? (lightboxIndex+1)+' / '+lightboxPhotos.length : '';
+  const deleteBtn = document.getElementById('lightboxDeleteBtn');
+  if(deleteBtn) deleteBtn.style.display = lightboxTripId ? 'flex' : 'none';
 }
 function lightboxPrev(){
   if(lightboxPhotos.length<2) return;
@@ -855,7 +863,42 @@ function lightboxNext(){
 }
 function closeLightbox(){
   document.getElementById('photoLightbox').classList.remove('show');
-  lightboxPhotos = []; lightboxIndex = 0;
+  lightboxPhotos = []; lightboxIndex = 0; lightboxTripId = null;
+}
+// Deletes the photo currently shown in the lightbox from its trip record —
+// confirms first (matching deleteTripPrompt/deleteBoatForm/deleteCrewForm
+// elsewhere in the app), then updates storage, the in-memory tripIndex, and
+// whichever screen (trip detail or Gallery) is currently showing it.
+async function deleteLightboxPhoto(){
+  if(!lightboxTripId || !lightboxPhotos.length) return;
+  if(!confirm(t('confirm.deletePhoto'))) return;
+  const photoToDelete = lightboxPhotos[lightboxIndex];
+  const tripId = lightboxTripId;
+  const trip = await storeGet('trip:'+tripId);
+  if(!trip){ showToast(t('toast.tripLoadFail')); return; }
+
+  const photoIdx = (trip.photos||[]).indexOf(photoToDelete);
+  if(photoIdx>=0) trip.photos.splice(photoIdx,1);
+  if(trip.coverPhoto===photoToDelete) trip.coverPhoto = trip.photos[0] || null;
+
+  const ok = await storeSet('trip:'+tripId, trip);
+  if(!ok){ showToast(t('toast.saveFailed')); return; }
+  const idxEntry = state.tripIndex.find(t=>t.id===tripId);
+  if(idxEntry){ idxEntry.hasPhotos = trip.photos.length>0; idxEntry.coverPhoto = trip.coverPhoto; }
+  await storeSet(KEYS.INDEX, state.tripIndex);
+  showToast(t('toast.photoDeleted'));
+
+  lightboxPhotos.splice(lightboxIndex,1);
+  if(!lightboxPhotos.length){
+    closeLightbox();
+  } else {
+    lightboxIndex = Math.min(lightboxIndex, lightboxPhotos.length-1);
+    renderLightboxImage();
+  }
+
+  if(window._detailTrip && window._detailTrip.id===tripId) openTripDetail(tripId);
+  const galleryScreen = document.getElementById('screen-gallery');
+  if(galleryScreen && galleryScreen.classList.contains('active')) renderGallery();
 }
 async function shareLightboxPhoto(){
   const url = lightboxPhotos[lightboxIndex];
