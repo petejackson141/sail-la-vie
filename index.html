@@ -1672,7 +1672,7 @@ const TRANSLATIONS = {
   'mapStyle.light': 'Light',
   'mapStyle.voyager': 'Colorful',
   'mapStyle.dark': 'Dark',
-  'toast.tripDeleted': 'Trip deleted',
+  'mapStyle.custom': 'Custom',  'toast.tripDeleted': 'Trip deleted',
   'toast.tripLoadFail': 'Could not load that trip',
   'toast.unitsMetric': 'Default units: Metric (km/h, km)',
   'toast.unitsNautical': 'Default units: Nautical (kts, NM)',
@@ -1964,6 +1964,7 @@ const TRANSLATIONS = {
   'mapStyle.light': 'Claro',
   'mapStyle.voyager': 'Colorido',
   'mapStyle.dark': 'Oscuro',
+  'mapStyle.custom': 'Personalizado',
   'toast.tripDeleted': 'Travesía eliminada',
   'toast.tripLoadFail': 'No se pudo cargar esa travesía',
   'toast.unitsMetric': 'Unidades predeterminadas: Métrico (km/h, km)',
@@ -2262,6 +2263,7 @@ const TRANSLATIONS = {
   'mapStyle.light': 'בהיר',
   'mapStyle.voyager': 'צבעוני',
   'mapStyle.dark': 'כהה',
+  'mapStyle.custom': 'מותאם אישית',
   'toast.tripDeleted': 'השיט נמחק',
   'toast.tripLoadFail': 'לא ניתן היה לטעון את השיט הזה',
   'toast.unitsMetric': 'יחידות ברירת מחדל: מטרי (קמ"ש, ק"מ)',
@@ -2548,6 +2550,7 @@ const TRANSLATIONS = {
   'mapStyle.light': 'Claro',
   'mapStyle.voyager': 'Colorido',
   'mapStyle.dark': 'Escuro',
+  'mapStyle.custom': 'Personalizado',
   'toast.tripDeleted': 'Travessia eliminada',
   'toast.tripLoadFail': 'Não foi possível carregar essa travessia',
   'toast.unitsMetric': 'Unidades padrão: Métrico (km/h, km)',
@@ -4134,9 +4137,16 @@ const MAP_STYLES = {
     attribution:'Tiles © Esri — Source: Esri, HERE, Garmin, FAO, NOAA, USGS', maxZoom:19 },
   dark: { labelKey:'mapStyle.dark', base:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19 },
+  // Custom style built in the MapTiler style editor (maptiler.com/maps) — needs a
+  // MapTiler API key (free tier: 100,000 requests/month, no card required; maps just
+  // pause for the rest of the month if the quota is hit rather than generating a bill).
+  // Raster tiles use ~10-16 requests per view vs ~4 for vector, so this uses quota
+  // faster than a vector map would, but 100k/month is still very generous for one app.
+  custom: { labelKey:'mapStyle.custom', base:'https://api.maptiler.com/maps/01a02d4e-7857-790e-b61e-25c9028e2dc9/256/{z}/{x}/{y}.png?key=ZpTDYI83xl3YTWg4MdV9',
+    attribution:'Tiles © MapTiler © OpenStreetMap contributors', maxZoom:20 },
 };
-let currentMapStyle = localStorage.getItem('mapStyle') || 'voyager';
-if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'voyager';
+let currentMapStyle = localStorage.getItem('mapStyle') || 'custom';
+if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'custom';
 let liveStyleLayers = null, detailStyleLayers = null; // {base, overlay?} L.tileLayer instances currently attached to each map
 
 // Removes whatever base/overlay tile layers are on `map` and adds fresh ones for
@@ -4249,11 +4259,18 @@ let liveLastLatLng = null;     // last known boat position, so the re-center but
 function yachtDivIcon(headingDeg){
   return L.divIcon({
     className: 'yacht-marker-icon',
-    html: `<div style="width:100%;height:100%;transform:rotate(${headingDeg}deg);transition:transform .4s ease;">
-      <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 1.5 L15.5 12 L12 10 L8.5 12 Z" fill="#F4E7C9" stroke="#16324F" stroke-width="1"/><path d="M12 10 L12 21" stroke="#16324F" stroke-width="1.6" stroke-linecap="round"/><path d="M7 20.5 L17 20.5 L14.5 23 L9.5 23 Z" fill="#D65A4A" stroke="#16324F" stroke-width="1"/></svg>
+    html: `<div style="width:100%;height:100%;transform:rotate(${headingDeg}deg);transition:transform .4s ease;
+        filter:drop-shadow(0 1px 2px rgba(0,0,0,.55));">
+      <svg viewBox="0 0 32 32" width="36" height="36">
+        <ellipse cx="16" cy="25" rx="7" ry="1.6" fill="rgba(0,0,0,.18)"/>
+        <path d="M16 2 C19.5 9 21 17.5 19.6 25.5 Q16 28.4 12.4 25.5 C11 17.5 12.5 9 16 2 Z" fill="#F7F3E8" stroke="#16324F" stroke-width="1.4"/>
+        <line x1="16" y1="3.5" x2="16" y2="24" stroke="#16324F" stroke-width="1"/>
+        <path d="M16 4.5 L16 21.5 L24 19 Z" fill="#C9A24B" stroke="#16324F" stroke-width="1"/>
+        <path d="M16 4.5 L16 15 L9 16.2 Z" fill="#D65A4A" stroke="#16324F" stroke-width="1"/>
+      </svg>
     </div>`,
-    iconSize: [26,26],
-    iconAnchor: [13,13]
+    iconSize: [36,36],
+    iconAnchor: [18,18]
   });
 }
 // Great-circle initial bearing from a to b, in compass degrees (0=N, 90=E).
