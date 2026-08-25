@@ -38,16 +38,33 @@ function continueBoatPhotoQueue(){
     openPhotoAdjuster(next, 'boat', 'sheetBoat', {shape:'rect', vw:320, vh:150, outputW:800, outputH:375});
   }
 }
+// Opens the shared photo lightbox (same swipeable/pinch viewer used by the
+// Gallery and trip detail screens) over the boat's current in-progress photo
+// set. tripId is left null since these aren't a trip's photos — that also
+// keeps the lightbox's delete button hidden here, since removing a boat
+// photo goes through removeBoatPhoto()/the strip's own ✕ instead.
+function openBoatPhotoLightbox(i){
+  openLightbox(pendingBoatPhotos, i, null);
+}
 function renderBoatPhotoStrip(){
   const strip = document.getElementById('boatPhotoStrip');
   // keep the two add-tiles, remove only the photo thumbs, then re-insert thumbs at the front
   strip.querySelectorAll('.photo-thumb').forEach(n=>n.remove());
   pendingBoatPhotos.forEach((p,i)=>{
+    const isDefault = p===pendingBoatPhoto;
     const div = document.createElement('div');
     div.className = 'photo-thumb';
-    div.innerHTML = `<img src="${p}" onclick="setBoatDefaultPhoto(${i})">
-      ${p===pendingBoatPhoto ? `<div class="cover-badge">${t('sheet.defaultBadge')}</div>` : ''}
-      <div class="rm" onclick="removeBoatPhoto(${i})">✕</div>`;
+    // Tapping the photo itself opens it fullscreen (swipeable, same viewer as
+    // the Gallery); the star sets it as the boat's default photo instead —
+    // previously these two actions were combined on a single tap, which
+    // meant there was no way to just look at a photo without also changing
+    // the default.
+    div.innerHTML = `<img src="${p}" onclick="openBoatPhotoLightbox(${i})">
+      <div class="setdef${isDefault ? ' is-default' : ''}" onclick="event.stopPropagation();setBoatDefaultPhoto(${i})" title="${t('action.setAsDefault')}">
+        <svg viewBox="0 0 24 24" fill="${isDefault ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9L12 17.8 5.8 21.1 7 14.2 2 9.3l6.9-1z"/></svg>
+      </div>
+      ${isDefault ? `<div class="cover-badge">${t('sheet.defaultBadge')}</div>` : ''}
+      <div class="rm" onclick="event.stopPropagation();removeBoatPhoto(${i})">✕</div>`;
     strip.insertBefore(div, strip.firstChild);
   });
 }
