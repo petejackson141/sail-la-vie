@@ -399,10 +399,10 @@ function yachtDivIcon(){
   return L.divIcon({
     className: 'yacht-marker-icon',
     html: `<div style="width:100%;height:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55));">
-      <img src="${YACHT_ICON_DATA_URL}" width="34" height="34" style="display:block;">
+      <img src="${YACHT_ICON_DATA_URL}" width="68" height="68" style="display:block;">
     </div>`,
-    iconSize: [34,34],
-    iconAnchor: [17,17]
+    iconSize: [68,68],
+    iconAnchor: [34,34]
   });
 }
 // Great-circle initial bearing from a to b, in compass degrees (0=N, 90=E).

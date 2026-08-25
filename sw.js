@@ -1,20 +1,33 @@
 /*
   Sail la Vie — service worker
   Strategy:
-    - App shell (this HTML, manifest, icons): cache-first, so the app opens
-      instantly and works with zero connection.
-    - index.html itself: network-first with a cache fallback, so a person
-      online gets the latest version, but offline still opens the last one.
+    - index.html AND all of our own JS (i18n.js, history-maps.js, etc.):
+      network-first with a cache fallback. This means "online → always get
+      the latest push, no extra steps"; "offline → falls back to whatever
+      was last successfully cached, so the app still opens with zero
+      connection." (Previously our own JS was cache-first — see the bottom
+      of this file for why that silently broke every JS-only deploy.)
     - Third-party libraries (Leaflet, jsPDF, html2canvas, fonts): cache-first
-      once fetched, since they're version-pinned URLs and won't change.
+      once fetched, since they're version-pinned URLs and genuinely won't
+      change under us — no need to hit the network for these every time.
   All of the user's actual logbook data lives in IndexedDB/localStorage,
   which the browser keeps regardless of the service worker — this file only
   caches the *code*, not the trip data.
 
-  Bump CACHE_NAME whenever index.html/manifest/icons change, so old caches
-  get cleared and the new shell is fetched.
+  Bump CACHE_NAME on any release where you want to force a clean cache
+  (e.g. if a stale entry ever gets stuck) — it's no longer required for
+  ordinary updates to show up, since those are now network-first.
+
+  --- Why JS updates used to go missing ---
+  A browser only checks for a new service worker by byte-comparing THIS FILE
+  against the one it already has installed. Editing history-maps.js or
+  i18n.js alone never touches this file, so the browser never even knew to
+  look for an update — the old cache-first JS just kept being served
+  indefinitely, regardless of how many times you pushed, hard-refreshed, or
+  cleared the browser's own cache. Switching those files to network-first
+  (below) removes the dependency on that detection mechanism entirely.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v4';
+const CACHE_NAME = 'sail-la-vie-shell-v5';
 
 const APP_SHELL = [
   './',
@@ -61,22 +74,26 @@ self.addEventListener('fetch', (event) => {
   const isSameOrigin = url.origin === self.location.origin;
   const isHtml = req.mode === 'navigate' || req.destination === 'document';
 
-  if (isSameOrigin && isHtml) {
-    // Network-first for the app shell HTML so updates are picked up when online.
+  if (isSameOrigin) {
+    // Network-first for everything we own — the HTML shell and our own JS —
+    // so a push is live on the very next load while online, with the cached
+    // copy only used as an offline fallback.
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          }
           return res;
         })
-        .catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
+        .catch(() => caches.match(req).then((cached) => cached || (isHtml ? caches.match('./index.html') : undefined)))
     );
     return;
   }
 
-  // Cache-first for everything else: local assets and pinned CDN libraries
-  // (Leaflet, jsPDF, html2canvas, Google Fonts).
+  // Cache-first for third-party CDN libraries (Leaflet, jsPDF, html2canvas,
+  // Google Fonts) — cross-origin, version-pinned URLs that won't change.
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;

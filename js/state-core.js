@@ -66,8 +66,12 @@ async function boot(){
   document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
   greet();
 
+  // Baseline history entry for the Android back-button integration below —
+  // gives popstate a known "home" state to fall back to.
+  history.replaceState({type:'screen', name:'home'}, '', location.href);
+
   const resumed = await resumeActiveTripIfAny();
-  if(!resumed) nav('home');
+  if(!resumed) nav('home', true); // already home — skip pushing a duplicate entry
   renderHomeStats();
 }
 function greet(){
@@ -84,12 +88,22 @@ function placeholderAvatar(){
 }
 
 /* ---------- navigation: nav(name) is the app's entire "router" — it just
-   shows the matching .screen div and hides the rest. No URL/history involved. ---------- */
-function nav(name){
+   shows the matching .screen div and hides the rest. No URL involved, but it
+   DOES push a browser history entry per screen switch (see the back-button
+   block below) so Android's hardware/gesture back steps through the app
+   instead of exiting it straight away.
+   fromPopState=true means "the back button already got us here, just update
+   the UI" — skips pushing a duplicate history entry. ---------- */
+function nav(name, fromPopState){
+  const prevActiveEl = document.querySelector('.screen.active');
+  const prevName = prevActiveEl ? prevActiveEl.id.replace('screen-','') : null;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.navitem').forEach(n=>n.classList.toggle('active', n.dataset.tab===name));
   window.scrollTo(0,0);
+  if(!fromPopState && name!==prevName){
+    history.pushState({type:'screen', name}, '', location.href);
+  }
   if(name==='history') renderHistory();
   if(name==='boats') renderBoats();
   if(name==='crew') renderCrew();
@@ -130,18 +144,61 @@ function showToast(msg){
   clearTimeout(window._toastTimer);
   window._toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 2200);
 }
-function closeSheets(){
+function closeSheets(fromPopState){
   // Sheets (modals) are just divs toggled between display:none/block — hiding "all of them"
   // is simplest since only one is ever open at a time anyway.
+  const wasOpen = [...document.querySelectorAll('.sheet')].some(s=>s.style.display==='block');
   document.querySelectorAll('.sheet').forEach(s=>s.style.display='none');
   document.getElementById('overlay').classList.remove('active');
   crewPickerActive = false;
+  // Pop the history entry the open sheet was holding — but only when WE'RE
+  // the ones closing it (a Cancel/Save/backdrop tap). If this close is a
+  // reaction to the back button (fromPopState), the browser already moved
+  // back on its own; calling history.back() again here would skip an extra
+  // entry and throw the back-stack out of sync.
+  if(wasOpen && !fromPopState){
+    ignoreNextPopState = true;
+    history.back();
+  }
 }
 function openSheet(id){
+  const wasSheetOpen = [...document.querySelectorAll('.sheet')].some(s=>s.style.display==='block');
   document.querySelectorAll('.sheet').forEach(s=>s.style.display='none');
   document.getElementById(id).style.display='block';
   document.getElementById('overlay').classList.add('active');
+  // Swapping from one sheet straight to another (e.g. the photo adjuster
+  // returning to the boat/crew sheet it was opened from) replaces the
+  // current history entry rather than stacking a new one — otherwise each
+  // hop through a chain of sheets would need its own extra back-press to
+  // fully back out of, even though only one sheet is ever visible at a time.
+  const state = {type:'sheet', id};
+  if(wasSheetOpen){
+    history.replaceState(state, '', location.href);
+  } else {
+    history.pushState(state, '', location.href);
+  }
 }
+
+/* ---------- Android back-button integration ----------
+   A PWA has no navigation history by default, so the phone's back button
+   just exits the app immediately — this is what was happening. nav() and
+   openSheet() above push a history entry per screen/sheet; this listener
+   uses those entries to step back through the app instead, and only once
+   you're back at Home with nothing open does a further back press fall
+   through to actually exiting, which is the expected behavior.
+   ignoreNextPopState suppresses the popstate our OWN history.back() call
+   (from closeSheets) generates, so we don't double-handle it. ---------- */
+let ignoreNextPopState = false;
+window.addEventListener('popstate', (event)=>{
+  if(ignoreNextPopState){ ignoreNextPopState = false; return; }
+  const sheetOpen = [...document.querySelectorAll('.sheet')].some(s=>s.style.display==='block');
+  if(sheetOpen){
+    closeSheets(true);
+  } else {
+    const target = (event.state && event.state.type==='screen') ? event.state.name : 'home';
+    nav(target, true);
+  }
+});
 
 /* ---------- image resize helper (keeps localStorage payloads small) ---------- */
 function resizeImage(file, maxDim, quality){
