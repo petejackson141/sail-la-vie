@@ -265,6 +265,8 @@ let detailLeafletMap = null, detailMapLocked = true;
    both the live map and any trip's detail map; Colorful is the default for anyone
    who hasn't picked yet. */
 const MAP_STYLES = {
+  minimal: { labelKey:'mapStyle.minimal', base:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20 },
   standard: { labelKey:'mapStyle.standard', base:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution:'© OpenStreetMap contributors', maxZoom:19 },
   nautical: { labelKey:'mapStyle.nautical', base:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -272,11 +274,15 @@ const MAP_STYLES = {
     attribution:'© OpenStreetMap contributors, seamarks © OpenSeaMap', maxZoom:18 },
   satellite: { labelKey:'mapStyle.satellite', base:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics', maxZoom:19 },
-  voyager: { labelKey:'mapStyle.voyager', base:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-    attribution:'Tiles © Esri — Source: Esri, HERE, Garmin, FAO, NOAA, USGS', maxZoom:19 },
+  voyager: { labelKey:'mapStyle.voyager', base:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20 },
 };
-let currentMapStyle = localStorage.getItem('mapStyle') || 'voyager';
-if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'voyager';
+};
+// "Minimal" (CARTO Positron) is now the default — light grey background, thin
+// roads, muted labels, no clutter. Voyager/Standard/Nautical/Satellite are
+// still there in the style switcher for anyone who wants them.
+let currentMapStyle = localStorage.getItem('mapStyle') || 'minimal';
+if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'minimal';
 let liveStyleLayers = null, detailStyleLayers = null; // {base, overlay?} L.tileLayer instances currently attached to each map
 
 // Removes whatever base/overlay tile layers are on `map` and adds fresh ones for

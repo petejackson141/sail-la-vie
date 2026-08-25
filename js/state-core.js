@@ -13,7 +13,9 @@ let currentTrip = null;   // the ONE journey/manual-entry/edit in progress right
 let watchId = null;       // navigator.geolocation.watchPosition() handle, so stopGPS() can cancel it
 let timerId = null;       // setInterval() handle for the elapsed-time ticker
 let startedAt = null;     // Date.now() when the current live journey began, used to compute elapsed time
-let lastFixTime = null;
+let lastFixTime = null;   // Date.now() of the last GPS fix we RECEIVED (accepted or not) — drives the staleness watchdog in journey.js
+let gpsWatchdogInterval = null; // setInterval() handle that checks lastFixTime and flags/restarts a silently-dead GPS watch
+let bestRejectedFix = null;     // best (lowest-accuracy-radius) fix we've rejected for being too imprecise, kept as a fallback so chronically weak signal doesn't mean zero points get recorded
 let wakeLock = null;      // Screen Wake Lock, held while a live journey is running to reduce the chance
                            // of the OS suspending/killing the tab when the screen would otherwise sleep
 

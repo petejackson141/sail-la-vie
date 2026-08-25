@@ -500,6 +500,20 @@ function haversineNm(a,b){
   const h = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
   return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1-h));
 }
+// A fix worse than this radius (meters) is almost certainly the browser falling
+// back to coarse network/cell positioning rather than a real GPS lock — common
+// offshore with a weak cell signal. These used to get plotted straight onto the
+// track, snapping the line miles off course. Tune this up if legit fixes at sea
+// are getting rejected too often (weak-signal status will show if so); tune it
+// down if occasional jumps still slip through.
+const GPS_ACCURACY_LIMIT_M = 60;
+// How long to go without ANY fix (good or bad) before we treat GPS as silently
+// dead rather than just between fixes. watchPosition can stop delivering
+// callbacks on mobile (especially iOS Safari/PWAs) without ever firing an
+// error — nothing previously caught this, so the elapsed timer (which runs on
+// its own independent setInterval) just kept counting while nothing recorded.
+const GPS_STALE_MS = 45000;
+
 function startGPS(){
   document.getElementById('manualDistanceWrap').style.display='none';
   const gpsEl = document.getElementById('gpsStatus');
@@ -510,29 +524,61 @@ function startGPS(){
     return;
   }
   gpsEl.textContent = t('gps.searching');
+  lastFixTime = null;
+  bestRejectedFix = null;
   watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
+  if(gpsWatchdogInterval) clearInterval(gpsWatchdogInterval);
+  gpsWatchdogInterval = setInterval(checkGpsFreshness, 15000);
 }
 function onFix(pos){
+  lastFixTime = Date.now();
   const gpsEl = document.getElementById('gpsStatus');
-  gpsEl.textContent = t('gps.live'); gpsEl.style.color='var(--navy)';
-  const point = { lat: pos.coords.latitude, lng: pos.coords.longitude, t: Date.now() };
+  const acc = pos.coords.accuracy; // meters, browser's own confidence radius for this fix
+  const point = { lat: pos.coords.latitude, lng: pos.coords.longitude, t: Date.now(), acc };
+
+  if(acc != null && acc > GPS_ACCURACY_LIMIT_M){
+    // Too imprecise to trust — keep it as a fallback candidate (in case signal
+    // stays weak for a while and we'd otherwise record nothing at all) but
+    // don't let it touch the path or stats.
+    if(!bestRejectedFix || acc < bestRejectedFix.acc) bestRejectedFix = point;
+    gpsEl.textContent = t('gps.weakSignal', {acc: Math.round(acc)});
+    gpsEl.style.color = 'var(--coral)';
+    return;
+  }
+  acceptFix(point);
+}
+// Actually commits a fix to the trip: sanity-checks it against the previous
+// accepted point and only THEN adds it to the path. Previously the point was
+// pushed to the path unconditionally and only its distance/speed contribution
+// was thrown away on a glitch — so a bad fix still visibly snapped the track
+// line to the wrong spot even though the stats looked fine.
+function acceptFix(point){
+  const gpsEl = document.getElementById('gpsStatus');
   const prev = currentTrip.path[currentTrip.path.length-1];
-  currentTrip.path.push(point);
+  let accept = true;
   if(prev){
     const segNm = haversineNm(prev, point);
     const dtHours = (point.t - prev.t)/3600000;
     if(dtHours>0){
       const instSpeed = segNm/dtHours;
-      if(instSpeed < 60){ // discard the segment if it implies >60kts — almost certainly a GPS glitch, not real sailing speed
+      if(instSpeed >= 60){ accept = false; } // almost certainly a GPS glitch, not real sailing speed — reject the point entirely, not just its stats contribution
+      else {
         currentTrip.distanceNm += segNm;
         currentTrip.maxSpeed = Math.max(currentTrip.maxSpeed, instSpeed);
       }
     }
   }
+  if(accept){
+    currentTrip.path.push(point);
+    bestRejectedFix = null;
+    gpsEl.textContent = t('gps.live'); gpsEl.style.color='var(--navy)';
+    renderLiveTrack();
+  } else {
+    gpsEl.textContent = t('gps.rejectedJump'); gpsEl.style.color='var(--coral)';
+  }
   const elapsedH = currentTrip.elapsedSeconds/3600;
   currentTrip.avgSpeed = elapsedH>0 ? currentTrip.distanceNm/elapsedH : 0;
   updateLiveStatDisplays();
-  renderLiveTrack();
   saveActiveTripCheckpoint();
 }
 function onGpsError(){
@@ -541,9 +587,40 @@ function onGpsError(){
   document.getElementById('manualDistanceWrap').style.display='block';
   renderLiveTrack();
 }
+// Watchdog: polls how long it's been since ANY fix arrived (not just accepted
+// ones). Past GPS_STALE_MS it visibly flags "no fix" in the GPS status pill
+// instead of silently saying "Live" forever, and tries to self-heal by
+// tearing down and restarting the watch — cheap to attempt, and covers the
+// case where the OS/browser has quietly stalled the watch rather than the
+// boat genuinely having no signal. If we've been stuck long enough and have a
+// weak-but-real fallback fix sitting around, accept it rather than leaving a
+// total gap in the track.
+function checkGpsFreshness(){
+  if(!currentTrip || currentTrip.isManual || watchId===null) return;
+  if(!lastFixTime) return; // still waiting on the very first fix — "Searching…" already covers this
+  const staleFor = Date.now() - lastFixTime;
+  if(staleFor <= GPS_STALE_MS) return;
+
+  const gpsEl = document.getElementById('gpsStatus');
+  const mins = Math.floor(staleFor/60000), secs = Math.floor((staleFor%60000)/1000);
+  gpsEl.textContent = t('gps.stale', {time: mins>0 ? `${mins}m ${secs}s` : `${secs}s`});
+  gpsEl.style.color = 'var(--coral)';
+
+  if(bestRejectedFix){
+    acceptFix(bestRejectedFix);
+    bestRejectedFix = null;
+  }
+  if('geolocation' in navigator){
+    navigator.geolocation.clearWatch(watchId);
+    watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
+  }
+}
 function stopGPS(){
   if(watchId!==null && 'geolocation' in navigator){ navigator.geolocation.clearWatch(watchId); watchId=null; }
   if(timerId){ clearInterval(timerId); timerId=null; }
+  if(gpsWatchdogInterval){ clearInterval(gpsWatchdogInterval); gpsWatchdogInterval=null; }
+  lastFixTime = null;
+  bestRejectedFix = null;
   stopLiveConnCheck();
   releaseWakeLock();
 }
