@@ -277,7 +277,7 @@ const MAP_STYLES = {
   voyager: { labelKey:'mapStyle.voyager', base:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20 },
 };
-};
+
 // "Minimal" (CARTO Positron) is now the default — light grey background, thin
 // roads, muted labels, no clutter. Voyager/Standard/Nautical/Satellite are
 // still there in the style switcher for anyone who wants them.
