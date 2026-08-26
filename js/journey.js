@@ -526,9 +526,44 @@ function startGPS(){
   gpsEl.textContent = t('gps.searching');
   lastFixTime = null;
   bestRejectedFix = null;
+  pendingJumpCandidate = null;
   watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
   if(gpsWatchdogInterval) clearInterval(gpsWatchdogInterval);
   gpsWatchdogInterval = setInterval(checkGpsFreshness, 15000);
+  showRecordingNotification();
+}
+// Mirrors the persistent "Trip Recording" system notification other tracking
+// apps (SeePeople, etc.) show — makes it obvious at a glance, even with the
+// phone locked or another app open, that a journey is currently being
+// tracked. Best-effort: web notifications on Android Chrome behave a lot
+// like this, but there's no true PWA equivalent of a native foreground
+// service — the notification CAN be swiped away by the user without
+// stopping tracking (a native app can pin theirs so it can't be dismissed;
+// a web one can't). It also depends on notification permission being
+// granted, and is more limited on iOS. The in-app recording banner stays as
+// the reliable fallback either way — this is an addition to it, not a
+// replacement.
+async function showRecordingNotification(){
+  try{
+    if(!('serviceWorker' in navigator) || !('Notification' in window)) return;
+    if(Notification.permission==='default'){ await Notification.requestPermission(); }
+    if(Notification.permission!=='granted') return;
+    const reg = await navigator.serviceWorker.ready;
+    const boat = state.boats.find(b=>b.id===currentTrip?.boatId);
+    reg.showNotification(t('notification.recordingTitle'), {
+      body: boat ? t('notification.recordingBodyBoat', {boat: boat.name}) : t('notification.recordingBody'),
+      icon: './images/icon-192.png',
+      tag: 'trip-recording',
+      silent: true
+    });
+  }catch(e){ /* not fatal — in-app recording banner is still there */ }
+}
+async function clearRecordingNotification(){
+  try{
+    if(!('serviceWorker' in navigator)) return;
+    const reg = await navigator.serviceWorker.ready;
+    (await reg.getNotifications({tag:'trip-recording'})).forEach(n=>n.close());
+  }catch(e){}
 }
 function onFix(pos){
   lastFixTime = Date.now();
@@ -548,34 +583,68 @@ function onFix(pos){
   acceptFix(point);
 }
 // Actually commits a fix to the trip: sanity-checks it against the previous
-// accepted point and only THEN adds it to the path. Previously the point was
-// pushed to the path unconditionally and only its distance/speed contribution
-// was thrown away on a glitch — so a bad fix still visibly snapped the track
-// line to the wrong spot even though the stats looked fine.
+// accepted point and only THEN adds it to the path. A fix implying 60+kts is
+// almost certainly a glitch, not real sailing speed — but a plain "reject
+// and wait" isn't enough on its own: the longer fixes keep getting rejected,
+// the more elapsed time stacks up against that same stale last-good point,
+// and distance÷time eventually dips back under the 60kt cutoff for ANY
+// distance, however wrong — the filter quietly gets weaker over time instead
+// of staying strict. That's what let a multi-mile jump back in after ~30s of
+// "Ignored bad fix".
+// Fix: once a fix gets rejected, we hold it as pendingJumpCandidate and stop
+// trusting the stale-anchor math entirely — the ONLY way out of "disputed"
+// state is a SECOND raw fix that closely agrees with the first rejected one
+// (checked against each other, not the old anchor). Two fixes in a row
+// landing in the same place is real, if abrupt, movement — e.g. GPS handing
+// off between providers while another location app runs at the same time,
+// which can happen even when each individual fix reports decent accuracy.
+// An isolated one-off glitch won't have a second fix agreeing with it and
+// just gets dropped. We don't count a confirmed jump's distance/speed toward
+// trip stats, since we don't actually know the true path across whatever
+// gap caused the dispute.
 function acceptFix(point){
+  const prev = currentTrip.path[currentTrip.path.length-1];
+  if(!prev){ commitFix(point, false); return; }
+
+  const segNm = haversineNm(prev, point);
+  const dtHours = (point.t - prev.t)/3600000;
+  const instSpeed = dtHours>0 ? segNm/dtHours : Infinity;
+
+  if(instSpeed < 60 && !pendingJumpCandidate){
+    commitFix(point, true);
+    return;
+  }
+
+  if(pendingJumpCandidate){
+    const confirmNm = haversineNm(pendingJumpCandidate, point);
+    const confirmDtHours = (point.t - pendingJumpCandidate.t)/3600000;
+    const confirmSpeed = confirmDtHours>0 ? confirmNm/confirmDtHours : Infinity;
+    if(confirmSpeed < 15){
+      pendingJumpCandidate = null;
+      commitFix(point, false); // confirmed relocation, but skip stats — the true path across the disputed gap is unknown
+      return;
+    }
+  }
+  pendingJumpCandidate = point;
+  const gpsEl = document.getElementById('gpsStatus');
+  gpsEl.textContent = t('gps.rejectedJump'); gpsEl.style.color='var(--coral)';
+}
+function commitFix(point, countStats){
   const gpsEl = document.getElementById('gpsStatus');
   const prev = currentTrip.path[currentTrip.path.length-1];
-  let accept = true;
-  if(prev){
+  if(countStats && prev){
     const segNm = haversineNm(prev, point);
     const dtHours = (point.t - prev.t)/3600000;
     if(dtHours>0){
       const instSpeed = segNm/dtHours;
-      if(instSpeed >= 60){ accept = false; } // almost certainly a GPS glitch, not real sailing speed — reject the point entirely, not just its stats contribution
-      else {
-        currentTrip.distanceNm += segNm;
-        currentTrip.maxSpeed = Math.max(currentTrip.maxSpeed, instSpeed);
-      }
+      currentTrip.distanceNm += segNm;
+      currentTrip.maxSpeed = Math.max(currentTrip.maxSpeed, instSpeed);
     }
   }
-  if(accept){
-    currentTrip.path.push(point);
-    bestRejectedFix = null;
-    gpsEl.textContent = t('gps.live'); gpsEl.style.color='var(--navy)';
-    renderLiveTrack();
-  } else {
-    gpsEl.textContent = t('gps.rejectedJump'); gpsEl.style.color='var(--coral)';
-  }
+  currentTrip.path.push(point);
+  bestRejectedFix = null;
+  gpsEl.textContent = t('gps.live'); gpsEl.style.color='var(--navy)';
+  renderLiveTrack();
   const elapsedH = currentTrip.elapsedSeconds/3600;
   currentTrip.avgSpeed = elapsedH>0 ? currentTrip.distanceNm/elapsedH : 0;
   updateLiveStatDisplays();
@@ -621,6 +690,8 @@ function stopGPS(){
   if(gpsWatchdogInterval){ clearInterval(gpsWatchdogInterval); gpsWatchdogInterval=null; }
   lastFixTime = null;
   bestRejectedFix = null;
+  pendingJumpCandidate = null;
+  clearRecordingNotification();
   stopLiveConnCheck();
   releaseWakeLock();
 }

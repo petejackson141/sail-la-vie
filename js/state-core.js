@@ -16,6 +16,7 @@ let startedAt = null;     // Date.now() when the current live journey began, use
 let lastFixTime = null;   // Date.now() of the last GPS fix we RECEIVED (accepted or not) — drives the staleness watchdog in journey.js
 let gpsWatchdogInterval = null; // setInterval() handle that checks lastFixTime and flags/restarts a silently-dead GPS watch
 let bestRejectedFix = null;     // best (lowest-accuracy-radius) fix we've rejected for being too imprecise, kept as a fallback so chronically weak signal doesn't mean zero points get recorded
+let pendingJumpCandidate = null; // last fix rejected for implying an implausible (60+kt) jump — held so a SECOND agreeing fix can confirm it's a real relocation rather than a one-off glitch (see acceptFix() in journey.js)
 let wakeLock = null;      // Screen Wake Lock, held while a live journey is running to reduce the chance
                            // of the OS suspending/killing the tab when the screen would otherwise sleep
 

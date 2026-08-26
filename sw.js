@@ -27,7 +27,7 @@
   cleared the browser's own cache. Switching those files to network-first
   (below) removes the dependency on that detection mechanism entirely.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v5';
+const CACHE_NAME = 'sail-la-vie-shell-v6';
 
 const APP_SHELL = [
   './',
@@ -104,6 +104,21 @@ self.addEventListener('fetch', (event) => {
         }
         return res;
       }).catch(() => cached);
+    })
+  );
+});
+
+// Tapping the "Trip Recording" notification (see showRecordingNotification()
+// in journey.js) should bring the app forward rather than just dismissing
+// the notification and doing nothing.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus();
+      }
+      if (clients.openWindow) return clients.openWindow('./');
     })
   );
 });
