@@ -227,6 +227,7 @@ const TRANSLATIONS = {
   'settings.language': 'Language',
   'settings.nightTheme': 'Night Theme',
   'settings.resetApp': 'Reset App Data…',
+  'settings.version': 'Version {version}',
   'settings.resetApp2': 'Reset App Data',
   'settings.resetHint': 'Permanently erases every trip, boat, crew member, and profile detail on this device. This can\'t be undone — back up first if you want to keep anything.',
   'settings.themeHint': 'Choose Day, Night, or Auto to switch based on your local sunrise and sunset',

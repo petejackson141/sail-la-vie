@@ -2,6 +2,15 @@
 // Global app state object, boot(), nav()/screen switching, action sheets, wake lock, photo resize + crop/adjust tool
 // Extracted from the original single-file app.js, lines 1470-1776, in original order.
 
+// Bumped automatically on every change Claude hands over — format is
+// DD.MM.YYYY.HHMM (the moment the fix was produced, UTC). Shown in Settings
+// so you can ask a tester "what version does yours say?" instead of
+// guessing whether they're on the latest code — this exists BECAUSE of the
+// caching mess a few pushes back, where nobody could tell whether an old
+// build was still stuck on someone's phone. You shouldn't need to touch
+// this yourself.
+const APP_VERSION = '26.08.2026.0610';
+
 let state = {
   tripIndex: [],   // lightweight list for History screen — NOT the full trip records (those are stored separately as 'trip:<id>')
   boats: [],
@@ -65,6 +74,7 @@ async function boot(){
 
   refreshAvatars();
   document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
+  document.getElementById('appVersionLine').textContent = t('settings.version', {version: APP_VERSION});
   greet();
 
   // Baseline history entry for the Android back-button integration below —
