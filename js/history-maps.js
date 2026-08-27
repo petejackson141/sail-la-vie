@@ -597,7 +597,7 @@ function renderLiveTrack(){
 }
 async function deleteTripPrompt(){
   if(!openTripId) return;
-  if(!confirm(t('confirm.deleteTrip'))) return;
+  if(!(await showConfirm("This will delete this log entry and you will lose all its data", {danger:true}))) return;
   await storeDelete('trip:'+openTripId);
   state.tripIndex = state.tripIndex.filter(t=>t.id!==openTripId);
   await storeSet(KEYS.INDEX, state.tripIndex);

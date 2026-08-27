@@ -180,7 +180,7 @@ async function restoreFromFile(ev){
   try{
     const data = JSON.parse(await f.text());
     if(!data || !data.profile || !Array.isArray(data.trips)){ showToast(t('toast.invalidBackup')); return; }
-    if(!confirm(t('confirm.restore', {name: f.name}))) return;
+    if(!(await showConfirm(t('confirm.restore', {name: f.name}), {danger:true}))) return;
 
     await storeSet(KEYS.PROFILE, data.profile);
     await storeSet(KEYS.BOATS, data.boats||[]);

@@ -9,7 +9,87 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '27.08.2026.1039';
+const APP_VERSION = '27.08.2026.1541';
+
+/* ============================================================
+   CUSTOM CONFIRM DIALOG (shared across all screens)
+   Drop-in replacement for the native confirm() popup (browser-styled,
+   can't be customized) so every confirmation in the app matches its look
+   instead of showing the browser's default alert box.
+   Usage: if(await showConfirm(message)) { ... }
+   Pass {danger:true} for destructive actions (discard/delete) to show
+   the confirm button in red with a warning icon instead of blue.
+   Lives here (state-core.js) rather than in journey.js/history-maps.js/etc.
+   since this file loads first and every screen needs this dialog.
+   ============================================================ */
+function showConfirm(message, opts={}){
+  const danger = !!opts.danger;
+  const okLabel = opts.okLabel || 'Confirm';
+  const cancelLabel = opts.cancelLabel || 'Cancel';
+
+  if(!document.getElementById('customConfirmStyles')){
+    const style = document.createElement('style');
+    style.id = 'customConfirmStyles';
+    style.textContent = `
+      .cc-overlay{position:fixed;inset:0;background:rgba(8,15,26,0.55);backdrop-filter:blur(2px);
+        display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;
+        opacity:0;transition:opacity .18s ease;}
+      .cc-overlay.show{opacity:1;}
+      .cc-card{background:#152233;color:#eaf1fb;border-radius:18px;max-width:340px;width:100%;
+        padding:24px 22px 18px;box-shadow:0 12px 40px rgba(0,0,0,0.45);
+        transform:scale(.92) translateY(6px);transition:transform .18s ease;
+        border:1px solid rgba(255,255,255,0.06);}
+      .cc-overlay.show .cc-card{transform:scale(1) translateY(0);}
+      .cc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+      .cc-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+        font-size:20px;flex-shrink:0;}
+      .cc-icon.danger{background:rgba(255,90,90,0.15);color:#ff6b6b;}
+      .cc-icon.normal{background:rgba(64,160,255,0.15);color:#4da3ff;}
+      .cc-icon.cc-icon-boat{background:rgba(255,255,255,0.08);color:#9fb3c8;}
+      .cc-msg{font-size:15.5px;line-height:1.45;color:#cdd8e6;margin:0 0 20px;}
+      .cc-actions{display:flex;gap:10px;}
+      .cc-btn{flex:1;padding:12px 0;border-radius:12px;border:none;font-size:15px;font-weight:600;
+        cursor:pointer;transition:opacity .12s ease;}
+      .cc-btn:active{opacity:.7;}
+      .cc-btn-cancel{background:rgba(255,255,255,0.08);color:#eaf1fb;}
+      .cc-btn-ok{background:#4da3ff;color:#06121f;}
+      .cc-btn-ok.danger{background:#ff5a5a;color:#22090a;}
+    `;
+    document.head.appendChild(style);
+  }
+
+  return new Promise(resolve=>{
+    const overlay = document.createElement('div');
+    overlay.className = 'cc-overlay';
+    overlay.innerHTML = `
+      <div class="cc-card">
+        <div class="cc-header">
+          <div class="cc-icon ${danger?'danger':'normal'}">${danger?'⚠️':'❔'}</div>
+          <div class="cc-icon cc-icon-boat">⛵</div>
+        </div>
+        <p class="cc-msg"></p>
+        <div class="cc-actions">
+          <button class="cc-btn cc-btn-cancel" data-act="cancel"></button>
+          <button class="cc-btn cc-btn-ok ${danger?'danger':''}" data-act="ok"></button>
+        </div>
+      </div>`;
+    overlay.querySelector('.cc-msg').textContent = message;
+    overlay.querySelector('[data-act="cancel"]').textContent = cancelLabel;
+    overlay.querySelector('[data-act="ok"]').textContent = okLabel;
+
+    function close(result){
+      overlay.classList.remove('show');
+      setTimeout(()=>overlay.remove(), 180);
+      resolve(result);
+    }
+    overlay.querySelector('[data-act="cancel"]').onclick = ()=>close(false);
+    overlay.querySelector('[data-act="ok"]').onclick = ()=>close(true);
+    overlay.addEventListener('click', e=>{ if(e.target===overlay) close(false); });
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(()=>overlay.classList.add('show'));
+  });
+}
 
 let state = {
   tripIndex: [],   // lightweight list for History screen — NOT the full trip records (those are stored separately as 'trip:<id>')
