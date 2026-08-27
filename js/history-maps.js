@@ -144,6 +144,7 @@ async function openTripDetail(id){
     <div class="section-title">${t('detail.weather')}</div>
     <div class="card" style="padding:16px;">
       <div class="trip-meta">
+        <span>${trip.weather?.sky?`${skyIcon(trip.weather.sky)} ${skyLabel(trip.weather.sky)}`:''}</span>
         <span>💨 ${compassLabel(trip.weather?.windDir)||'—'} ${trip.weather?.windSpeed!=null?fmtSpeed(trip.weather.windSpeed):''}</span>
         <span>${trip.weather?.gusts?`${t('detail.gustsShort')} ${fmtSpeed(trip.weather.gusts)}`:''}</span>
         <span>🌊 ${seaStateLabel(trip.weather?.seaState)||'—'}${trip.weather?.waveHeight?` (${trip.weather.waveHeight}m)`:''}${trip.weather?.waveDir?` ${t('detail.fromDir')} ${compassLabel(trip.weather.waveDir)}`:''}</span>

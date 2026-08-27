@@ -527,6 +527,8 @@ function startGPS(){
   lastFixTime = null;
   bestRejectedFix = null;
   pendingJumpCandidate = null;
+  fixCountAccepted = 0; fixCountWeak = 0; fixCountJumpRejected = 0;
+  updateFixCountsDisplay();
   watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
   if(gpsWatchdogInterval) clearInterval(gpsWatchdogInterval);
   gpsWatchdogInterval = setInterval(checkGpsFreshness, 15000);
@@ -576,11 +578,25 @@ function onFix(pos){
     // stays weak for a while and we'd otherwise record nothing at all) but
     // don't let it touch the path or stats.
     if(!bestRejectedFix || acc < bestRejectedFix.acc) bestRejectedFix = point;
+    fixCountWeak++;
+    updateFixCountsDisplay();
     gpsEl.textContent = t('gps.weakSignal', {acc: Math.round(acc)});
     gpsEl.style.color = 'var(--coral)';
     return;
   }
   acceptFix(point);
+}
+// Renders the small "N fixes • M weak-signal • J jump-rejected" line under the
+// GPS status pill. Purely diagnostic — a track that looks sparse/straight-lined
+// on the map (see history) usually traces back to a high weak-signal count here,
+// which is common testing on land/near buildings rather than a real bug.
+function updateFixCountsDisplay(){
+  const el = document.getElementById('gpsFixCounts');
+  if(!el) return;
+  const parts = [t('gps.fixCountAccepted', {n: fixCountAccepted})];
+  if(fixCountWeak) parts.push(t('gps.fixCountWeak', {n: fixCountWeak}));
+  if(fixCountJumpRejected) parts.push(t('gps.fixCountJump', {n: fixCountJumpRejected}));
+  el.textContent = parts.join(' • ');
 }
 // Actually commits a fix to the trip: sanity-checks it against the previous
 // accepted point and only THEN adds it to the path. A fix implying 60+kts is
@@ -626,6 +642,8 @@ function acceptFix(point){
     }
   }
   pendingJumpCandidate = point;
+  fixCountJumpRejected++;
+  updateFixCountsDisplay();
   const gpsEl = document.getElementById('gpsStatus');
   gpsEl.textContent = t('gps.rejectedJump'); gpsEl.style.color='var(--coral)';
 }
@@ -643,6 +661,8 @@ function commitFix(point, countStats){
   }
   currentTrip.path.push(point);
   bestRejectedFix = null;
+  fixCountAccepted++;
+  updateFixCountsDisplay();
   gpsEl.textContent = t('gps.live'); gpsEl.style.color='var(--navy)';
   renderLiveTrack();
   const elapsedH = currentTrip.elapsedSeconds/3600;
