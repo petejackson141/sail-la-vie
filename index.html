@@ -242,6 +242,10 @@
     font-weight:700; padding:2px 6px; border-radius:8px; }
   .photo-thumb .rm{ position:absolute; top:3px; right:3px; width:18px; height:18px; background:rgba(20,43,68,.75); border-radius:50%;
     display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; cursor:pointer; }
+  .weather-autofill-banner{ display:flex; align-items:center; gap:10px; background:var(--gold); color:var(--navy-deep); border-radius:14px;
+    padding:10px 14px; margin-bottom:14px; font-size:12.5px; font-weight:600; line-height:1.4; cursor:pointer; }
+  .weather-autofill-banner .dismiss{ flex:0 0 auto; width:20px; height:20px; border-radius:50%; background:rgba(14,35,56,.18);
+    display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; }
   .photo-thumb .setdef{ position:absolute; top:3px; left:3px; width:18px; height:18px; background:rgba(20,43,68,.75); border-radius:50%;
     display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; }
   .photo-thumb .setdef svg{ width:11px; height:11px; }
@@ -818,6 +822,10 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </div>
 
     <div id="liveStatsBlock">
+      <div class="weather-autofill-banner" id="weatherAutoFillBanner" style="display:none;" onclick="scrollToLogEntryWeather(event)">
+        <span id="weatherAutoFillText"></span>
+        <div class="dismiss" onclick="event.stopPropagation();dismissWeatherAutoFillBanner()">✕</div>
+      </div>
       <div class="stat-card" style="text-align:center;">
         <div class="stat-label" data-i18n="active.elapsedTime">Elapsed Time</div>
         <div style="font-family:var(--font-display);font-size:42px;font-weight:700;color:var(--navy);letter-spacing:.02em;" id="elapsedDisplay">00:00:00</div>
@@ -827,7 +835,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
         <div class="cell"><div class="stat-label" data-i18n="stat.avgSpeed">Avg Speed</div><div class="stat-value" id="avgSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
         <div class="cell"><div class="stat-label" data-i18n="stat.maxSpeed">Max Speed</div><div class="stat-value" id="maxSpeedDisplay">0.0<span class="stat-unit"> kts</span></div></div>
         <div class="cell" style="margin-top:14px;"><div class="stat-label" data-i18n="stat.distance">Distance</div><div class="stat-value" id="distDisplay">0.0<span class="stat-unit"> NM</span></div></div>
-        <div class="cell" style="margin-top:14px;"><div class="stat-label" data-i18n="stat.gps">GPS</div><div class="stat-value" id="gpsStatus" style="font-size:15px;">—</div><div style="font-size:11px;color:var(--ink-muted);margin-top:2px;" id="gpsFixCounts"></div></div>
+        <div class="cell" style="margin-top:14px;"><div class="stat-label" data-i18n="stat.gps">GPS</div><div class="stat-value" id="gpsStatus" style="font-size:15px;">—</div></div>
       </div>
 
       <div class="theme-toggle" style="margin-top:12px;">
@@ -918,6 +926,18 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div class="field">
       <label data-i18n="active.place">Place</label>
       <input type="text" id="tripPlace" placeholder="e.g. Chesapeake Bay" data-i18n-ph="ph.egPlace">
+    </div>
+    <div class="field">
+      <label data-i18n="active.sky">General Conditions</label>
+      <select id="sky">
+        <option data-i18n="sky.clear">Clear / Sunny</option>
+        <option data-i18n="sky.partlyCloudy">Partly Cloudy</option>
+        <option data-i18n="sky.cloudy">Cloudy</option>
+        <option data-i18n="sky.fog">Fog</option>
+        <option data-i18n="sky.rain">Rain</option>
+        <option data-i18n="sky.thunderstorm">Thunderstorm</option>
+        <option data-i18n="sky.snow">Snow</option>
+      </select>
     </div>
     <div class="two-col">
       <div class="field">

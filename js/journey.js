@@ -58,6 +58,115 @@ function updateGustsLabel(){
   const kts = parseFloat(document.getElementById('gusts').value)||0;
   document.getElementById('gustsVal').textContent = fmtSpeed(kts, activeUnitSystem);
 }
+/* ---- auto-fill weather at Cast Off ----
+   Pre-fills the wind/wave/sky fields above from live conditions at the
+   boat's current position, using Open-Meteo (free, no API key —
+   https://open-meteo.com) — one call to their general forecast API for
+   wind/temp/sky, one to their marine API for wave height/direction. This is
+   a ONE-TIME snapshot taken at the moment of Cast Off, not a live feed: the
+   fields stay ordinary editable sliders/dropdowns afterward, exactly as if
+   the sailor had set them by hand, so anything here can still be corrected
+   before or after the sail.
+   Note: gusts don't get their own direction field, here or in the weather
+   data itself — a gust is a brief spike in speed within the SAME prevailing
+   wind, not an independently measured direction, so gust speed is shown
+   alongside the one wind direction rather than a fabricated second value.
+   Best-effort: if there's no connectivity yet at the dock, or geolocation
+   fails, this silently leaves the fields at their normal defaults — it
+   never blocks or interrupts Cast Off. */
+function degToCompass8(deg){
+  if(deg==null || isNaN(deg)) return null;
+  const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+  return dirs[Math.round((((deg%360)+360)%360)/45)%8];
+}
+function weatherCodeToSky(code){
+  if(code==null) return null;
+  if(code===0) return 'Clear / Sunny';
+  if(code===1 || code===2) return 'Partly Cloudy';
+  if(code===3) return 'Cloudy';
+  if(code===45 || code===48) return 'Fog';
+  if(code>=51 && code<=67) return 'Rain';
+  if(code>=71 && code<=77 || code===85 || code===86) return 'Snow';
+  if(code>=80 && code<=82) return 'Rain';
+  if(code>=95) return 'Thunderstorm';
+  return null;
+}
+function waveHeightToSeaState(m){
+  if(m==null || isNaN(m)) return null;
+  if(m<0.5) return 'Calm';
+  if(m<1.25) return 'Slight';
+  if(m<2.5) return 'Moderate';
+  if(m<4) return 'Rough';
+  return 'Very Rough';
+}
+function autoFillWeatherAtCastOff(){
+  if(!('geolocation' in navigator)) return;
+  navigator.geolocation.getCurrentPosition(
+    (pos)=> applyAutoWeather(pos.coords.latitude, pos.coords.longitude),
+    ()=>{}, // no position yet (no signal at the dock) — fields just keep their defaults
+    {enableHighAccuracy:true, timeout:15000, maximumAge:60000}
+  );
+}
+async function applyAutoWeather(lat, lng){
+  try{
+    const [wxRes, marineRes] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kn`),
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lng}&current=wave_height,wave_direction`)
+    ]);
+    // currentTrip may have been discarded/ended while these requests were in
+    // flight — bail out rather than filling in a form that's no longer live.
+    if(!currentTrip || currentTrip.isManual) return;
+    const wx = wxRes.ok ? (await wxRes.json()).current : null;
+    const marine = marineRes.ok ? (await marineRes.json()).current : null;
+    let filledAny = false;
+    if(wx){
+      const dir = degToCompass8(wx.wind_direction_10m);
+      if(dir){ document.getElementById('windDir').value = dir; filledAny = true; }
+      if(wx.wind_speed_10m!=null){ document.getElementById('windSpeed').value = Math.max(0,Math.min(19,Math.round(wx.wind_speed_10m))); updateWindSpeedLabel(); filledAny = true; }
+      if(wx.wind_gusts_10m!=null){ document.getElementById('gusts').value = Math.max(0,Math.min(40,Math.round(wx.wind_gusts_10m))); updateGustsLabel(); filledAny = true; }
+      if(wx.temperature_2m!=null){ document.getElementById('temp').value = Math.max(0,Math.min(50,Math.round(wx.temperature_2m))); updateTempLabel(); filledAny = true; }
+      const sky = weatherCodeToSky(wx.weather_code);
+      if(sky){ document.getElementById('sky').value = sky; filledAny = true; }
+    }
+    if(marine){
+      const dir = degToCompass8(marine.wave_direction);
+      if(dir){ document.getElementById('waveDir').value = dir; filledAny = true; }
+      if(marine.wave_height!=null){
+        document.getElementById('waveHeight').value = Math.max(0,Math.min(5,marine.wave_height)).toFixed(1);
+        updateWaveHeightLabel();
+        const seaState = waveHeightToSeaState(marine.wave_height);
+        if(seaState){ document.getElementById('seaState').value = seaState; }
+        filledAny = true;
+      }
+    }
+    if(filledAny){
+      const bits = [];
+      const skyVal = document.getElementById('sky').value;
+      if(skyVal) bits.push(`${skyIcon(skyVal)} ${skyLabel(skyVal)}`);
+      if(wx && wx.wind_direction_10m!=null) bits.push(`💨 ${compassLabel(document.getElementById('windDir').value)} ${fmtSpeed(parseFloat(document.getElementById('windSpeed').value)||0, activeUnitSystem)}`);
+      if(marine && marine.wave_height!=null) bits.push(`🌊 ${document.getElementById('waveHeight').value}m`);
+      if(wx && wx.temperature_2m!=null) bits.push(`🌡 ${document.getElementById('temp').value}°C`);
+      showWeatherAutoFillBanner(bits.join(' · '));
+    }
+  }catch(e){ /* no connectivity or the request failed — fields just keep their defaults */ }
+}
+function showWeatherAutoFillBanner(summary){
+  const banner = document.getElementById('weatherAutoFillBanner');
+  if(!banner) return;
+  document.getElementById('weatherAutoFillText').textContent = t('active.weatherAutoFillBanner', {summary});
+  banner.style.display = 'flex';
+}
+function dismissWeatherAutoFillBanner(){
+  const banner = document.getElementById('weatherAutoFillBanner');
+  if(banner) banner.style.display = 'none';
+}
+// Tapping the banner (not its ✕) jumps straight to the weather fields it's
+// describing, since they sit well below the fold on this screen.
+function scrollToLogEntryWeather(event){
+  if(event && event.target.closest('.dismiss')) return;
+  const el = document.getElementById('sky');
+  if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+}
 /* ---- guarded sliders ----
    The weather sliders live inline in a long scrolling form, so a thumb
    resting under a finger while the page scrolls used to drag the value by
@@ -256,6 +365,7 @@ function clearSkipperPick(){
 // Shared field-reset used by both a fresh live journey and a fresh manual entry
 // (NOT used by editTrip, which pre-fills from the existing trip instead).
 function resetActiveFormFields(){
+  dismissWeatherAutoFillBanner();
   document.getElementById('tripTitle').value = '';
   document.getElementById('tripPlace').value = '';
   document.getElementById('windSpeed').value = 8; updateWindSpeedLabel();
@@ -263,6 +373,7 @@ function resetActiveFormFields(){
   document.getElementById('temp').value = 20; updateTempLabel();
   document.getElementById('gusts').value = 10; updateGustsLabel();
   document.getElementById('waveDir').value = 'N';
+  document.getElementById('sky').value = 'Clear / Sunny';
   document.getElementById('activePhotoStrip').querySelectorAll('.photo-thumb').forEach(n=>n.remove());
   document.getElementById('tripNotes').value = '';
   document.getElementById('mapImagePreviewWrap').style.display = 'none';
@@ -306,6 +417,7 @@ async function beginJourney(){
   startGPS();
   startLiveConnCheck();
   requestWakeLock();
+  autoFillWeatherAtCastOff();
   // Awaited deliberately, unlike the per-tick/per-fix checkpoints below: this is the
   // one-time "a journey now exists" write, and it's the only thing standing between
   // an instant crash right after tapping Cast Off and losing the journey entirely.
@@ -403,6 +515,7 @@ async function resumeActiveTripIfAny(){
   document.getElementById('seaState').value = currentTrip.weather?.seaState || 'Moderate';
   document.getElementById('waveHeight').value = currentTrip.weather?.waveHeight || 0.5;
   document.getElementById('temp').value = currentTrip.weather?.temp || 20;
+  document.getElementById('sky').value = currentTrip.weather?.sky || 'Clear / Sunny';
   document.getElementById('tripNotes').value = currentTrip.notes || '';
   refreshLogUnitsUI();
   updateWindSpeedLabel(); updateGustsLabel(); updateWaveHeightLabel(); updateTempLabel();
@@ -527,8 +640,6 @@ function startGPS(){
   lastFixTime = null;
   bestRejectedFix = null;
   pendingJumpCandidate = null;
-  fixCountAccepted = 0; fixCountWeak = 0; fixCountJumpRejected = 0;
-  updateFixCountsDisplay();
   watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
   if(gpsWatchdogInterval) clearInterval(gpsWatchdogInterval);
   gpsWatchdogInterval = setInterval(checkGpsFreshness, 15000);
@@ -578,25 +689,11 @@ function onFix(pos){
     // stays weak for a while and we'd otherwise record nothing at all) but
     // don't let it touch the path or stats.
     if(!bestRejectedFix || acc < bestRejectedFix.acc) bestRejectedFix = point;
-    fixCountWeak++;
-    updateFixCountsDisplay();
     gpsEl.textContent = t('gps.weakSignal', {acc: Math.round(acc)});
     gpsEl.style.color = 'var(--coral)';
     return;
   }
   acceptFix(point);
-}
-// Renders the small "N fixes • M weak-signal • J jump-rejected" line under the
-// GPS status pill. Purely diagnostic — a track that looks sparse/straight-lined
-// on the map (see history) usually traces back to a high weak-signal count here,
-// which is common testing on land/near buildings rather than a real bug.
-function updateFixCountsDisplay(){
-  const el = document.getElementById('gpsFixCounts');
-  if(!el) return;
-  const parts = [t('gps.fixCountAccepted', {n: fixCountAccepted})];
-  if(fixCountWeak) parts.push(t('gps.fixCountWeak', {n: fixCountWeak}));
-  if(fixCountJumpRejected) parts.push(t('gps.fixCountJump', {n: fixCountJumpRejected}));
-  el.textContent = parts.join(' • ');
 }
 // Actually commits a fix to the trip: sanity-checks it against the previous
 // accepted point and only THEN adds it to the path. A fix implying 60+kts is
@@ -642,8 +739,6 @@ function acceptFix(point){
     }
   }
   pendingJumpCandidate = point;
-  fixCountJumpRejected++;
-  updateFixCountsDisplay();
   const gpsEl = document.getElementById('gpsStatus');
   gpsEl.textContent = t('gps.rejectedJump'); gpsEl.style.color='var(--coral)';
 }
@@ -661,8 +756,6 @@ function commitFix(point, countStats){
   }
   currentTrip.path.push(point);
   bestRejectedFix = null;
-  fixCountAccepted++;
-  updateFixCountsDisplay();
   gpsEl.textContent = t('gps.live'); gpsEl.style.color='var(--navy)';
   renderLiveTrack();
   const elapsedH = currentTrip.elapsedSeconds/3600;
@@ -822,6 +915,7 @@ async function endJourney(){
     }
   }
   currentTrip.weather = {
+    sky: document.getElementById('sky').value,
     windDir: document.getElementById('windDir').value,
     windSpeed: parseFloat(document.getElementById('windSpeed').value)||0, // canonical kts
     gusts: parseFloat(document.getElementById('gusts').value)||0, // canonical kts

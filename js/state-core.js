@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '27.08.2026.0512';
+const APP_VERSION = '27.08.2026.0958';
 
 let state = {
   tripIndex: [],   // lightweight list for History screen — NOT the full trip records (those are stored separately as 'trip:<id>')
@@ -26,12 +26,6 @@ let lastFixTime = null;   // Date.now() of the last GPS fix we RECEIVED (accepte
 let gpsWatchdogInterval = null; // setInterval() handle that checks lastFixTime and flags/restarts a silently-dead GPS watch
 let bestRejectedFix = null;     // best (lowest-accuracy-radius) fix we've rejected for being too imprecise, kept as a fallback so chronically weak signal doesn't mean zero points get recorded
 let pendingJumpCandidate = null; // last fix rejected for implying an implausible (60+kt) jump — held so a SECOND agreeing fix can confirm it's a real relocation rather than a one-off glitch (see acceptFix() in journey.js)
-// Live counters, reset at the start of each GPS journey, so a sparse/jumpy-looking
-// track can be explained WHILE recording instead of only puzzled over afterwards.
-// weak = accuracy worse than GPS_ACCURACY_LIMIT_M (common in built-up areas/on
-// land); jump = a fix implying an implausible speed jump that got held for
-// confirmation. Neither of these touch the path or stats — see onFix()/acceptFix().
-let fixCountAccepted = 0, fixCountWeak = 0, fixCountJumpRejected = 0;
 let wakeLock = null;      // Screen Wake Lock, held while a live journey is running to reduce the chance
                            // of the OS suspending/killing the tab when the screen would otherwise sleep
 

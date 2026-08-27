@@ -58,6 +58,7 @@ const TRANSLATIONS = {
   'active.title': 'Active Journey Log',
   'active.unitsHint': 'Units for this log entry — flip anytime, doesn\'t change your default',
   'active.waveDir': 'Wave Direction',
+  'active.sky': 'General Conditions',
   'active.waveHeight': 'Wave Height',
   'active.windDir': 'Wind Direction',
   'active.windSpeed': 'Wind Speed',
@@ -126,9 +127,6 @@ const TRANSLATIONS = {
   'gps.weakSignal': 'Weak signal (±{acc}m)',
   'gps.stale': 'No fix for {time}',
   'gps.rejectedJump': 'Ignored bad fix',
-  'gps.fixCountAccepted': '{n} fixes',
-  'gps.fixCountWeak': '{n} weak signal',
-  'gps.fixCountJump': '{n} jump-rejected',
   'greet.afternoon': 'Good afternoon',
   'greet.evening': 'Good evening',
   'greet.morning': 'Good morning',
@@ -221,6 +219,13 @@ const TRANSLATIONS = {
   'sea.rough': 'Rough',
   'sea.slight': 'Slight',
   'sea.veryRough': 'Very Rough',
+  'sky.clear': 'Clear / Sunny',
+  'sky.partlyCloudy': 'Partly Cloudy',
+  'sky.cloudy': 'Cloudy',
+  'sky.fog': 'Fog',
+  'sky.rain': 'Rain',
+  'sky.thunderstorm': 'Thunderstorm',
+  'sky.snow': 'Snow',
   'settings.appearance': 'Appearance',
   'settings.autoNowLabel': 'Auto — right now: {theme}',
   'settings.autoTheme': 'Auto Theme',
@@ -318,6 +323,8 @@ const TRANSLATIONS = {
   'toast.saveFailed': 'Save failed — trip kept on screen, try again',
   'toast.stillRecording': 'Still recording — tap the banner to return',
   'toast.tripResumed': 'Picked up your journey where it left off — tracking is running again',
+  'toast.weatherAutoFilled': 'Filled in wind, waves & conditions from the current forecast — feel free to adjust',
+  'active.weatherAutoFillBanner': 'Auto-filled: {summary} — tap to review',
   'mapStyle.minimal': 'Minimal',
   'mapStyle.standard': 'Standard',
   'mapStyle.nautical': 'Nautical',
@@ -1239,6 +1246,10 @@ function currentLocale(){ return currentLang==='es' ? 'es-ES' : currentLang==='p
 const SEA_STATE_KEYS = {'Calm':'sea.calm','Slight':'sea.slight','Moderate':'sea.moderate','Rough':'sea.rough','Very Rough':'sea.veryRough'};
 function seaStateLabel(v){ return v ? (SEA_STATE_KEYS[v] ? t(SEA_STATE_KEYS[v]) : v) : ''; }
 function compassLabel(v){ return v ? t('compass.'+v) : ''; }
+const SKY_KEYS = {'Clear / Sunny':'sky.clear','Partly Cloudy':'sky.partlyCloudy','Cloudy':'sky.cloudy','Fog':'sky.fog','Rain':'sky.rain','Thunderstorm':'sky.thunderstorm','Snow':'sky.snow'};
+const SKY_ICONS = {'Clear / Sunny':'☀️','Partly Cloudy':'⛅','Cloudy':'☁️','Fog':'🌫️','Rain':'🌧️','Thunderstorm':'⛈️','Snow':'❄️'};
+function skyLabel(v){ return v ? (SKY_KEYS[v] ? t(SKY_KEYS[v]) : v) : ''; }
+function skyIcon(v){ return v ? (SKY_ICONS[v] || '') : ''; }
 // Walks every element tagged with data-i18n / data-i18n-ph / data-i18n-title
 // and sets its text/placeholder/title from the current language. Static
 // markup only — dynamic screens (history list, trip detail, etc.) re-render
