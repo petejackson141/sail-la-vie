@@ -48,8 +48,8 @@ async function openStartJourneySheet(){
    ============================================================ */
 function showConfirm(message, opts={}){
   const danger = !!opts.danger;
-  const okLabel = opts.okLabel || t('common.ok') || 'OK';
-  const cancelLabel = opts.cancelLabel || t('common.cancel') || 'Cancel';
+  const okLabel = opts.okLabel || 'Confirm';
+  const cancelLabel = opts.cancelLabel || 'Cancel';
 
   if(!document.getElementById('customConfirmStyles')){
     const style = document.createElement('style');
@@ -64,10 +64,12 @@ function showConfirm(message, opts={}){
         transform:scale(.92) translateY(6px);transition:transform .18s ease;
         border:1px solid rgba(255,255,255,0.06);}
       .cc-overlay.show .cc-card{transform:scale(1) translateY(0);}
+      .cc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
       .cc-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-        font-size:20px;margin-bottom:12px;}
+        font-size:20px;flex-shrink:0;}
       .cc-icon.danger{background:rgba(255,90,90,0.15);color:#ff6b6b;}
       .cc-icon.normal{background:rgba(64,160,255,0.15);color:#4da3ff;}
+      .cc-icon.cc-icon-boat{background:rgba(255,255,255,0.08);color:#9fb3c8;}
       .cc-msg{font-size:15.5px;line-height:1.45;color:#cdd8e6;margin:0 0 20px;}
       .cc-actions{display:flex;gap:10px;}
       .cc-btn{flex:1;padding:12px 0;border-radius:12px;border:none;font-size:15px;font-weight:600;
@@ -85,7 +87,10 @@ function showConfirm(message, opts={}){
     overlay.className = 'cc-overlay';
     overlay.innerHTML = `
       <div class="cc-card">
-        <div class="cc-icon ${danger?'danger':'normal'}">${danger?'⚠️':'❔'}</div>
+        <div class="cc-header">
+          <div class="cc-icon ${danger?'danger':'normal'}">${danger?'⚠️':'❔'}</div>
+          <div class="cc-icon cc-icon-boat">⛵</div>
+        </div>
         <p class="cc-msg"></p>
         <div class="cc-actions">
           <button class="cc-btn cc-btn-cancel" data-act="cancel"></button>
@@ -886,11 +891,7 @@ function confirmLeaveActive(){
   showToast(currentTrip.isEditing ? t('toast.editsKept') : currentTrip.isManual ? t('toast.draftKept') : t('toast.stillRecording'));
 }
 async function discardJourney(){
-  const msg = currentTrip.isEditing
-    ? t('confirm.discardEdits')
-    : currentTrip.isManual
-    ? t('confirm.discardManual')
-    : t('confirm.discardJourney');
+  const msg = "This will discard this journey and you will lose all its data";
   if(await showConfirm(msg, {danger:true})){
     stopGPS();
     const wasEditing = currentTrip.isEditing, editedId = currentTrip.id;
