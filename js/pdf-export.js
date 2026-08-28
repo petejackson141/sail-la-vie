@@ -233,9 +233,17 @@ function buildTripPdfHtmlNautical(trip){
     {value:fmtSpeed(trip.maxSpeed||0).split(' ')[0], unit:speedUnitLabel(), label:t('stat.maxSpeed'), icon:'gauge'},
   ];
 
+  // Three cases, same priority order as the app's own trip-detail map
+  // (renderTripDetailMap in history-maps.js): a recorded GPS track, falling
+  // back to a manually-uploaded map image (trip.mapImage) when there's no
+  // track, falling back to the empty placeholder only when neither exists.
+  // The old version only ever checked trip.path, so a trip with an uploaded
+  // map but no GPS track silently fell through to "no track recorded".
   const mapInner = (trip.path && trip.path.length>1)
     ? buildPortholeSvg(trip.path, false, appUnitSystem())
-    : `<div class="n-map-empty">${t('pdf.noTrack')}</div><div class="n-map-compass">${navCompassSvg(30,'rgba(12,42,74,.55)','rgba(12,42,74,.7)')}</div>`;
+    : trip.mapImage
+      ? `<img src="${trip.mapImage}">`
+      : `<div class="n-map-empty">${t('pdf.noTrack')}</div><div class="n-map-compass">${navCompassSvg(30,'rgba(12,42,74,.55)','rgba(12,42,74,.7)')}</div>`;
 
   return `<div class="pdf-sheet" id="pdfTripBlock">
     <div class="n-hero">
