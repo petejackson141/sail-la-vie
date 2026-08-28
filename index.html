@@ -423,71 +423,99 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-format{ font-size:11px; color:var(--ink-muted); margin:-4px 0 10px; }
 
 /* ---------- PDF export: Nautical Magazine theme ----------
-   Canvas is laid out at 612x918 "px" — the same numeric grid as the poster
-   spec (612x918pt) — so positions/sizes map 1:1 onto the final PDF page. */
+   Canvas is a true A4 page laid out at 794px wide (≈210mm @ 96dpi). Every
+   section below the stats bar is its own bordered `.n-card` sitting inside
+   `.n-cards` (a wrapping flex row) or, for the route/map and photos, its own
+   full-width card — so a page break (see computeSectionPageBreaks in
+   pdf-export.js) can always land between cards and never through one. */
 .pdf-theme-nautical .pdf-sheet{
-  width:612px; padding:0; position:relative;
+  width:794px; padding:0; position:relative;
   background:var(--n-cream); color:var(--n-ink); font-family:'Libre Baskerville',Georgia,serif;
   --n-navy:#0C2A4A; --n-navy-dark:#081D33; --n-gold:#B8905A; --n-gold-light:#D3AD7A;
   --n-cream:#F8F4EE; --n-cream-line:#E3DACB; --n-ink:#16324F; --n-body:#5B6672;
-  --n-water:#BBD8EE; --n-land:#EFE3C8;
+  --n-water:#DCE8E4; --n-land:#EFE3C8;
 }
-.pdf-theme-nautical .n-hero{ position:relative; width:612px; height:308px; overflow:hidden; background:var(--n-navy); }
-.pdf-theme-nautical .n-hero img{ width:100%; height:100%; object-fit:contain; object-position:center; display:block; background:var(--n-navy-dark); }
+.pdf-theme-nautical .n-hero{ position:relative; width:794px; height:380px; overflow:hidden; background:var(--n-navy); }
+/* object-fit:cover (was contain) — contain was leaving visible navy bars
+   around any photo whose aspect ratio didn't exactly match the hero box. */
+.pdf-theme-nautical .n-hero img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; background:var(--n-navy-dark); }
 .pdf-theme-nautical .n-hero-noimg{ width:100%; height:100%; background:linear-gradient(160deg,var(--n-navy),var(--n-navy-dark)); }
 .pdf-theme-nautical .n-hero::after{
   content:''; position:absolute; inset:0;
   background:linear-gradient(180deg, rgba(8,29,51,.78) 0%, rgba(8,29,51,.30) 42%, rgba(8,29,51,.58) 100%);
 }
-.pdf-theme-nautical .n-hero-content{ position:absolute; inset:0; padding:24px 26px; display:flex; justify-content:space-between; align-items:flex-start; z-index:2; }
-.pdf-theme-nautical .n-hero-left{ display:flex; align-items:flex-start; gap:16px; max-width:400px; }
+.pdf-theme-nautical .n-hero-content{ position:absolute; inset:0; padding:30px 34px; display:flex; justify-content:space-between; align-items:flex-start; z-index:2; }
+.pdf-theme-nautical .n-hero-left{ display:flex; align-items:flex-start; gap:18px; max-width:520px; }
 .pdf-theme-nautical .n-compass{ flex:0 0 auto; margin-top:2px; }
-.pdf-theme-nautical .n-hero-title{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:30px; line-height:1.08; color:#fff; margin:0; text-transform:uppercase; letter-spacing:.01em; }
-.pdf-theme-nautical .n-hero-subtitle{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--n-gold-light); font-weight:700; padding-top:9px; border-top:1.4px solid var(--n-gold); display:inline-block; margin-top:10px; }
+.pdf-theme-nautical .n-hero-title{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:36px; line-height:1.08; color:#fff; margin:0; text-transform:uppercase; letter-spacing:.01em; }
+.pdf-theme-nautical .n-hero-subtitle{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--n-gold-light); font-weight:700; padding-top:10px; border-top:1.4px solid var(--n-gold); display:inline-block; margin-top:12px; }
 .pdf-theme-nautical .n-hero-meta{ text-align:right; color:#fff; font-family:'Helvetica Neue',Arial,sans-serif; flex:0 0 auto; }
-.pdf-theme-nautical .n-hero-meta .n-meta-row{ display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-bottom:4px; }
-.pdf-theme-nautical .n-hero-meta .n-meta-row b{ font-size:12px; font-weight:700; letter-spacing:.03em; }
-.pdf-theme-nautical .n-hero-meta .n-meta-sub{ font-size:11px; color:#fff; opacity:.92; margin:-2px 0 8px; }
-.pdf-theme-nautical .n-hero-meta .n-meta-place{ font-size:10px; color:var(--n-gold-light); font-weight:700; letter-spacing:.04em; text-transform:uppercase; margin-top:2px; }
+.pdf-theme-nautical .n-hero-meta .n-meta-row{ display:flex; align-items:center; justify-content:flex-end; gap:7px; margin-bottom:5px; }
+.pdf-theme-nautical .n-hero-meta .n-meta-row b{ font-size:14px; font-weight:700; letter-spacing:.03em; }
+.pdf-theme-nautical .n-hero-meta .n-meta-sub{ font-size:12.5px; color:#fff; opacity:.92; margin:-2px 0 9px; }
+.pdf-theme-nautical .n-hero-meta .n-meta-place{ font-size:11.5px; color:var(--n-gold-light); font-weight:700; letter-spacing:.04em; text-transform:uppercase; margin-top:2px; }
 
-.pdf-theme-nautical .n-stats{ height:56px; background:var(--n-navy); display:flex; align-items:center; justify-content:space-around; color:#fff; }
-.pdf-theme-nautical .n-stat{ display:flex; align-items:center; gap:8px; }
+.pdf-theme-nautical .n-stats{ height:72px; background:var(--n-navy); display:flex; align-items:center; justify-content:space-around; color:#fff; }
+.pdf-theme-nautical .n-stat{ display:flex; align-items:center; gap:10px; }
 .pdf-theme-nautical .n-stat-icon{ color:var(--n-gold-light); display:flex; }
 .pdf-theme-nautical .n-stat-text{ line-height:1.1; }
-.pdf-theme-nautical .n-stat b{ font-family:'Playfair Display',Georgia,serif; font-size:16px; font-weight:700; }
-.pdf-theme-nautical .n-stat .n-stat-unit{ font-size:9px; font-weight:700; margin-left:2px; color:var(--n-gold-light); }
-.pdf-theme-nautical .n-stat .n-stat-label{ display:block; font-size:7.3px; letter-spacing:.05em; text-transform:uppercase; color:#C7D2DD; margin-top:1px; }
+.pdf-theme-nautical .n-stat b{ font-family:'Playfair Display',Georgia,serif; font-size:20px; font-weight:700; }
+.pdf-theme-nautical .n-stat .n-stat-unit{ font-size:11px; font-weight:700; margin-left:3px; color:var(--n-gold-light); }
+.pdf-theme-nautical .n-stat .n-stat-label{ display:block; font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:#C7D2DD; margin-top:2px; }
 
-.pdf-theme-nautical .n-info{ display:flex; gap:26px; padding:22px 26px 0; align-items:flex-start; }
-.pdf-theme-nautical .n-col-left{ flex:0 0 162px; }
-.pdf-theme-nautical .n-col-mid{ flex:0 0 179px; }
-.pdf-theme-nautical .n-col-map{ flex:1 1 auto; min-width:0; }
-.pdf-theme-nautical .n-heading{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--n-ink); border-bottom:1.2px solid var(--n-gold); padding-bottom:6px; margin-bottom:10px; }
-.pdf-theme-nautical .n-cond-row{ display:flex; align-items:center; justify-content:space-between; padding:5px 0; font-family:'Helvetica Neue',Arial,sans-serif; }
-.pdf-theme-nautical .n-cond-label{ display:flex; align-items:center; gap:6px; font-size:8.4px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--n-body); }
+/* Conditions / The Day / Crew: independent cards that wrap onto as many
+   rows as they need, instead of three fixed-width columns that used to
+   leave a lot of dead space or crowd a long crew list. */
+.pdf-theme-nautical .n-cards{ display:flex; flex-wrap:wrap; gap:16px; padding:26px 34px 0; align-items:flex-start; }
+.pdf-theme-nautical .n-card{ background:#fff; border:1px solid var(--n-cream-line); border-radius:10px; padding:18px 20px; box-sizing:border-box; }
+.pdf-theme-nautical .n-card-conditions{ flex:1 1 220px; }
+.pdf-theme-nautical .n-card-day{ flex:1 1 280px; }
+.pdf-theme-nautical .n-card-crew{ flex:1 1 220px; }
+.pdf-theme-nautical .n-card-route{ margin:16px 34px 0; }
+.pdf-theme-nautical .n-card-photos{ margin:16px 34px 0; }
+.pdf-theme-nautical .n-heading{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--n-ink); border-bottom:1.2px solid var(--n-gold); padding-bottom:7px; margin-bottom:12px; }
+.pdf-theme-nautical .n-cond-row{ display:flex; align-items:center; justify-content:space-between; padding:6px 0; font-family:'Helvetica Neue',Arial,sans-serif; }
+.pdf-theme-nautical .n-cond-label{ display:flex; align-items:center; gap:7px; font-size:9.5px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--n-body); }
 .pdf-theme-nautical .n-cond-label .n-cond-icon{ color:var(--n-gold); display:flex; }
-.pdf-theme-nautical .n-cond-value{ font-size:9.4px; font-weight:700; color:var(--n-ink); }
+.pdf-theme-nautical .n-cond-value{ font-size:10.5px; font-weight:700; color:var(--n-ink); }
 .pdf-theme-nautical .n-crew-list{ margin-top:2px; }
-.pdf-theme-nautical .n-crew-item{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
-.pdf-theme-nautical .n-crew-photo{ width:30px; height:30px; border-radius:50%; border:1px solid var(--n-gold); object-fit:contain; display:block; background:var(--n-cream-line); flex:0 0 30px; }
-.pdf-theme-nautical .n-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.4px; color:var(--n-body); font-weight:700; text-transform:uppercase; display:block; letter-spacing:.03em; }
-.pdf-theme-nautical .n-crew-name{ font-family:'Playfair Display',Georgia,serif; font-size:12px; font-weight:700; color:var(--n-ink); }
-.pdf-theme-nautical .n-quote-mark{ font-family:'Playfair Display',Georgia,serif; font-size:32px; color:var(--n-gold); line-height:1; margin:0 0 2px; }
-.pdf-theme-nautical .n-story p{ font-size:10px; line-height:1.55; margin:0 0 9px; color:var(--n-ink); font-family:'Libre Baskerville',Georgia,serif; }
-.pdf-theme-nautical .n-map-box{ position:relative; width:100%; height:200px; border-radius:6px; overflow:hidden; border:1.2px solid var(--n-gold); background:var(--n-water); }
+.pdf-theme-nautical .n-crew-item{ display:flex; align-items:center; gap:11px; margin-bottom:13px; }
+.pdf-theme-nautical .n-crew-item:last-child{ margin-bottom:0; }
+/* object-fit:cover (was contain) — avatars now crop to fill the circle
+   instead of shrinking inside it with cream padding around a mismatched shape. */
+.pdf-theme-nautical .n-crew-photo{ width:34px; height:34px; border-radius:50%; border:1px solid var(--n-gold); object-fit:cover; display:block; background:var(--n-cream-line); flex:0 0 34px; }
+.pdf-theme-nautical .n-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9px; color:var(--n-body); font-weight:700; text-transform:uppercase; display:block; letter-spacing:.03em; }
+.pdf-theme-nautical .n-crew-name{ font-family:'Playfair Display',Georgia,serif; font-size:13.5px; font-weight:700; color:var(--n-ink); }
+.pdf-theme-nautical .n-quote-mark{ font-family:'Playfair Display',Georgia,serif; font-size:36px; color:var(--n-gold); line-height:1; margin:0 0 4px; }
+.pdf-theme-nautical .n-story p{ font-size:11px; line-height:1.6; margin:0 0 10px; color:var(--n-ink); font-family:'Libre Baskerville',Georgia,serif; }
+.pdf-theme-nautical .n-story p:last-child{ margin-bottom:0; }
+/* Map card: locally overrides the generic --water/--navy/--coral tokens that
+   buildPortholeSvg() draws with, so the GPS track always renders in THIS
+   theme's palette (muted sage + navy) instead of the app's default bright
+   blue, wherever the porthole SVG gets dropped in. */
+.pdf-theme-nautical .n-map-box{
+  position:relative; width:100%; height:280px; border-radius:8px; overflow:hidden;
+  border:1.2px solid var(--n-gold); background:var(--n-water);
+  --water:var(--n-water); --navy:var(--n-navy); --coral:#B8443A;
+}
 .pdf-theme-nautical .n-map-box svg, .pdf-theme-nautical .n-map-box img{ width:100%; height:100%; object-fit:cover; display:block; }
-.pdf-theme-nautical .n-map-compass{ position:absolute; left:10px; top:10px; opacity:.85; }
-.pdf-theme-nautical .n-map-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--n-navy); opacity:.6; }
+.pdf-theme-nautical .n-map-compass{ position:absolute; left:12px; top:12px; opacity:.85; }
+.pdf-theme-nautical .n-map-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:18px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--n-navy); opacity:.55; }
 
-.pdf-theme-nautical .n-photos{ display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(2,1fr); gap:6px; padding:20px 26px 0; }
-.pdf-theme-nautical .n-photo-cell{ height:97px; border-radius:3px; overflow:hidden; background:var(--n-cream-line); }
-.pdf-theme-nautical .n-photo-cell img{ width:100%; height:100%; object-fit:contain; display:block; background:var(--n-cream-line); }
+/* Photo grid: aspect-ratio cells + object-fit:cover so every photo crops to
+   fill its cell regardless of its native proportions — replaces the old
+   fixed-height cell + object-fit:contain combo that left visible cream bars
+   around any photo that wasn't exactly the cell's shape. Auto-flowing rows
+   (not a fixed 4x2) so 1–8 photos all lay out cleanly. */
+.pdf-theme-nautical .n-photos{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.pdf-theme-nautical .n-photo-cell{ aspect-ratio:1/1; border-radius:5px; overflow:hidden; background:var(--n-cream-line); }
+.pdf-theme-nautical .n-photo-cell img{ width:100%; height:100%; object-fit:cover; display:block; }
 
-.pdf-theme-nautical .n-footer{ display:flex; flex-direction:column; align-items:center; padding:18px 26px 20px; }
-.pdf-theme-nautical .n-footer-motif{ display:flex; align-items:center; gap:8px; width:100%; max-width:340px; }
+.pdf-theme-nautical .n-footer{ display:flex; flex-direction:column; align-items:center; padding:26px 34px 30px; }
+.pdf-theme-nautical .n-footer-motif{ display:flex; align-items:center; gap:9px; width:100%; max-width:400px; }
 .pdf-theme-nautical .n-footer-motif .n-footer-line{ flex:1; height:1.2px; background:var(--n-gold); }
-.pdf-theme-nautical .n-footer-motif .n-footer-dot{ width:11px; height:11px; border-radius:50%; border:1.2px solid var(--n-gold); flex:0 0 11px; }
-.pdf-theme-nautical .n-footer-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8px; color:var(--n-body); text-align:center; margin-top:8px; letter-spacing:.02em; }
+.pdf-theme-nautical .n-footer-motif .n-footer-dot{ width:12px; height:12px; border-radius:50%; border:1.2px solid var(--n-gold); flex:0 0 12px; }
+.pdf-theme-nautical .n-footer-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9px; color:var(--n-body); text-align:center; margin-top:9px; letter-spacing:.02em; }
 
 /* ---------- Sailing Story theme ----------
    Ported from the reportlab poster mockup (same 612x918 grid convention as

@@ -20,10 +20,13 @@ const PDF_THEMES = {
   nautical: {
     label: 'pdf.themeNautical',
     swatch: '#B8905A',
-    pageW: 612, pageH: 918, // 8.5" x 12.75" poster
-    contentWidthPx: 612,
-    formatLabel: 'pdf.formatPoster',
+    pageW: 595.28, pageH: 841.89, // A4
+    contentWidthPx: 794,
+    formatLabel: 'pdf.formatA4',
     sheetClass: 'pdf-theme-nautical',
+    // Most sails fit one page; a long note or a full 8-photo set can still
+    // run to a 2nd. paginate:true now uses computeSectionPageBreaks() below,
+    // which only ever breaks BETWEEN top-level sections, never through one.
     paginate: true, pageBg: '#F8F4EE',
     build: buildTripPdfHtmlNautical
   },
@@ -261,28 +264,39 @@ function buildTripPdfHtmlNautical(trip){
       </div>`).join('')}
     </div>
 
-    <div class="n-info">
-      <div class="n-col-left">
-        ${condRows.length ? `<div class="n-heading">${t('pdf.conditions')}</div>${condRows.map(r=>`
+    <div class="n-cards">
+      ${condRows.length ? `<div class="n-card n-card-conditions">
+        <div class="n-heading">${t('pdf.conditions')}</div>
+        ${condRows.map(r=>`
           <div class="n-cond-row">
             <span class="n-cond-label"><span class="n-cond-icon">${PDF_ICON_SVG[r.icon]}</span>${escapeHtml(r.label)}</span>
             <span class="n-cond-value">${r.value}</span>
-          </div>`).join('')}` : ''}
-        ${crewList.length ? `<div class="n-heading" style="margin-top:18px;">${t('nav.crew')}</div><div class="n-crew-list">${crewList.map(m=>`
+          </div>`).join('')}
+      </div>` : ''}
+      ${paragraphs.length ? `<div class="n-card n-card-day">
+        <div class="n-heading">${t('pdf.theDay')}</div>
+        <div class="n-quote-mark">&ldquo;</div>
+        <div class="n-story">${paragraphs.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div>
+      </div>` : ''}
+      ${crewList.length ? `<div class="n-card n-card-crew">
+        <div class="n-heading">${t('nav.crew')}</div>
+        <div class="n-crew-list">${crewList.map(m=>`
           <div class="n-crew-item">
             <img class="n-crew-photo" src="${m.photo||placeholderAvatar()}">
             <div><span class="n-crew-role">${escapeHtml(m.role)}</span><span class="n-crew-name">${escapeHtml(m.name)}</span></div>
-          </div>`).join('')}</div>` : ''}
-      </div>
-      <div class="n-col-mid">
-        ${paragraphs.length ? `<div class="n-heading">${t('pdf.theDay')}</div><div class="n-quote-mark">&ldquo;</div><div class="n-story">${paragraphs.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div>` : ''}
-      </div>
-      <div class="n-col-map">
-        <div class="n-map-box">${mapInner}</div>
-      </div>
+          </div>`).join('')}</div>
+      </div>` : ''}
     </div>
 
-    ${photos.length ? `<div class="n-photos">${photos.map(p=>`<div class="n-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
+    <div class="n-card n-card-route">
+      <div class="n-heading">${t('pdf.theRoute')}</div>
+      <div class="n-map-box">${mapInner}</div>
+    </div>
+
+    ${photos.length ? `<div class="n-card n-card-photos">
+      <div class="n-heading">${t('active.photos')}</div>
+      <div class="n-photos">${photos.map(p=>`<div class="n-photo-cell"><img src="${p}"></div>`).join('')}</div>
+    </div>` : ''}
 
     <div class="n-footer">
       <div class="n-footer-motif"><span class="n-footer-line"></span><span class="n-footer-dot"></span><span class="n-footer-dot"></span><span class="n-footer-line"></span></div>
@@ -609,6 +623,32 @@ function buildTripPdfHtmlMemoryPage(trip){
   </div>`;
 }
 
+// Computes page-break Y offsets (in CSS px, relative to the top of `block`)
+// for paginated themes. Greedy: keep adding whole top-level sections
+// (n-hero, n-stats, n-cards, n-photos, n-footer, etc.) to the current page
+// until the next one would overflow it, then start a new page at that
+// section's top edge. This guarantees a page break only ever falls BETWEEN
+// two sections — never through the middle of a crew list, a photo, or a
+// stat block — which is what was producing decapitated content and
+// near-empty trailing pages before.
+function computeSectionPageBreaks(block, pageHeightPx){
+  const children = Array.from(block.children);
+  const breaks = [];
+  let pageStartY = 0;
+  for(const child of children){
+    const top = child.offsetTop;
+    const bottom = top + child.offsetHeight;
+    // A single section taller than a full page is a rare edge case (e.g. a
+    // very long note) — better to let it overflow onto/through the next
+    // page than to guillotine it at an arbitrary pixel row.
+    if(bottom - pageStartY > pageHeightPx && top > pageStartY){
+      breaks.push(top);
+      pageStartY = top;
+    }
+  }
+  return breaks;
+}
+
 // Waits for every <img> inside a container to finish loading AND decoding
 // before we measure or rasterize it. Without this, html2canvas can snapshot
 // mid-load images at the wrong size (or blank), which is what produced the
@@ -656,7 +696,11 @@ function openTripPdfPreview(){
       // capping it to a single page's aspect ratio.
       scale = (wrapWidth - margin * 2) / theme.contentWidthPx;
       const pageHeightPx = theme.contentWidthPx * (theme.pageH / theme.pageW);
-      const pages = Math.max(1, Math.ceil(naturalHeight / pageHeightPx));
+      const block = inner.querySelector('#pdfTripBlock');
+      // Same section-aware break logic used at export time, so the page
+      // count shown here always matches what actually gets generated.
+      const pages = block ? computeSectionPageBreaks(block, pageHeightPx).length + 1
+                           : Math.max(1, Math.ceil(naturalHeight / pageHeightPx));
       const fmt = document.getElementById('pdfThemeFormat');
       if(fmt) fmt.textContent = t(theme.formatLabel) + (pages>1 ? ` · ${pages} ${t('pdf.pages')}` : '');
     } else {
@@ -734,29 +778,36 @@ async function generateAndShareTripPdf(){
     });
 
     if(theme.paginate){
-      // Slice the single tall capture into consecutive page-height chunks —
-      // each chunk becomes its own full-bleed page at the theme's native
-      // size, preserving the image's own pixel aspect (never stretched).
+      // Slice the single tall capture at section boundaries, not at fixed
+      // pixel intervals — a page break only ever falls between two
+      // top-level sections (hero, stats, cards, photos, footer), so nothing
+      // ever gets cut through the middle, and there's no near-empty
+      // trailing page from an arbitrary leftover slice.
       const pageHeightCanvasPx = canvas.width * (theme.pageH / theme.pageW);
-      const numPages = Math.max(1, Math.ceil(canvas.height / pageHeightCanvasPx));
-      for(let i=0; i<numPages; i++){
+      const scaleFactor = canvas.width / theme.contentWidthPx; // matches html2canvas's scale:2 above
+      const block = inner.querySelector('#pdfTripBlock');
+      const breaksCss = block ? computeSectionPageBreaks(block, pageHeightCanvasPx / scaleFactor) : [];
+      const breakPointsCanvasPx = [0, ...breaksCss.map(y => y * scaleFactor), canvas.height];
+
+      for(let i=0; i<breakPointsCanvasPx.length-1; i++){
         if(i>0) doc.addPage([theme.pageW, theme.pageH]);
         if(theme.pageBg){
-          // Fill the full physical page first — the last page's image can be
-          // shorter than a full page (trailing content), so this guarantees
-          // no white gap below it.
           const bg = hexToRgbTuple(theme.pageBg);
           doc.setFillColor(bg[0], bg[1], bg[2]);
           doc.rect(0, 0, theme.pageW, theme.pageH, 'F');
         }
-        const sliceH = Math.min(pageHeightCanvasPx, canvas.height - i*pageHeightCanvasPx);
+        const sliceStart = breakPointsCanvasPx[i];
+        // Safety clamp: a single section taller than one page (rare — e.g. a
+        // very long note) still gets capped to a page height per slice
+        // rather than being skipped, so nothing silently vanishes.
+        const sliceH = Math.min(pageHeightCanvasPx, breakPointsCanvasPx[i+1] - sliceStart);
         const sliceCanvas = document.createElement('canvas');
         sliceCanvas.width = canvas.width;
         sliceCanvas.height = sliceH;
         const sctx = sliceCanvas.getContext('2d');
         sctx.fillStyle = theme.pageBg || '#ffffff';
         sctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
-        sctx.drawImage(canvas, 0, i*pageHeightCanvasPx, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+        sctx.drawImage(canvas, 0, sliceStart, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
         const imgW = theme.pageW;
         const imgH = imgW * (sliceH / canvas.width);
         doc.addImage(sliceCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');

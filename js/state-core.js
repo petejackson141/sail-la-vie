@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '27.08.2026.1541';
+const APP_VERSION = '28.08.2026.1052';
 
 /* ============================================================
    CUSTOM CONFIRM DIALOG (shared across all screens)
