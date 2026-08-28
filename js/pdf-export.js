@@ -33,9 +33,9 @@ const PDF_THEMES = {
   story: {
     label: 'pdf.themeSailingStory',
     swatch: '#122F4E',
-    pageW: 612, pageH: 918, // 8.5" x 12.75" poster
-    contentWidthPx: 612,
-    formatLabel: 'pdf.formatPoster',
+    pageW: 595.28, pageH: 841.89, // A4 — was a non-standard 8.5"x12.75" poster size
+    contentWidthPx: 794,
+    formatLabel: 'pdf.formatA4',
     sheetClass: 'pdf-theme-story',
     paginate: true, pageBg: '#FAF6EF',
     build: buildTripPdfHtmlStory
@@ -43,9 +43,9 @@ const PDF_THEMES = {
   yacht: {
     label: 'pdf.themeMinimalistYacht',
     swatch: '#16324F',
-    pageW: 612, pageH: 918, // 8.5" x 12.75" poster
-    contentWidthPx: 612,
-    formatLabel: 'pdf.formatPoster',
+    pageW: 595.28, pageH: 841.89, // A4 — was a non-standard 8.5"x12.75" poster size
+    contentWidthPx: 794,
+    formatLabel: 'pdf.formatA4',
     sheetClass: 'pdf-theme-yacht',
     paginate: true, pageBg: '#FAF8F6',
     build: buildTripPdfHtmlMinimalistYacht
@@ -53,9 +53,9 @@ const PDF_THEMES = {
   memory: {
     label: 'pdf.themeMemoryPage',
     swatch: '#B4884F',
-    pageW: 612, pageH: 918, // 8.5" x 12.75" poster
-    contentWidthPx: 612,
-    formatLabel: 'pdf.formatPoster',
+    pageW: 595.28, pageH: 841.89, // A4 — was a non-standard 8.5"x12.75" poster size
+    contentWidthPx: 794,
+    formatLabel: 'pdf.formatA4',
     sheetClass: 'pdf-theme-memory',
     paginate: true, pageBg: '#FAF6EF',
     build: buildTripPdfHtmlMemoryPage
@@ -213,7 +213,7 @@ function buildTripPdfHtmlNautical(trip){
   const dateLabel = d.toLocaleDateString(currentLocale(),{weekday:'long'}).toUpperCase();
   const dateValue = d.toLocaleDateString(currentLocale(),{day:'numeric',month:'long',year:'numeric'}).toUpperCase();
   const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
-  const photos = (trip.photos||[]).slice(0,8);
+  const photos = trip.photos||[]; // every photo — never capped, never repeated elsewhere in this theme
   let notes = trip.notes || '';
   if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
   const paragraphs = notes ? notes.split(/\n+/).filter(Boolean) : [];
@@ -318,12 +318,12 @@ function buildTripPdfHtmlMinimalistYacht(trip){
   const tripCrew = (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
   const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
   const crewList = [ ...(tripSkipper ? [{...tripSkipper, role:t('active.skipper')}] : []),
-                      ...tripCrew.map(c=>({...c, role:t('nav.crew')})) ].slice(0,2);
+                      ...tripCrew.map(c=>({...c, role:t('nav.crew')})) ]; // full list — was capped at 2
   const d = new Date(trip.date);
   const dateLabel = d.toLocaleDateString(currentLocale(),{weekday:'long'}).toUpperCase();
   const dateValue = d.toLocaleDateString(currentLocale(),{day:'numeric',month:'long',year:'numeric'}).toUpperCase();
   const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
-  const photos = (trip.photos||[]).slice(0,8);
+  const photos = trip.photos||[]; // every photo — never capped
   let notes = trip.notes || '';
   if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
   const paragraphs = notes ? notes.split(/\n+/).filter(Boolean) : [];
@@ -343,6 +343,14 @@ function buildTripPdfHtmlMinimalistYacht(trip){
     {value:fmtSpeed(trip.avgSpeed||0).split(' ')[0], unit:speedUnitLabel(), label:t('stat.avgSpeed'), icon:'gauge'},
     {value:fmtSpeed(trip.maxSpeed||0).split(' ')[0], unit:speedUnitLabel(), label:t('stat.maxSpeed'), icon:'gauge'},
   ];
+
+  // Same GPS-track → uploaded-map-image → empty-placeholder priority as the
+  // app's own trip-detail map and the other themes.
+  const mapInner = (trip.path && trip.path.length>1)
+    ? buildPortholeSvg(trip.path, false, appUnitSystem())
+    : trip.mapImage
+      ? `<img src="${trip.mapImage}">`
+      : `<div class="y-map-empty">${t('pdf.noTrack')}</div>`;
 
   return `<div class="pdf-sheet" id="pdfTripBlock">
     <div class="y-header">
@@ -380,20 +388,33 @@ function buildTripPdfHtmlMinimalistYacht(trip){
       </div>`).join('')}
     </div>
 
-    ${condRows.length ? `<div class="y-section-heading"><span class="y-sh-line"></span><span class="y-sh-text">${t('pdf.conditions').toUpperCase()}</span><span class="y-sh-line"></span></div>
-    <div class="y-conditions">${condRows.map(r=>`
-      <div class="y-cond">
-        <span class="y-cond-icon">${PDF_ICON_SVG[r.icon]}</span>
-        <div><span class="y-cond-label">${escapeHtml(r.label)}</span><span class="y-cond-value">${r.value}</span></div>
-      </div>`).join('')}</div>` : ''}
+    <div class="y-cards">
+      ${condRows.length ? `<div class="y-card y-card-conditions">
+        <div class="y-card-heading">${t('pdf.conditions')}</div>
+        ${condRows.map(r=>`
+          <div class="y-cond-row">
+            <span class="y-cond-row-label"><span class="y-cond-icon">${PDF_ICON_SVG[r.icon]}</span>${escapeHtml(r.label)}</span>
+            <span class="y-cond-row-value">${r.value}</span>
+          </div>`).join('')}
+      </div>` : ''}
+      <div class="y-card y-card-route">
+        <div class="y-card-heading">${t('pdf.theRoute')}</div>
+        ${trip.place ? `<div class="y-route-text">${escapeHtml(trip.place)}</div>` : ''}
+        <div class="y-map-box">${mapInner}</div>
+      </div>
+      ${crewList.length ? `<div class="y-card y-card-crew">
+        <div class="y-card-heading">${t('nav.crew')}</div>
+        <div class="y-crew-list">${crewList.map(m=>`
+          <div class="y-crew-item">
+            <img class="y-crew-photo-sm" src="${m.photo||placeholderAvatar()}">
+            <div><span class="y-crew-role">${escapeHtml(m.role)}</span><span class="y-crew-name-sm">${escapeHtml(m.name)}</span></div>
+          </div>`).join('')}</div>
+      </div>` : ''}
+    </div>
 
-    ${photos.length ? `<div class="y-photos">${photos.map(p=>`<div class="y-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
-
-    ${crewList.length ? `<div class="y-crew-footer">
-      ${crewList.map((m,i)=>`<div class="y-crew-member${i===1?' right':''}">
-        <img class="y-crew-photo" src="${m.photo||placeholderAvatar()}">
-        <div><span class="y-crew-role">${escapeHtml(m.role)}</span><span class="y-crew-name">${escapeHtml(m.name)}</span></div>
-      </div>${i < crewList.length-1 ? `<span class="y-crew-line"></span><span class="y-crew-anchor">${pdfAnchorSvgSized(15,'#B4884F',1.3)}</span><span class="y-crew-line"></span>` : ''}`).join('')}
+    ${photos.length ? `<div class="y-card y-card-photos">
+      <div class="y-card-heading">${t('active.photos')}</div>
+      <div class="y-photos">${photos.map(p=>`<div class="y-photo-cell"><img src="${p}"></div>`).join('')}</div>
     </div>` : ''}
 
     <div class="y-footer">Sail la Vie Logbook · ${t('cert.generated')} ${new Date().toLocaleDateString(currentLocale())}</div>
@@ -428,7 +449,7 @@ function buildTripPdfHtmlStory(trip){
   const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
   const allPhotos = trip.photos||[];
   const legPhotos = allPhotos.slice(0,4);
-  const gridPhotos = allPhotos.slice(4,12); // never repeat a leg-strip photo in the grid below
+  const gridPhotos = allPhotos.slice(4); // every remaining photo — never repeats a leg-strip photo, never capped
   let notes = trip.notes || '';
   if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
   const paragraphs = notes ? notes.split(/\n+/).filter(Boolean) : [];
@@ -453,6 +474,14 @@ function buildTripPdfHtmlStory(trip){
     {value:fmtSpeed(trip.avgSpeed||0).split(' ')[0], unit:speedUnitLabel(), label:t('stat.avgSpeed'), icon:'gauge'},
     {value:fmtSpeed(trip.maxSpeed||0).split(' ')[0], unit:speedUnitLabel(), label:t('stat.maxSpeed'), icon:'gauge'},
   ];
+
+  // Same GPS-track → uploaded-map-image → empty-placeholder priority as the
+  // app's own trip-detail map and the other themes.
+  const mapInner = (trip.path && trip.path.length>1)
+    ? buildPortholeSvg(trip.path, false, appUnitSystem())
+    : trip.mapImage
+      ? `<img src="${trip.mapImage}">`
+      : `<div class="ss-map-empty">${t('pdf.noTrack')}</div>`;
 
   return `<div class="pdf-sheet" id="pdfTripBlock">
     <div class="ss-frame"></div><div class="ss-frame-inner"></div>
@@ -491,28 +520,40 @@ function buildTripPdfHtmlStory(trip){
     </div>
     <div class="ss-stats-rule"></div>
 
-    <div class="ss-info">
-      <div class="ss-col ss-col-conditions">
-        ${condRows.length ? `<div class="ss-heading">${t('pdf.conditions')}</div>${condRows.map(r=>`
+    <div class="ss-cards">
+      ${condRows.length ? `<div class="ss-card ss-card-conditions">
+        <div class="ss-heading">${t('pdf.conditions')}</div>
+        ${condRows.map(r=>`
           <div class="ss-cond-row">
             <span class="ss-cond-label"><span class="ss-cond-icon">${PDF_ICON_SVG[r.icon]}</span>${escapeHtml(r.label)}</span>
             <span class="ss-cond-value">${r.value}</span>
-          </div>`).join('')}` : ''}
-      </div>
-      <div class="ss-col ss-col-day">
-        ${paragraphs.length ? `<div class="ss-heading">${t('pdf.theDay')}</div><div class="ss-day-text">${paragraphs.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div><div class="ss-day-boat">${ssSailboatSvg(64,40,'#8FA4BE')}</div>` : ''}
-      </div>
-      <div class="ss-col ss-col-crew">
-        ${crewList.length ? `<div class="ss-heading">${t('nav.crew')}</div>${crewList.map(m=>`
+          </div>`).join('')}
+      </div>` : ''}
+      ${paragraphs.length ? `<div class="ss-card ss-card-day">
+        <div class="ss-heading">${t('pdf.theDay')}</div>
+        <div class="ss-day-text">${paragraphs.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div>
+        <div class="ss-day-boat">${ssSailboatSvg(64,40,'#8FA4BE')}</div>
+      </div>` : ''}
+      ${crewList.length ? `<div class="ss-card ss-card-crew">
+        <div class="ss-heading">${t('nav.crew')}</div>
+        <div class="ss-crew-list">${crewList.map(m=>`
           <div class="ss-crew-item">
             <img class="ss-crew-photo" src="${m.photo||placeholderAvatar()}">
             <span class="ss-crew-role">${escapeHtml(m.role)}</span>
             <span class="ss-crew-name">${escapeHtml(m.name)}</span>
-          </div>`).join('')}` : ''}
-      </div>
+          </div>`).join('')}</div>
+      </div>` : ''}
     </div>
 
-    ${gridPhotos.length ? `<div class="ss-photos" style="grid-template-columns:repeat(${Math.min(4,gridPhotos.length)},1fr);">${gridPhotos.map(p=>`<div class="ss-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
+    <div class="ss-card ss-card-route">
+      <div class="ss-heading">${t('pdf.theRoute')}</div>
+      <div class="ss-map-box">${mapInner}</div>
+    </div>
+
+    ${gridPhotos.length ? `<div class="ss-card ss-card-photos">
+      <div class="ss-heading">${t('active.photos')}</div>
+      <div class="ss-photos">${gridPhotos.map(p=>`<div class="ss-photo-cell"><img src="${p}"></div>`).join('')}</div>
+    </div>` : ''}
 
     <div class="ss-footer">
       <div class="ss-footer-heart">${PDF_ICON_SVG.heart}</div>
@@ -531,14 +572,13 @@ function buildTripPdfHtmlStory(trip){
 function buildTripPdfHtmlMemoryPage(trip){
   const tripCrew = (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
   const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
-  const fullCrewList = [ ...(tripSkipper ? [{...tripSkipper, role:t('active.skipper')}] : []),
-                          ...tripCrew.map(c=>({...c, role:t('nav.crew')})) ];
-  const crewList = fullCrewList.slice(0,2);
+  const crewList = [ ...(tripSkipper ? [{...tripSkipper, role:t('active.skipper')}] : []),
+                      ...tripCrew.map(c=>({...c, role:t('nav.crew')})) ]; // full list — was capped at 2
   const d = new Date(trip.date);
   const dateLabel = d.toLocaleDateString(currentLocale(),{weekday:'long'}).toUpperCase();
   const dateValue = d.toLocaleDateString(currentLocale(),{day:'numeric',month:'long',year:'numeric'}).toUpperCase();
   const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
-  const photos = (trip.photos||[]).slice(0,8);
+  const photos = trip.photos||[]; // every photo — never capped
   let notes = trip.notes || '';
   if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
   const paragraphs = notes ? notes.split(/\n+/).filter(Boolean) : [];
@@ -560,15 +600,21 @@ function buildTripPdfHtmlMemoryPage(trip){
     {value:fmtSpeed(trip.maxSpeed||0).split(' ')[0], unit:speedUnitLabel(), label:t('stat.maxSpeed'), icon:'gauge'},
   ];
 
+  // Same GPS-track → uploaded-map-image → empty-placeholder priority as the
+  // app's own trip-detail map and the other themes. The old version only
+  // ever checked trip.path, so a trip with an uploaded map but no GPS track
+  // silently fell through to "no track recorded".
   const mapInner = (trip.path && trip.path.length>1)
     ? buildPortholeSvg(trip.path, false, appUnitSystem())
-    : `<div class="m-map-empty">${t('pdf.noTrack')}</div>`;
+    : trip.mapImage
+      ? `<img src="${trip.mapImage}">`
+      : `<div class="m-map-empty">${t('pdf.noTrack')}</div>`;
 
   return `<div class="pdf-sheet" id="pdfTripBlock">
     <div class="m-hero">
       ${trip.coverPhoto ? `<img src="${trip.coverPhoto}">` : `<div class="m-hero-noimg"></div>`}
       <div class="m-hero-scrim"></div>
-      <div class="m-hero-wave">${pdfWaveStripSvg(612,12,'#B4884F')}</div>
+      <div class="m-hero-wave">${pdfWaveStripSvg(794,12,'#B4884F')}</div>
       <div class="m-badge">
         <div class="m-badge-compass">${navCompassSvg(50,'rgba(255,255,255,.5)','rgba(255,255,255,.85)','rgba(255,255,255,.9)')}</div>
         <div class="m-badge-anchor">${pdfAnchorSvgSized(24,'#B4884F')}</div>
@@ -598,33 +644,41 @@ function buildTripPdfHtmlMemoryPage(trip){
     </div>
     <div class="m-stats-rule"></div>
 
-    <div class="m-info">
-      <div class="m-col m-col-conditions">
-        ${condRows.length ? `<div class="m-heading">${t('pdf.conditions')}</div>${condRows.map(r=>`
+    <div class="m-cards">
+      ${condRows.length ? `<div class="m-card m-card-conditions">
+        <div class="m-heading">${t('pdf.conditions')}</div>
+        ${condRows.map(r=>`
           <div class="m-cond-row">
             <span class="m-cond-label"><span class="m-cond-icon">${PDF_ICON_SVG[r.icon]}</span>${escapeHtml(r.label)}</span>
             <span class="m-cond-value">${r.value}</span>
-          </div>`).join('')}` : ''}
-      </div>
-      <div class="m-col m-col-day">
-        ${paragraphs.length ? `<div class="m-heading">${t('pdf.theDay')}</div><div class="m-day-text">${paragraphs.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div>` : ''}
-      </div>
-      <div class="m-col m-col-route">
-        <div class="m-heading">${t('pdf.theRoute')}</div>
-        ${trip.place ? `<div class="m-route-text">${escapeHtml(trip.place)}</div>` : ''}
-        <div class="m-map-box">${mapInner}</div>
-      </div>
+          </div>`).join('')}
+      </div>` : ''}
+      ${paragraphs.length ? `<div class="m-card m-card-day">
+        <div class="m-heading">${t('pdf.theDay')}</div>
+        <div class="m-day-text">${paragraphs.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div>
+      </div>` : ''}
+      ${crewList.length ? `<div class="m-card m-card-crew">
+        <div class="m-heading">${t('nav.crew')}</div>
+        <div class="m-crew-list">${crewList.map(m=>`
+          <div class="m-crew-item">
+            <img class="m-crew-photo-sm" src="${m.photo||placeholderAvatar()}">
+            <div><span class="m-crew-role">${escapeHtml(m.role)}</span><span class="m-crew-name-sm">${escapeHtml(m.name)}</span></div>
+          </div>`).join('')}</div>
+      </div>` : ''}
     </div>
 
-    ${photos.length ? `<div class="m-photos">${photos.map(p=>`<div class="m-photo-cell"><img src="${p}"></div>`).join('')}</div>` : ''}
+    <div class="m-card m-card-route">
+      <div class="m-heading">${t('pdf.theRoute')}</div>
+      ${trip.place ? `<div class="m-route-text">${escapeHtml(trip.place)}</div>` : ''}
+      <div class="m-map-box">${mapInner}</div>
+    </div>
+
+    ${photos.length ? `<div class="m-card m-card-photos">
+      <div class="m-heading">${t('active.photos')}</div>
+      <div class="m-photos">${photos.map(p=>`<div class="m-photo-cell"><img src="${p}"></div>`).join('')}</div>
+    </div>` : ''}
 
     <div class="m-footer">
-      ${crewList.length ? `<div class="m-crew-row">
-        ${crewList.map((m,i)=>`<div class="m-crew-member${i===1?' right':''}">
-          <img class="m-crew-photo" src="${m.photo||placeholderAvatar()}">
-          <div><span class="m-crew-role">${escapeHtml(m.role)}</span><span class="m-crew-name">${escapeHtml(m.name)}</span></div>
-        </div>${i < crewList.length-1 ? `<span class="m-crew-line"></span><span class="m-crew-anchor">${pdfAnchorSvgSized(15,'#B4884F',1.3)}</span><span class="m-crew-line"></span>` : ''}`).join('')}
-      </div>` : ''}
       <div class="m-tagline-rule"></div>
       <div class="m-tagline"><span>${t('pdf.gratefulJourney').toUpperCase()}</span><span class="m-tagline-heart">${PDF_ICON_SVG.heart}</span></div>
     </div>

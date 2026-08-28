@@ -518,238 +518,295 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-nautical .n-footer-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9px; color:var(--n-body); text-align:center; margin-top:9px; letter-spacing:.02em; }
 
 /* ---------- Sailing Story theme ----------
-   Ported from the reportlab poster mockup (same 612x918 grid convention as
-   the Nautical theme). No hero photo — identity comes from the compass +
-   script/serif masthead, a numbered route bar, and an edge-to-edge leg-photo
-   strip. All photos use object-fit:cover (crop-to-fill, never stretched)
-   and stay inside the double border frame, which is drawn as an absolute
-   z-index overlay so it always sits on top of the full-bleed bands. */
+   True A4 canvas (794px wide). No hero photo — identity comes from the
+   compass + script/serif masthead, a numbered route bar, and an edge-to-edge
+   leg-photo strip. Conditions / The Day / Crew are now independent
+   `.ss-card` boxes (was three loose columns with no boundary), plus a new
+   Route+Map card and a full-width Photos card, matching the Nautical
+   theme's container treatment. The double border frame is drawn as an
+   absolute z-index overlay so it always sits on top of the full-bleed bands. */
 .pdf-theme-story .pdf-sheet{
-  width:612px; padding:0; position:relative;
+  width:794px; padding:0; position:relative;
   background:var(--s-cream); color:var(--s-ink); font-family:'Times New Roman',Georgia,serif;
-  display:flex; flex-direction:column;
   --s-navy:#122F4E; --s-navy-deep:#0B2038; --s-gold:#B4884F; --s-gold-deep:#9C7440;
   --s-cream:#FAF6EF; --s-cream-line:#EFE6D5; --s-ink:#17324F; --s-body:#5B6672;
+  --s-water:#DCE8E4; --s-coral:#B8443A;
 }
 .pdf-theme-story .ss-frame, .pdf-theme-story .ss-frame-inner{ position:absolute; pointer-events:none; z-index:5; }
 .pdf-theme-story .ss-frame{ inset:14px; border:1.1px solid var(--s-navy); border-radius:4px; }
 .pdf-theme-story .ss-frame-inner{ inset:18px; border:0.6px solid var(--s-navy); border-radius:3px; }
 
-.pdf-theme-story .ss-header{ padding:30px 34px 0; display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex:0 0 auto; }
+.pdf-theme-story .ss-header{ padding:36px 40px 0; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
 .pdf-theme-story .ss-compass{ flex:0 0 auto; margin-top:4px; }
 .pdf-theme-story .ss-title-block{ flex:1; text-align:center; padding-top:2px; min-width:0; }
-.pdf-theme-story .ss-title-lead{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:28px; color:var(--s-gold-deep); line-height:1; margin-bottom:2px; }
-.pdf-theme-story .ss-title-main{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:29px; color:var(--s-navy); text-transform:uppercase; line-height:1.05; letter-spacing:.01em; }
-.pdf-theme-story .ss-title-rule{ display:flex; align-items:center; justify-content:center; gap:8px; margin:10px auto 8px; max-width:230px; }
+.pdf-theme-story .ss-title-lead{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:33px; color:var(--s-gold-deep); line-height:1; margin-bottom:3px; }
+.pdf-theme-story .ss-title-main{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:34px; color:var(--s-navy); text-transform:uppercase; line-height:1.05; letter-spacing:.01em; }
+.pdf-theme-story .ss-title-rule{ display:flex; align-items:center; justify-content:center; gap:9px; margin:12px auto 9px; max-width:260px; }
 .pdf-theme-story .ss-title-rule .ss-rule-line{ flex:1; height:1px; background:var(--s-gold); }
 .pdf-theme-story .ss-title-rule .ss-rule-heart{ color:var(--s-gold); display:flex; }
-.pdf-theme-story .ss-subtitle{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--s-navy); margin-bottom:2px; }
-.pdf-theme-story .ss-meta{ flex:0 0 auto; text-align:right; padding-top:2px; min-width:110px; }
-.pdf-theme-story .ss-meta-row{ display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-bottom:2px; }
-.pdf-theme-story .ss-meta-row b{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; font-weight:700; color:var(--s-navy); }
+.pdf-theme-story .ss-subtitle{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:11.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--s-navy); margin-bottom:2px; }
+.pdf-theme-story .ss-meta{ flex:0 0 auto; text-align:right; padding-top:2px; min-width:125px; }
+.pdf-theme-story .ss-meta-row{ display:flex; align-items:center; justify-content:flex-end; gap:7px; margin-bottom:2px; }
+.pdf-theme-story .ss-meta-row b{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:11px; font-weight:700; color:var(--s-navy); }
 .pdf-theme-story .ss-meta-icon{ color:var(--s-gold-deep); display:flex; }
-.pdf-theme-story .ss-meta-sub{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.2px; color:var(--s-navy); margin:0 0 10px; }
-.pdf-theme-story .ss-meta-time{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.6px; color:var(--s-navy); }
-.pdf-theme-story .ss-meta-anchor{ margin-top:14px; color:var(--s-gold); display:flex; justify-content:flex-end; }
+.pdf-theme-story .ss-meta-sub{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; color:var(--s-navy); margin:0 0 11px; }
+.pdf-theme-story .ss-meta-time{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10.5px; color:var(--s-navy); }
+.pdf-theme-story .ss-meta-anchor{ margin-top:15px; color:var(--s-gold); display:flex; justify-content:flex-end; }
 
-.pdf-theme-story .ss-route-bar{ background:var(--s-navy); color:#fff; height:26px; display:flex; align-items:center; justify-content:center; gap:9px; margin:12px 22px 0; border-radius:3px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; font-weight:700; letter-spacing:.02em; padding:0 16px; flex:0 0 auto; }
-.pdf-theme-story .ss-route-num{ width:15px; height:15px; border-radius:50%; border:1px solid var(--s-gold); color:var(--s-gold); font-family:'Times New Roman',serif; font-weight:700; font-size:8.5px; display:flex; align-items:center; justify-content:center; flex:0 0 15px; }
+.pdf-theme-story .ss-route-bar{ background:var(--s-navy); color:#fff; height:30px; display:flex; align-items:center; justify-content:center; gap:10px; margin:14px 30px 0; border-radius:4px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:11px; font-weight:700; letter-spacing:.02em; padding:0 18px; }
+.pdf-theme-story .ss-route-num{ width:16px; height:16px; border-radius:50%; border:1px solid var(--s-gold); color:var(--s-gold); font-family:'Times New Roman',serif; font-weight:700; font-size:9px; display:flex; align-items:center; justify-content:center; flex:0 0 16px; }
 .pdf-theme-story .ss-route-arrow{ color:var(--s-gold); font-weight:700; }
 
-.pdf-theme-story .ss-legs{ display:flex; height:150px; margin:6px 22px 0; border-radius:3px; overflow:hidden; flex:0 0 auto; }
+.pdf-theme-story .ss-legs{ display:flex; height:190px; margin:8px 30px 0; border-radius:4px; overflow:hidden; }
 .pdf-theme-story .ss-legs .ss-leg-cell{ flex:1; overflow:hidden; background:var(--s-cream-line); min-width:0; }
-.pdf-theme-story .ss-legs .ss-leg-cell + .ss-leg-cell{ margin-left:3px; }
-.pdf-theme-story .ss-legs .ss-leg-cell img{ width:100%; height:100%; object-fit:contain; object-position:center; display:block; background:var(--s-cream-line); }
+.pdf-theme-story .ss-legs .ss-leg-cell + .ss-leg-cell{ margin-left:4px; }
+/* object-fit:cover (was contain) — contain was leaving cream bars around
+   any leg photo whose aspect ratio didn't match the cell. */
+.pdf-theme-story .ss-legs .ss-leg-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; background:var(--s-cream-line); }
 
-.pdf-theme-story .ss-sail-heading{ display:flex; align-items:center; justify-content:center; gap:16px; margin:20px 34px 0; flex:0 0 auto; }
-.pdf-theme-story .ss-sail-heading .ss-sail-line{ flex:1; height:0.7px; background:var(--s-gold); max-width:170px; }
+.pdf-theme-story .ss-sail-heading{ display:flex; align-items:center; justify-content:center; gap:18px; margin:26px 40px 0; }
+.pdf-theme-story .ss-sail-heading .ss-sail-line{ flex:1; height:0.7px; background:var(--s-gold); max-width:200px; }
 .pdf-theme-story .ss-sail-heading .ss-sail-star{ color:var(--s-gold); display:flex; }
-.pdf-theme-story .ss-sail-heading .ss-sail-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:13px; font-weight:700; letter-spacing:.06em; color:var(--s-navy); white-space:nowrap; }
+.pdf-theme-story .ss-sail-heading .ss-sail-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:14.5px; font-weight:700; letter-spacing:.06em; color:var(--s-navy); white-space:nowrap; }
 
-.pdf-theme-story .ss-stats{ display:flex; align-items:center; justify-content:space-around; height:60px; margin:14px 30px 0; flex:0 0 auto; }
-.pdf-theme-story .ss-stat{ display:flex; align-items:center; gap:8px; position:relative; padding:0 12px; }
+.pdf-theme-story .ss-stats{ display:flex; align-items:center; justify-content:space-around; height:70px; margin:16px 34px 0; }
+.pdf-theme-story .ss-stat{ display:flex; align-items:center; gap:9px; position:relative; padding:0 14px; }
 .pdf-theme-story .ss-stat + .ss-stat::before{ content:''; position:absolute; left:-1px; top:12%; bottom:12%; width:0; border-left:1px dotted var(--s-gold); }
 .pdf-theme-story .ss-stat-icon{ color:var(--s-navy); display:flex; }
-.pdf-theme-story .ss-stat b{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:17px; color:var(--s-navy); }
-.pdf-theme-story .ss-stat .ss-stat-unit{ font-size:9px; font-weight:700; color:var(--s-gold-deep); margin-left:2px; font-family:'Helvetica Neue',Arial,sans-serif; }
-.pdf-theme-story .ss-stat .ss-stat-label{ display:block; font-size:7.3px; letter-spacing:.05em; text-transform:uppercase; color:var(--s-body); font-family:'Helvetica Neue',Arial,sans-serif; margin-top:1px; }
-.pdf-theme-story .ss-stats-rule{ height:1px; background:#DCD0BC; margin:8px 30px 0; flex:0 0 auto; }
+.pdf-theme-story .ss-stat b{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:19px; color:var(--s-navy); }
+.pdf-theme-story .ss-stat .ss-stat-unit{ font-size:10px; font-weight:700; color:var(--s-gold-deep); margin-left:2px; font-family:'Helvetica Neue',Arial,sans-serif; }
+.pdf-theme-story .ss-stat .ss-stat-label{ display:block; font-size:8.2px; letter-spacing:.05em; text-transform:uppercase; color:var(--s-body); font-family:'Helvetica Neue',Arial,sans-serif; margin-top:1px; }
+.pdf-theme-story .ss-stats-rule{ height:1px; background:#DCD0BC; margin:10px 34px 0; }
 
-.pdf-theme-story .ss-info{ display:flex; gap:20px; padding:18px 30px 0; flex:1 1 auto; min-height:0; }
-.pdf-theme-story .ss-col{ flex:1 1 0; min-width:0; }
-.pdf-theme-story .ss-col-day{ flex:1.15 1 0; }
-.pdf-theme-story .ss-heading{ text-align:center; font-family:'Helvetica Neue',Arial,sans-serif; font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--s-navy); padding-bottom:6px; margin-bottom:10px; border-bottom:0.8px solid var(--s-gold); }
+/* Conditions / The Day / Crew: independent cards (was three loose columns
+   with no boundary), wrapping onto new rows as needed. */
+.pdf-theme-story .ss-cards{ display:flex; flex-wrap:wrap; gap:18px; padding:22px 34px 0; }
+.pdf-theme-story .ss-card{ background:#fff; border:1px solid var(--s-cream-line); border-radius:8px; padding:18px 20px; box-sizing:border-box; }
+.pdf-theme-story .ss-card-conditions{ flex:1 1 220px; }
+.pdf-theme-story .ss-card-day{ flex:1.2 1 260px; }
+.pdf-theme-story .ss-card-crew{ flex:1 1 200px; }
+.pdf-theme-story .ss-card-route{ margin:18px 34px 0; }
+.pdf-theme-story .ss-card-photos{ margin:18px 34px 0; }
+.pdf-theme-story .ss-heading{ text-align:center; font-family:'Helvetica Neue',Arial,sans-serif; font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--s-navy); padding-bottom:7px; margin-bottom:11px; border-bottom:0.8px solid var(--s-gold); }
 .pdf-theme-story .ss-cond-row{ display:flex; align-items:center; justify-content:space-between; padding:5px 2px; }
-.pdf-theme-story .ss-cond-label{ display:flex; align-items:center; gap:6px; font-size:8.2px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--s-body); font-family:'Helvetica Neue',Arial,sans-serif; }
+.pdf-theme-story .ss-cond-label{ display:flex; align-items:center; gap:7px; font-size:8.8px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--s-body); font-family:'Helvetica Neue',Arial,sans-serif; }
 .pdf-theme-story .ss-cond-icon{ color:var(--s-gold-deep); display:flex; }
-.pdf-theme-story .ss-cond-value{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:9.4px; color:var(--s-navy); }
-.pdf-theme-story .ss-day-text p{ font-family:'Times New Roman',Georgia,serif; font-size:9.6px; line-height:1.5; color:var(--s-ink); margin:0 0 8px; }
-.pdf-theme-story .ss-day-boat{ display:flex; justify-content:flex-end; margin-top:8px; opacity:.85; }
+.pdf-theme-story .ss-cond-value{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:10px; color:var(--s-navy); }
+.pdf-theme-story .ss-day-text p{ font-family:'Times New Roman',Georgia,serif; font-size:10.2px; line-height:1.55; color:var(--s-ink); margin:0 0 9px; }
+.pdf-theme-story .ss-day-text p:last-child{ margin-bottom:0; }
+.pdf-theme-story .ss-day-boat{ display:flex; justify-content:flex-end; margin-top:9px; opacity:.85; }
 .pdf-theme-story .ss-crew-item{ text-align:center; padding-bottom:14px; margin-bottom:14px; border-bottom:1px dotted var(--s-gold); }
 .pdf-theme-story .ss-crew-item:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
-.pdf-theme-story .ss-crew-photo{ width:44px; height:44px; border-radius:50%; border:1.1px solid var(--s-gold); object-fit:contain; object-position:center; display:block; margin:0 auto 8px; background:var(--s-cream-line); }
-.pdf-theme-story .ss-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.6px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--s-body); display:block; margin-bottom:2px; }
-.pdf-theme-story .ss-crew-name{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:19px; color:var(--s-navy); }
+/* object-fit:cover (was contain) — contain was leaving cream bars around
+   any crew photo whose aspect ratio didn't match the circle. */
+.pdf-theme-story .ss-crew-photo{ width:46px; height:46px; border-radius:50%; border:1.1px solid var(--s-gold); object-fit:cover; object-position:center; display:block; margin:0 auto 8px; background:var(--s-cream-line); }
+.pdf-theme-story .ss-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--s-body); display:block; margin-bottom:2px; }
+.pdf-theme-story .ss-crew-name{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:20px; color:var(--s-navy); }
+/* Map card: locally overrides the generic --water/--navy/--coral tokens
+   buildPortholeSvg() draws with, so the track matches this theme's palette. */
+.pdf-theme-story .ss-map-box{
+  position:relative; width:100%; height:220px; border-radius:6px; overflow:hidden;
+  border:1px solid var(--s-gold); background:var(--s-water);
+  --water:var(--s-water); --navy:var(--s-navy); --coral:var(--s-coral);
+}
+.pdf-theme-story .ss-map-box svg, .pdf-theme-story .ss-map-box img{ width:100%; height:100%; object-fit:cover; display:block; }
+.pdf-theme-story .ss-map-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--s-navy); opacity:.55; }
 
-.pdf-theme-story .ss-photos{ display:grid; grid-auto-rows:95px; gap:2.5px; margin:16px 30px 0; border:1px solid var(--s-gold); flex:0 0 auto; }
-.pdf-theme-story .ss-photo-cell{ overflow:hidden; background:var(--s-cream-line); }
-.pdf-theme-story .ss-photo-cell img{ width:100%; height:100%; object-fit:contain; object-position:center; display:block; background:var(--s-cream-line); }
+/* Photo grid: aspect-ratio cells + object-fit:cover (was contain, leaving
+   cream bars around mismatched photos) so the full photo set — never
+   capped — crops cleanly to fill. Auto-flowing rows fit any photo count. */
+.pdf-theme-story .ss-photos{ display:grid; grid-template-columns:repeat(4,1fr); gap:4px; border:1px solid var(--s-gold); border-radius:4px; overflow:hidden; }
+.pdf-theme-story .ss-photo-cell{ aspect-ratio:1/1; overflow:hidden; background:var(--s-cream-line); }
+.pdf-theme-story .ss-photo-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; background:var(--s-cream-line); }
 
-.pdf-theme-story .ss-footer{ display:flex; flex-direction:column; align-items:center; padding:14px 30px 26px; flex:0 0 auto; }
-.pdf-theme-story .ss-footer-heart{ color:var(--s-gold); margin-bottom:6px; display:flex; }
-.pdf-theme-story .ss-footer-row{ display:flex; align-items:center; gap:8px; width:100%; max-width:420px; }
+.pdf-theme-story .ss-footer{ display:flex; flex-direction:column; align-items:center; padding:20px 34px 30px; }
+.pdf-theme-story .ss-footer-heart{ color:var(--s-gold); margin-bottom:7px; display:flex; }
+.pdf-theme-story .ss-footer-row{ display:flex; align-items:center; gap:9px; width:100%; max-width:460px; }
 .pdf-theme-story .ss-footer-row .ss-footer-anchor{ color:var(--s-gold); flex:0 0 auto; display:flex; }
 .pdf-theme-story .ss-footer-row .ss-footer-line{ flex:1; height:0; border-top:1px dotted var(--s-gold); }
-.pdf-theme-story .ss-footer-row .ss-footer-text{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:15px; color:var(--s-navy); white-space:nowrap; padding:0 8px; }
+.pdf-theme-story .ss-footer-row .ss-footer-text{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:16px; color:var(--s-navy); white-space:nowrap; padding:0 9px; }
 
 /* ---------- Minimalist Yacht Club theme ----------
-   Ported from the reportlab poster mockup: a restrained navy/gold/cream
-   editorial layout — badge + serif masthead header, a 3:1 hero/story
-   split, centered rule headings for Numbers/Conditions, and a simple
-   two-photo crew footer joined by an anchor. Single flowing page,
-   612x918 grid, same convention as the other poster themes. */
+   True A4 canvas (794px wide). Badge + serif masthead header, a 3:1
+   hero/story split, centered rule headings for Numbers, then Conditions /
+   Route+Map / Crew as independent `.y-card` boxes (was three loose inline
+   rows with no boundary) so a page break can land between them cleanly. */
 .pdf-theme-yacht .pdf-sheet{
-  width:612px; padding:34px 32px 28px; box-sizing:border-box; position:relative;
+  width:794px; padding:40px 40px 34px; box-sizing:border-box; position:relative;
   background:var(--y-cream); color:var(--y-navy); font-family:'Times New Roman',Georgia,serif;
-  display:flex; flex-direction:column;
   --y-navy:#16324F; --y-gold:#B4884F; --y-gold-deep:#9C7440; --y-cream:#FAF8F6; --y-body:#5B6672; --y-line:#DCD6CC;
+  --y-water:#DCE8E4; --y-coral:#B8443A;
 }
-.pdf-theme-yacht .y-header{ display:flex; align-items:flex-start; gap:22px; }
-.pdf-theme-yacht .y-badge{ position:relative; width:84px; height:84px; border-radius:50%; background:var(--y-navy); border:1.6px solid var(--y-gold); flex:0 0 84px; display:flex; align-items:center; justify-content:center; }
-.pdf-theme-yacht .y-badge-compass{ position:absolute; inset:10px; opacity:.85; }
+.pdf-theme-yacht .y-header{ display:flex; align-items:flex-start; gap:26px; }
+.pdf-theme-yacht .y-badge{ position:relative; width:96px; height:96px; border-radius:50%; background:var(--y-navy); border:1.8px solid var(--y-gold); flex:0 0 96px; display:flex; align-items:center; justify-content:center; }
+.pdf-theme-yacht .y-badge-compass{ position:absolute; inset:12px; opacity:.85; }
 .pdf-theme-yacht .y-badge-anchor{ position:relative; color:var(--y-gold); display:flex; }
-.pdf-theme-yacht .y-title-block{ flex:1 1 auto; min-width:0; padding-top:2px; }
-.pdf-theme-yacht .y-title-line1, .pdf-theme-yacht .y-title-line2{ font-family:'Playfair Display',Georgia,serif; font-weight:700; font-size:29px; color:var(--y-navy); line-height:1.08; margin:0; }
-.pdf-theme-yacht .y-title-rule{ display:flex; align-items:center; gap:10px; margin-top:12px; max-width:200px; }
+.pdf-theme-yacht .y-title-block{ flex:1 1 auto; min-width:0; padding-top:4px; }
+.pdf-theme-yacht .y-title-line1, .pdf-theme-yacht .y-title-line2{ font-family:'Playfair Display',Georgia,serif; font-weight:700; font-size:34px; color:var(--y-navy); line-height:1.08; margin:0; }
+.pdf-theme-yacht .y-title-rule{ display:flex; align-items:center; gap:11px; margin-top:14px; max-width:230px; }
 .pdf-theme-yacht .y-title-rule .y-rule-line{ flex:1; height:0.8px; background:var(--y-gold); }
 .pdf-theme-yacht .y-title-rule .y-rule-anchor{ color:var(--y-gold); display:flex; flex:0 0 auto; }
-.pdf-theme-yacht .y-meta{ flex:0 0 175px; text-align:right; padding-top:2px; }
-.pdf-theme-yacht .y-meta-row{ display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-bottom:2px; }
-.pdf-theme-yacht .y-meta-row b{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5px; font-weight:700; color:var(--y-navy); }
+.pdf-theme-yacht .y-meta{ flex:0 0 190px; text-align:right; padding-top:4px; }
+.pdf-theme-yacht .y-meta-row{ display:flex; align-items:center; justify-content:flex-end; gap:7px; margin-bottom:3px; }
+.pdf-theme-yacht .y-meta-row b{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10.5px; font-weight:700; color:var(--y-navy); }
 .pdf-theme-yacht .y-meta-icon{ color:var(--y-gold-deep); display:flex; }
-.pdf-theme-yacht .y-meta-time{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.2px; color:var(--y-navy); margin:0 0 8px; }
-.pdf-theme-yacht .y-meta-rule{ height:0.7px; background:var(--y-gold); margin:4px 0 8px; }
-.pdf-theme-yacht .y-route{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.3px; font-weight:700; color:var(--y-navy); line-height:1.5; }
+.pdf-theme-yacht .y-meta-time{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; color:var(--y-navy); margin:0 0 9px; }
+.pdf-theme-yacht .y-meta-rule{ height:0.7px; background:var(--y-gold); margin:5px 0 9px; }
+.pdf-theme-yacht .y-route{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; font-weight:700; color:var(--y-navy); line-height:1.5; }
 
-.pdf-theme-yacht .y-hero-row{ display:flex; gap:26px; margin-top:26px; }
-.pdf-theme-yacht .y-hero{ flex:0 0 75%; height:250px; border-radius:2px; overflow:hidden; background:var(--y-line); }
+.pdf-theme-yacht .y-hero-row{ display:flex; gap:30px; margin-top:30px; }
+.pdf-theme-yacht .y-hero{ flex:0 0 74%; height:300px; border-radius:4px; overflow:hidden; background:var(--y-line); }
+/* object-fit was already cover here — the hero was never the bug */
 .pdf-theme-yacht .y-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
 .pdf-theme-yacht .y-story{ flex:1 1 auto; min-width:0; padding-top:4px; }
-.pdf-theme-yacht .y-story-rule{ width:34px; height:0.8px; background:var(--y-gold); margin-bottom:16px; }
-.pdf-theme-yacht .y-story p{ font-size:10.2px; line-height:1.55; color:var(--y-navy); margin:0 0 10px; }
+.pdf-theme-yacht .y-story-rule{ width:36px; height:0.8px; background:var(--y-gold); margin-bottom:18px; }
+.pdf-theme-yacht .y-story p{ font-size:11px; line-height:1.6; color:var(--y-navy); margin:0 0 11px; }
 
-.pdf-theme-yacht .y-section-heading{ display:flex; align-items:center; justify-content:center; gap:14px; margin:26px 0 0; }
-.pdf-theme-yacht .y-section-heading .y-sh-line{ flex:1; max-width:150px; height:0.8px; background:var(--y-gold); }
-.pdf-theme-yacht .y-section-heading .y-sh-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:11.5px; font-weight:700; letter-spacing:.14em; color:var(--y-navy); white-space:nowrap; }
+.pdf-theme-yacht .y-section-heading{ display:flex; align-items:center; justify-content:center; gap:16px; margin:30px 0 0; }
+.pdf-theme-yacht .y-section-heading .y-sh-line{ flex:1; max-width:170px; height:0.8px; background:var(--y-gold); }
+.pdf-theme-yacht .y-section-heading .y-sh-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:12.5px; font-weight:700; letter-spacing:.14em; color:var(--y-navy); white-space:nowrap; }
 
-.pdf-theme-yacht .y-stats{ display:flex; align-items:center; justify-content:space-around; margin-top:18px; }
-.pdf-theme-yacht .y-stat{ display:flex; align-items:center; gap:10px; position:relative; padding:0 14px; }
+.pdf-theme-yacht .y-stats{ display:flex; align-items:center; justify-content:space-around; margin-top:20px; }
+.pdf-theme-yacht .y-stat{ display:flex; align-items:center; gap:11px; position:relative; padding:0 16px; }
 .pdf-theme-yacht .y-stat + .y-stat::before{ content:''; position:absolute; left:-1px; top:6%; bottom:6%; width:0; border-left:1px dotted var(--y-line); }
 .pdf-theme-yacht .y-stat-icon{ color:var(--y-navy); display:flex; }
-.pdf-theme-yacht .y-stat b{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:18px; color:var(--y-navy); }
-.pdf-theme-yacht .y-stat .y-stat-unit{ font-size:8.6px; font-weight:700; color:var(--y-gold-deep); margin-left:2px; font-family:'Helvetica Neue',Arial,sans-serif; }
-.pdf-theme-yacht .y-stat .y-stat-label{ display:block; font-size:7.6px; letter-spacing:.05em; text-transform:uppercase; color:var(--y-body); font-family:'Helvetica Neue',Arial,sans-serif; margin-top:2px; }
+.pdf-theme-yacht .y-stat b{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:20px; color:var(--y-navy); }
+.pdf-theme-yacht .y-stat .y-stat-unit{ font-size:9.5px; font-weight:700; color:var(--y-gold-deep); margin-left:3px; font-family:'Helvetica Neue',Arial,sans-serif; }
+.pdf-theme-yacht .y-stat .y-stat-label{ display:block; font-size:8.4px; letter-spacing:.05em; text-transform:uppercase; color:var(--y-body); font-family:'Helvetica Neue',Arial,sans-serif; margin-top:2px; }
 
-.pdf-theme-yacht .y-conditions{ display:flex; align-items:center; justify-content:space-around; margin-top:16px; }
-.pdf-theme-yacht .y-cond{ display:flex; align-items:center; gap:8px; position:relative; padding:0 10px; }
-.pdf-theme-yacht .y-cond + .y-cond::before{ content:''; position:absolute; left:-1px; top:10%; bottom:10%; width:0; border-left:1px dotted var(--y-line); }
+/* Conditions / Route+Map / Crew: independent cards, was three loose inline
+   rows floating with no visual boundary between them. */
+.pdf-theme-yacht .y-cards{ display:flex; flex-wrap:wrap; gap:18px; margin-top:26px; }
+.pdf-theme-yacht .y-card{ background:#fff; border:1px solid var(--y-line); border-radius:8px; padding:18px 20px; box-sizing:border-box; }
+.pdf-theme-yacht .y-card-conditions{ flex:1 1 220px; }
+.pdf-theme-yacht .y-card-route{ flex:1 1 260px; }
+.pdf-theme-yacht .y-card-crew{ flex:1 1 220px; }
+.pdf-theme-yacht .y-card-photos{ margin-top:22px; }
+.pdf-theme-yacht .y-card-heading{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--y-navy); border-bottom:1px solid var(--y-gold); padding-bottom:7px; margin-bottom:12px; }
+.pdf-theme-yacht .y-cond-row{ display:flex; align-items:center; justify-content:space-between; padding:5px 0; }
+.pdf-theme-yacht .y-cond-row-label{ display:flex; align-items:center; gap:7px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.8px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--y-navy); }
 .pdf-theme-yacht .y-cond-icon{ color:var(--y-gold-deep); display:flex; }
-.pdf-theme-yacht .y-cond-label{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.4px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--y-navy); display:block; }
-.pdf-theme-yacht .y-cond-value{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.4px; font-weight:700; color:var(--y-body); display:block; margin-top:1px; }
+.pdf-theme-yacht .y-cond-row-value{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.6px; font-weight:700; color:var(--y-body); }
+.pdf-theme-yacht .y-route-text{ font-size:9.6px; color:var(--y-body); margin-bottom:10px; }
+/* Map card: locally overrides the generic --water/--navy/--coral tokens
+   buildPortholeSvg() draws with, so the track matches this theme's palette. */
+.pdf-theme-yacht .y-map-box{
+  position:relative; width:100%; height:180px; border-radius:6px; overflow:hidden;
+  border:1px solid var(--y-gold); background:var(--y-water);
+  --water:var(--y-water); --navy:var(--y-navy); --coral:var(--y-coral);
+}
+.pdf-theme-yacht .y-map-box svg, .pdf-theme-yacht .y-map-box img{ width:100%; height:100%; object-fit:cover; display:block; }
+.pdf-theme-yacht .y-map-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--y-navy); opacity:.55; }
+.pdf-theme-yacht .y-crew-list{ margin-top:2px; }
+.pdf-theme-yacht .y-crew-item{ display:flex; align-items:center; gap:11px; margin-bottom:13px; }
+.pdf-theme-yacht .y-crew-item:last-child{ margin-bottom:0; }
+.pdf-theme-yacht .y-crew-photo-sm{ width:34px; height:34px; border-radius:50%; border:1px solid var(--y-gold); object-fit:cover; display:block; background:var(--y-line); flex:0 0 34px; }
+.pdf-theme-yacht .y-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.4px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--y-gold-deep); display:block; }
+.pdf-theme-yacht .y-crew-name-sm{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:12.5px; color:var(--y-navy); }
 
-.pdf-theme-yacht .y-photos{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:22px; }
-.pdf-theme-yacht .y-photo-cell{ height:110px; border-radius:2px; overflow:hidden; background:var(--y-line); }
+/* Photo grid: aspect-ratio cells + object-fit:cover (cover was already in
+   use here) so every photo — the full set, never capped — crops cleanly. */
+.pdf-theme-yacht .y-photos{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.pdf-theme-yacht .y-photo-cell{ aspect-ratio:1/1; border-radius:4px; overflow:hidden; background:var(--y-line); }
 .pdf-theme-yacht .y-photo-cell img{ width:100%; height:100%; object-fit:cover; display:block; }
 
-.pdf-theme-yacht .y-crew-footer{ display:flex; align-items:center; justify-content:center; gap:16px; margin-top:26px; }
-.pdf-theme-yacht .y-crew-member{ display:flex; align-items:center; gap:10px; }
-.pdf-theme-yacht .y-crew-member.right{ flex-direction:row-reverse; }
-.pdf-theme-yacht .y-crew-photo{ width:52px; height:52px; border-radius:50%; border:1.1px solid var(--y-gold); object-fit:cover; display:block; background:var(--y-line); }
-.pdf-theme-yacht .y-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.4px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--y-gold-deep); display:block; }
-.pdf-theme-yacht .y-crew-name{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:13px; color:var(--y-navy); }
-.pdf-theme-yacht .y-crew-line{ width:44px; height:0.8px; background:var(--y-gold); }
-.pdf-theme-yacht .y-crew-anchor{ color:var(--y-gold); display:flex; }
-
-.pdf-theme-yacht .y-footer{ text-align:center; margin-top:24px; padding-top:14px; border-top:0.7px solid var(--y-gold); font-family:'Helvetica Neue',Arial,sans-serif; font-size:8px; color:var(--y-body); letter-spacing:.02em; }
+.pdf-theme-yacht .y-footer{ text-align:center; margin-top:28px; padding-top:16px; border-top:0.7px solid var(--y-gold); font-family:'Helvetica Neue',Arial,sans-serif; font-size:9px; color:var(--y-body); letter-spacing:.02em; }
 
 /* ---------- Memory Page theme ----------
-   Ported from the reportlab poster mockup: a keepsake-caption layout —
-   full-bleed hero with a badge/script masthead and a translucent meta
-   strip, then Numbers / Conditions+Day+Route columns, a photo grid, and
-   a two-up crew footer joined by an anchor with a tagline underneath. */
+   True A4 canvas (794px wide). Full-bleed hero with a badge/script masthead
+   and a translucent meta strip, then Numbers, then Conditions / The Day /
+   Crew as independent `.m-card` boxes (was three loose columns with no
+   boundary, and crew was a fixed 2-up "joined by anchor" footer motif that
+   couldn't show more than 2 people) plus a Route+Map card and a full-width
+   Photos card. */
 .pdf-theme-memory .pdf-sheet{
-  width:612px; padding:0; position:relative; background:var(--m-cream); color:var(--m-ink); font-family:'Times New Roman',Georgia,serif;
-  display:flex; flex-direction:column;
+  width:794px; padding:0; position:relative; background:var(--m-cream); color:var(--m-ink); font-family:'Times New Roman',Georgia,serif;
   --m-navy:#122F4E; --m-gold:#B4884F; --m-gold-deep:#9C7440; --m-cream:#FAF6EF; --m-ink:#17324F; --m-body:#5B6672; --m-line:#EFE6D5;
+  --m-water:#DCE8E4; --m-coral:#B8443A;
 }
-.pdf-theme-memory .m-hero{ position:relative; width:100%; height:330px; overflow:hidden; background:var(--m-navy); flex:0 0 auto; }
+.pdf-theme-memory .m-hero{ position:relative; width:100%; height:400px; overflow:hidden; background:var(--m-navy); }
 .pdf-theme-memory .m-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
 .pdf-theme-memory .m-hero-noimg{ width:100%; height:100%; background:linear-gradient(160deg,var(--m-navy),#0B2038); }
 .pdf-theme-memory .m-hero-scrim{ position:absolute; inset:0; background:linear-gradient(to top, rgba(250,246,239,.85) 0%, rgba(250,246,239,.32) 42%, transparent 68%); }
-.pdf-theme-memory .m-hero-wave{ position:absolute; left:0; right:0; bottom:-1px; height:12px; display:flex; }
+.pdf-theme-memory .m-hero-wave{ position:absolute; left:0; right:0; bottom:-1px; height:14px; display:flex; }
 .pdf-theme-memory .m-hero-wave svg{ display:block; }
-.pdf-theme-memory .m-hero-content{ position:absolute; inset:0; padding:22px 26px 20px; display:flex; justify-content:space-between; align-items:flex-end; z-index:2; }
-.pdf-theme-memory .m-badge{ position:absolute; top:20px; left:24px; width:66px; height:66px; border-radius:50%; background:var(--m-navy); border:1.4px solid var(--m-gold); display:flex; align-items:center; justify-content:center; z-index:3; }
-.pdf-theme-memory .m-badge-compass{ position:absolute; inset:8px; opacity:.85; }
+.pdf-theme-memory .m-hero-content{ position:absolute; inset:0; padding:28px 32px 24px; display:flex; justify-content:space-between; align-items:flex-end; z-index:2; }
+.pdf-theme-memory .m-badge{ position:absolute; top:26px; left:30px; width:78px; height:78px; border-radius:50%; background:var(--m-navy); border:1.6px solid var(--m-gold); display:flex; align-items:center; justify-content:center; z-index:3; }
+.pdf-theme-memory .m-badge-compass{ position:absolute; inset:10px; opacity:.85; }
 .pdf-theme-memory .m-badge-anchor{ position:relative; color:var(--m-gold); display:flex; }
-.pdf-theme-memory .m-hero-left{ display:flex; flex-direction:column; align-items:flex-start; min-width:0; max-width:360px; padding-left:96px; }
-.pdf-theme-memory .m-title-lead{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:23px; color:var(--m-gold-deep); line-height:1; margin-bottom:2px; }
-.pdf-theme-memory .m-title-main{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:29px; color:var(--m-navy); text-transform:uppercase; line-height:1.06; }
-.pdf-theme-memory .m-title-rule{ display:flex; align-items:center; gap:8px; margin:8px 0 6px; }
-.pdf-theme-memory .m-title-rule .m-rule-line{ width:44px; height:0.8px; background:var(--m-gold); }
+.pdf-theme-memory .m-hero-left{ display:flex; flex-direction:column; align-items:flex-start; min-width:0; max-width:460px; padding-left:112px; }
+.pdf-theme-memory .m-title-lead{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:27px; color:var(--m-gold-deep); line-height:1; margin-bottom:3px; }
+.pdf-theme-memory .m-title-main{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:34px; color:var(--m-navy); text-transform:uppercase; line-height:1.06; }
+.pdf-theme-memory .m-title-rule{ display:flex; align-items:center; gap:9px; margin:10px 0 7px; }
+.pdf-theme-memory .m-title-rule .m-rule-line{ width:50px; height:0.8px; background:var(--m-gold); }
 .pdf-theme-memory .m-title-rule .m-rule-heart{ color:var(--m-gold); display:flex; }
-.pdf-theme-memory .m-subtitle{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--m-navy); }
-.pdf-theme-memory .m-hero-meta{ background:rgba(255,255,255,.68); border-radius:5px; padding:12px 16px; text-align:center; min-width:118px; flex:0 0 auto; }
-.pdf-theme-memory .m-meta-row{ display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:2px; }
-.pdf-theme-memory .m-meta-row b{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9px; font-weight:700; color:var(--m-navy); }
+.pdf-theme-memory .m-subtitle{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--m-navy); }
+.pdf-theme-memory .m-hero-meta{ background:rgba(255,255,255,.68); border-radius:6px; padding:14px 18px; text-align:center; min-width:130px; flex:0 0 auto; }
+.pdf-theme-memory .m-meta-row{ display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:2px; }
+.pdf-theme-memory .m-meta-row b{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; font-weight:700; color:var(--m-navy); }
 .pdf-theme-memory .m-meta-icon{ color:var(--m-gold-deep); display:flex; }
-.pdf-theme-memory .m-meta-sub{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.4px; color:var(--m-navy); margin:0 0 8px; }
-.pdf-theme-memory .m-meta-time{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.6px; color:var(--m-navy); margin-bottom:8px; }
-.pdf-theme-memory .m-meta-rule{ height:0.7px; background:var(--m-gold); margin:4px 0 8px; }
-.pdf-theme-memory .m-meta-route{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.4px; font-weight:700; color:var(--m-navy); line-height:1.7; }
+.pdf-theme-memory .m-meta-sub{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.2px; color:var(--m-navy); margin:0 0 9px; }
+.pdf-theme-memory .m-meta-time{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.4px; color:var(--m-navy); margin-bottom:9px; }
+.pdf-theme-memory .m-meta-rule{ height:0.7px; background:var(--m-gold); margin:5px 0 9px; }
+.pdf-theme-memory .m-meta-route{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.2px; font-weight:700; color:var(--m-navy); line-height:1.7; }
 
-.pdf-theme-memory .m-section-heading{ display:flex; align-items:center; justify-content:center; gap:14px; margin:24px 28px 0; }
-.pdf-theme-memory .m-section-heading .m-sh-line{ flex:1; max-width:150px; height:0.8px; background:var(--m-gold); }
-.pdf-theme-memory .m-section-heading .m-sh-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:11.5px; font-weight:700; letter-spacing:.14em; color:var(--m-navy); white-space:nowrap; }
+.pdf-theme-memory .m-section-heading{ display:flex; align-items:center; justify-content:center; gap:16px; margin:30px 34px 0; }
+.pdf-theme-memory .m-section-heading .m-sh-line{ flex:1; max-width:170px; height:0.8px; background:var(--m-gold); }
+.pdf-theme-memory .m-section-heading .m-sh-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:12.5px; font-weight:700; letter-spacing:.14em; color:var(--m-navy); white-space:nowrap; }
 
-.pdf-theme-memory .m-stats{ display:flex; align-items:center; justify-content:space-around; margin:16px 28px 0; }
-.pdf-theme-memory .m-stat{ display:flex; align-items:center; gap:9px; position:relative; padding:0 12px; }
+.pdf-theme-memory .m-stats{ display:flex; align-items:center; justify-content:space-around; margin:18px 34px 0; }
+.pdf-theme-memory .m-stat{ display:flex; align-items:center; gap:10px; position:relative; padding:0 14px; }
 .pdf-theme-memory .m-stat + .m-stat::before{ content:''; position:absolute; left:-1px; top:6%; bottom:6%; width:0; border-left:1px dotted var(--m-line); }
 .pdf-theme-memory .m-stat-icon{ color:var(--m-navy); display:flex; }
-.pdf-theme-memory .m-stat b{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:17px; color:var(--m-navy); }
-.pdf-theme-memory .m-stat .m-stat-unit{ font-size:8.4px; font-weight:700; color:var(--m-gold-deep); margin-left:2px; font-family:'Helvetica Neue',Arial,sans-serif; }
-.pdf-theme-memory .m-stat .m-stat-label{ display:block; font-size:7.3px; letter-spacing:.05em; text-transform:uppercase; color:var(--m-body); font-family:'Helvetica Neue',Arial,sans-serif; margin-top:1px; }
-.pdf-theme-memory .m-stats-rule{ height:1px; background:#DCD0BC; margin:12px 28px 0; }
+.pdf-theme-memory .m-stat b{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:19px; color:var(--m-navy); }
+.pdf-theme-memory .m-stat .m-stat-unit{ font-size:9.5px; font-weight:700; color:var(--m-gold-deep); margin-left:2px; font-family:'Helvetica Neue',Arial,sans-serif; }
+.pdf-theme-memory .m-stat .m-stat-label{ display:block; font-size:8.2px; letter-spacing:.05em; text-transform:uppercase; color:var(--m-body); font-family:'Helvetica Neue',Arial,sans-serif; margin-top:1px; }
+.pdf-theme-memory .m-stats-rule{ height:1px; background:#DCD0BC; margin:14px 34px 0; }
 
-.pdf-theme-memory .m-info{ display:flex; gap:20px; padding:18px 28px 0; }
-.pdf-theme-memory .m-col{ flex:1 1 0; min-width:0; }
-.pdf-theme-memory .m-col-day{ flex:1.15 1 0; }
-.pdf-theme-memory .m-heading{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--m-navy); padding-bottom:6px; margin-bottom:10px; border-bottom:0.8px solid var(--m-gold); }
+/* Conditions / The Day / Crew: independent cards (was three loose columns
+   with no boundary, plus crew used to be a separate 2-up footer motif that
+   silently dropped anyone past the 2nd person). */
+.pdf-theme-memory .m-cards{ display:flex; flex-wrap:wrap; gap:18px; padding:24px 34px 0; }
+.pdf-theme-memory .m-card{ background:#fff; border:1px solid var(--m-line); border-radius:8px; padding:18px 20px; box-sizing:border-box; }
+.pdf-theme-memory .m-card-conditions{ flex:1 1 220px; }
+.pdf-theme-memory .m-card-day{ flex:1.15 1 260px; }
+.pdf-theme-memory .m-card-crew{ flex:1 1 200px; }
+.pdf-theme-memory .m-card-route{ margin:18px 34px 0; }
+.pdf-theme-memory .m-card-photos{ margin:18px 34px 0; }
+.pdf-theme-memory .m-heading{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--m-navy); padding-bottom:7px; margin-bottom:11px; border-bottom:0.8px solid var(--m-gold); }
 .pdf-theme-memory .m-cond-row{ display:flex; align-items:center; justify-content:space-between; padding:5px 2px; }
-.pdf-theme-memory .m-cond-label{ display:flex; align-items:center; gap:6px; font-size:8.2px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--m-body); font-family:'Helvetica Neue',Arial,sans-serif; }
+.pdf-theme-memory .m-cond-label{ display:flex; align-items:center; gap:7px; font-size:8.8px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--m-body); font-family:'Helvetica Neue',Arial,sans-serif; }
 .pdf-theme-memory .m-cond-icon{ color:var(--m-gold-deep); display:flex; }
-.pdf-theme-memory .m-cond-value{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:9.4px; color:var(--m-navy); }
-.pdf-theme-memory .m-day-text p{ font-family:'Times New Roman',Georgia,serif; font-size:9.6px; line-height:1.5; color:var(--m-ink); margin:0 0 8px; }
-.pdf-theme-memory .m-route-text{ font-family:'Times New Roman',Georgia,serif; font-size:9.3px; line-height:1.5; color:var(--m-ink); margin-bottom:10px; }
-.pdf-theme-memory .m-map-box{ position:relative; width:100%; height:118px; border-radius:4px; overflow:hidden; border:1px solid var(--m-gold); background:#BBD8EE; }
+.pdf-theme-memory .m-cond-value{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:10px; color:var(--m-navy); }
+.pdf-theme-memory .m-day-text p{ font-family:'Times New Roman',Georgia,serif; font-size:10.2px; line-height:1.55; color:var(--m-ink); margin:0 0 9px; }
+.pdf-theme-memory .m-day-text p:last-child{ margin-bottom:0; }
+.pdf-theme-memory .m-crew-list{ margin-top:2px; }
+.pdf-theme-memory .m-crew-item{ display:flex; align-items:center; gap:11px; margin-bottom:13px; }
+.pdf-theme-memory .m-crew-item:last-child{ margin-bottom:0; }
+.pdf-theme-memory .m-crew-photo-sm{ width:34px; height:34px; border-radius:50%; border:1px solid var(--m-gold); object-fit:cover; display:block; background:var(--m-line); flex:0 0 34px; }
+.pdf-theme-memory .m-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.4px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--m-gold-deep); display:block; }
+.pdf-theme-memory .m-crew-name-sm{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:12.5px; color:var(--m-navy); }
+.pdf-theme-memory .m-route-text{ font-family:'Times New Roman',Georgia,serif; font-size:9.8px; line-height:1.55; color:var(--m-ink); margin-bottom:11px; }
+/* Map card: locally overrides the generic --water/--navy/--coral tokens
+   buildPortholeSvg() draws with, so the track matches this theme's palette
+   (was hardcoded to a bright, off-brand blue). */
+.pdf-theme-memory .m-map-box{
+  position:relative; width:100%; height:200px; border-radius:6px; overflow:hidden;
+  border:1px solid var(--m-gold); background:var(--m-water);
+  --water:var(--m-water); --navy:var(--m-navy); --coral:var(--m-coral);
+}
 .pdf-theme-memory .m-map-box svg, .pdf-theme-memory .m-map-box img{ width:100%; height:100%; object-fit:cover; display:block; }
-.pdf-theme-memory .m-map-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--m-navy); opacity:.6; }
+.pdf-theme-memory .m-map-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--m-navy); opacity:.55; }
 
-.pdf-theme-memory .m-photos{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:20px 28px 0; }
-.pdf-theme-memory .m-photo-cell{ height:105px; border-radius:2px; overflow:hidden; background:var(--m-line); }
+/* Photo grid: aspect-ratio cells + object-fit:cover so the full photo set —
+   never capped — crops cleanly regardless of source shape. */
+.pdf-theme-memory .m-photos{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.pdf-theme-memory .m-photo-cell{ aspect-ratio:1/1; border-radius:4px; overflow:hidden; background:var(--m-line); }
 .pdf-theme-memory .m-photo-cell img{ width:100%; height:100%; object-fit:cover; display:block; }
 
-.pdf-theme-memory .m-footer{ display:flex; flex-direction:column; align-items:center; padding:22px 28px 26px; }
-.pdf-theme-memory .m-crew-row{ display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:16px; }
-.pdf-theme-memory .m-crew-member{ display:flex; align-items:center; gap:10px; text-align:left; }
-.pdf-theme-memory .m-crew-member.right{ flex-direction:row-reverse; text-align:right; }
-.pdf-theme-memory .m-crew-photo{ width:48px; height:48px; border-radius:50%; border:1.1px solid var(--m-gold); object-fit:cover; display:block; background:var(--m-line); }
-.pdf-theme-memory .m-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.4px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--m-gold-deep); display:block; }
-.pdf-theme-memory .m-crew-name{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:12.5px; color:var(--m-navy); }
-.pdf-theme-memory .m-crew-line{ width:40px; height:0.8px; background:var(--m-gold); }
-.pdf-theme-memory .m-crew-anchor{ color:var(--m-gold); display:flex; }
-.pdf-theme-memory .m-tagline-rule{ width:100%; max-width:420px; height:0.7px; background:var(--m-gold); margin-bottom:10px; }
-.pdf-theme-memory .m-tagline{ display:flex; align-items:center; gap:6px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:8.6px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--m-navy); }
+.pdf-theme-memory .m-footer{ display:flex; flex-direction:column; align-items:center; padding:26px 34px 30px; }
+.pdf-theme-memory .m-tagline-rule{ width:100%; max-width:460px; height:0.7px; background:var(--m-gold); margin-bottom:11px; }
+.pdf-theme-memory .m-tagline{ display:flex; align-items:center; gap:7px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.2px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--m-navy); }
 .pdf-theme-memory .m-tagline .m-tagline-heart{ color:var(--m-gold); display:flex; }
 
 .lightbox{ position:fixed; inset:0; background:rgba(10,20,30,.95); z-index:2000; display:none; align-items:center; justify-content:center; flex-direction:column; padding:20px; }
