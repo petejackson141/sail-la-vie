@@ -94,9 +94,8 @@ function buildTripPdfHtmlClassic(trip){
   const d = new Date(trip.date);
   const dateStr = d.toLocaleDateString(currentLocale(),{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
-  const photos = (trip.photos||[]);
+  const photos = (trip.photos||[]).filter(p=>p!==trip.coverPhoto); // never repeat the hero/cover photo in the grid below
   let notes = trip.notes || '';
-  if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
 
   return `<div class="pdf-sheet" id="pdfTripBlock">
     <h1>${escapeHtml(trip.title||t('pdf.sailLogFallback'))}</h1>
@@ -213,9 +212,8 @@ function buildTripPdfHtmlNautical(trip){
   const dateLabel = d.toLocaleDateString(currentLocale(),{weekday:'long'}).toUpperCase();
   const dateValue = d.toLocaleDateString(currentLocale(),{day:'numeric',month:'long',year:'numeric'}).toUpperCase();
   const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
-  const photos = trip.photos||[]; // every photo — never capped, never repeated elsewhere in this theme
+  const photos = (trip.photos||[]).filter(p=>p!==trip.coverPhoto); // every photo except the hero — never capped, never repeated elsewhere in this theme
   let notes = trip.notes || '';
-  if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
   const paragraphs = notes ? notes.split(/\n+/).filter(Boolean) : [];
 
   const w = trip.weather || {};
@@ -325,9 +323,8 @@ function buildTripPdfHtmlMinimalistYacht(trip){
   const dateLabel = d.toLocaleDateString(currentLocale(),{weekday:'long'}).toUpperCase();
   const dateValue = d.toLocaleDateString(currentLocale(),{day:'numeric',month:'long',year:'numeric'}).toUpperCase();
   const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
-  const photos = trip.photos||[]; // every photo — never capped
+  const photos = (trip.photos||[]).filter(p=>p!==trip.coverPhoto); // every photo except the hero — never capped
   let notes = trip.notes || '';
-  if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
   const paragraphs = notes ? notes.split(/\n+/).filter(Boolean) : [];
   const { line1, line2 } = yachtSplitTitle(trip.title||t('pdf.sailLogFallback'));
 
@@ -454,7 +451,6 @@ function buildTripPdfHtmlStory(trip){
   const legPhotos = allPhotos.slice(0,4);
   const gridPhotos = allPhotos.slice(4); // every remaining photo — never repeats a leg-strip photo, never capped
   let notes = trip.notes || '';
-  if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
   const paragraphs = notes ? notes.split(/\n+/).filter(Boolean) : [];
   const { lead, main } = ssSplitTitle(trip.title||t('pdf.sailLogFallback'));
   // The data model has no discrete route waypoints (only a continuous GPS
@@ -583,9 +579,8 @@ function buildTripPdfHtmlMemoryPage(trip){
   const dateLabel = d.toLocaleDateString(currentLocale(),{weekday:'long'}).toUpperCase();
   const dateValue = d.toLocaleDateString(currentLocale(),{day:'numeric',month:'long',year:'numeric'}).toUpperCase();
   const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
-  const photos = trip.photos||[]; // every photo — never capped
+  const photos = (trip.photos||[]).filter(p=>p!==trip.coverPhoto); // every photo except the hero — never capped
   let notes = trip.notes || '';
-  if(notes.length>600) notes = notes.slice(0,600).trim()+'…';
   const paragraphs = notes ? notes.split(/\n+/).filter(Boolean) : [];
   const { lead, main } = memorySplitTitle(trip.title||t('pdf.sailLogFallback'));
   const routeItems = trip.place ? [trip.place] : [];
