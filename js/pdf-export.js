@@ -260,10 +260,11 @@ function buildTripPdfHtmlNautical(trip){
           <div class="n-meta-row">${PDF_ICON_SVG.calendar}<b>${dateLabel}</b></div>
           <div class="n-meta-sub">${dateValue}</div>
           <div class="n-meta-row">${PDF_ICON_SVG.clock}<b>${timeStr}</b></div>
-          ${boat ? `<div class="n-meta-place">${boat.photo ? `<img class="n-boat-photo" src="${boat.photo}">` : ''}${escapeHtml(boat.name)}</div>` : ''}
         </div>
       </div>
     </div>
+
+    ${boat ? `<div class="n-boat-strip">${boat.photo ? `<img class="n-boat-photo" src="${boat.photo}">` : ''}<span class="n-boat-name">${escapeHtml(boat.name)}</span></div>` : ''}
 
     <div class="n-stats">
       ${stats.map(s=>`<div class="n-stat">
@@ -634,11 +635,12 @@ function buildTripPdfHtmlMemoryPage(trip){
           <div class="m-meta-row">${PDF_ICON_SVG.calendar}<b>${dateLabel}</b></div>
           <div class="m-meta-sub">${dateValue}</div>
           <div class="m-meta-row m-meta-time"><span class="m-meta-icon">${PDF_ICON_SVG.clock}</span><span>${timeStr}</span></div>
-          ${boat ? `<div class="m-meta-row m-meta-boat">${boat.photo ? `<img class="m-boat-photo" src="${boat.photo}">` : ''}<b>${escapeHtml(boat.name)}</b></div>` : ''}
           ${routeItems.length ? `<div class="m-meta-rule"></div><div class="m-meta-route">${routeItems.map(r=>escapeHtml(r.toUpperCase())).join('<br>')}</div>` : ''}
         </div>
       </div>
     </div>
+
+    ${boat ? `<div class="m-boat-strip">${boat.photo ? `<img class="m-boat-photo" src="${boat.photo}">` : ''}<span class="m-boat-name">${escapeHtml(boat.name)}</span></div>` : ''}
 
     <div class="m-section-heading"><span class="m-sh-line"></span><span class="m-sh-text">${t('pdf.theNumbers').toUpperCase()}</span><span class="m-sh-line"></span></div>
     <div class="m-stats">
