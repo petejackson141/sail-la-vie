@@ -520,10 +520,18 @@ function stopLiveConnCheck(){
   if(liveConnCheckInterval){ clearInterval(liveConnCheckInterval); liveConnCheckInterval=null; }
 }
 
-function buildPortholeSvg(path, live, sys){
+function buildPortholeSvg(path, live, sys, boxW, boxH){
   const lats = path.map(p=>p.lat), lngs = path.map(p=>p.lng);
   const minLat=Math.min(...lats), maxLat=Math.max(...lats), minLng=Math.min(...lngs), maxLng=Math.max(...lngs);
-  const w=260,h=260;
+  // The SVG's own viewBox now matches the actual box it's dropped into
+  // (square porthole in-app, wide banner in the PDF cards) instead of
+  // always being a fixed 260×260 square. That square used to get forced
+  // into non-square PDF map boxes via CSS object-fit — which html2canvas
+  // doesn't reliably honor for inline SVG, so the correctly-shaped track
+  // from the fix below was still coming out stretched in the exported PDF.
+  // Matching the viewBox to the box means no scaling/cropping is needed
+  // at all, so that unreliable step is removed from the picture.
+  const w = boxW || 260, h = boxH || 260;
 
   // A degree of longitude covers less real-world distance than a degree of
   // latitude, by a factor of cos(lat) — everywhere except the equator. The
@@ -536,11 +544,11 @@ function buildPortholeSvg(path, live, sys){
   const latSpan = (maxLat-minLat) || 0.001;
   const lngSpanTrue = ((maxLng-minLng)*lngScale) || 0.001; // in latitude-degree-equivalent units
 
-  // Fit whichever span is larger to the canvas (with a 15% pad, as before),
-  // then center the shorter axis — this is what stops the porthole from
-  // force-stretching a narrow/tall or wide/short track into a square.
-  const span = Math.max(latSpan, lngSpanTrue) * 1.3;
-  const scale = w / span; // px per latitude-degree-equivalent, same for x and y
+  // Fit the track into the box using ONE scale for both axes (so the track's
+  // real shape is preserved, never stretched to fill a mismatched box), with
+  // a 15% pad. Since the box itself may be a wide rectangle (PDF cards) or
+  // square (in-app porthole), fit against whichever axis is tighter.
+  const scale = Math.min( w / (lngSpanTrue*1.3), h / (latSpan*1.3) );
   const midLat = (minLat+maxLat)/2, midLng = (minLng+maxLng)/2;
   const toXY = (p)=>{
     const x = w/2 + (p.lng-midLng)*lngScale*scale;
@@ -556,11 +564,11 @@ function buildPortholeSvg(path, live, sys){
   // longitude/cos(lat) conversion — it was already folded in above.
   const nmPerPx = 60 / scale;
   const isMetric = sys==='metric';
-  const maxBarNm = 90 * nmPerPx; // keep the bar comfortably inside the circle
+  const maxBarNm = (w*0.346) * nmPerPx; // keep the bar comfortably inside the box (scales with box width)
   const barValue = isMetric ? niceScaleValue(maxBarNm*NM_TO_KM)/NM_TO_KM : niceScaleValue(maxBarNm);
   const barPx = barValue / nmPerPx;
   const barLabel = isMetric ? (barValue*NM_TO_KM).toFixed(barValue*NM_TO_KM<1?2:0)+' km' : barValue.toFixed(barValue<1?2:0)+' NM';
-  const barX0 = 130 - barPx/2, barY = 222;
+  const barX0 = w/2 - barPx/2, barY = h - 38;
 
   return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
     <rect width="${w}" height="${h}" fill="var(--water)"/>
@@ -569,7 +577,7 @@ function buildPortholeSvg(path, live, sys){
     ${live
       ? `<circle cx="${end[0]}" cy="${end[1]}" r="9" fill="var(--coral)" opacity=".35"><animate attributeName="r" values="7;13;7" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".45;.05;.45" dur="1.6s" repeatCount="indefinite"/></circle><circle cx="${end[0]}" cy="${end[1]}" r="6" fill="var(--coral)"/>`
       : `<circle cx="${end[0]}" cy="${end[1]}" r="6" fill="var(--coral)"/>`}
-    <g transform="translate(130,32)" opacity=".85">
+    <g transform="translate(${w/2},32)" opacity=".85">
       <path d="M0,-11 L5,4 L0,0.5 L-5,4 Z" fill="var(--navy)"/>
       <text x="0" y="17" text-anchor="middle" font-size="10" font-weight="700" fill="var(--navy)" font-family="sans-serif">N</text>
     </g>
@@ -577,7 +585,7 @@ function buildPortholeSvg(path, live, sys){
       <line x1="${barX0}" y1="${barY}" x2="${barX0+barPx}" y2="${barY}" stroke="var(--navy)" stroke-width="2"/>
       <line x1="${barX0}" y1="${barY-4}" x2="${barX0}" y2="${barY+4}" stroke="var(--navy)" stroke-width="2"/>
       <line x1="${barX0+barPx}" y1="${barY-4}" x2="${barX0+barPx}" y2="${barY+4}" stroke="var(--navy)" stroke-width="2"/>
-      <text x="130" y="${barY+15}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--navy)" font-family="sans-serif">${barLabel}</text>
+      <text x="${w/2}" y="${barY+15}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--navy)" font-family="sans-serif">${barLabel}</text>
     </g>
   </svg>`;
 }

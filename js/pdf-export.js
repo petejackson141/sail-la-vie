@@ -238,9 +238,9 @@ function buildTripPdfHtmlNautical(trip){
   // The old version only ever checked trip.path, so a trip with an uploaded
   // map but no GPS track silently fell through to "no track recorded".
   const mapInner = (trip.path && trip.path.length>1)
-    ? buildPortholeSvg(trip.path, false, appUnitSystem())
+    ? buildPortholeSvg(trip.path, false, appUnitSystem(), 686, 280) // matches .n-map-box's rendered size (794 sheet − 34×2 .n-cards pad − 20×2 .n-card pad, × 280 tall)
     : trip.mapImage
-      ? `<img src="${trip.mapImage}">`
+      ? `<div class="n-map-img" style="background-image:url('${trip.mapImage}')"></div>`
       : `<div class="n-map-empty">${t('pdf.noTrack')}</div><div class="n-map-compass">${navCompassSvg(30,'rgba(12,42,74,.55)','rgba(12,42,74,.7)')}</div>`;
 
   return `<div class="pdf-sheet" id="pdfTripBlock">
@@ -248,7 +248,7 @@ function buildTripPdfHtmlNautical(trip){
       ${trip.coverPhoto ? `<img src="${trip.coverPhoto}">` : `<div class="n-hero-noimg"></div>`}
       <div class="n-hero-content">
         <div class="n-hero-left">
-          <div class="n-compass">${navCompassSvg(46,'#F8F4EE','#D3AD7A')}</div>
+          <div class="n-compass"><img class="n-logo-badge" src="images/Logo.png" alt=""></div>
           <div>
             <h1 class="n-hero-title">${escapeHtml(trip.title||t('pdf.sailLogFallback'))}</h1>
             ${trip.place ? `<div class="n-hero-subtitle">${escapeHtml(trip.place)}</div>` : ''}
@@ -346,16 +346,15 @@ function buildTripPdfHtmlMinimalistYacht(trip){
   // Same GPS-track → uploaded-map-image → empty-placeholder priority as the
   // app's own trip-detail map and the other themes.
   const mapInner = (trip.path && trip.path.length>1)
-    ? buildPortholeSvg(trip.path, false, appUnitSystem())
+    ? buildPortholeSvg(trip.path, false, appUnitSystem(), 674, 180) // matches .y-map-box's rendered size (794 sheet - 40x2 sheet pad - 20x2 .y-card pad, x 180 tall)
     : trip.mapImage
-      ? `<img src="${trip.mapImage}">`
+      ? `<div class="y-map-img" style="background-image:url('${trip.mapImage}')"></div>`
       : `<div class="y-map-empty">${t('pdf.noTrack')}</div>`;
 
   return `<div class="pdf-sheet" id="pdfTripBlock">
     <div class="y-header">
       <div class="y-badge">
-        <div class="y-badge-compass">${navCompassSvg(64,'rgba(255,255,255,.5)','rgba(255,255,255,.85)','rgba(255,255,255,.9)')}</div>
-        <div class="y-badge-anchor">${pdfAnchorSvgSized(30,'#B4884F')}</div>
+        <img class="y-badge-compass" src="images/Logo.png" alt="">
       </div>
       <div class="y-title-block">
         <div class="y-title-line1">${escapeHtml(line1)}</div>
@@ -477,16 +476,16 @@ function buildTripPdfHtmlStory(trip){
   // Same GPS-track → uploaded-map-image → empty-placeholder priority as the
   // app's own trip-detail map and the other themes.
   const mapInner = (trip.path && trip.path.length>1)
-    ? buildPortholeSvg(trip.path, false, appUnitSystem())
+    ? buildPortholeSvg(trip.path, false, appUnitSystem(), 686, 220) // matches .ss-map-box's rendered size (794 sheet - 34x2 .ss-cards pad - 20x2 .ss-card pad, x 220 tall)
     : trip.mapImage
-      ? `<img src="${trip.mapImage}">`
+      ? `<div class="ss-map-img" style="background-image:url('${trip.mapImage}')"></div>`
       : `<div class="ss-map-empty">${t('pdf.noTrack')}</div>`;
 
   return `<div class="pdf-sheet" id="pdfTripBlock">
     <div class="ss-frame"></div><div class="ss-frame-inner"></div>
 
     <div class="ss-header">
-      <div class="ss-compass">${navCompassSvg(46,'#122F4E','#B4884F')}</div>
+      <div class="ss-compass"><img class="ss-logo-badge" src="images/Logo.png" alt=""></div>
       <div class="ss-title-block">
         ${lead ? `<div class="ss-title-lead">${escapeHtml(lead)}</div>` : ''}
         <div class="ss-title-main">${escapeHtml(main)}</div>
@@ -605,9 +604,9 @@ function buildTripPdfHtmlMemoryPage(trip){
   // ever checked trip.path, so a trip with an uploaded map but no GPS track
   // silently fell through to "no track recorded".
   const mapInner = (trip.path && trip.path.length>1)
-    ? buildPortholeSvg(trip.path, false, appUnitSystem())
+    ? buildPortholeSvg(trip.path, false, appUnitSystem(), 686, 200) // matches .m-map-box's rendered size (794 sheet - 34x2 .m-cards pad - 20x2 .m-card pad, x 200 tall)
     : trip.mapImage
-      ? `<img src="${trip.mapImage}">`
+      ? `<div class="m-map-img" style="background-image:url('${trip.mapImage}')"></div>`
       : `<div class="m-map-empty">${t('pdf.noTrack')}</div>`;
 
   return `<div class="pdf-sheet" id="pdfTripBlock">
@@ -616,8 +615,7 @@ function buildTripPdfHtmlMemoryPage(trip){
       <div class="m-hero-scrim"></div>
       <div class="m-hero-wave">${pdfWaveStripSvg(794,12,'#B4884F')}</div>
       <div class="m-badge">
-        <div class="m-badge-compass">${navCompassSvg(50,'rgba(255,255,255,.5)','rgba(255,255,255,.85)','rgba(255,255,255,.9)')}</div>
-        <div class="m-badge-anchor">${pdfAnchorSvgSized(24,'#B4884F')}</div>
+        <img class="m-badge-compass" src="images/Logo.png" alt="">
       </div>
       <div class="m-hero-content">
         <div class="m-hero-left">
@@ -720,7 +718,7 @@ function computeSectionPageBreaks(block, pageHeightPx){
 // by WhatsApp's own preview — the capture, not the sharing step, was the bug.
 function waitForImagesToLoad(container){
   const imgs = Array.from(container.querySelectorAll('img'));
-  return Promise.all(imgs.map(img=>{
+  const imgPromises = imgs.map(img=>{
     if(img.complete && img.naturalWidth>0){
       return img.decode ? img.decode().catch(()=>{}) : Promise.resolve();
     }
@@ -729,7 +727,28 @@ function waitForImagesToLoad(container){
       img.addEventListener('load',done);
       img.addEventListener('error',done);
     }).then(()=> img.decode ? img.decode().catch(()=>{}) : Promise.resolve());
-  }));
+  });
+
+  // The map screenshot (trip.mapImage) is set via a CSS background-image
+  // rather than an <img> now (see PDF_THEMES notes), so it's invisible to
+  // the querySelectorAll('img') above. There's no load/decode event for
+  // background-images, so preload the same URL through an offscreen Image
+  // object instead — once THAT decodes, the browser has it cached and
+  // html2canvas paints the real background-image synchronously from cache.
+  const bgEls = Array.from(container.querySelectorAll('[style*="background-image"]'));
+  const bgPromises = bgEls.map(el=>{
+    const m = /url\(['"]?(.*?)['"]?\)/.exec(el.style.backgroundImage||'');
+    if(!m || !m[1]) return Promise.resolve();
+    const preload = new Image();
+    preload.src = m[1];
+    return new Promise(resolve=>{
+      if(preload.complete && preload.naturalWidth>0){ resolve(); return; }
+      preload.addEventListener('load',resolve);
+      preload.addEventListener('error',resolve);
+    }).then(()=> preload.decode ? preload.decode().catch(()=>{}) : Promise.resolve());
+  });
+
+  return Promise.all([...imgPromises, ...bgPromises]);
 }
 // Renders the preview sheet at true A4 proportions (794px ≈ 210mm at 96dpi),
 // then scales it down to fit the sheet's width — an accurate shrink-to-fit
