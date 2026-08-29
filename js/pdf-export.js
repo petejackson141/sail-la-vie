@@ -315,6 +315,7 @@ function buildTripPdfHtmlNautical(trip){
 
 /* ---------- Minimalist Yacht Club theme ---------- */
 function buildTripPdfHtmlMinimalistYacht(trip){
+  const boat = state.boats.find(b=>b.id===trip.boatId);
   const tripCrew = (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
   const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
   const crewList = [ ...(tripSkipper ? [{...tripSkipper, role:t('active.skipper')}] : []),
