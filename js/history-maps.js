@@ -523,23 +523,38 @@ function stopLiveConnCheck(){
 function buildPortholeSvg(path, live, sys){
   const lats = path.map(p=>p.lat), lngs = path.map(p=>p.lng);
   const minLat=Math.min(...lats), maxLat=Math.max(...lats), minLng=Math.min(...lngs), maxLng=Math.max(...lngs);
-  const padLat=(maxLat-minLat)*0.15||0.001, padLng=(maxLng-minLng)*0.15||0.001;
   const w=260,h=260;
-  const viewMinLat=minLat-padLat, viewMaxLat=maxLat+padLat, viewMinLng=minLng-padLng, viewMaxLng=maxLng+padLng;
+
+  // A degree of longitude covers less real-world distance than a degree of
+  // latitude, by a factor of cos(lat) — everywhere except the equator. The
+  // old version mapped lat and lng straight onto a w×h square independently,
+  // so the track stretched (worse the further from the equator you sail).
+  // Fix: convert lng into the same "latitude-degree" units as lat before
+  // laying out points, then use ONE px-per-degree scale for both axes.
+  const meanLatRad = ((minLat+maxLat)/2) * Math.PI/180;
+  const lngScale = Math.max(Math.cos(meanLatRad), 0.01); // guard against /0 near the poles
+  const latSpan = (maxLat-minLat) || 0.001;
+  const lngSpanTrue = ((maxLng-minLng)*lngScale) || 0.001; // in latitude-degree-equivalent units
+
+  // Fit whichever span is larger to the canvas (with a 15% pad, as before),
+  // then center the shorter axis — this is what stops the porthole from
+  // force-stretching a narrow/tall or wide/short track into a square.
+  const span = Math.max(latSpan, lngSpanTrue) * 1.3;
+  const scale = w / span; // px per latitude-degree-equivalent, same for x and y
+  const midLat = (minLat+maxLat)/2, midLng = (minLng+maxLng)/2;
   const toXY = (p)=>{
-    const x = ((p.lng-viewMinLng)/(viewMaxLng-viewMinLng))*w;
-    const y = h - ((p.lat-viewMinLat)/(viewMaxLat-viewMinLat))*h;
+    const x = w/2 + (p.lng-midLng)*lngScale*scale;
+    const y = h/2 - (p.lat-midLat)*scale;
     return [x,y];
   };
   const pts = path.map(toXY);
   const d = pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
   const start = pts[0], end = pts[pts.length-1];
 
-  // Scale bar: convert the width of the view (in degrees longitude) to a real
-  // distance at this latitude, pick a round number, then draw a bar that long.
-  const meanLatRad = (viewMinLat+viewMaxLat)/2 * Math.PI/180;
-  const totalNmAcrossView = (viewMaxLng-viewMinLng) * 60 * Math.cos(meanLatRad); // 1° longitude ≈ 60·cos(lat) NM
-  const nmPerPx = totalNmAcrossView / w;
+  // Scale bar: 1 latitude-degree-equivalent ≈ 60 NM, and `scale` is px per
+  // that same unit on both axes now, so this no longer needs a separate
+  // longitude/cos(lat) conversion — it was already folded in above.
+  const nmPerPx = 60 / scale;
   const isMetric = sys==='metric';
   const maxBarNm = 90 * nmPerPx; // keep the bar comfortably inside the circle
   const barValue = isMetric ? niceScaleValue(maxBarNm*NM_TO_KM)/NM_TO_KM : niceScaleValue(maxBarNm);

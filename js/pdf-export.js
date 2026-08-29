@@ -260,7 +260,7 @@ function buildTripPdfHtmlNautical(trip){
           <div class="n-meta-row">${PDF_ICON_SVG.calendar}<b>${dateLabel}</b></div>
           <div class="n-meta-sub">${dateValue}</div>
           <div class="n-meta-row">${PDF_ICON_SVG.clock}<b>${timeStr}</b></div>
-          ${boat ? `<div class="n-meta-place">${escapeHtml(boat.name)}</div>` : ''}
+          ${boat ? `<div class="n-meta-place">${boat.photo ? `<img class="n-boat-photo" src="${boat.photo}">` : ''}${escapeHtml(boat.name)}</div>` : ''}
         </div>
       </div>
     </div>
@@ -368,6 +368,7 @@ function buildTripPdfHtmlMinimalistYacht(trip){
         <div class="y-meta-time">${dateValue}</div>
         <div class="y-meta-row"><span class="y-meta-icon">${PDF_ICON_SVG.clock}</span><span style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:9.2px;">${timeStr}</span></div>
         <div class="y-meta-rule"></div>
+        ${boat ? `<div class="y-boat">${boat.photo ? `<img class="y-boat-photo" src="${boat.photo}">` : ''}${escapeHtml(boat.name)}</div>` : ''}
         ${trip.place ? `<div class="y-route">${escapeHtml(trip.place.toUpperCase())}</div>` : ''}
       </div>
     </div>
@@ -498,6 +499,7 @@ function buildTripPdfHtmlStory(trip){
         <div class="ss-meta-row">${PDF_ICON_SVG.calendar}<b>${dateLabel}</b></div>
         <div class="ss-meta-sub">${dateValue}</div>
         <div class="ss-meta-row ss-meta-time"><span class="ss-meta-icon">${PDF_ICON_SVG.clock}</span><span>${timeStr}</span></div>
+        ${boat ? `<div class="ss-meta-row ss-meta-boat">${boat.photo ? `<img class="ss-boat-photo" src="${boat.photo}">` : ''}<b>${escapeHtml(boat.name)}</b></div>` : ''}
         <div class="ss-meta-anchor">${PDF_ICON_SVG.anchor}</div>
       </div>
     </div>
@@ -570,6 +572,7 @@ function buildTripPdfHtmlStory(trip){
 
 /* ---------- Memory Page theme ---------- */
 function buildTripPdfHtmlMemoryPage(trip){
+  const boat = state.boats.find(b=>b.id===trip.boatId);
   const tripCrew = (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
   const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
   const crewList = [ ...(tripSkipper ? [{...tripSkipper, role:t('active.skipper')}] : []),
@@ -630,6 +633,7 @@ function buildTripPdfHtmlMemoryPage(trip){
           <div class="m-meta-row">${PDF_ICON_SVG.calendar}<b>${dateLabel}</b></div>
           <div class="m-meta-sub">${dateValue}</div>
           <div class="m-meta-row m-meta-time"><span class="m-meta-icon">${PDF_ICON_SVG.clock}</span><span>${timeStr}</span></div>
+          ${boat ? `<div class="m-meta-row m-meta-boat">${boat.photo ? `<img class="m-boat-photo" src="${boat.photo}">` : ''}<b>${escapeHtml(boat.name)}</b></div>` : ''}
           ${routeItems.length ? `<div class="m-meta-rule"></div><div class="m-meta-route">${routeItems.map(r=>escapeHtml(r.toUpperCase())).join('<br>')}</div>` : ''}
         </div>
       </div>
