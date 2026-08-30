@@ -694,7 +694,18 @@ function buildTripPdfHtmlMemoryPage(trip){
 // stat block — which is what was producing decapitated content and
 // near-empty trailing pages before.
 function computeSectionPageBreaks(block, pageHeightPx){
-  const children = Array.from(block.children);
+  // Absolutely/fixed-positioned children (decorative overlays like the
+  // Sailing Story theme's double border frame, ss-frame/ss-frame-inner) are
+  // NOT real flow sections — they sit on top of the real content rather than
+  // taking a slot in the page. Counting them as sections used to register
+  // spurious page breaks right near the top of the document (since an
+  // absolutely-positioned box's own top/bottom can land almost anywhere,
+  // independent of where the actual content flow is), producing near-empty
+  // leading pages before the real content ever appeared.
+  const children = Array.from(block.children).filter(child=>{
+    const pos = getComputedStyle(child).position;
+    return pos!=='absolute' && pos!=='fixed';
+  });
   const breaks = [];
   let pageStartY = 0;
   for(const child of children){

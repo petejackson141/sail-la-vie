@@ -437,14 +437,19 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 }
 .pdf-theme-nautical .n-hero{ position:relative; width:794px; height:380px; overflow:hidden; background:var(--n-navy); }
 /* object-fit:cover (was contain) — contain was leaving visible navy bars
-   around any photo whose aspect ratio didn't exactly match the hero box. */
-.pdf-theme-nautical .n-hero img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; background:var(--n-navy-dark); }
+   around any photo whose aspect ratio didn't exactly match the hero box.
+   Scoped to the DIRECT child img only (was ".n-hero img", a descendant
+   selector) — that used to also match the small logo badge nested several
+   levels down inside .n-hero-content, and its higher specificity than
+   .n-logo-badge's own width/height rule was stretching the 46px badge up
+   to fill the entire hero, which is what was covering the top photo. */
+.pdf-theme-nautical .n-hero > img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; background:var(--n-navy-dark); }
 .pdf-theme-nautical .n-hero-noimg{ width:100%; height:100%; background:linear-gradient(160deg,var(--n-navy),var(--n-navy-dark)); }
 .pdf-theme-nautical .n-hero::after{
-  content:''; position:absolute; inset:0;
+  content:''; position:absolute; top:0; right:0; bottom:0; left:0;
   background:linear-gradient(180deg, rgba(8,29,51,.78) 0%, rgba(8,29,51,.30) 42%, rgba(8,29,51,.58) 100%);
 }
-.pdf-theme-nautical .n-hero-content{ position:absolute; inset:0; padding:30px 34px; display:flex; justify-content:space-between; align-items:flex-start; z-index:2; }
+.pdf-theme-nautical .n-hero-content{ position:absolute; top:0; right:0; bottom:0; left:0; padding:30px 34px; display:flex; justify-content:space-between; align-items:flex-start; z-index:2; }
 .pdf-theme-nautical .n-hero-left{ display:flex; align-items:flex-start; gap:18px; max-width:520px; }
 .pdf-theme-nautical .n-compass{ flex:0 0 auto; margin-top:2px; }
 .pdf-theme-nautical .n-logo-badge{ width:46px; height:46px; border-radius:50%; object-fit:cover; display:block; }
@@ -502,9 +507,13 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   --water:var(--n-water); --navy:var(--n-navy); --coral:#B8443A;
 }
 .pdf-theme-nautical .n-map-box svg{ width:100%; height:100%; display:block; }
-.pdf-theme-nautical .n-map-img{ width:100%; height:100%; background-size:cover; background-position:center; }
+/* background-size:contain (was cover) — cover was cropping a lot of the
+   uploaded map screenshot away to fill the box; contain always shows the
+   whole image, letterboxed on the map-box's own water-colored background
+   if the aspect ratio doesn't match exactly. */
+.pdf-theme-nautical .n-map-img{ width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center; }
 .pdf-theme-nautical .n-map-compass{ position:absolute; left:12px; top:12px; opacity:.85; }
-.pdf-theme-nautical .n-map-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:18px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--n-navy); opacity:.55; }
+.pdf-theme-nautical .n-map-empty{ position:absolute; top:0; right:0; bottom:0; left:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:18px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--n-navy); opacity:.55; }
 
 /* Photo grid: aspect-ratio cells + object-fit:cover so every photo crops to
    fill its cell regardless of its native proportions — replaces the old
@@ -537,8 +546,8 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   --s-water:#DCE8E4; --s-coral:#B8443A;
 }
 .pdf-theme-story .ss-frame, .pdf-theme-story .ss-frame-inner{ position:absolute; pointer-events:none; z-index:5; }
-.pdf-theme-story .ss-frame{ inset:14px; border:1.1px solid var(--s-navy); border-radius:4px; }
-.pdf-theme-story .ss-frame-inner{ inset:18px; border:0.6px solid var(--s-navy); border-radius:3px; }
+.pdf-theme-story .ss-frame{ top:14px; right:14px; bottom:14px; left:14px; border:1.1px solid var(--s-navy); border-radius:4px; }
+.pdf-theme-story .ss-frame-inner{ top:18px; right:18px; bottom:18px; left:18px; border:0.6px solid var(--s-navy); border-radius:3px; }
 
 .pdf-theme-story .ss-header{ padding:36px 40px 0; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
 .pdf-theme-story .ss-compass{ flex:0 0 auto; margin-top:4px; }
@@ -618,8 +627,9 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   --water:var(--s-water); --navy:var(--s-navy); --coral:var(--s-coral);
 }
 .pdf-theme-story .ss-map-box svg{ width:100%; height:100%; display:block; }
-.pdf-theme-story .ss-map-img{ width:100%; height:100%; background-size:cover; background-position:center; }
-.pdf-theme-story .ss-map-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--s-navy); opacity:.55; }
+/* background-size:contain (was cover) — see .n-map-img note above. */
+.pdf-theme-story .ss-map-img{ width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center; }
+.pdf-theme-story .ss-map-empty{ position:absolute; top:0; right:0; bottom:0; left:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--s-navy); opacity:.55; }
 
 /* Photo grid: aspect-ratio cells + object-fit:cover (was contain, leaving
    cream bars around mismatched photos) so the full photo set — never
@@ -648,7 +658,7 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 }
 .pdf-theme-yacht .y-header{ display:flex; align-items:flex-start; gap:26px; }
 .pdf-theme-yacht .y-badge{ position:relative; width:96px; height:96px; border-radius:50%; background:var(--y-navy); border:1.8px solid var(--y-gold); flex:0 0 96px; display:flex; align-items:center; justify-content:center; }
-.pdf-theme-yacht .y-badge-compass{ position:absolute; inset:8px; width:80px; height:80px; border-radius:50%; object-fit:cover; display:block; }
+.pdf-theme-yacht .y-badge-compass{ position:absolute; top:8px; right:8px; bottom:8px; left:8px; width:80px; height:80px; border-radius:50%; object-fit:cover; display:block; }
 .pdf-theme-yacht .y-title-block{ flex:1 1 auto; min-width:0; padding-top:4px; }
 .pdf-theme-yacht .y-title-line1, .pdf-theme-yacht .y-title-line2{ font-family:'Playfair Display',Georgia,serif; font-weight:700; font-size:34px; color:var(--y-navy); line-height:1.08; margin:0; }
 .pdf-theme-yacht .y-title-rule{ display:flex; align-items:center; gap:11px; margin-top:14px; max-width:230px; }
@@ -706,8 +716,9 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   --water:var(--y-water); --navy:var(--y-navy); --coral:var(--y-coral);
 }
 .pdf-theme-yacht .y-map-box svg{ width:100%; height:100%; display:block; }
-.pdf-theme-yacht .y-map-img{ width:100%; height:100%; background-size:cover; background-position:center; }
-.pdf-theme-yacht .y-map-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--y-navy); opacity:.55; }
+/* background-size:contain (was cover) — see .n-map-img note above. */
+.pdf-theme-yacht .y-map-img{ width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center; }
+.pdf-theme-yacht .y-map-empty{ position:absolute; top:0; right:0; bottom:0; left:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--y-navy); opacity:.55; }
 .pdf-theme-yacht .y-crew-list{ margin-top:2px; }
 .pdf-theme-yacht .y-crew-item{ display:flex; align-items:center; gap:11px; margin-bottom:13px; }
 .pdf-theme-yacht .y-crew-item:last-child{ margin-bottom:0; }
@@ -736,14 +747,19 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   --m-water:#DCE8E4; --m-coral:#B8443A;
 }
 .pdf-theme-memory .m-hero{ position:relative; width:100%; height:400px; overflow:hidden; background:var(--m-navy); }
-.pdf-theme-memory .m-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+/* Direct-child selector only (was ".m-hero img") — that descendant selector
+   also matched the small logo badge nested inside .m-badge further down the
+   tree, and its higher specificity than .m-badge-compass's own width/height
+   was stretching the badge image to fill its 78px circle unevenly instead
+   of sitting centered inside it. */
+.pdf-theme-memory .m-hero > img{ width:100%; height:100%; object-fit:cover; display:block; }
 .pdf-theme-memory .m-hero-noimg{ width:100%; height:100%; background:linear-gradient(160deg,var(--m-navy),#0B2038); }
-.pdf-theme-memory .m-hero-scrim{ position:absolute; inset:0; background:linear-gradient(to top, rgba(250,246,239,.85) 0%, rgba(250,246,239,.32) 42%, transparent 68%); }
+.pdf-theme-memory .m-hero-scrim{ position:absolute; top:0; right:0; bottom:0; left:0; background:linear-gradient(to top, rgba(250,246,239,.85) 0%, rgba(250,246,239,.32) 42%, transparent 68%); }
 .pdf-theme-memory .m-hero-wave{ position:absolute; left:0; right:0; bottom:-1px; height:14px; display:flex; }
 .pdf-theme-memory .m-hero-wave svg{ display:block; }
-.pdf-theme-memory .m-hero-content{ position:absolute; inset:0; padding:28px 32px 24px; display:flex; justify-content:space-between; align-items:flex-end; z-index:2; }
+.pdf-theme-memory .m-hero-content{ position:absolute; top:0; right:0; bottom:0; left:0; padding:28px 32px 24px; display:flex; justify-content:space-between; align-items:flex-end; z-index:2; }
 .pdf-theme-memory .m-badge{ position:absolute; top:26px; left:30px; width:78px; height:78px; border-radius:50%; background:var(--m-navy); border:1.6px solid var(--m-gold); display:flex; align-items:center; justify-content:center; z-index:3; }
-.pdf-theme-memory .m-badge-compass{ position:absolute; inset:6px; width:66px; height:66px; border-radius:50%; object-fit:cover; display:block; }
+.pdf-theme-memory .m-badge-compass{ position:absolute; top:6px; right:6px; bottom:6px; left:6px; width:66px; height:66px; border-radius:50%; object-fit:cover; display:block; }
 .pdf-theme-memory .m-hero-left{ display:flex; flex-direction:column; align-items:flex-start; min-width:0; max-width:460px; padding-left:112px; }
 .pdf-theme-memory .m-title-lead{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:27px; color:var(--m-gold-deep); line-height:1; margin-bottom:3px; }
 .pdf-theme-memory .m-title-main{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:34px; color:var(--m-navy); text-transform:uppercase; line-height:1.06; }
@@ -809,8 +825,9 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   --water:var(--m-water); --navy:var(--m-navy); --coral:var(--m-coral);
 }
 .pdf-theme-memory .m-map-box svg{ width:100%; height:100%; display:block; }
-.pdf-theme-memory .m-map-img{ width:100%; height:100%; background-size:cover; background-position:center; }
-.pdf-theme-memory .m-map-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--m-navy); opacity:.55; }
+/* background-size:contain (was cover) — see .n-map-img note above. */
+.pdf-theme-memory .m-map-img{ width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center; }
+.pdf-theme-memory .m-map-empty{ position:absolute; top:0; right:0; bottom:0; left:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--m-navy); opacity:.55; }
 
 /* Photo grid: aspect-ratio cells + object-fit:cover so the full photo set —
    never capped — crops cleanly regardless of source shape. */
