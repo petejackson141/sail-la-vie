@@ -384,31 +384,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
   @page{ size:A4; margin:14mm; }
 }
 .pdf-sheet{ font-family:var(--font-body); color:#1a1a1a; width:794px; box-sizing:border-box; padding:12px 18px 14px; font-size:10pt; background:#fff; }
-.pdf-sheet h1{ font-family:var(--font-display); font-size:22px; margin:0 0 3px; }
-.pdf-sheet .pdf-sub{ font-size:10.5px; color:#555; margin-bottom:10px; }
-.pdf-top-row{ display:flex; gap:14px; margin-bottom:10px; align-items:flex-start; }
-.pdf-sheet .pdf-cover-cell{ width:270px; height:190px; border-radius:7px; flex:0 0 270px; overflow:hidden; display:block; }
-.pdf-sheet .pdf-cover-cell img{ width:100%; height:100%; object-fit:contain; object-position:center; display:block; background:#e9eef2; }
-.pdf-top-right{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; }
-.pdf-stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:9px; }
-.pdf-stats-grid div{ border:1px solid #ddd; border-radius:6px; padding:7px 4px; text-align:center; min-width:0; }
-.pdf-stats-grid div b{ display:block; font-family:var(--font-display); font-size:13px; white-space:nowrap; }
-.pdf-stats-grid div span{ font-size:7.8px; text-transform:uppercase; letter-spacing:.03em; color:#777; }
-.pdf-weather-line{ font-size:10px; line-height:1.5; margin:0; }
-.pdf-section-title{ font-family:var(--font-display); font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em;
-  color:#555; margin:10px 0 4px; border-bottom:1px solid #ddd; padding-bottom:3px; }
-.pdf-sheet p{ font-size:10px; line-height:1.4; margin:2px 0; }
-.pdf-crew-grid{ display:flex; flex-wrap:wrap; gap:6px 8px; margin-top:4px; }
-.pdf-crew-chip{ display:flex; align-items:center; gap:6px; padding:4px 9px 4px 4px; border:1px solid #ddd; border-radius:999px; background:#f5f7f8; font-size:9.5px; font-weight:600; color:#444; }
-.pdf-crew-chip img{ width:24px; height:24px; border-radius:50%; object-fit:contain; display:block; background:#e3ebf0; flex:0 0 24px; }
-.pdf-photos-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-top:5px; align-items:start; }
-/* Fixed-size cells (not width:100%/height:auto/max-height on the <img> itself) —
-   that combo is ambiguous replaced-element sizing that html2canvas rasterizes
-   inconsistently (see generateAndShareTripPdf notes). A cell with an explicit
-   height and object-fit:cover on the img gives every renderer the same box. */
-.pdf-photos-grid .pdf-photo-cell{ width:100%; height:145px; border-radius:6px; overflow:hidden; display:block; background:#f0f0f0; }
-.pdf-photos-grid .pdf-photo-cell img{ width:100%; height:100%; object-fit:contain; object-position:center; display:block; background:#e9eef2; }
-.pdf-foot{ margin-top:10px; font-size:8.5px; color:#999; text-align:center; }
 
 /* ---------- PDF export: theme picker (segmented control in the preview sheet) ---------- */
 .pdf-theme-picker{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin-bottom:12px; }
@@ -452,7 +427,8 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-nautical .n-hero-content{ position:absolute; top:0; right:0; bottom:0; left:0; padding:30px 34px; display:flex; justify-content:space-between; align-items:flex-start; z-index:2; }
 .pdf-theme-nautical .n-hero-left{ display:flex; align-items:flex-start; gap:18px; max-width:520px; }
 .pdf-theme-nautical .n-compass{ flex:0 0 auto; margin-top:2px; }
-.pdf-theme-nautical .n-logo-badge{ width:46px; height:46px; border-radius:50%; object-fit:cover; display:block; }
+/* 46px * 1.3 ≈ 60px — 30% bigger, per request. */
+.pdf-theme-nautical .n-logo-badge{ width:60px; height:60px; border-radius:50%; object-fit:cover; display:block; }
 .pdf-theme-nautical .n-hero-title{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:36px; line-height:1.08; color:#fff; margin:0; text-transform:uppercase; letter-spacing:.01em; }
 .pdf-theme-nautical .n-hero-subtitle{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--n-gold-light); font-weight:700; padding-top:10px; border-top:1.4px solid var(--n-gold); display:inline-block; margin-top:12px; }
 .pdf-theme-nautical .n-hero-meta{ text-align:right; color:#fff; font-family:'Helvetica Neue',Arial,sans-serif; flex:0 0 auto; }
@@ -538,125 +514,6 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-nautical .n-footer-motif .n-footer-dot{ width:12px; height:12px; border-radius:50%; border:1.2px solid var(--n-gold); flex:0 0 12px; }
 .pdf-theme-nautical .n-footer-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9px; color:var(--n-body); text-align:center; margin-top:9px; letter-spacing:.02em; }
 
-/* ---------- Sailing Story theme ----------
-   True A4 canvas (794px wide). No hero photo — identity comes from the
-   compass + script/serif masthead, a numbered route bar, and an edge-to-edge
-   leg-photo strip. Conditions / The Day / Crew are now independent
-   `.ss-card` boxes (was three loose columns with no boundary), plus a new
-   Route+Map card and a full-width Photos card, matching the Nautical
-   theme's container treatment. The double border frame is drawn as an
-   absolute z-index overlay so it always sits on top of the full-bleed bands. */
-.pdf-theme-story .pdf-sheet{
-  width:794px; padding:0; position:relative;
-  background:var(--s-cream); color:var(--s-ink); font-family:'Times New Roman',Georgia,serif;
-  --s-navy:#122F4E; --s-navy-deep:#0B2038; --s-gold:#B4884F; --s-gold-deep:#9C7440;
-  --s-cream:#FAF6EF; --s-cream-line:#EFE6D5; --s-ink:#17324F; --s-body:#5B6672;
-  --s-water:#DCE8E4; --s-coral:#B8443A;
-}
-.pdf-theme-story .ss-frame, .pdf-theme-story .ss-frame-inner{ position:absolute; pointer-events:none; z-index:5; }
-.pdf-theme-story .ss-frame{ top:14px; right:14px; bottom:14px; left:14px; border:1.1px solid var(--s-navy); border-radius:4px; }
-.pdf-theme-story .ss-frame-inner{ top:18px; right:18px; bottom:18px; left:18px; border:0.6px solid var(--s-navy); border-radius:3px; }
-
-.pdf-theme-story .ss-header{ padding:36px 40px 0; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
-.pdf-theme-story .ss-compass{ flex:0 0 auto; margin-top:4px; }
-.pdf-theme-story .ss-logo-badge{ width:46px; height:46px; border-radius:50%; object-fit:cover; display:block; }
-.pdf-theme-story .ss-title-block{ flex:1; text-align:center; padding-top:2px; min-width:0; }
-.pdf-theme-story .ss-title-lead{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:33px; color:var(--s-gold-deep); line-height:1; margin-bottom:3px; }
-.pdf-theme-story .ss-title-main{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:34px; color:var(--s-navy); text-transform:uppercase; line-height:1.05; letter-spacing:.01em; }
-.pdf-theme-story .ss-title-rule{ display:flex; align-items:center; justify-content:center; gap:9px; margin:12px auto 9px; max-width:260px; }
-.pdf-theme-story .ss-title-rule .ss-rule-line{ flex:1; height:1px; background:var(--s-gold); }
-.pdf-theme-story .ss-title-rule .ss-rule-heart{ color:var(--s-gold); display:flex; }
-.pdf-theme-story .ss-subtitle{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:11.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--s-navy); margin-bottom:2px; }
-.pdf-theme-story .ss-meta{ flex:0 0 auto; text-align:right; padding-top:2px; min-width:125px; }
-.pdf-theme-story .ss-meta-row{ display:flex; align-items:center; justify-content:flex-end; gap:7px; margin-bottom:2px; }
-.pdf-theme-story .ss-meta-row b{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:11px; font-weight:700; color:var(--s-navy); }
-.pdf-theme-story .ss-meta-icon{ color:var(--s-gold-deep); display:flex; }
-.pdf-theme-story .ss-meta-sub{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10px; color:var(--s-navy); margin:0 0 11px; }
-.pdf-theme-story .ss-meta-time{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:10.5px; color:var(--s-navy); }
-.pdf-theme-story .ss-meta-anchor{ margin-top:15px; color:var(--s-gold); display:flex; justify-content:flex-end; }
-.pdf-theme-story .ss-meta-boat{ margin-top:4px; }
-.pdf-theme-story .ss-meta-boat b{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:11px; font-weight:700; color:var(--s-navy); }
-/* Widened to 2x the height — see .n-boat-photo note above. */
-.pdf-theme-story .ss-boat-photo{ width:36px; height:18px; border-radius:9px; object-fit:cover; border:1px solid var(--s-gold); display:block; flex:0 0 36px; }
-
-.pdf-theme-story .ss-route-bar{ background:var(--s-navy); color:#fff; height:30px; display:flex; align-items:center; justify-content:center; gap:10px; margin:14px 30px 0; border-radius:4px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:11px; font-weight:700; letter-spacing:.02em; padding:0 18px; }
-.pdf-theme-story .ss-route-num{ width:16px; height:16px; border-radius:50%; border:1px solid var(--s-gold); color:var(--s-gold); font-family:'Times New Roman',serif; font-weight:700; font-size:9px; display:flex; align-items:center; justify-content:center; flex:0 0 16px; }
-.pdf-theme-story .ss-route-arrow{ color:var(--s-gold); font-weight:700; }
-
-.pdf-theme-story .ss-legs{ display:flex; height:190px; margin:8px 30px 0; border-radius:4px; overflow:hidden; }
-.pdf-theme-story .ss-legs .ss-leg-cell{ flex:1; overflow:hidden; background:var(--s-cream-line); min-width:0; }
-.pdf-theme-story .ss-legs .ss-leg-cell + .ss-leg-cell{ margin-left:4px; }
-/* object-fit:cover (was contain) — contain was leaving cream bars around
-   any leg photo whose aspect ratio didn't match the cell. */
-.pdf-theme-story .ss-legs .ss-leg-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; background:var(--s-cream-line); }
-
-.pdf-theme-story .ss-sail-heading{ display:flex; align-items:center; justify-content:center; gap:18px; margin:26px 40px 0; }
-.pdf-theme-story .ss-sail-heading .ss-sail-line{ flex:1; height:0.7px; background:var(--s-gold); max-width:200px; }
-.pdf-theme-story .ss-sail-heading .ss-sail-star{ color:var(--s-gold); display:flex; }
-.pdf-theme-story .ss-sail-heading .ss-sail-text{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:14.5px; font-weight:700; letter-spacing:.06em; color:var(--s-navy); white-space:nowrap; }
-
-.pdf-theme-story .ss-stats{ display:flex; align-items:center; justify-content:space-around; height:70px; margin:16px 34px 0; }
-.pdf-theme-story .ss-stat{ display:flex; align-items:center; gap:9px; position:relative; padding:0 14px; }
-.pdf-theme-story .ss-stat + .ss-stat::before{ content:''; position:absolute; left:-1px; top:12%; bottom:12%; width:0; border-left:1px dotted var(--s-gold); }
-.pdf-theme-story .ss-stat-icon{ color:var(--s-navy); display:flex; }
-.pdf-theme-story .ss-stat b{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:19px; color:var(--s-navy); }
-.pdf-theme-story .ss-stat .ss-stat-unit{ font-size:10px; font-weight:700; color:var(--s-gold-deep); margin-left:2px; font-family:'Helvetica Neue',Arial,sans-serif; }
-.pdf-theme-story .ss-stat .ss-stat-label{ display:block; font-size:8.2px; letter-spacing:.05em; text-transform:uppercase; color:var(--s-body); font-family:'Helvetica Neue',Arial,sans-serif; margin-top:1px; }
-.pdf-theme-story .ss-stats-rule{ height:1px; background:#DCD0BC; margin:10px 34px 0; }
-
-/* Conditions / The Day / Crew: independent cards (was three loose columns
-   with no boundary), wrapping onto new rows as needed. */
-.pdf-theme-story .ss-cards{ display:flex; flex-wrap:wrap; gap:18px; padding:22px 34px 0; }
-.pdf-theme-story .ss-card{ background:#fff; border:1px solid var(--s-cream-line); border-radius:8px; padding:18px 20px; box-sizing:border-box; }
-.pdf-theme-story .ss-card-conditions{ flex:1 1 220px; }
-.pdf-theme-story .ss-card-day{ flex:1.2 1 260px; }
-.pdf-theme-story .ss-card-crew{ flex:1 1 200px; }
-.pdf-theme-story .ss-card-route{ margin:18px 34px 0; }
-.pdf-theme-story .ss-card-photos{ margin:18px 34px 0; }
-.pdf-theme-story .ss-heading{ text-align:center; font-family:'Helvetica Neue',Arial,sans-serif; font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--s-navy); padding-bottom:7px; margin-bottom:11px; border-bottom:0.8px solid var(--s-gold); }
-.pdf-theme-story .ss-cond-row{ display:flex; align-items:center; justify-content:space-between; padding:5px 2px; }
-.pdf-theme-story .ss-cond-label{ display:flex; align-items:center; gap:7px; font-size:8.8px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--s-body); font-family:'Helvetica Neue',Arial,sans-serif; }
-.pdf-theme-story .ss-cond-icon{ color:var(--s-gold-deep); display:flex; }
-.pdf-theme-story .ss-cond-value{ font-family:'Times New Roman',Georgia,serif; font-weight:700; font-size:10px; color:var(--s-navy); }
-.pdf-theme-story .ss-day-text p{ font-family:'Times New Roman',Georgia,serif; font-size:10.2px; line-height:1.55; color:var(--s-ink); margin:0 0 9px; }
-.pdf-theme-story .ss-day-text p:last-child{ margin-bottom:0; }
-.pdf-theme-story .ss-day-boat{ display:flex; justify-content:flex-end; margin-top:9px; opacity:.85; }
-.pdf-theme-story .ss-crew-item{ text-align:center; padding-bottom:14px; margin-bottom:14px; border-bottom:1px dotted var(--s-gold); }
-.pdf-theme-story .ss-crew-item:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
-/* object-fit:cover (was contain) — contain was leaving cream bars around
-   any crew photo whose aspect ratio didn't match the circle. */
-.pdf-theme-story .ss-crew-photo{ width:46px; height:46px; border-radius:50%; border:1.1px solid var(--s-gold); object-fit:cover; object-position:center; display:block; margin:0 auto 8px; background:var(--s-cream-line); }
-.pdf-theme-story .ss-crew-role{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--s-body); display:block; margin-bottom:2px; }
-.pdf-theme-story .ss-crew-name{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:20px; color:var(--s-navy); }
-/* Map card: locally overrides the generic --water/--navy/--coral tokens
-   buildPortholeSvg() draws with, so the track matches this theme's palette.
-   Box background is white (matches .ss-card) rather than the water tint, so
-   any contain-mode letterbox bars on an uploaded map screenshot blend into
-   the card instead of showing as a visible stripe. */
-.pdf-theme-story .ss-map-box{
-  position:relative; width:100%; height:220px; border-radius:6px; overflow:hidden;
-  border:1px solid var(--s-gold); background:#fff;
-  --water:var(--s-water); --navy:var(--s-navy); --coral:var(--s-coral);
-}
-.pdf-theme-story .ss-map-box svg{ width:100%; height:100%; display:block; }
-/* background-size:contain (was cover) — see .n-map-img note above. */
-.pdf-theme-story .ss-map-img{ width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center; }
-.pdf-theme-story .ss-map-empty{ position:absolute; top:0; right:0; bottom:0; left:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:16px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--s-navy); opacity:.55; }
-
-/* Photo grid: aspect-ratio cells + object-fit:cover (was contain, leaving
-   cream bars around mismatched photos) so the full photo set — never
-   capped — crops cleanly to fill. Auto-flowing rows fit any photo count. */
-.pdf-theme-story .ss-photos{ display:grid; grid-template-columns:repeat(4,1fr); gap:4px; border:1px solid var(--s-gold); border-radius:4px; overflow:hidden; }
-.pdf-theme-story .ss-photo-cell{ aspect-ratio:1/1; overflow:hidden; background:var(--s-cream-line); }
-.pdf-theme-story .ss-photo-cell img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; background:var(--s-cream-line); }
-
-.pdf-theme-story .ss-footer{ display:flex; flex-direction:column; align-items:center; padding:20px 34px 30px; }
-.pdf-theme-story .ss-footer-heart{ color:var(--s-gold); margin-bottom:7px; display:flex; }
-.pdf-theme-story .ss-footer-row{ display:flex; align-items:center; gap:9px; width:100%; max-width:460px; }
-.pdf-theme-story .ss-footer-row .ss-footer-anchor{ color:var(--s-gold); flex:0 0 auto; display:flex; }
-.pdf-theme-story .ss-footer-row .ss-footer-line{ flex:1; height:0; border-top:1px dotted var(--s-gold); }
-.pdf-theme-story .ss-footer-row .ss-footer-text{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:16px; color:var(--s-navy); white-space:nowrap; padding:0 9px; }
-
 /* ---------- Minimalist Yacht Club theme ----------
    True A4 canvas (794px wide). Badge + serif masthead header, a 3:1
    hero/story split, centered rule headings for Numbers, then Conditions /
@@ -670,7 +527,10 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 }
 .pdf-theme-yacht .y-header{ display:flex; align-items:flex-start; gap:26px; }
 .pdf-theme-yacht .y-badge{ position:relative; width:96px; height:96px; border-radius:50%; background:var(--y-navy); border:1.8px solid var(--y-gold); flex:0 0 96px; display:flex; align-items:center; justify-content:center; }
-.pdf-theme-yacht .y-badge-compass{ position:absolute; top:8px; right:8px; bottom:8px; left:8px; width:80px; height:80px; border-radius:50%; object-fit:cover; display:block; }
+/* Filled edge-to-edge (was inset 8px, leaving a visible navy ring around the
+   compass image) — the compass now covers the whole navy circle right up to
+   the gold border. */
+.pdf-theme-yacht .y-badge-compass{ position:absolute; top:0; right:0; bottom:0; left:0; width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; }
 .pdf-theme-yacht .y-title-block{ flex:1 1 auto; min-width:0; padding-top:4px; }
 .pdf-theme-yacht .y-title-line1, .pdf-theme-yacht .y-title-line2{ font-family:'Playfair Display',Georgia,serif; font-weight:700; font-size:34px; color:var(--y-navy); line-height:1.08; margin:0; }
 .pdf-theme-yacht .y-title-rule{ display:flex; align-items:center; gap:11px; margin-top:14px; max-width:230px; }
@@ -775,7 +635,10 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-memory .m-hero-wave svg{ display:block; }
 .pdf-theme-memory .m-hero-content{ position:absolute; top:0; right:0; bottom:0; left:0; padding:28px 32px 24px; display:flex; justify-content:space-between; align-items:flex-end; z-index:2; }
 .pdf-theme-memory .m-badge{ position:absolute; top:26px; left:30px; width:78px; height:78px; border-radius:50%; background:var(--m-navy); border:1.6px solid var(--m-gold); display:flex; align-items:center; justify-content:center; z-index:3; }
-.pdf-theme-memory .m-badge-compass{ position:absolute; top:6px; right:6px; bottom:6px; left:6px; width:66px; height:66px; border-radius:50%; object-fit:cover; display:block; }
+/* Filled edge-to-edge (was inset 6px, leaving a visible navy ring around the
+   compass image) — the compass now covers the whole navy circle right up to
+   the gold border. */
+.pdf-theme-memory .m-badge-compass{ position:absolute; top:0; right:0; bottom:0; left:0; width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; }
 .pdf-theme-memory .m-hero-left{ display:flex; flex-direction:column; align-items:flex-start; min-width:0; max-width:460px; padding-left:112px; }
 .pdf-theme-memory .m-title-lead{ font-family:'Alex Brush','Brush Script MT',cursive; font-size:27px; color:var(--m-gold-deep); line-height:1; margin-bottom:3px; }
 .pdf-theme-memory .m-title-main{ font-family:'Playfair Display',Georgia,serif; font-weight:900; font-size:34px; color:var(--m-navy); text-transform:uppercase; line-height:1.06; }
