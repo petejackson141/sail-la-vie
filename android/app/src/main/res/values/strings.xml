@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sail la Vie</string>
+    <string name="title_activity_main">Sail la Vie</string>
+    <string name="package_name">com.saillavie.app</string>
+    <string name="custom_url_scheme">com.saillavie.app</string>
+</resources>
