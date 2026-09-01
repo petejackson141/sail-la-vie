@@ -667,7 +667,7 @@ function startGPS(){
       {
         backgroundTitle: t('notification.recordingTitle'),
         backgroundMessage: t('notification.recordingBody'),
-        requestPermissions: true,
+        requestPermissions: false, // TEMP — testing whether re-requesting an already-granted permission is what's hanging
         stale: false,
         distanceFilter: 0
       },
