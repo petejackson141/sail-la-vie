@@ -627,6 +627,25 @@ const GPS_ACCURACY_LIMIT_M = 60;
 // its own independent setInterval) just kept counting while nothing recorded.
 const GPS_STALE_MS = 45000;
 
+// True when running inside the Capacitor native app (Android/iOS), false in
+// the browser/PWA. Everything below branches on this so the web version keeps
+// using the plain browser geolocation API unchanged, while the native app
+// uses the @capgo/background-geolocation plugin — the piece that actually
+// survives the screen locking or the app being backgrounded, which
+// navigator.geolocation.watchPosition() cannot do on its own.
+function isNativeApp(){
+  return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+}
+// The plugin's callback hands back a flat {latitude, longitude, accuracy, ...}
+// object; onFix()/onGpsError() below were written for the browser's
+// GeolocationPosition shape ({coords:{latitude, longitude, accuracy}}). This
+// just reshapes one into the other so the existing fix-processing pipeline
+// (accuracy filtering, jump rejection, distance/speed math) doesn't need to
+// know or care which source a fix came from.
+function normalizeNativeLocation(loc){
+  return { coords: { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy } };
+}
+
 function startGPS(){
   document.getElementById('manualDistanceWrap').style.display='none';
   const gpsEl = document.getElementById('gpsStatus');
@@ -640,7 +659,25 @@ function startGPS(){
   lastFixTime = null;
   bestRejectedFix = null;
   pendingJumpCandidate = null;
-  watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
+  if(isNativeApp()){
+    const { BackgroundGeolocation } = window.Capacitor.Plugins;
+    nativeGpsActive = true;
+    BackgroundGeolocation.start(
+      {
+        backgroundTitle: t('notification.recordingTitle'),
+        backgroundMessage: t('notification.recordingBody'),
+        requestPermissions: true,
+        stale: false,
+        distanceFilter: 0
+      },
+      (location, error) => {
+        if(error){ onGpsError(); return; }
+        if(location) onFix(normalizeNativeLocation(location));
+      }
+    ).catch(()=>{ onGpsError(); });
+  } else {
+    watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
+  }
   if(gpsWatchdogInterval) clearInterval(gpsWatchdogInterval);
   gpsWatchdogInterval = setInterval(checkGpsFreshness, 15000);
   showRecordingNotification();
@@ -778,7 +815,8 @@ function onGpsError(){
 // weak-but-real fallback fix sitting around, accept it rather than leaving a
 // total gap in the track.
 function checkGpsFreshness(){
-  if(!currentTrip || currentTrip.isManual || watchId===null) return;
+  if(!currentTrip || currentTrip.isManual) return;
+  if(watchId===null && !nativeGpsActive) return;
   if(!lastFixTime) return; // still waiting on the very first fix — "Searching…" already covers this
   const staleFor = Date.now() - lastFixTime;
   if(staleFor <= GPS_STALE_MS) return;
@@ -792,13 +830,25 @@ function checkGpsFreshness(){
     acceptFix(bestRejectedFix);
     bestRejectedFix = null;
   }
-  if('geolocation' in navigator){
+  if(nativeGpsActive){
+    // Tear down and restart the native watcher the same way we do for the
+    // browser one below — cheap to attempt, and covers the case where the
+    // watcher has quietly stalled rather than the boat genuinely having no
+    // signal.
+    const { BackgroundGeolocation } = window.Capacitor.Plugins;
+    BackgroundGeolocation.stop().finally(() => { nativeGpsActive = false; startGPS(); });
+  } else if('geolocation' in navigator){
     navigator.geolocation.clearWatch(watchId);
     watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
   }
 }
 function stopGPS(){
   if(watchId!==null && 'geolocation' in navigator){ navigator.geolocation.clearWatch(watchId); watchId=null; }
+  if(nativeGpsActive){
+    nativeGpsActive = false;
+    const { BackgroundGeolocation } = window.Capacitor.Plugins;
+    BackgroundGeolocation.stop().catch(()=>{});
+  }
   if(timerId){ clearInterval(timerId); timerId=null; }
   if(gpsWatchdogInterval){ clearInterval(gpsWatchdogInterval); gpsWatchdogInterval=null; }
   lastFixTime = null;

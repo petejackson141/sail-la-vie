@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '01.09.2026.0940';
+const APP_VERSION = '01.09.2026.1015';
 
 /* ============================================================
    CUSTOM CONFIRM DIALOG (shared across all screens)
@@ -100,6 +100,7 @@ let state = {
 
 let currentTrip = null;   // the ONE journey/manual-entry/edit in progress right now; null when nothing's active — check this first if the active screen misbehaves
 let watchId = null;       // navigator.geolocation.watchPosition() handle, so stopGPS() can cancel it
+let nativeGpsActive = false; // true while the native @capgo/background-geolocation watcher (not watchPosition) is running
 let timerId = null;       // setInterval() handle for the elapsed-time ticker
 let startedAt = null;     // Date.now() when the current live journey began, used to compute elapsed time
 let lastFixTime = null;   // Date.now() of the last GPS fix we RECEIVED (accepted or not) — drives the staleness watchdog in journey.js
