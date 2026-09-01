@@ -659,30 +659,34 @@ function startGPS(){
   lastFixTime = null;
   bestRejectedFix = null;
   pendingJumpCandidate = null;
-  const bgPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundGeolocation;
+  // @capgo/background-geolocation's start() call hangs indefinitely on at
+  // least one test device (Samsung, Android 16) — no error, no promise
+  // resolution, no callback, ever. Not a config issue we could find (setup,
+  // permissions, and manifest all check out against the plugin's own docs).
+  // Disabling it here rather than staying blocked: falls back to the same
+  // foreground-only browser tracking the PWA already uses reliably. This
+  // means background/locked-screen tracking is NOT yet solved — that's a
+  // separate, still-open problem — but everything else works again.
+  const BACKGROUND_GPS_PLUGIN_ENABLED = false;
+  const bgPlugin = BACKGROUND_GPS_PLUGIN_ENABLED && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundGeolocation;
   if(isNativeApp() && bgPlugin){
     nativeGpsActive = true;
-    showToast('DEBUG: calling BackgroundGeolocation.start()'); // TEMP — remove once tracking is confirmed working
     bgPlugin.start(
       {
         backgroundTitle: t('notification.recordingTitle'),
         backgroundMessage: t('notification.recordingBody'),
-        requestPermissions: false, // TEMP — testing whether re-requesting an already-granted permission is what's hanging
+        requestPermissions: false,
         stale: false,
         distanceFilter: 0
       },
       (location, error) => {
-        if(error){ showToast('DEBUG error: '+JSON.stringify(error)); onGpsError(); return; } // TEMP
-        if(location){ showToast('DEBUG fix: '+location.latitude.toFixed(4)+','+location.longitude.toFixed(4)); onFix(normalizeNativeLocation(location)); } // TEMP
+        if(error){ onGpsError(); return; }
+        if(location) onFix(normalizeNativeLocation(location));
       }
-    ).then(()=>{ showToast('DEBUG: start() resolved OK'); }) // TEMP
-     .catch((e)=>{ showToast('DEBUG start() rejected: '+(e&&e.message?e.message:JSON.stringify(e))); nativeGpsActive = false; onGpsError(); }); // TEMP
+    ).catch(()=>{ nativeGpsActive = false; onGpsError(); });
   } else {
-    // Falls back here on the web/PWA, AND on native if the background plugin
-    // isn't installed/synced for some reason — foreground-only tracking via
-    // the browser API still works either way, it just won't survive the
-    // screen locking.
-    if(isNativeApp() && !bgPlugin) console.warn('BackgroundGeolocation plugin not found — falling back to foreground-only tracking. Check npm install + npx cap sync.');
+    // Foreground-only tracking — same as the web/PWA. Reliable while the app
+    // is open and the screen is on; does not survive the screen locking.
     watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
   }
   if(gpsWatchdogInterval) clearInterval(gpsWatchdogInterval);
