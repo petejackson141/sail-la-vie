@@ -599,7 +599,40 @@ function openTripPdfPreview(){
   });
 }
 
-// IMPORTANT: Do not use jsPDF.doc.html() here (it paginates unpredictably).
+// Shares/downloads a generated file. Browsers can trigger a real download or
+// the Web Share API directly. Inside the native Capacitor app there's no
+// browser chrome to hand a download to, so we write the file to the app's
+// cache via the Filesystem plugin first, then hand that real on-device file
+// off to Android's native share sheet (Save to Files, email, WhatsApp, etc.)
+// via the Share plugin. Both plugins are registered on window.Capacitor.Plugins
+// once installed + synced — no bundler/import needed for this vanilla-JS app.
+async function shareOrDownloadFile(blob, fileName, mimeType, title, downloadedToastKey){
+  if(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()){
+    const { Filesystem, Share } = window.Capacitor.Plugins;
+    const base64Data = await new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    const written = await Filesystem.writeFile({ path: fileName, data: base64Data, directory: 'CACHE' });
+    await Share.share({ title: title || fileName, url: written.uri, dialogTitle: title || fileName });
+    return;
+  }
+  const file = new File([blob], fileName, {type: mimeType});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    await navigator.share({files:[file], title});
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showToast(t(downloadedToastKey || 'toast.pdfDownloaded'));
+  }
+}
+
+
 // We render the COMPLETE log into one tall canvas first. Themes that are
 // designed to always fit one page (theme.paginate is falsy) get shrunk to
 // fit that single page, same as before. Themes that can legitimately run
@@ -721,21 +754,7 @@ async function generateAndShareTripPdf(){
 
     const blob = doc.output('blob');
     const fileName = (trip.title||'sail-log').replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.pdf';
-    const file = new File([blob], fileName, {type:'application/pdf'});
-
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({files:[file], title: trip.title||'Sail Log'});
-    } else {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      showToast(t('toast.pdfDownloaded'));
-    }
+    await shareOrDownloadFile(blob, fileName, 'application/pdf', trip.title||'Sail Log');
     closeSheets();
   }catch(e){
     if(e && e.name==='AbortError'){ /* user cancelled the native share sheet */ }
@@ -839,20 +858,12 @@ async function shareLightboxPhoto(){
   try{
     const res = await fetch(url);
     const blob = await res.blob();
-    const file = new File([blob], 'sail-la-vie-photo.jpg', {type: blob.type||'image/jpeg'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({files:[file], title:'Sail la Vie Photo'});
-      return;
-    }
+    await shareOrDownloadFile(blob, 'sail-la-vie-photo.jpg', blob.type||'image/jpeg', 'Sail la Vie Photo', 'toast.photoDownloaded');
   }catch(e){
     if(e && e.name==='AbortError') return; // user cancelled the native share sheet
     console.error('share failed', e);
+    showToast(t('toast.pdfGenFail'));
   }
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'sail-la-vie-photo.jpg';
-  document.body.appendChild(a); a.click(); a.remove();
-  showToast(t('toast.photoDownloaded'));
 }
 (function setupLightboxSwipe(){
   const img = document.getElementById('lightboxImg');
