@@ -198,7 +198,7 @@ async function renderTripDetailMap(trip){
         </div>
         <div class="map-style-toggle left" id="detailMapStyleToggle" style="display:none;" onclick="toggleMapStyleMenu('detail')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
-          <span id="detailMapStyleLabel">Standard</span>
+          <span id="detailMapStyleLabel">Minimal</span>
         </div>
         <div class="map-style-menu left" id="detailMapStyleMenu"></div>
         <div class="map-lock-toggle" id="detailMapLockToggle" style="display:none;" onclick="toggleDetailMapLock()">
@@ -268,21 +268,19 @@ let detailLeafletMap = null, detailMapLocked = true;
 const MAP_STYLES = {
   minimal: { labelKey:'mapStyle.minimal', base:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
     attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20 },
-  standard: { labelKey:'mapStyle.standard', base:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution:'© OpenStreetMap contributors', maxZoom:19 },
   nautical: { labelKey:'mapStyle.nautical', base:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     overlay:'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
     attribution:'© OpenStreetMap contributors, seamarks © OpenSeaMap', maxZoom:18 },
-  satellite: { labelKey:'mapStyle.satellite', base:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics', maxZoom:19 },
   voyager: { labelKey:'mapStyle.voyager', base:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20 },
 };
 // "Minimal" (CARTO Positron) is the default — light grey background, thin
-// roads, muted labels, no clutter. "Colorful" now points at real CARTO
-// Voyager (soft pastel colors, colored parks/water, clean labels — designed
-// to feel like a friendlier Google Maps) instead of the flatter Esri street
-// tiles it used before. Standard/Nautical/Satellite are still there too.
+// roads, muted labels, no clutter. "Colorful" is real CARTO Voyager (soft
+// pastel colors, colored parks/water, clean labels). "Nautical" is OSM's
+// standard base layer with the OpenSeaMap seamarks overlay on top (buoys,
+// lights, depth areas). Standard and Satellite were removed on request —
+// Satellite relied on Esri's free tile endpoint, which is now key-gated and
+// was rendering "API Key Required" tiles instead of imagery.
 let currentMapStyle = localStorage.getItem('mapStyle') || 'minimal';
 if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'minimal';
 let liveStyleLayers = null, detailStyleLayers = null; // {base, overlay?} L.tileLayer instances currently attached to each map
@@ -292,9 +290,9 @@ let liveStyleLayers = null, detailStyleLayers = null; // {base, overlay?} L.tile
 // swapping styles again later removes the RIGHT layers, not just "whatever's on it").
 function applyMapStyle(map, styleId){
   if(!map) return null;
-  const style = MAP_STYLES[styleId] || MAP_STYLES.standard;
+  const style = MAP_STYLES[styleId] || MAP_STYLES.minimal;
   const layers = {};
-  layers.base = L.tileLayer(style.base, {maxZoom: style.maxZoom, attribution: style.attribution}).addTo(map);
+  layers.base = L.tileLayer(style.base, {maxZoom: style.maxZoom, maxNativeZoom: style.maxNativeZoom, attribution: style.attribution}).addTo(map);
   if(style.overlay) layers.overlay = L.tileLayer(style.overlay, {maxZoom: style.maxZoom}).addTo(map);
   const tilePane = map.getPane('tilePane');
   if(tilePane) tilePane.style.filter = style.filter || '';
