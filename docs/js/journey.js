@@ -659,10 +659,11 @@ function startGPS(){
   lastFixTime = null;
   bestRejectedFix = null;
   pendingJumpCandidate = null;
-  if(isNativeApp()){
-    const { BackgroundGeolocation } = window.Capacitor.Plugins;
+  const bgPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundGeolocation;
+  if(isNativeApp() && bgPlugin){
     nativeGpsActive = true;
-    BackgroundGeolocation.start(
+    showToast('DEBUG: calling BackgroundGeolocation.start()'); // TEMP — remove once tracking is confirmed working
+    bgPlugin.start(
       {
         backgroundTitle: t('notification.recordingTitle'),
         backgroundMessage: t('notification.recordingBody'),
@@ -671,11 +672,17 @@ function startGPS(){
         distanceFilter: 0
       },
       (location, error) => {
-        if(error){ onGpsError(); return; }
-        if(location) onFix(normalizeNativeLocation(location));
+        if(error){ showToast('DEBUG error: '+JSON.stringify(error)); onGpsError(); return; } // TEMP
+        if(location){ showToast('DEBUG fix: '+location.latitude.toFixed(4)+','+location.longitude.toFixed(4)); onFix(normalizeNativeLocation(location)); } // TEMP
       }
-    ).catch(()=>{ onGpsError(); });
+    ).then(()=>{ showToast('DEBUG: start() resolved OK'); }) // TEMP
+     .catch((e)=>{ showToast('DEBUG start() rejected: '+(e&&e.message?e.message:JSON.stringify(e))); nativeGpsActive = false; onGpsError(); }); // TEMP
   } else {
+    // Falls back here on the web/PWA, AND on native if the background plugin
+    // isn't installed/synced for some reason — foreground-only tracking via
+    // the browser API still works either way, it just won't survive the
+    // screen locking.
+    if(isNativeApp() && !bgPlugin) console.warn('BackgroundGeolocation plugin not found — falling back to foreground-only tracking. Check npm install + npx cap sync.');
     watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
   }
   if(gpsWatchdogInterval) clearInterval(gpsWatchdogInterval);
@@ -835,8 +842,9 @@ function checkGpsFreshness(){
     // browser one below — cheap to attempt, and covers the case where the
     // watcher has quietly stalled rather than the boat genuinely having no
     // signal.
-    const { BackgroundGeolocation } = window.Capacitor.Plugins;
-    BackgroundGeolocation.stop().finally(() => { nativeGpsActive = false; startGPS(); });
+    const bgPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundGeolocation;
+    if(bgPlugin) bgPlugin.stop().finally(() => { nativeGpsActive = false; startGPS(); });
+    else { nativeGpsActive = false; startGPS(); }
   } else if('geolocation' in navigator){
     navigator.geolocation.clearWatch(watchId);
     watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
@@ -846,8 +854,8 @@ function stopGPS(){
   if(watchId!==null && 'geolocation' in navigator){ navigator.geolocation.clearWatch(watchId); watchId=null; }
   if(nativeGpsActive){
     nativeGpsActive = false;
-    const { BackgroundGeolocation } = window.Capacitor.Plugins;
-    BackgroundGeolocation.stop().catch(()=>{});
+    const bgPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundGeolocation;
+    if(bgPlugin) bgPlugin.stop().catch(()=>{});
   }
   if(timerId){ clearInterval(timerId); timerId=null; }
   if(gpsWatchdogInterval){ clearInterval(gpsWatchdogInterval); gpsWatchdogInterval=null; }
