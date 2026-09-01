@@ -266,14 +266,20 @@ let detailLeafletMap = null, detailMapLocked = true;
    both the live map and any trip's detail map; Colorful is the default for anyone
    who hasn't picked yet. */
 const MAP_STYLES = {
-  minimal: { labelKey:'mapStyle.minimal', base:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  minimal: { labelKey:'mapStyle.minimal', base:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_2ovi_1_4398d296b38a11f0c00df3b6',
     attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20 },
   nautical: { labelKey:'mapStyle.nautical', base:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     overlay:'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
     attribution:'© OpenStreetMap contributors, seamarks © OpenSeaMap', maxZoom:18 },
-  voyager: { labelKey:'mapStyle.voyager', base:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  voyager: { labelKey:'mapStyle.voyager', base:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=cb1_2ovi_1_4398d296b38a11f0c00df3b6',
     attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20 },
 };
+// CARTO started requiring a free API key on their raster basemap endpoint
+// (basemaps.cartocdn.com) in late Aug 2026 — unauthenticated requests now come
+// back watermarked "API KEY REQUIRED" instead of failing outright. The key
+// below is free (5M tile requests/month, plenty for personal use) — get your
+// own at https://carto.com/basemaps/apikey if this one ever needs rotating.
+// Nautical is unaffected since it uses plain OpenStreetMap tiles directly.
 // "Minimal" (CARTO Positron) is the default — light grey background, thin
 // roads, muted labels, no clutter. "Colorful" is real CARTO Voyager (soft
 // pastel colors, colored parks/water, clean labels). "Nautical" is OSM's
