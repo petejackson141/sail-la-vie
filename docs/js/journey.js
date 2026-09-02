@@ -636,15 +636,13 @@ const GPS_STALE_MS = 45000;
 function isNativeApp(){
   return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 }
-// The plugin's callback hands back a flat {latitude, longitude, accuracy, ...}
-// object; onFix()/onGpsError() below were written for the browser's
-// GeolocationPosition shape ({coords:{latitude, longitude, accuracy}}). This
-// just reshapes one into the other so the existing fix-processing pipeline
-// (accuracy filtering, jump rejection, distance/speed math) doesn't need to
-// know or care which source a fix came from.
-function normalizeNativeLocation(loc){
-  return { coords: { latitude: loc.latitude, longitude: loc.longitude, accuracy: loc.accuracy } };
+// Loaded from vendor-background-geolocation.js (a plain-script bundle of
+// @transistorsoft/capacitor-background-geolocation, built with esbuild since
+// this app has no bundler of its own — see that file's header comment).
+function getBgGeo(){
+  return window.TSBackgroundGeolocationModule && window.TSBackgroundGeolocationModule.default;
 }
+let bgGeoReady = false; // true once .ready() has been called this app session — only needs doing once
 
 function startGPS(){
   document.getElementById('manualDistanceWrap').style.display='none';
@@ -659,39 +657,52 @@ function startGPS(){
   lastFixTime = null;
   bestRejectedFix = null;
   pendingJumpCandidate = null;
-  // @capgo/background-geolocation's start() call hangs indefinitely on at
-  // least one test device (Samsung, Android 16) — no error, no promise
-  // resolution, no callback, ever. Not a config issue we could find (setup,
-  // permissions, and manifest all check out against the plugin's own docs).
-  // Disabling it here rather than staying blocked: falls back to the same
-  // foreground-only browser tracking the PWA already uses reliably. This
-  // means background/locked-screen tracking is NOT yet solved — that's a
-  // separate, still-open problem — but everything else works again.
-  const BACKGROUND_GPS_PLUGIN_ENABLED = false;
-  const bgPlugin = BACKGROUND_GPS_PLUGIN_ENABLED && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundGeolocation;
-  if(isNativeApp() && bgPlugin){
+  const bgGeo = getBgGeo();
+  if(isNativeApp() && bgGeo){
     nativeGpsActive = true;
-    bgPlugin.start(
-      {
-        backgroundTitle: t('notification.recordingTitle'),
-        backgroundMessage: t('notification.recordingBody'),
-        requestPermissions: false,
-        stale: false,
-        distanceFilter: 0
-      },
-      (location, error) => {
-        if(error){ onGpsError(); return; }
-        if(location) onFix(normalizeNativeLocation(location));
-      }
-    ).catch(()=>{ nativeGpsActive = false; onGpsError(); });
+    startNativeBackgroundGps(bgGeo);
   } else {
-    // Foreground-only tracking — same as the web/PWA. Reliable while the app
-    // is open and the screen is on; does not survive the screen locking.
+    // Web/PWA, or native without the plugin loaded for some reason —
+    // foreground-only tracking. Reliable while the app is open and the
+    // screen is on; does not survive the screen locking.
     watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
   }
   if(gpsWatchdogInterval) clearInterval(gpsWatchdogInterval);
   gpsWatchdogInterval = setInterval(checkGpsFreshness, 15000);
   showRecordingNotification();
+}
+
+async function startNativeBackgroundGps(bgGeo){
+  try{
+    // onLocation only needs wiring up once per app session — safe to call
+    // again on a restart (e.g. from the watchdog), it just replaces the
+    // previous listener rather than stacking duplicates.
+    bgGeo.onLocation(
+      (location) => onFix({ coords: location.coords }), // this plugin already nests coords the same way the browser API does
+      () => onGpsError()
+    );
+    if(!bgGeoReady){
+      await bgGeo.ready({
+        reset: true,
+        geolocation: {
+          desiredAccuracy: -1, // High — see DesiredAccuracy.High in the plugin's types; hardcoded since we can't import the enum without a bundler
+          distanceFilter: 0,
+          locationAuthorizationRequest: 'Always',
+          stopOnStationary: false // sailing includes genuinely stationary stretches (anchored, drifting) — don't treat those as "trip over"
+        },
+        app: {
+          stopOnTerminate: false,
+          startOnBoot: true,
+          notification: { title: t('notification.recordingTitle'), text: t('notification.recordingBody') }
+        }
+      });
+      bgGeoReady = true;
+    }
+    await bgGeo.start();
+  }catch(e){
+    nativeGpsActive = false;
+    onGpsError();
+  }
 }
 // Mirrors the persistent "Trip Recording" system notification other tracking
 // apps (SeePeople, etc.) show — makes it obvious at a glance, even with the
@@ -845,9 +856,10 @@ function checkGpsFreshness(){
     // Tear down and restart the native watcher the same way we do for the
     // browser one below — cheap to attempt, and covers the case where the
     // watcher has quietly stalled rather than the boat genuinely having no
-    // signal.
-    const bgPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundGeolocation;
-    if(bgPlugin) bgPlugin.stop().finally(() => { nativeGpsActive = false; startGPS(); });
+    // signal. ready() only needs calling once per session (bgGeoReady stays
+    // true), so this restart is just stop() then start() again.
+    const bgGeo = getBgGeo();
+    if(bgGeo) bgGeo.stop().finally(() => { nativeGpsActive = false; startGPS(); });
     else { nativeGpsActive = false; startGPS(); }
   } else if('geolocation' in navigator){
     navigator.geolocation.clearWatch(watchId);
@@ -858,8 +870,8 @@ function stopGPS(){
   if(watchId!==null && 'geolocation' in navigator){ navigator.geolocation.clearWatch(watchId); watchId=null; }
   if(nativeGpsActive){
     nativeGpsActive = false;
-    const bgPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BackgroundGeolocation;
-    if(bgPlugin) bgPlugin.stop().catch(()=>{});
+    const bgGeo = getBgGeo();
+    if(bgGeo) bgGeo.stop().catch(()=>{});
   }
   if(timerId){ clearInterval(timerId); timerId=null; }
   if(gpsWatchdogInterval){ clearInterval(gpsWatchdogInterval); gpsWatchdogInterval=null; }
