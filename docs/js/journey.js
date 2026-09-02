@@ -763,15 +763,26 @@ function onFix(pos){
   }
   acceptFix(point);
 }
+// A fix implying a speed above this is almost certainly a GPS glitch, not
+// real movement — but the right ceiling depends entirely on what's actually
+// moving. 60kt comfortably covers even a fast raceboat, so that's the right
+// number for real sailing use. While testing by car, though, ordinary
+// highway driving legitimately exceeds 60kt — so this is set generously high
+// for now (car testing only) to stop genuinely real distance getting
+// quarantined as a "jump" and excluded from the trip totals. Turn this back
+// down to something boat-appropriate (60, or lower for a typical cruising
+// boat) once real sea testing starts — a tighter ceiling catches genuine
+// glitches better.
+const MAX_PLAUSIBLE_SPEED_KT = 100; // TODO: lower to ~60 (or less) once testing moves from car to boat
 // Actually commits a fix to the trip: sanity-checks it against the previous
-// accepted point and only THEN adds it to the path. A fix implying 60+kts is
-// almost certainly a glitch, not real sailing speed — but a plain "reject
-// and wait" isn't enough on its own: the longer fixes keep getting rejected,
-// the more elapsed time stacks up against that same stale last-good point,
-// and distance÷time eventually dips back under the 60kt cutoff for ANY
-// distance, however wrong — the filter quietly gets weaker over time instead
-// of staying strict. That's what let a multi-mile jump back in after ~30s of
-// "Ignored bad fix".
+// accepted point and only THEN adds it to the path. A fix implying an
+// impossible speed (see MAX_PLAUSIBLE_SPEED_KT above) is almost certainly a
+// glitch, not real movement — but a plain "reject and wait" isn't enough on
+// its own: the longer fixes keep getting rejected, the more elapsed time
+// stacks up against that same stale last-good point, and distance÷time
+// eventually dips back under the cutoff for ANY distance, however wrong —
+// the filter quietly gets weaker over time instead of staying strict. That's
+// what let a multi-mile jump back in after ~30s of "Ignored bad fix".
 // Fix: once a fix gets rejected, we hold it as pendingJumpCandidate and stop
 // trusting the stale-anchor math entirely — the ONLY way out of "disputed"
 // state is a SECOND raw fix that closely agrees with the first rejected one
@@ -791,7 +802,7 @@ function acceptFix(point){
   const dtHours = (point.t - prev.t)/3600000;
   const instSpeed = dtHours>0 ? segNm/dtHours : Infinity;
 
-  if(instSpeed < 60 && !pendingJumpCandidate){
+  if(instSpeed < MAX_PLAUSIBLE_SPEED_KT && !pendingJumpCandidate){
     commitFix(point, true);
     return;
   }
@@ -800,7 +811,7 @@ function acceptFix(point){
     const confirmNm = haversineNm(pendingJumpCandidate, point);
     const confirmDtHours = (point.t - pendingJumpCandidate.t)/3600000;
     const confirmSpeed = confirmDtHours>0 ? confirmNm/confirmDtHours : Infinity;
-    if(confirmSpeed < 15){
+    if(confirmSpeed < MAX_PLAUSIBLE_SPEED_KT/4){ // much stricter — this is checking that TWO consecutive fixes agree with each other, not just against a stale anchor
       pendingJumpCandidate = null;
       commitFix(point, false); // confirmed relocation, but skip stats — the true path across the disputed gap is unknown
       return;
