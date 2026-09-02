@@ -678,7 +678,7 @@ async function startNativeBackgroundGps(bgGeo){
     // again on a restart (e.g. from the watchdog), it just replaces the
     // previous listener rather than stacking duplicates.
     bgGeo.onLocation(
-      (location) => onFix({ coords: location.coords }), // this plugin already nests coords the same way the browser API does
+      (location) => onFix({ coords: location.coords, timestamp: location.timestamp }), // pass the fix's real GPS time through — see onFix()'s comment on why this matters for batched background fixes
       () => onGpsError()
     );
     if(!bgGeoReady){
@@ -738,10 +738,19 @@ async function clearRecordingNotification(){
   }catch(e){}
 }
 function onFix(pos){
-  lastFixTime = Date.now();
+  lastFixTime = Date.now(); // processing time — used only to detect GPS going silent (checkGpsFreshness), never for distance/speed math
   const gpsEl = document.getElementById('gpsStatus');
   const acc = pos.coords.accuracy; // meters, browser's own confidence radius for this fix
-  const point = { lat: pos.coords.latitude, lng: pos.coords.longitude, t: Date.now(), acc };
+  // Use the fix's own real GPS timestamp when we have one (native background
+  // fixes can arrive in a batch, several at once, well after they were
+  // actually recorded — timing them by Date.now() at processing time made
+  // real gaps between points look near-instant, which made ordinary movement
+  // look like impossibly fast jumps and get wrongly excluded from distance
+  // and average-speed totals below). Falls back to Date.now() when a source
+  // doesn't provide one (plain browser watchPosition doesn't need this fix,
+  // since it never batches, but pos.timestamp is used there too if present).
+  const fixTime = pos.timestamp ? new Date(pos.timestamp).getTime() : Date.now();
+  const point = { lat: pos.coords.latitude, lng: pos.coords.longitude, t: fixTime, acc };
 
   if(acc != null && acc > GPS_ACCURACY_LIMIT_M){
     // Too imprecise to trust — keep it as a fallback candidate (in case signal
