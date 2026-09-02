@@ -1157,6 +1157,19 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <h2 data-i18n="settings.title">Settings</h2>
     </div>
 
+    <div class="section-title">Account</div>
+    <div class="card" style="padding:16px;">
+      <div id="accountSignedOut">
+        <p style="font-size:12.5px;margin-bottom:12px;">Create an account to back up your journeys to the cloud and sync across devices. This doesn't affect anything already saved on this device.</p>
+        <button class="btn btn-primary" onclick="openAuthSheet('signin')">Sign In / Create Account</button>
+      </div>
+      <div id="accountSignedIn" style="display:none;">
+        <p style="font-size:12.5px;margin-bottom:4px;">Signed in as</p>
+        <p style="font-weight:600;font-size:14.5px;margin-bottom:14px;" id="accountEmailLine"></p>
+        <button class="btn btn-outline" onclick="signOutUser()">Sign Out</button>
+      </div>
+    </div>
+
     <div class="section-title" data-i18n="settings.appearance">Appearance</div>
     <p style="font-size:12px;margin-bottom:10px;" data-i18n="settings.themeHint">Choose Day, Night, or Auto to switch based on your local sunrise and sunset</p>
     <div class="chiprow" id="themeChips">
@@ -1391,6 +1404,18 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div id="certificateOutput"></div>
   </div>
 
+  <div class="sheet" id="sheetAuth" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3 id="authSheetTitle">Sign In</h3>
+    <p style="font-size:12.5px;margin-bottom:14px;" id="authSheetHint">Sign in to sync your journeys across devices.</p>
+    <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="you@email.com" autocomplete="email"></div>
+    <div class="field"><label>Password</label><input type="password" id="authPassword" placeholder="At least 6 characters" autocomplete="current-password"></div>
+    <p id="authErrorMsg" style="font-size:12.5px;color:var(--coral);display:none;margin-bottom:4px;"></p>
+    <button class="btn btn-primary" id="authSubmitBtn" style="margin-top:8px;" onclick="submitAuthForm()">Sign In</button>
+    <button class="btn btn-ghost" id="authToggleModeBtn" onclick="toggleAuthMode()">Don't have an account? Sign up</button>
+    <button class="btn btn-ghost" onclick="closeSheets()" data-i18n="action.cancel">Cancel</button>
+  </div>
+
   <div class="sheet" id="sheetReset" style="display:none;">
     <div class="sheet-handle"></div>
     <h3 data-i18n="settings.resetApp2">Reset App Data</h3>
@@ -1429,8 +1454,12 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   </div>
 </div>
 
+<!-- Supabase: the backend for user accounts (and, later, cloud sync). Loaded
+     plain (no defer) so it's ready by the time js/auth.js runs right after it. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/storage.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/state-core.js"></script>
 <script src="js/vendor-background-geolocation.js"></script>
 <script src="js/journey.js"></script>

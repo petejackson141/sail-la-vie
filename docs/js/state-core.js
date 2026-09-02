@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '02.09.2026.1330';
+const APP_VERSION = '02.09.2026.1520';
 
 /* ============================================================
    CUSTOM CONFIRM DIALOG (shared across all screens)
@@ -98,6 +98,12 @@ let state = {
   profile: { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme:'light', unitSystem:'nautical', language:'en' },
 };
 
+// The logged-in Supabase account, if any: null when signed out, or
+// { id, email } when signed in. Set by auth.js (see initAuth()/applySession()
+// there) — nothing here writes to it directly. This is separate from
+// state.profile, which is the local on-device profile that's existed all along.
+state.user = null;
+
 let currentTrip = null;   // the ONE journey/manual-entry/edit in progress right now; null when nothing's active — check this first if the active screen misbehaves
 let watchId = null;       // navigator.geolocation.watchPosition() handle, so stopGPS() can cancel it
 let nativeGpsActive = false; // true while the native @capgo/background-geolocation watcher (not watchPosition) is running
@@ -139,6 +145,9 @@ function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(
    then reveals the app (hides the loading spinner) ---------- */
 async function boot(){
   await initStorage();
+  initAuth(); // checks for an existing Supabase session; not awaited so a slow/offline
+              // network doesn't delay the app opening — renderAccountUI() updates
+              // Settings whenever it resolves, even after the rest of boot() finishes.
 
   const [idx, boats, crew, profile] = await Promise.all([
     storeGet(KEYS.INDEX), storeGet(KEYS.BOATS), storeGet(KEYS.CREW), storeGet(KEYS.PROFILE)
