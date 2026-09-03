@@ -3,10 +3,9 @@
 // sign up / sign in / sign out and keeps state.user in sync with whoever's
 // currently logged in.
 //
-// IMPORTANT — what this file does NOT do yet: it doesn't sync journeys,
-// boats, crew or your profile to the cloud. Signing in right now just gives
-// you an account; nothing about how the app stores your data on this device
-// changes. Cloud sync is a separate feature we'll build next, on top of this.
+// IMPORTANT — what this file does NOT do yet: it doesn't sync journeys to the
+// cloud. Profile, boats, and crew are handled below; journeys are a separate
+// feature to build next, on top of this.
 //
 // state.user is null when signed out, or { id, email } when signed in.
 // Set only by applySession() below — read it elsewhere in the app once we
@@ -156,6 +155,7 @@ async function submitAuthForm(){
       if(data.session){
         // Email confirmation is off (or already satisfied) — signed in immediately.
         await resolveProfileSyncOnSignIn();
+        await resolveBoatsCrewSyncOnSignIn();
         showToast('Account created.');
       } else {
         // Normal case: Supabase emails a confirmation link and there's no
@@ -168,6 +168,7 @@ async function submitAuthForm(){
       if(error) throw error;
       closeSheets();
       await resolveProfileSyncOnSignIn();
+      await resolveBoatsCrewSyncOnSignIn();
       showToast('Signed in.');
     }
   } catch(e){
@@ -240,6 +241,98 @@ async function applyCloudProfile(cloudProfile){
   showToast('Profile loaded from your account.');
 }
 
+/* ---------- boats & crew ↔ cloud ----------
+   Same pattern as profile, but for lists rather than a single object: each
+   boat/crew member is its own row (id, user_id, data), matched by the same
+   id your app already generates locally (uid()) — no separate cloud-id
+   mapping needed. */
+
+// Push = "make the cloud match this device exactly": deletes any cloud rows
+// for this user that no longer exist locally (things deleted on this
+// device), then upserts everything currently local.
+async function pushBoatsAndCrewToCloud(){
+  if(!state.user) return false;
+  const client = getSupabaseClient();
+  try{
+    const boatIds = state.boats.map(b=>b.id);
+    const crewIds = state.crew.map(c=>c.id);
+
+    const delBoats = boatIds.length
+      ? client.from('boats').delete().eq('user_id', state.user.id).not('id','in',boatIds)
+      : client.from('boats').delete().eq('user_id', state.user.id);
+    const delCrew = crewIds.length
+      ? client.from('crew').delete().eq('user_id', state.user.id).not('id','in',crewIds)
+      : client.from('crew').delete().eq('user_id', state.user.id);
+    const [{error:delBoatsErr},{error:delCrewErr}] = await Promise.all([delBoats, delCrew]);
+    if(delBoatsErr) throw delBoatsErr;
+    if(delCrewErr) throw delCrewErr;
+
+    if(boatIds.length){
+      const rows = state.boats.map(b=>({ id:b.id, user_id:state.user.id, data:b, updated_at:new Date().toISOString() }));
+      const { error } = await client.from('boats').upsert(rows);
+      if(error) throw error;
+    }
+    if(crewIds.length){
+      const rows = state.crew.map(c=>({ id:c.id, user_id:state.user.id, data:c, updated_at:new Date().toISOString() }));
+      const { error } = await client.from('crew').upsert(rows);
+      if(error) throw error;
+    }
+    return true;
+  }catch(e){
+    console.error('boats/crew cloud push failed', e);
+    return false;
+  }
+}
+
+async function fetchCloudBoatsAndCrew(){
+  const client = getSupabaseClient();
+  const [{data:boatRows,error:be},{data:crewRows,error:ce}] = await Promise.all([
+    client.from('boats').select('data').eq('user_id', state.user.id),
+    client.from('crew').select('data').eq('user_id', state.user.id)
+  ]);
+  if(be) throw be;
+  if(ce) throw ce;
+  return { boats:(boatRows||[]).map(r=>r.data), crew:(crewRows||[]).map(r=>r.data) };
+}
+
+async function resolveBoatsCrewSyncOnSignIn(){
+  if(!state.user) return;
+
+  let cloud = null;
+  try{ cloud = await fetchCloudBoatsAndCrew(); }
+  catch(e){ console.error('boats/crew cloud fetch failed', e); }
+
+  const localHasData = (state.boats && state.boats.length) || (state.crew && state.crew.length);
+  const cloudHasData = cloud && ((cloud.boats && cloud.boats.length) || (cloud.crew && cloud.crew.length));
+
+  if(cloudHasData){
+    const sameAsLocal = JSON.stringify(cloud.boats)===JSON.stringify(state.boats)
+      && JSON.stringify(cloud.crew)===JSON.stringify(state.crew);
+    if(!localHasData || sameAsLocal){
+      await applyCloudBoatsAndCrew(cloud);
+      return;
+    }
+    const loadCloud = await showConfirm("This account already has boats/crew saved in the cloud. Load them and replace what's on this device?");
+    if(loadCloud){
+      await applyCloudBoatsAndCrew(cloud);
+      return;
+    }
+    // They chose to keep this device's boats/crew — fall through and push up instead.
+  }
+
+  await pushBoatsAndCrewToCloud();
+}
+
+async function applyCloudBoatsAndCrew(cloud){
+  state.boats = cloud.boats || [];
+  state.crew = cloud.crew || [];
+  await storeSet(KEYS.BOATS, state.boats);
+  await storeSet(KEYS.CREW, state.crew);
+  renderBoats();
+  renderCrew();
+  showToast('Boats & crew loaded from your account.');
+}
+
 /* ---------- profile → cloud sync ----------
    One-way for now: pushes this device's local profile up to the profiles
    table, overwriting whatever was there. Runs after every successful sign-in
@@ -268,14 +361,16 @@ async function syncLocalProfileToCloud(){
 
 // Manual trigger from the Settings Account card — mainly useful while
 // testing, but also a reasonable safety valve later if an automatic sync
-// ever seems to have missed.
+// ever seems to have missed. Pushes profile, boats, and crew together —
+// always upward (device → cloud), same direction as the automatic push.
 async function manualSyncProfile(){
   const btn = document.getElementById('syncProfileBtn');
   const originalLabel = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Syncing…';
-  const ok = await syncLocalProfileToCloud();
+  const profileOk = await syncLocalProfileToCloud();
+  const boatsCrewOk = await pushBoatsAndCrewToCloud();
   btn.disabled = false;
   btn.textContent = originalLabel;
-  showToast(ok ? 'Profile synced to cloud.' : "Sync failed — check you're online.");
+  showToast((profileOk && boatsCrewOk) ? 'Synced to cloud.' : "Sync failed — check you're online.");
 }
