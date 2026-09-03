@@ -1454,9 +1454,11 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   </div>
 </div>
 
-<!-- Supabase: the backend for user accounts (and, later, cloud sync). Loaded
-     plain (no defer) so it's ready by the time js/auth.js runs right after it. -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- Supabase: the backend for user accounts (and, later, cloud sync). `defer`
+     so downloading it doesn't hold up the app's own screen from appearing —
+     it loads in the background and is ready by the time it's actually used
+     (see the lazy getSupabaseClient() in js/auth.js). -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
 <script src="js/i18n.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/auth.js"></script>

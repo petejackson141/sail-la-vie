@@ -19,7 +19,19 @@
 const SUPABASE_URL = 'https://opejqowgcjltanvgxmxn.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_GGREMl8C6rbCIkn0k7GVog_yCLJLtz9';
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+let _supabaseClient = null;
+// Built lazily on first use, not at file-load time. The library loads with
+// `defer` now (see index.html) so the app's own screen appears instantly
+// instead of waiting on that download — but that means `supabase` (the
+// library) isn't guaranteed to exist yet the instant THIS file runs. By the
+// time anything actually calls getSupabaseClient() (initAuth(), a sign-in
+// tap, etc.), the page has finished loading and it's always ready.
+function getSupabaseClient(){
+  if(!_supabaseClient){
+    _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  }
+  return _supabaseClient;
+}
 
 let authMode = 'signin'; // 'signin' | 'signup' — which mode sheetAuth is currently showing
 
@@ -30,10 +42,10 @@ let authMode = 'signin'; // 'signin' | 'signup' — which mode sheetAuth is curr
    future auth changes so state.user + the Settings screen stay correct
    whenever the session changes (sign in, sign out, token refresh). */
 async function initAuth(){
-  const { data } = await supabaseClient.auth.getSession();
+  const { data } = await getSupabaseClient().auth.getSession();
   applySession(data.session);
 
-  supabaseClient.auth.onAuthStateChange((_event, session) => {
+  getSupabaseClient().auth.onAuthStateChange((_event, session) => {
     applySession(session);
   });
 }
@@ -120,14 +132,14 @@ async function submitAuthForm(){
 
   try{
     if(authMode === 'signup'){
-      const { error } = await supabaseClient.auth.signUp({ email, password });
+      const { error } = await getSupabaseClient().auth.signUp({ email, password });
       if(error) throw error;
       closeSheets();
       // Supabase emails a confirmation link by default — the account exists
       // but won't be able to sign in until that link is clicked.
       showToast('Check your email to confirm your account.');
     } else {
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      const { error } = await getSupabaseClient().auth.signInWithPassword({ email, password });
       if(error) throw error;
       closeSheets();
       showToast('Signed in.');
@@ -142,6 +154,6 @@ async function submitAuthForm(){
 
 async function signOutUser(){
   if(!(await showConfirm('Sign out of your account?'))) return;
-  await supabaseClient.auth.signOut();
+  await getSupabaseClient().auth.signOut();
   showToast('Signed out.');
 }
