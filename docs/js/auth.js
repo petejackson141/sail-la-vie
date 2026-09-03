@@ -190,16 +190,36 @@ async function signOutUser(){
    (not on session-restore at app boot — only on an actual sign-in action),
    so it's always this device's copy that wins. There's no pull-down yet
    (a second device won't fetch this automatically) — that's the next piece
-   to build once this is confirmed working. */
+   to build once this is confirmed working.
+   Uses upsert rather than update: an account whose profiles row doesn't
+   exist yet (e.g. it predates the profiles table, or the create-on-signup
+   trigger didn't fire for some other reason) would silently no-op under
+   update — upsert creates the row if it's missing. Returns true/false so
+   callers can tell the person whether it actually worked. */
 async function syncLocalProfileToCloud(){
-  if(!state.user) return;
+  if(!state.user) return false;
   try{
     const { error } = await getSupabaseClient()
       .from('profiles')
-      .update({ display_name: state.profile.name || null, profile_data: state.profile })
-      .eq('id', state.user.id);
-    if(error) console.error('profile cloud sync failed', error);
+      .upsert({ id: state.user.id, display_name: state.profile.name || null, profile_data: state.profile });
+    if(error){ console.error('profile cloud sync failed', error); return false; }
+    return true;
   }catch(e){
     console.error('profile cloud sync failed', e);
+    return false;
   }
+}
+
+// Manual trigger from the Settings Account card — mainly useful while
+// testing, but also a reasonable safety valve later if an automatic sync
+// ever seems to have missed.
+async function manualSyncProfile(){
+  const btn = document.getElementById('syncProfileBtn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Syncing…';
+  const ok = await syncLocalProfileToCloud();
+  btn.disabled = false;
+  btn.textContent = originalLabel;
+  showToast(ok ? 'Profile synced to cloud.' : "Sync failed — check you're online.");
 }
