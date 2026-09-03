@@ -155,7 +155,7 @@ async function submitAuthForm(){
       closeSheets();
       if(data.session){
         // Email confirmation is off (or already satisfied) — signed in immediately.
-        await syncLocalProfileToCloud();
+        await resolveProfileSyncOnSignIn();
         showToast('Account created.');
       } else {
         // Normal case: Supabase emails a confirmation link and there's no
@@ -167,7 +167,7 @@ async function submitAuthForm(){
       const { error } = await getSupabaseClient().auth.signInWithPassword({ email, password });
       if(error) throw error;
       closeSheets();
-      await syncLocalProfileToCloud();
+      await resolveProfileSyncOnSignIn();
       showToast('Signed in.');
     }
   } catch(e){
@@ -182,6 +182,62 @@ async function signOutUser(){
   if(!(await showConfirm('Sign out of your account?'))) return;
   await getSupabaseClient().auth.signOut();
   showToast('Signed out.');
+}
+
+/* ---------- profile ↔ cloud resolution on sign-in ----------
+   Runs once right after a successful sign-in (or a sign-up that logs
+   straight in). Decides which direction data should move:
+   - No cloud profile yet, or it matches this device exactly → push local up.
+   - Cloud has a profile and this device is essentially blank (no name set)
+     → pull it down with no prompt, since there's nothing local to lose.
+   - Cloud has a profile AND this device already has its own local data that
+     differs → ask before overwriting either side, rather than silently
+     picking one. */
+async function resolveProfileSyncOnSignIn(){
+  if(!state.user) return;
+
+  let cloudProfile = null;
+  try{
+    const { data, error } = await getSupabaseClient()
+      .from('profiles')
+      .select('profile_data')
+      .eq('id', state.user.id)
+      .maybeSingle();
+    if(error) throw error;
+    cloudProfile = data ? data.profile_data : null;
+  }catch(e){
+    console.error('profile cloud fetch failed', e);
+  }
+
+  const localHasData = !!(state.profile && state.profile.name);
+
+  if(cloudProfile){
+    const sameAsLocal = JSON.stringify(cloudProfile) === JSON.stringify(state.profile);
+    if(!localHasData || sameAsLocal){
+      await applyCloudProfile(cloudProfile);
+      return;
+    }
+    const loadCloud = await showConfirm("This account already has a profile saved in the cloud. Load it and replace what's on this device?");
+    if(loadCloud){
+      await applyCloudProfile(cloudProfile);
+      return;
+    }
+    // They chose to keep what's on this device — fall through and push it up instead.
+  }
+
+  await syncLocalProfileToCloud();
+}
+
+// Applies a profile fetched from the cloud onto this device — saves it to
+// local storage and refreshes the screens that show profile info, the same
+// way restoreFromFile() does in storage.js for a manual backup restore.
+async function applyCloudProfile(cloudProfile){
+  state.profile = cloudProfile;
+  await storeSet(KEYS.PROFILE, state.profile);
+  await applyThemePreference();
+  document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
+  refreshAvatars();
+  showToast('Profile loaded from your account.');
 }
 
 /* ---------- profile → cloud sync ----------
