@@ -79,9 +79,27 @@ function openAuthSheet(mode){
   authMode = mode || 'signin';
   document.getElementById('authEmail').value = '';
   document.getElementById('authPassword').value = '';
+  resetPasswordVisibility();
   hideAuthError();
   updateAuthSheetLabels();
   openSheet('sheetAuth');
+}
+
+// Lets someone check what they actually typed, since typos in a masked
+// password field are otherwise invisible until the submit fails.
+function togglePasswordVisibility(){
+  const input = document.getElementById('authPassword');
+  const btn = document.getElementById('authPasswordToggle');
+  const showing = input.type === 'text';
+  input.type = showing ? 'password' : 'text';
+  btn.classList.toggle('is-active', !showing);
+  btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+}
+function resetPasswordVisibility(){
+  document.getElementById('authPassword').type = 'password';
+  const btn = document.getElementById('authPasswordToggle');
+  btn.classList.remove('is-active');
+  btn.setAttribute('aria-label', 'Show password');
 }
 
 function toggleAuthMode(){
@@ -132,16 +150,24 @@ async function submitAuthForm(){
 
   try{
     if(authMode === 'signup'){
-      const { error } = await getSupabaseClient().auth.signUp({ email, password });
+      const { data, error } = await getSupabaseClient().auth.signUp({ email, password });
       if(error) throw error;
       closeSheets();
-      // Supabase emails a confirmation link by default — the account exists
-      // but won't be able to sign in until that link is clicked.
-      showToast('Check your email to confirm your account.');
+      if(data.session){
+        // Email confirmation is off (or already satisfied) — signed in immediately.
+        await syncLocalProfileToCloud();
+        showToast('Account created.');
+      } else {
+        // Normal case: Supabase emails a confirmation link and there's no
+        // session yet — nothing to sync to until that link is clicked and
+        // they sign in for the first time (handled in the signin branch below).
+        showToast('Check your email to confirm your account.');
+      }
     } else {
       const { error } = await getSupabaseClient().auth.signInWithPassword({ email, password });
       if(error) throw error;
       closeSheets();
+      await syncLocalProfileToCloud();
       showToast('Signed in.');
     }
   } catch(e){
@@ -156,4 +182,24 @@ async function signOutUser(){
   if(!(await showConfirm('Sign out of your account?'))) return;
   await getSupabaseClient().auth.signOut();
   showToast('Signed out.');
+}
+
+/* ---------- profile → cloud sync ----------
+   One-way for now: pushes this device's local profile up to the profiles
+   table, overwriting whatever was there. Runs after every successful sign-in
+   (not on session-restore at app boot — only on an actual sign-in action),
+   so it's always this device's copy that wins. There's no pull-down yet
+   (a second device won't fetch this automatically) — that's the next piece
+   to build once this is confirmed working. */
+async function syncLocalProfileToCloud(){
+  if(!state.user) return;
+  try{
+    const { error } = await getSupabaseClient()
+      .from('profiles')
+      .update({ display_name: state.profile.name || null, profile_data: state.profile })
+      .eq('id', state.user.id);
+    if(error) console.error('profile cloud sync failed', error);
+  }catch(e){
+    console.error('profile cloud sync failed', e);
+  }
 }

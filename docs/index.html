@@ -204,13 +204,40 @@
   /* ---------- form elements ---------- */
   .field{ margin-bottom:16px; }
   .field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-muted); margin-bottom:7px; text-transform:uppercase; letter-spacing:.05em; }
-  select,input[type=text],input[type=number],input[type=date],textarea{
+  select,input[type=text],input[type=number],input[type=date],input[type=email],input[type=password],textarea{
     width:100%; background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-sm);
     padding:13px 14px; font-size:14.5px; font-family:var(--font-body); color:var(--ink); }
+  select:focus,input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[type=email]:focus,input[type=password]:focus,textarea:focus{
+    outline:none; border-color:var(--navy-soft); box-shadow:0 0 0 3px rgba(44,95,145,.18); }
+  html[data-theme="dark"] select:focus,html[data-theme="dark"] input[type=text]:focus,html[data-theme="dark"] input[type=number]:focus,
+  html[data-theme="dark"] input[type=date]:focus,html[data-theme="dark"] input[type=email]:focus,html[data-theme="dark"] input[type=password]:focus,
+  html[data-theme="dark"] textarea:focus{ border-color:var(--gold); box-shadow:0 0 0 3px rgba(217,187,110,.18); }
   textarea{ resize:vertical; min-height:80px; }
   input[type=range]{ width:100%; accent-color:var(--navy); touch-action:pan-y; }
   html[data-theme="dark"] input[type=range]{ accent-color:var(--gold); }
   .range-value{ font-size:13px; font-weight:600; color:var(--navy); margin-top:4px; display:block; }
+
+  /* ---- Account / sign-in sheet ---- */
+  .auth-hero{ display:flex; flex-direction:column; align-items:center; text-align:center; margin-bottom:22px; }
+  .auth-hero-icon{ width:64px; height:64px; border-radius:50%; margin-bottom:14px;
+    background:linear-gradient(160deg,var(--gold),#B8923A); box-shadow:0 12px 24px -10px rgba(201,162,75,.55);
+    display:flex; align-items:center; justify-content:center; }
+  html[data-theme="dark"] .auth-hero-icon{ background:linear-gradient(160deg,var(--gold),#9c7d3d); }
+  .auth-hero-icon svg{ width:30px; height:30px; color:var(--navy-deep); }
+  .auth-hero h3{ margin-bottom:6px; }
+  .auth-hero p{ font-size:13px; color:var(--ink-muted); max-width:280px; }
+  .input-icon-field{ position:relative; }
+  .input-icon-field svg.field-icon{ position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    width:17px; height:17px; color:var(--ink-muted); pointer-events:none; }
+  .input-icon-field input{ padding-left:42px !important; }
+  .input-icon-field input#authPassword{ padding-right:42px !important; }
+  .password-toggle-btn{ position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none;
+    padding:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-muted); }
+  .password-toggle-btn.is-active{ color:var(--navy); }
+  html[data-theme="dark"] .password-toggle-btn.is-active{ color:var(--gold); }
+  .password-toggle-btn svg{ width:19px; height:19px; }
+  #authErrorMsg{ background:rgba(214,90,74,.1); border:1px solid rgba(214,90,74,.3); border-radius:var(--radius-sm);
+    padding:10px 12px; margin-bottom:14px !important; }
   html[data-theme="dark"] .range-value{ color:var(--gold); }
   /* ---------- guarded sliders ----------
      Weather sliders sit inline in a long scrolling form, so a thumb resting
@@ -1406,12 +1433,28 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 
   <div class="sheet" id="sheetAuth" style="display:none;">
     <div class="sheet-handle"></div>
-    <h3 id="authSheetTitle">Sign In</h3>
-    <p style="font-size:12.5px;margin-bottom:14px;" id="authSheetHint">Sign in to sync your journeys across devices.</p>
-    <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="you@email.com" autocomplete="email"></div>
-    <div class="field"><label>Password</label><input type="password" id="authPassword" placeholder="At least 6 characters" autocomplete="current-password"></div>
-    <p id="authErrorMsg" style="font-size:12.5px;color:var(--coral);display:none;margin-bottom:4px;"></p>
-    <button class="btn btn-primary" id="authSubmitBtn" style="margin-top:8px;" onclick="submitAuthForm()">Sign In</button>
+    <div class="auth-hero">
+      <div class="auth-hero-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="2"/><path d="M12 7v13M5 12H2a10 10 0 0 0 10 10 10 10 0 0 0 10-10h-3M8 12H5M19 12h-3"/></svg>
+      </div>
+      <h3 id="authSheetTitle">Sign In</h3>
+      <p id="authSheetHint">Sign in to sync your journeys across devices.</p>
+    </div>
+    <div class="field input-icon-field">
+      <label>Email</label>
+      <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+      <input type="email" id="authEmail" placeholder="you@email.com" autocomplete="email">
+    </div>
+    <div class="field input-icon-field">
+      <label>Password</label>
+      <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <input type="password" id="authPassword" placeholder="At least 6 characters" autocomplete="current-password">
+      <button type="button" class="password-toggle-btn" id="authPasswordToggle" onclick="togglePasswordVisibility()" aria-label="Show password">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <p id="authErrorMsg" style="font-size:12.5px;color:var(--coral);display:none;"></p>
+    <button class="btn btn-primary" id="authSubmitBtn" style="margin-top:4px;" onclick="submitAuthForm()">Sign In</button>
     <button class="btn btn-ghost" id="authToggleModeBtn" onclick="toggleAuthMode()">Don't have an account? Sign up</button>
     <button class="btn btn-ghost" onclick="closeSheets()" data-i18n="action.cancel">Cancel</button>
   </div>
