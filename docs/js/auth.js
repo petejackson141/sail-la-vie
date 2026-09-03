@@ -19,12 +19,10 @@ const SUPABASE_URL = 'https://opejqowgcjltanvgxmxn.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_GGREMl8C6rbCIkn0k7GVog_yCLJLtz9';
 
 let _supabaseClient = null;
-// Built lazily on first use, not at file-load time. The library loads with
-// `defer` now (see index.html) so the app's own screen appears instantly
-// instead of waiting on that download — but that means `supabase` (the
-// library) isn't guaranteed to exist yet the instant THIS file runs. By the
-// time anything actually calls getSupabaseClient() (initAuth(), a sign-in
-// tap, etc.), the page has finished loading and it's always ready.
+// Built lazily on first use rather than at file-load time — harmless either
+// way now that the library loads as a normal blocking script (see
+// index.html), but keeping it lazy costs nothing and avoids creating a
+// client before it's actually needed.
 function getSupabaseClient(){
   if(!_supabaseClient){
     _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);

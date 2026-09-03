@@ -1498,11 +1498,13 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   </div>
 </div>
 
-<!-- Supabase: the backend for user accounts (and, later, cloud sync). `defer`
-     so downloading it doesn't hold up the app's own screen from appearing —
-     it loads in the background and is ready by the time it's actually used
-     (see the lazy getSupabaseClient() in js/auth.js). -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+<!-- Supabase: the backend for accounts and cloud sync. Loaded as a normal
+     blocking script (not defer) so it's guaranteed ready before boot() (and
+     therefore initAuth()) ever runs — deferring it caused a real race on a
+     slow/first-ever load (library not finished loading yet when initAuth()
+     called it), which only showed up on a device loading it fresh over the
+     network for the first time. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/auth.js"></script>
