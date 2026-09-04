@@ -34,7 +34,7 @@ async function saveProfileForm(){
   state.profile.social = document.getElementById('profileSocial').value.trim();
   state.profile.bio = document.getElementById('profileBio').value;
   const ok = await storeSet(KEYS.PROFILE, state.profile);
-  if(ok){ showToast(t('toast.profileSaved')); document.getElementById('homeName').textContent = state.profile.name; }
+  if(ok){ showToast(t('toast.profileSaved')); document.getElementById('homeName').textContent = state.profile.name; syncProfileIfSignedIn(); }
 }
 async function clearProfilePrompt(){
   if(!confirm(t('confirm.clearProfile'))) return;
@@ -48,6 +48,7 @@ async function clearProfilePrompt(){
     document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
     renderProfileScreen();
     refreshAvatars();
+    syncProfileIfSignedIn();
   }
 }
 /* ============================================================
@@ -182,6 +183,7 @@ async function setThemeChoice(choice){
   state.profile.theme = choice;
   await storeSet(KEYS.PROFILE, state.profile);
   await applyThemePreference();
+  syncProfileIfSignedIn();
 }
 // Sets the DEFAULT unit system used app-wide (History, trip detail, PDF,
 // certificate) and as the starting point for new log entries. This is
@@ -193,6 +195,7 @@ async function toggleDefaultUnitSystem(){
   renderUnitsSettingUI();
   await storeSet(KEYS.PROFILE, state.profile);
   showToast(next==='metric' ? t('toast.unitsMetric') : t('toast.unitsNautical'));
+  syncProfileIfSignedIn();
 }
 function renderUnitsSettingUI(){
   const sys = appUnitSystem();

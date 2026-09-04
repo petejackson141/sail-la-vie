@@ -361,6 +361,24 @@ async function syncLocalProfileToCloud(){
   }
 }
 
+// Fire-and-forget cloud push, called after any LOCAL edit to boats/crew or
+// profile (add/edit/delete) so changes made after the initial sign-in sync
+// also reach other devices — previously only the one-time sign-in
+// resolution and the manual "Sync" button ever pushed to the cloud, so any
+// edit made afterward silently stayed on that device only. No-ops (and no
+// toast) when signed out; failures are logged, not surfaced, since these
+// run silently after routine local saves.
+async function syncBoatsCrewIfSignedIn(){
+  if(!state.user) return;
+  const result = await pushBoatsAndCrewToCloud();
+  if(!result.ok) console.error('background boats/crew sync failed', result.message);
+}
+async function syncProfileIfSignedIn(){
+  if(!state.user) return;
+  const result = await syncLocalProfileToCloud();
+  if(!result.ok) console.error('background profile sync failed', result.message);
+}
+
 // Manual trigger from the Settings Account card — mainly useful while
 // testing, but also a reasonable safety valve later if an automatic sync
 // ever seems to have missed. Pushes profile, boats, and crew together —
