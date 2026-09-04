@@ -379,23 +379,26 @@ async function syncProfileIfSignedIn(){
   if(!result.ok) console.error('background profile sync failed', result.message);
 }
 
-// Manual trigger from the Settings Account card — mainly useful while
-// testing, but also a reasonable safety valve later if an automatic sync
-// ever seems to have missed. Pushes profile, boats, and crew together —
-// always upward (device → cloud), same direction as the automatic push.
+// Manual trigger from the Settings Account card. Reuses the same safe
+// resolve logic as sign-in (pull down if the cloud has data this device
+// lacks, ask before overwriting if both sides differ) rather than blindly
+// pushing — a straight push from a device with no local boats/crew yet was
+// wiping the cloud copy, since "no local rows" was being read as "delete
+// everything," not "this device hasn't pulled yet."
 async function manualSyncProfile(){
   const btn = document.getElementById('syncProfileBtn');
   const originalLabel = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Syncing…';
-  const profileResult = await syncLocalProfileToCloud();
-  const boatsCrewResult = await pushBoatsAndCrewToCloud();
-  btn.disabled = false;
-  btn.textContent = originalLabel;
-  if(profileResult.ok && boatsCrewResult.ok){
+  try{
+    await resolveProfileSyncOnSignIn();
+    await resolveBoatsCrewSyncOnSignIn();
     showToast('Synced to cloud.');
-  } else {
-    const detail = profileResult.message || boatsCrewResult.message;
-    showToast(detail ? `Sync failed: ${detail}` : "Sync failed — check you're online.");
+  }catch(e){
+    console.error('manual sync failed', e);
+    showToast("Sync failed — check you're online.");
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalLabel;
   }
 }
