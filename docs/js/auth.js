@@ -249,17 +249,21 @@ async function applyCloudProfile(cloudProfile){
 // for this user that no longer exist locally (things deleted on this
 // device), then upserts everything currently local.
 async function pushBoatsAndCrewToCloud(){
-  if(!state.user) return false;
+  if(!state.user) return { ok:false };
   const client = getSupabaseClient();
   try{
     const boatIds = state.boats.map(b=>b.id);
     const crewIds = state.crew.map(c=>c.id);
 
+    // .not() needs the "in" list preformatted as "(a,b,c)" — unlike .in(),
+    // it doesn't auto-serialize a plain JS array. Passing the raw array here
+    // was the actual cause of "Sync failed": PostgREST rejected the
+    // malformed filter and the whole push aborted.
     const delBoats = boatIds.length
-      ? client.from('boats').delete().eq('user_id', state.user.id).not('id','in',boatIds)
+      ? client.from('boats').delete().eq('user_id', state.user.id).not('id','in',`(${boatIds.join(',')})`)
       : client.from('boats').delete().eq('user_id', state.user.id);
     const delCrew = crewIds.length
-      ? client.from('crew').delete().eq('user_id', state.user.id).not('id','in',crewIds)
+      ? client.from('crew').delete().eq('user_id', state.user.id).not('id','in',`(${crewIds.join(',')})`)
       : client.from('crew').delete().eq('user_id', state.user.id);
     const [{error:delBoatsErr},{error:delCrewErr}] = await Promise.all([delBoats, delCrew]);
     if(delBoatsErr) throw delBoatsErr;
@@ -275,10 +279,10 @@ async function pushBoatsAndCrewToCloud(){
       const { error } = await client.from('crew').upsert(rows);
       if(error) throw error;
     }
-    return true;
+    return { ok:true };
   }catch(e){
     console.error('boats/crew cloud push failed', e);
-    return false;
+    return { ok:false, message: e.message || String(e) };
   }
 }
 
@@ -344,16 +348,16 @@ async function applyCloudBoatsAndCrew(cloud){
    update — upsert creates the row if it's missing. Returns true/false so
    callers can tell the person whether it actually worked. */
 async function syncLocalProfileToCloud(){
-  if(!state.user) return false;
+  if(!state.user) return { ok:false };
   try{
     const { error } = await getSupabaseClient()
       .from('profiles')
       .upsert({ id: state.user.id, display_name: state.profile.name || null, profile_data: state.profile });
-    if(error){ console.error('profile cloud sync failed', error); return false; }
-    return true;
+    if(error){ console.error('profile cloud sync failed', error); return { ok:false, message: error.message }; }
+    return { ok:true };
   }catch(e){
     console.error('profile cloud sync failed', e);
-    return false;
+    return { ok:false, message: e.message || String(e) };
   }
 }
 
@@ -366,9 +370,14 @@ async function manualSyncProfile(){
   const originalLabel = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Syncing…';
-  const profileOk = await syncLocalProfileToCloud();
-  const boatsCrewOk = await pushBoatsAndCrewToCloud();
+  const profileResult = await syncLocalProfileToCloud();
+  const boatsCrewResult = await pushBoatsAndCrewToCloud();
   btn.disabled = false;
   btn.textContent = originalLabel;
-  showToast((profileOk && boatsCrewOk) ? 'Synced to cloud.' : "Sync failed — check you're online.");
+  if(profileResult.ok && boatsCrewResult.ok){
+    showToast('Synced to cloud.');
+  } else {
+    const detail = profileResult.message || boatsCrewResult.message;
+    showToast(detail ? `Sync failed: ${detail}` : "Sync failed — check you're online.");
+  }
 }
