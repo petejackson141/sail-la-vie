@@ -307,13 +307,37 @@ async function pushBoatsAndCrewToCloud(){
 
 async function fetchCloudBoatsAndCrew(){
   const client = getSupabaseClient();
-  const [{data:boatRows,error:be},{data:crewRows,error:ce}] = await Promise.all([
+  const [boatsResult, crewResult] = await Promise.allSettled([
     client.from('boats').select('data').eq('user_id', state.user.id),
     client.from('crew').select('data').eq('user_id', state.user.id)
   ]);
-  if(be) throw be;
-  if(ce) throw ce;
-  return { boats:(boatRows||[]).map(r=>r.data), crew:(crewRows||[]).map(r=>r.data) };
+
+  // Each table is handled independently now — a problem with one (e.g. a
+  // leftover/broken policy on just 'crew') can no longer silently discard a
+  // perfectly good result from the other, which is what a single combined
+  // throw was doing before.
+  const problems = [];
+  let boats = [];
+  let crew = [];
+
+  if(boatsResult.status === 'fulfilled'){
+    if(boatsResult.value.error) problems.push('boats: ' + boatsResult.value.error.message);
+    else boats = (boatsResult.value.data || []).map(r=>r.data);
+  } else {
+    problems.push('boats: ' + (boatsResult.reason && boatsResult.reason.message || String(boatsResult.reason)));
+  }
+
+  if(crewResult.status === 'fulfilled'){
+    if(crewResult.value.error) problems.push('crew: ' + crewResult.value.error.message);
+    else crew = (crewResult.value.data || []).map(r=>r.data);
+  } else {
+    problems.push('crew: ' + (crewResult.reason && crewResult.reason.message || String(crewResult.reason)));
+  }
+
+  const bothFailed = problems.length === 2;
+  if(problems.length) console.error('partial boats/crew fetch problem(s):', problems.join(' | '));
+  if(bothFailed) throw new Error(problems.join(' | '));
+  return { boats, crew, partialProblem: problems.length ? problems.join(' | ') : null };
 }
 
 async function resolveBoatsCrewSyncOnSignIn(){
@@ -436,33 +460,15 @@ async function manualSyncProfile(){
   btn.disabled = true;
   btn.textContent = 'Syncing…';
 
-  // TEMPORARY DEBUG — remove once sync is confirmed working. Checks the
-  // actual live session Supabase will use for this request, since the
-  // "Signed in as ..." UI is populated from locally cached user info and
-  // can look correct even if the real session/token used for API calls
-  // is missing or expired.
+  // TEMPORARY DEBUG — remove once sync is confirmed working.
   try{
-    const { data:{ session } } = await getSupabaseClient().auth.getSession();
-    if(!session){
-      showToast('DEBUG: no live session — token missing.');
-      await new Promise(r=>setTimeout(r, 3500));
-    } else {
-      const expiresInSec = session.expires_at ? (session.expires_at - Math.floor(Date.now()/1000)) : 'unknown';
-      showToast('DEBUG: session ok, expires in ' + expiresInSec + 's, uid=' + (session.user && session.user.id));
-      await new Promise(r=>setTimeout(r, 3500));
-
-      // Raw query, bypassing all app logic, to see exactly what Supabase
-      // itself returns for this device's session — no interpretation.
-      const raw = await getSupabaseClient().from('boats').select('id,user_id').eq('user_id', state.user.id);
-      showToast('DEBUG raw boats query: rows=' + (raw.data ? raw.data.length : 'null')
-        + ' status=' + raw.status
-        + ' error=' + (raw.error ? (raw.error.message + ' | code=' + raw.error.code) : 'none'));
-      await new Promise(r=>setTimeout(r, 4500));
-    }
+    const cloud = await fetchCloudBoatsAndCrew();
+    showToast('DEBUG: boats=' + cloud.boats.length + ' crew=' + cloud.crew.length
+      + (cloud.partialProblem ? ' | PARTIAL PROBLEM: ' + cloud.partialProblem : ''));
   }catch(e){
-    showToast('DEBUG: getSession threw: ' + (e.message||String(e)));
-    await new Promise(r=>setTimeout(r, 3500));
+    showToast('DEBUG: fetchCloudBoatsAndCrew() THREW: ' + (e.message || String(e)));
   }
+  await new Promise(r=>setTimeout(r, 6000));
 
   try{
     const profileResult = await resolveProfileSyncOnSignIn();
