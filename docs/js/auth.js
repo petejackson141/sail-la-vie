@@ -65,6 +65,8 @@ function renderAccountUI(){
     signedOutEl.style.display = 'none';
     signedInEl.style.display = 'block';
     document.getElementById('accountEmailLine').textContent = state.user.email;
+    const uidEl = document.getElementById('accountUidLine');
+    if(uidEl) uidEl.textContent = state.user.id;
   } else {
     signedOutEl.style.display = 'block';
     signedInEl.style.display = 'none';

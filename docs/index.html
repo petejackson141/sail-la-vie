@@ -1192,7 +1192,8 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       </div>
       <div id="accountSignedIn" style="display:none;">
         <p style="font-size:12.5px;margin-bottom:4px;">Signed in as</p>
-        <p style="font-weight:600;font-size:14.5px;margin-bottom:14px;" id="accountEmailLine"></p>
+        <p style="font-weight:600;font-size:14.5px;margin-bottom:4px;" id="accountEmailLine"></p>
+        <p style="font-size:11px;color:var(--muted,#888);margin-bottom:14px;word-break:break-all;">UID: <span id="accountUidLine"></span> (temporary debug line — remove once sync is confirmed working)</p>
         <button class="btn btn-outline" id="syncProfileBtn" style="margin-bottom:10px;" onclick="manualSyncProfile()">Sync Now</button>
         <button class="btn btn-outline" onclick="signOutUser()">Sign Out</button>
       </div>
