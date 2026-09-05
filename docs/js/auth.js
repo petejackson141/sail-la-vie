@@ -152,9 +152,14 @@ async function submitAuthForm(){
       closeSheets();
       if(data.session){
         // Email confirmation is off (or already satisfied) — signed in immediately.
-        await resolveProfileSyncOnSignIn();
-        await resolveBoatsCrewSyncOnSignIn();
-        showToast('Account created.');
+        const profileResult = await resolveProfileSyncOnSignIn();
+        const boatsCrewResult = await resolveBoatsCrewSyncOnSignIn();
+        if(profileResult.ok && boatsCrewResult.ok){
+          showToast('Account created.');
+        } else {
+          const failMsg = !profileResult.ok ? profileResult.message : boatsCrewResult.message;
+          showToast('Account created, but cloud sync failed: ' + failMsg);
+        }
       } else {
         // Normal case: Supabase emails a confirmation link and there's no
         // session yet — nothing to sync to until that link is clicked and
@@ -165,9 +170,14 @@ async function submitAuthForm(){
       const { error } = await getSupabaseClient().auth.signInWithPassword({ email, password });
       if(error) throw error;
       closeSheets();
-      await resolveProfileSyncOnSignIn();
-      await resolveBoatsCrewSyncOnSignIn();
-      showToast('Signed in.');
+      const profileResult = await resolveProfileSyncOnSignIn();
+      const boatsCrewResult = await resolveBoatsCrewSyncOnSignIn();
+      if(profileResult.ok && boatsCrewResult.ok){
+        showToast('Signed in.');
+      } else {
+        const failMsg = !profileResult.ok ? profileResult.message : boatsCrewResult.message;
+        showToast('Signed in, but cloud sync failed: ' + failMsg);
+      }
     }
   } catch(e){
     showAuthError(e.message || 'Something went wrong. Try again.');
@@ -193,9 +203,10 @@ async function signOutUser(){
      differs → ask before overwriting either side, rather than silently
      picking one. */
 async function resolveProfileSyncOnSignIn(){
-  if(!state.user) return;
+  if(!state.user) return {ok:true};
 
   let cloudProfile = null;
+  let fetchFailed = null;
   try{
     const { data, error } = await getSupabaseClient()
       .from('profiles')
@@ -206,7 +217,7 @@ async function resolveProfileSyncOnSignIn(){
     cloudProfile = data ? data.profile_data : null;
   }catch(e){
     console.error('profile cloud fetch failed', e);
-    showToast('Profile cloud fetch failed: ' + (e.message || String(e)));
+    fetchFailed = e.message || String(e);
   }
 
   const localHasData = !!(state.profile && state.profile.name);
@@ -215,18 +226,22 @@ async function resolveProfileSyncOnSignIn(){
     const sameAsLocal = JSON.stringify(cloudProfile) === JSON.stringify(state.profile);
     if(!localHasData || sameAsLocal){
       await applyCloudProfile(cloudProfile);
-      return;
+      return {ok:true};
     }
     const loadCloud = await showConfirm("This account already has a profile saved in the cloud. Load it and replace what's on this device?");
     if(loadCloud){
       await applyCloudProfile(cloudProfile);
-      return;
+      return {ok:true};
     }
     // They chose to keep what's on this device — fall through and push it up instead.
   }
 
   const pushResult = await syncLocalProfileToCloud();
-  if(!pushResult.ok) showToast('Profile cloud push failed: ' + (pushResult.message || 'unknown error'));
+  if(!pushResult.ok) return {ok:false, message: pushResult.message || 'push failed'};
+  // A failed fetch that fell through to a successful push isn't a full success —
+  // the push only sent this device's copy; the cloud state we compared against was unknown.
+  if(fetchFailed) return {ok:false, message: 'fetch failed: ' + fetchFailed};
+  return {ok:true};
 }
 
 // Applies a profile fetched from the cloud onto this device — saves it to
@@ -300,35 +315,51 @@ async function fetchCloudBoatsAndCrew(){
 }
 
 async function resolveBoatsCrewSyncOnSignIn(){
-  if(!state.user) return;
+  if(!state.user) return {ok:true};
 
   let cloud = null;
+  let fetchFailed = null;
   try{ cloud = await fetchCloudBoatsAndCrew(); }
   catch(e){
     console.error('boats/crew cloud fetch failed', e);
-    showToast('Boats/crew cloud fetch failed: ' + (e.message || String(e)));
+    fetchFailed = e.message || String(e);
   }
 
   const localHasData = (state.boats && state.boats.length) || (state.crew && state.crew.length);
   const cloudHasData = cloud && ((cloud.boats && cloud.boats.length) || (cloud.crew && cloud.crew.length));
+
+  // Safety net: if this device has nothing local to send, pushing would mean
+  // "delete everything in the cloud for this user" (see pushBoatsAndCrewToCloud's
+  // delete-what's-missing-locally logic). That's only safe to do when we're
+  // confident the cloud is also genuinely empty — never when the cloud read
+  // came back empty because it silently failed (e.g. a missing SELECT RLS
+  // policy returns [] instead of an error) or threw an actual error. Bail out
+  // instead of risking a wipe; a real fetch failure should be retried, not
+  // treated as "nothing to sync."
+  if(!localHasData && !cloudHasData){
+    if(fetchFailed) return {ok:false, message: 'fetch failed: ' + fetchFailed};
+    return {ok:true}; // both genuinely empty — nothing to do
+  }
 
   if(cloudHasData){
     const sameAsLocal = JSON.stringify(cloud.boats)===JSON.stringify(state.boats)
       && JSON.stringify(cloud.crew)===JSON.stringify(state.crew);
     if(!localHasData || sameAsLocal){
       await applyCloudBoatsAndCrew(cloud);
-      return;
+      return {ok:true};
     }
     const loadCloud = await showConfirm("This account already has boats/crew saved in the cloud. Load them and replace what's on this device?");
     if(loadCloud){
       await applyCloudBoatsAndCrew(cloud);
-      return;
+      return {ok:true};
     }
     // They chose to keep this device's boats/crew — fall through and push up instead.
   }
 
   const pushResult = await pushBoatsAndCrewToCloud();
-  if(!pushResult.ok) showToast('Boats/crew cloud push failed: ' + (pushResult.message || 'unknown error'));
+  if(!pushResult.ok) return {ok:false, message: pushResult.message || 'push failed'};
+  if(fetchFailed) return {ok:false, message: 'fetch failed: ' + fetchFailed};
+  return {ok:true};
 }
 
 async function applyCloudBoatsAndCrew(cloud){
@@ -403,9 +434,14 @@ async function manualSyncProfile(){
   btn.disabled = true;
   btn.textContent = 'Syncing…';
   try{
-    await resolveProfileSyncOnSignIn();
-    await resolveBoatsCrewSyncOnSignIn();
-    showToast('Synced to cloud.');
+    const profileResult = await resolveProfileSyncOnSignIn();
+    const boatsCrewResult = await resolveBoatsCrewSyncOnSignIn();
+    if(profileResult.ok && boatsCrewResult.ok){
+      showToast('Synced to cloud.');
+    } else {
+      const failMsg = !profileResult.ok ? profileResult.message : boatsCrewResult.message;
+      showToast('Sync failed: ' + failMsg);
+    }
   }catch(e){
     console.error('manual sync failed', e);
     showToast("Sync failed — check you're online.");
