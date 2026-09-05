@@ -445,10 +445,19 @@ async function manualSyncProfile(){
     const { data:{ session } } = await getSupabaseClient().auth.getSession();
     if(!session){
       showToast('DEBUG: no live session — token missing.');
+      await new Promise(r=>setTimeout(r, 3500));
     } else {
       const expiresInSec = session.expires_at ? (session.expires_at - Math.floor(Date.now()/1000)) : 'unknown';
       showToast('DEBUG: session ok, expires in ' + expiresInSec + 's, uid=' + (session.user && session.user.id));
-      await new Promise(r=>setTimeout(r, 3500)); // give the toast time to be read before it's replaced
+      await new Promise(r=>setTimeout(r, 3500));
+
+      // Raw query, bypassing all app logic, to see exactly what Supabase
+      // itself returns for this device's session — no interpretation.
+      const raw = await getSupabaseClient().from('boats').select('id,user_id').eq('user_id', state.user.id);
+      showToast('DEBUG raw boats query: rows=' + (raw.data ? raw.data.length : 'null')
+        + ' status=' + raw.status
+        + ' error=' + (raw.error ? (raw.error.message + ' | code=' + raw.error.code) : 'none'));
+      await new Promise(r=>setTimeout(r, 4500));
     }
   }catch(e){
     showToast('DEBUG: getSession threw: ' + (e.message||String(e)));
