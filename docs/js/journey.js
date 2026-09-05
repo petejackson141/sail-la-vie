@@ -657,6 +657,7 @@ function startGPS(){
   lastFixTime = null;
   bestRejectedFix = null;
   pendingJumpCandidate = null;
+  pendingMaxSpeedCandidate = null;
   const bgGeo = getBgGeo();
   if(isNativeApp() && bgGeo){
     nativeGpsActive = true;
@@ -765,15 +766,11 @@ function onFix(pos){
 }
 // A fix implying a speed above this is almost certainly a GPS glitch, not
 // real movement — but the right ceiling depends entirely on what's actually
-// moving. 60kt comfortably covers even a fast raceboat, so that's the right
-// number for real sailing use. While testing by car, though, ordinary
-// highway driving legitimately exceeds 60kt — so this is set generously high
-// for now (car testing only) to stop genuinely real distance getting
-// quarantined as a "jump" and excluded from the trip totals. Turn this back
-// down to something boat-appropriate (60, or lower for a typical cruising
-// boat) once real sea testing starts — a tighter ceiling catches genuine
-// glitches better.
-const MAX_PLAUSIBLE_SPEED_KT = 100; // TODO: lower to ~60 (or less) once testing moves from car to boat
+// moving. Testing has moved from car to boat, so this is back down to a
+// sailing-appropriate ceiling: 30kt comfortably covers even a foiling dinghy
+// or fast catamaran while still catching genuine GPS jump glitches, which
+// the old car-tuned 100kt ceiling let straight through.
+const MAX_PLAUSIBLE_SPEED_KT = 30;
 // Actually commits a fix to the trip: sanity-checks it against the previous
 // accepted point and only THEN adds it to the path. A fix implying an
 // impossible speed (see MAX_PLAUSIBLE_SPEED_KT above) is almost certainly a
@@ -794,6 +791,11 @@ const MAX_PLAUSIBLE_SPEED_KT = 100; // TODO: lower to ~60 (or less) once testing
 // just gets dropped. We don't count a confirmed jump's distance/speed toward
 // trip stats, since we don't actually know the true path across whatever
 // gap caused the dispute.
+// Holds a single fast segment's speed until the NEXT segment either
+// corroborates it (real burst — gets promoted to maxSpeed in commitFix) or
+// fails to (lone GPS jitter spike — gets dropped). Reset alongside
+// bestRejectedFix/pendingJumpCandidate at the start/end of every trip.
+let pendingMaxSpeedCandidate = null;
 function acceptFix(point){
   const prev = currentTrip.path[currentTrip.path.length-1];
   if(!prev){ commitFix(point, false); return; }
@@ -830,7 +832,22 @@ function commitFix(point, countStats){
     if(dtHours>0){
       const instSpeed = segNm/dtHours;
       currentTrip.distanceNm += segNm;
-      currentTrip.maxSpeed = Math.max(currentTrip.maxSpeed, instSpeed);
+
+      // A single two-point instant speed can spike from ordinary GPS jitter
+      // — at typical sailing speeds, even a few meters of position error over
+      // a short interval reads as a "fast" burst. A real burst of speed shows
+      // up across consecutive fixes; a glitch doesn't. So a fast segment only
+      // becomes the new max once the FOLLOWING segment corroborates it (at
+      // least half as fast) — otherwise it's held as a candidate and dropped.
+      if(pendingMaxSpeedCandidate){
+        if(instSpeed > pendingMaxSpeedCandidate.speed*0.5){
+          currentTrip.maxSpeed = Math.max(currentTrip.maxSpeed, pendingMaxSpeedCandidate.speed);
+        }
+        pendingMaxSpeedCandidate = null;
+      }
+      if(instSpeed > currentTrip.maxSpeed){
+        pendingMaxSpeedCandidate = {speed: instSpeed};
+      }
     }
   }
   currentTrip.path.push(point);
@@ -898,6 +915,7 @@ function stopGPS(){
   lastFixTime = null;
   bestRejectedFix = null;
   pendingJumpCandidate = null;
+  pendingMaxSpeedCandidate = null;
   clearRecordingNotification();
   stopLiveConnCheck();
   releaseWakeLock();
