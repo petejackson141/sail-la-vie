@@ -206,6 +206,7 @@ async function resolveProfileSyncOnSignIn(){
     cloudProfile = data ? data.profile_data : null;
   }catch(e){
     console.error('profile cloud fetch failed', e);
+    showToast('Profile cloud fetch failed: ' + (e.message || String(e)));
   }
 
   const localHasData = !!(state.profile && state.profile.name);
@@ -224,7 +225,8 @@ async function resolveProfileSyncOnSignIn(){
     // They chose to keep what's on this device — fall through and push it up instead.
   }
 
-  await syncLocalProfileToCloud();
+  const pushResult = await syncLocalProfileToCloud();
+  if(!pushResult.ok) showToast('Profile cloud push failed: ' + (pushResult.message || 'unknown error'));
 }
 
 // Applies a profile fetched from the cloud onto this device — saves it to
@@ -302,7 +304,10 @@ async function resolveBoatsCrewSyncOnSignIn(){
 
   let cloud = null;
   try{ cloud = await fetchCloudBoatsAndCrew(); }
-  catch(e){ console.error('boats/crew cloud fetch failed', e); }
+  catch(e){
+    console.error('boats/crew cloud fetch failed', e);
+    showToast('Boats/crew cloud fetch failed: ' + (e.message || String(e)));
+  }
 
   const localHasData = (state.boats && state.boats.length) || (state.crew && state.crew.length);
   const cloudHasData = cloud && ((cloud.boats && cloud.boats.length) || (cloud.crew && cloud.crew.length));
@@ -322,7 +327,8 @@ async function resolveBoatsCrewSyncOnSignIn(){
     // They chose to keep this device's boats/crew — fall through and push up instead.
   }
 
-  await pushBoatsAndCrewToCloud();
+  const pushResult = await pushBoatsAndCrewToCloud();
+  if(!pushResult.ok) showToast('Boats/crew cloud push failed: ' + (pushResult.message || 'unknown error'));
 }
 
 async function applyCloudBoatsAndCrew(cloud){
@@ -365,18 +371,24 @@ async function syncLocalProfileToCloud(){
 // profile (add/edit/delete) so changes made after the initial sign-in sync
 // also reach other devices — previously only the one-time sign-in
 // resolution and the manual "Sync" button ever pushed to the cloud, so any
-// edit made afterward silently stayed on that device only. No-ops (and no
-// toast) when signed out; failures are logged, not surfaced, since these
-// run silently after routine local saves.
+// edit made afterward silently stayed on that device only. No-ops (no toast)
+// when signed out. Failures now surface as a toast (not just console.error)
+// since a silent failure here is invisible on a phone with no devtools access.
 async function syncBoatsCrewIfSignedIn(){
   if(!state.user) return;
   const result = await pushBoatsAndCrewToCloud();
-  if(!result.ok) console.error('background boats/crew sync failed', result.message);
+  if(!result.ok){
+    console.error('background boats/crew sync failed', result.message);
+    showToast('Cloud sync failed: ' + (result.message || 'unknown error'));
+  }
 }
 async function syncProfileIfSignedIn(){
   if(!state.user) return;
   const result = await syncLocalProfileToCloud();
-  if(!result.ok) console.error('background profile sync failed', result.message);
+  if(!result.ok){
+    console.error('background profile sync failed', result.message);
+    showToast('Cloud sync failed: ' + (result.message || 'unknown error'));
+  }
 }
 
 // Manual trigger from the Settings Account card. Reuses the same safe
