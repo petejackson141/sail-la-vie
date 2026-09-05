@@ -435,6 +435,26 @@ async function manualSyncProfile(){
   const originalLabel = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Syncing…';
+
+  // TEMPORARY DEBUG — remove once sync is confirmed working. Checks the
+  // actual live session Supabase will use for this request, since the
+  // "Signed in as ..." UI is populated from locally cached user info and
+  // can look correct even if the real session/token used for API calls
+  // is missing or expired.
+  try{
+    const { data:{ session } } = await getSupabaseClient().auth.getSession();
+    if(!session){
+      showToast('DEBUG: no live session — token missing.');
+    } else {
+      const expiresInSec = session.expires_at ? (session.expires_at - Math.floor(Date.now()/1000)) : 'unknown';
+      showToast('DEBUG: session ok, expires in ' + expiresInSec + 's, uid=' + (session.user && session.user.id));
+      await new Promise(r=>setTimeout(r, 3500)); // give the toast time to be read before it's replaced
+    }
+  }catch(e){
+    showToast('DEBUG: getSession threw: ' + (e.message||String(e)));
+    await new Promise(r=>setTimeout(r, 3500));
+  }
+
   try{
     const profileResult = await resolveProfileSyncOnSignIn();
     const boatsCrewResult = await resolveBoatsCrewSyncOnSignIn();
