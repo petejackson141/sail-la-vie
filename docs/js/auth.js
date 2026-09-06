@@ -42,7 +42,27 @@ async function initAuth(){
   const { data } = await getSupabaseClient().auth.getSession();
   applySession(data.session);
 
+  // THE MULTI-DEVICE SYNC FIX: resolveProfileSyncOnSignIn() / resolveBoatsCrewSyncOnSignIn()
+  // were previously only ever called from submitAuthForm() — i.e. only at the exact moment
+  // someone types their password and signs in. A device that's already signed in (the normal
+  // case after the first pairing) never checked the cloud again on relaunch, so changes made
+  // on another device were invisible until you manually signed out and back in. Running the
+  // same resolve here, whenever boot finds an existing session, is what actually makes
+  // multi-device sync work day to day. Not awaited, same reasoning as initAuth() itself not
+  // being awaited in boot() — don't delay the app opening on a slow/offline network.
+  if(data.session){
+    resolveProfileSyncOnSignIn();
+    resolveBoatsCrewSyncOnSignIn();
+  }
+
   getSupabaseClient().auth.onAuthStateChange((_event, session) => {
+    // Supabase replays the current session once as 'INITIAL_SESSION' the moment this
+    // listener is registered — which is the exact same session we already just resolved
+    // above via the explicit getSession() call a few lines up. Acting on it again here
+    // would run the resolve functions (and any conflict-prompt) twice on every single
+    // app launch. Every OTHER event (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, ...) still
+    // updates the UI normally.
+    if(_event === 'INITIAL_SESSION') return;
     applySession(session);
   });
 }
@@ -459,16 +479,6 @@ async function manualSyncProfile(){
   const originalLabel = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Syncing…';
-
-  // TEMPORARY DEBUG — remove once sync is confirmed working.
-  try{
-    const cloud = await fetchCloudBoatsAndCrew();
-    showToast('DEBUG: boats=' + cloud.boats.length + ' crew=' + cloud.crew.length
-      + (cloud.partialProblem ? ' | PARTIAL PROBLEM: ' + cloud.partialProblem : ''));
-  }catch(e){
-    showToast('DEBUG: fetchCloudBoatsAndCrew() THREW: ' + (e.message || String(e)));
-  }
-  await new Promise(r=>setTimeout(r, 6000));
 
   try{
     const profileResult = await resolveProfileSyncOnSignIn();
