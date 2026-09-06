@@ -30,6 +30,23 @@ function getSupabaseClient(){
   return _supabaseClient;
 }
 
+let lastCloudSyncCheck = 0; // Date.now() of the last visibility-triggered check — throttled below
+// A PWA/Capacitor app that's merely switched away from and back to (not force-closed)
+// keeps running the same page — boot() and initAuth()'s one-time resolve never fire
+// again on their own. Without this, "make a change on Device A, switch back to
+// Device B" would never pick up the change until Device B was fully killed and
+// relaunched, which most people never do day to day.
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState !== 'visible' || !state.user) return;
+  const now = Date.now();
+  if(now - lastCloudSyncCheck < 15000) return; // don't re-check on every quick tab/app switch
+  lastCloudSyncCheck = now;
+  Promise.all([resolveProfileSyncOnSignIn(), resolveBoatsCrewSyncOnSignIn()]).then(([profileResult, boatsCrewResult])=>{
+    if(!profileResult.ok) console.error('visibility profile sync failed', profileResult.message);
+    if(!boatsCrewResult.ok) console.error('visibility boats/crew sync failed', boatsCrewResult.message);
+  });
+});
+
 let authMode = 'signin'; // 'signin' | 'signup' — which mode sheetAuth is currently showing
 
 /* ---------- boot-time session check ----------
@@ -51,8 +68,16 @@ async function initAuth(){
   // multi-device sync work day to day. Not awaited, same reasoning as initAuth() itself not
   // being awaited in boot() — don't delay the app opening on a slow/offline network.
   if(data.session){
-    resolveProfileSyncOnSignIn();
-    resolveBoatsCrewSyncOnSignIn();
+    Promise.all([resolveProfileSyncOnSignIn(), resolveBoatsCrewSyncOnSignIn()]).then(([profileResult, boatsCrewResult])=>{
+      // Unlike submitAuthForm()'s version of this check, this runs silently in the
+      // background on launch — a success (or a no-op because nothing had changed)
+      // shouldn't interrupt anyone, but a failure needs to actually reach the
+      // screen. Before this, a failed fetch here just logged to the console,
+      // which is invisible on a phone with no devtools — it looked identical
+      // to "nothing to sync," which was hiding real problems.
+      if(!profileResult.ok) showToast('Cloud sync failed: ' + (profileResult.message || 'unknown error'));
+      if(!boatsCrewResult.ok) showToast('Cloud sync failed: ' + (boatsCrewResult.message || 'unknown error'));
+    });
   }
 
   getSupabaseClient().auth.onAuthStateChange((_event, session) => {
