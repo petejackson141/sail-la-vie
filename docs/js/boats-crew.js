@@ -86,14 +86,13 @@ async function saveBoatForm(){
     state.boats.push({ id:uid(), name, type, notes, photos:[...pendingBoatPhotos], photo:pendingBoatPhoto });
   }
   const ok = await storeSet(KEYS.BOATS, state.boats);
-  if(ok){ showToast(t('toast.boatSaved')); closeSheets(); renderBoats(); syncBoatsCrewIfSignedIn(); }
+  if(ok){ showToast(t('toast.boatSaved')); closeSheets(); renderBoats(); }
 }
 async function deleteBoatForm(){
   if(!confirm(t('confirm.removeBoat'))) return;
   state.boats = state.boats.filter(b=>b.id!==editingBoatId);
   await storeSet(KEYS.BOATS, state.boats);
   closeSheets(); renderBoats();
-  syncBoatsCrewIfSignedIn();
 }
 function renderBoats(){
   const el = document.getElementById('boatsList');
@@ -160,7 +159,6 @@ async function saveCrewForm(){
   const ok = await storeSet(KEYS.CREW, state.crew);
   if(!ok) return;
   showToast(t('toast.crewSaved'));
-  syncBoatsCrewIfSignedIn();
   if(crewPickerActive){
     crewPickerActive = false;
     if(newId) crewPickTempIds.push(newId);
@@ -175,7 +173,6 @@ async function deleteCrewForm(){
   state.crew = state.crew.filter(c=>c.id!==editingCrewId);
   await storeSet(KEYS.CREW, state.crew);
   closeSheets(); renderCrew();
-  syncBoatsCrewIfSignedIn();
 }
 function renderCrew(){
   const el = document.getElementById('crewList');

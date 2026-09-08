@@ -3,9 +3,9 @@
 // sign up / sign in / sign out and keeps state.user in sync with whoever's
 // currently logged in.
 //
-// IMPORTANT — what this file does NOT do yet: it doesn't sync journeys to the
-// cloud. Profile, boats, and crew are handled below; journeys are a separate
-// feature to build next, on top of this.
+// IMPORTANT — what this file does NOT do yet: it doesn't sync journeys, boats,
+// or crew to the cloud — only the profile. Those are separate features to
+// build next, on top of this.
 //
 // state.user is null when signed out, or { id, email } when signed in.
 // Set only by applySession() below — read it elsewhere in the app once we
@@ -30,23 +30,6 @@ function getSupabaseClient(){
   return _supabaseClient;
 }
 
-let lastCloudSyncCheck = 0; // Date.now() of the last visibility-triggered check — throttled below
-// A PWA/Capacitor app that's merely switched away from and back to (not force-closed)
-// keeps running the same page — boot() and initAuth()'s one-time resolve never fire
-// again on their own. Without this, "make a change on Device A, switch back to
-// Device B" would never pick up the change until Device B was fully killed and
-// relaunched, which most people never do day to day.
-document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState !== 'visible' || !state.user) return;
-  const now = Date.now();
-  if(now - lastCloudSyncCheck < 15000) return; // don't re-check on every quick tab/app switch
-  lastCloudSyncCheck = now;
-  Promise.all([resolveProfileSyncOnSignIn(), resolveBoatsCrewSyncOnSignIn()]).then(([profileResult, boatsCrewResult])=>{
-    if(!profileResult.ok) console.error('visibility profile sync failed', profileResult.message);
-    if(!boatsCrewResult.ok) console.error('visibility boats/crew sync failed', boatsCrewResult.message);
-  });
-});
-
 let authMode = 'signin'; // 'signin' | 'signup' — which mode sheetAuth is currently showing
 
 /* ---------- boot-time session check ----------
@@ -59,35 +42,7 @@ async function initAuth(){
   const { data } = await getSupabaseClient().auth.getSession();
   applySession(data.session);
 
-  // THE MULTI-DEVICE SYNC FIX: resolveProfileSyncOnSignIn() / resolveBoatsCrewSyncOnSignIn()
-  // were previously only ever called from submitAuthForm() — i.e. only at the exact moment
-  // someone types their password and signs in. A device that's already signed in (the normal
-  // case after the first pairing) never checked the cloud again on relaunch, so changes made
-  // on another device were invisible until you manually signed out and back in. Running the
-  // same resolve here, whenever boot finds an existing session, is what actually makes
-  // multi-device sync work day to day. Not awaited, same reasoning as initAuth() itself not
-  // being awaited in boot() — don't delay the app opening on a slow/offline network.
-  if(data.session){
-    Promise.all([resolveProfileSyncOnSignIn(), resolveBoatsCrewSyncOnSignIn()]).then(([profileResult, boatsCrewResult])=>{
-      // Unlike submitAuthForm()'s version of this check, this runs silently in the
-      // background on launch — a success (or a no-op because nothing had changed)
-      // shouldn't interrupt anyone, but a failure needs to actually reach the
-      // screen. Before this, a failed fetch here just logged to the console,
-      // which is invisible on a phone with no devtools — it looked identical
-      // to "nothing to sync," which was hiding real problems.
-      if(!profileResult.ok) showToast('Cloud sync failed: ' + (profileResult.message || 'unknown error'));
-      if(!boatsCrewResult.ok) showToast('Cloud sync failed: ' + (boatsCrewResult.message || 'unknown error'));
-    });
-  }
-
   getSupabaseClient().auth.onAuthStateChange((_event, session) => {
-    // Supabase replays the current session once as 'INITIAL_SESSION' the moment this
-    // listener is registered — which is the exact same session we already just resolved
-    // above via the explicit getSession() call a few lines up. Acting on it again here
-    // would run the resolve functions (and any conflict-prompt) twice on every single
-    // app launch. Every OTHER event (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, ...) still
-    // updates the UI normally.
-    if(_event === 'INITIAL_SESSION') return;
     applySession(session);
   });
 }
@@ -110,8 +65,6 @@ function renderAccountUI(){
     signedOutEl.style.display = 'none';
     signedInEl.style.display = 'block';
     document.getElementById('accountEmailLine').textContent = state.user.email;
-    const uidEl = document.getElementById('accountUidLine');
-    if(uidEl) uidEl.textContent = state.user.id;
   } else {
     signedOutEl.style.display = 'block';
     signedInEl.style.display = 'none';
@@ -199,14 +152,8 @@ async function submitAuthForm(){
       closeSheets();
       if(data.session){
         // Email confirmation is off (or already satisfied) — signed in immediately.
-        const profileResult = await resolveProfileSyncOnSignIn();
-        const boatsCrewResult = await resolveBoatsCrewSyncOnSignIn();
-        if(profileResult.ok && boatsCrewResult.ok){
-          showToast('Account created.');
-        } else {
-          const failMsg = !profileResult.ok ? profileResult.message : boatsCrewResult.message;
-          showToast('Account created, but cloud sync failed: ' + failMsg);
-        }
+        await resolveProfileSyncOnSignIn();
+        showToast('Account created.');
       } else {
         // Normal case: Supabase emails a confirmation link and there's no
         // session yet — nothing to sync to until that link is clicked and
@@ -217,14 +164,8 @@ async function submitAuthForm(){
       const { error } = await getSupabaseClient().auth.signInWithPassword({ email, password });
       if(error) throw error;
       closeSheets();
-      const profileResult = await resolveProfileSyncOnSignIn();
-      const boatsCrewResult = await resolveBoatsCrewSyncOnSignIn();
-      if(profileResult.ok && boatsCrewResult.ok){
-        showToast('Signed in.');
-      } else {
-        const failMsg = !profileResult.ok ? profileResult.message : boatsCrewResult.message;
-        showToast('Signed in, but cloud sync failed: ' + failMsg);
-      }
+      await resolveProfileSyncOnSignIn();
+      showToast('Signed in.');
     }
   } catch(e){
     showAuthError(e.message || 'Something went wrong. Try again.');
@@ -250,10 +191,9 @@ async function signOutUser(){
      differs → ask before overwriting either side, rather than silently
      picking one. */
 async function resolveProfileSyncOnSignIn(){
-  if(!state.user) return {ok:true};
+  if(!state.user) return;
 
   let cloudProfile = null;
-  let fetchFailed = null;
   try{
     const { data, error } = await getSupabaseClient()
       .from('profiles')
@@ -264,7 +204,6 @@ async function resolveProfileSyncOnSignIn(){
     cloudProfile = data ? data.profile_data : null;
   }catch(e){
     console.error('profile cloud fetch failed', e);
-    fetchFailed = e.message || String(e);
   }
 
   const localHasData = !!(state.profile && state.profile.name);
@@ -273,22 +212,17 @@ async function resolveProfileSyncOnSignIn(){
     const sameAsLocal = JSON.stringify(cloudProfile) === JSON.stringify(state.profile);
     if(!localHasData || sameAsLocal){
       await applyCloudProfile(cloudProfile);
-      return {ok:true};
+      return;
     }
     const loadCloud = await showConfirm("This account already has a profile saved in the cloud. Load it and replace what's on this device?");
     if(loadCloud){
       await applyCloudProfile(cloudProfile);
-      return {ok:true};
+      return;
     }
     // They chose to keep what's on this device — fall through and push it up instead.
   }
 
-  const pushResult = await syncLocalProfileToCloud();
-  if(!pushResult.ok) return {ok:false, message: pushResult.message || 'push failed'};
-  // A failed fetch that fell through to a successful push isn't a full success —
-  // the push only sent this device's copy; the cloud state we compared against was unknown.
-  if(fetchFailed) return {ok:false, message: 'fetch failed: ' + fetchFailed};
-  return {ok:true};
+  await syncLocalProfileToCloud();
 }
 
 // Applies a profile fetched from the cloud onto this device — saves it to
@@ -301,146 +235,6 @@ async function applyCloudProfile(cloudProfile){
   document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
   refreshAvatars();
   showToast('Profile loaded from your account.');
-}
-
-/* ---------- boats & crew ↔ cloud ----------
-   Same pattern as profile, but for lists rather than a single object: each
-   boat/crew member is its own row (id, user_id, data), matched by the same
-   id your app already generates locally (uid()) — no separate cloud-id
-   mapping needed. */
-
-// Push = "make the cloud match this device exactly": deletes any cloud rows
-// for this user that no longer exist locally (things deleted on this
-// device), then upserts everything currently local.
-async function pushBoatsAndCrewToCloud(){
-  if(!state.user) return { ok:false };
-  const client = getSupabaseClient();
-  try{
-    const boatIds = state.boats.map(b=>b.id);
-    const crewIds = state.crew.map(c=>c.id);
-
-    // .not() needs the "in" list preformatted as "(a,b,c)" — unlike .in(),
-    // it doesn't auto-serialize a plain JS array. Passing the raw array here
-    // was the actual cause of "Sync failed": PostgREST rejected the
-    // malformed filter and the whole push aborted.
-    const delBoats = boatIds.length
-      ? client.from('boats').delete().eq('user_id', state.user.id).not('id','in',`(${boatIds.join(',')})`)
-      : client.from('boats').delete().eq('user_id', state.user.id);
-    const delCrew = crewIds.length
-      ? client.from('crew').delete().eq('user_id', state.user.id).not('id','in',`(${crewIds.join(',')})`)
-      : client.from('crew').delete().eq('user_id', state.user.id);
-    const [{error:delBoatsErr},{error:delCrewErr}] = await Promise.all([delBoats, delCrew]);
-    if(delBoatsErr) throw delBoatsErr;
-    if(delCrewErr) throw delCrewErr;
-
-    if(boatIds.length){
-      const rows = state.boats.map(b=>({ id:b.id, user_id:state.user.id, data:b, updated_at:new Date().toISOString() }));
-      const { error } = await client.from('boats').upsert(rows);
-      if(error) throw error;
-    }
-    if(crewIds.length){
-      const rows = state.crew.map(c=>({ id:c.id, user_id:state.user.id, data:c, updated_at:new Date().toISOString() }));
-      const { error } = await client.from('crew').upsert(rows);
-      if(error) throw error;
-    }
-    return { ok:true };
-  }catch(e){
-    console.error('boats/crew cloud push failed', e);
-    return { ok:false, message: e.message || String(e) };
-  }
-}
-
-async function fetchCloudBoatsAndCrew(){
-  const client = getSupabaseClient();
-  const [boatsResult, crewResult] = await Promise.allSettled([
-    client.from('boats').select('data').eq('user_id', state.user.id),
-    client.from('crew').select('data').eq('user_id', state.user.id)
-  ]);
-
-  // Each table is handled independently now — a problem with one (e.g. a
-  // leftover/broken policy on just 'crew') can no longer silently discard a
-  // perfectly good result from the other, which is what a single combined
-  // throw was doing before.
-  const problems = [];
-  let boats = [];
-  let crew = [];
-
-  if(boatsResult.status === 'fulfilled'){
-    if(boatsResult.value.error) problems.push('boats: ' + boatsResult.value.error.message);
-    else boats = (boatsResult.value.data || []).map(r=>r.data);
-  } else {
-    problems.push('boats: ' + (boatsResult.reason && boatsResult.reason.message || String(boatsResult.reason)));
-  }
-
-  if(crewResult.status === 'fulfilled'){
-    if(crewResult.value.error) problems.push('crew: ' + crewResult.value.error.message);
-    else crew = (crewResult.value.data || []).map(r=>r.data);
-  } else {
-    problems.push('crew: ' + (crewResult.reason && crewResult.reason.message || String(crewResult.reason)));
-  }
-
-  const bothFailed = problems.length === 2;
-  if(problems.length) console.error('partial boats/crew fetch problem(s):', problems.join(' | '));
-  if(bothFailed) throw new Error(problems.join(' | '));
-  return { boats, crew, partialProblem: problems.length ? problems.join(' | ') : null };
-}
-
-async function resolveBoatsCrewSyncOnSignIn(){
-  if(!state.user) return {ok:true};
-
-  let cloud = null;
-  let fetchFailed = null;
-  try{ cloud = await fetchCloudBoatsAndCrew(); }
-  catch(e){
-    console.error('boats/crew cloud fetch failed', e);
-    fetchFailed = e.message || String(e);
-  }
-
-  const localHasData = (state.boats && state.boats.length) || (state.crew && state.crew.length);
-  const cloudHasData = cloud && ((cloud.boats && cloud.boats.length) || (cloud.crew && cloud.crew.length));
-
-  // Safety net: if this device has nothing local to send, pushing would mean
-  // "delete everything in the cloud for this user" (see pushBoatsAndCrewToCloud's
-  // delete-what's-missing-locally logic). That's only safe to do when we're
-  // confident the cloud is also genuinely empty — never when the cloud read
-  // came back empty because it silently failed (e.g. a missing SELECT RLS
-  // policy returns [] instead of an error) or threw an actual error. Bail out
-  // instead of risking a wipe; a real fetch failure should be retried, not
-  // treated as "nothing to sync."
-  if(!localHasData && !cloudHasData){
-    if(fetchFailed) return {ok:false, message: 'fetch failed: ' + fetchFailed};
-    return {ok:true}; // both genuinely empty — nothing to do
-  }
-
-  if(cloudHasData){
-    const sameAsLocal = JSON.stringify(cloud.boats)===JSON.stringify(state.boats)
-      && JSON.stringify(cloud.crew)===JSON.stringify(state.crew);
-    if(!localHasData || sameAsLocal){
-      await applyCloudBoatsAndCrew(cloud);
-      return {ok:true};
-    }
-    const loadCloud = await showConfirm("This account already has boats/crew saved in the cloud. Load them and replace what's on this device?");
-    if(loadCloud){
-      await applyCloudBoatsAndCrew(cloud);
-      return {ok:true};
-    }
-    // They chose to keep this device's boats/crew — fall through and push up instead.
-  }
-
-  const pushResult = await pushBoatsAndCrewToCloud();
-  if(!pushResult.ok) return {ok:false, message: pushResult.message || 'push failed'};
-  if(fetchFailed) return {ok:false, message: 'fetch failed: ' + fetchFailed};
-  return {ok:true};
-}
-
-async function applyCloudBoatsAndCrew(cloud){
-  state.boats = cloud.boats || [];
-  state.crew = cloud.crew || [];
-  await storeSet(KEYS.BOATS, state.boats);
-  await storeSet(KEYS.CREW, state.crew);
-  renderBoats();
-  renderCrew();
-  showToast('Boats & crew loaded from your account.');
 }
 
 /* ---------- profile → cloud sync ----------
@@ -469,51 +263,31 @@ async function syncLocalProfileToCloud(){
   }
 }
 
-// Fire-and-forget cloud push, called after any LOCAL edit to boats/crew or
-// profile (add/edit/delete) so changes made after the initial sign-in sync
+// Fire-and-forget cloud push, called after any LOCAL edit to the profile
+// (name, theme, units, etc.) so changes made after the initial sign-in sync
 // also reach other devices — previously only the one-time sign-in
 // resolution and the manual "Sync" button ever pushed to the cloud, so any
-// edit made afterward silently stayed on that device only. No-ops (no toast)
-// when signed out. Failures now surface as a toast (not just console.error)
-// since a silent failure here is invisible on a phone with no devtools access.
-async function syncBoatsCrewIfSignedIn(){
-  if(!state.user) return;
-  const result = await pushBoatsAndCrewToCloud();
-  if(!result.ok){
-    console.error('background boats/crew sync failed', result.message);
-    showToast('Cloud sync failed: ' + (result.message || 'unknown error'));
-  }
-}
+// edit made afterward silently stayed on that device only. No-ops (and no
+// toast) when signed out; failures are logged, not surfaced, since these
+// run silently after routine local saves.
 async function syncProfileIfSignedIn(){
   if(!state.user) return;
   const result = await syncLocalProfileToCloud();
-  if(!result.ok){
-    console.error('background profile sync failed', result.message);
-    showToast('Cloud sync failed: ' + (result.message || 'unknown error'));
-  }
+  if(!result.ok) console.error('background profile sync failed', result.message);
 }
 
 // Manual trigger from the Settings Account card. Reuses the same safe
-// resolve logic as sign-in (pull down if the cloud has data this device
-// lacks, ask before overwriting if both sides differ) rather than blindly
-// pushing — a straight push from a device with no local boats/crew yet was
-// wiping the cloud copy, since "no local rows" was being read as "delete
-// everything," not "this device hasn't pulled yet."
+// resolve logic as sign-in (pull down if the cloud has a profile this
+// device lacks, ask before overwriting if both sides differ) rather than
+// blindly pushing.
 async function manualSyncProfile(){
   const btn = document.getElementById('syncProfileBtn');
   const originalLabel = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Syncing…';
-
   try{
-    const profileResult = await resolveProfileSyncOnSignIn();
-    const boatsCrewResult = await resolveBoatsCrewSyncOnSignIn();
-    if(profileResult.ok && boatsCrewResult.ok){
-      showToast('Synced to cloud.');
-    } else {
-      const failMsg = !profileResult.ok ? profileResult.message : boatsCrewResult.message;
-      showToast('Sync failed: ' + failMsg);
-    }
+    await resolveProfileSyncOnSignIn();
+    showToast('Synced to cloud.');
   }catch(e){
     console.error('manual sync failed', e);
     showToast("Sync failed — check you're online.");
