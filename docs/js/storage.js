@@ -165,10 +165,42 @@ async function backupToFile(){
     profile: state.profile, boats: state.boats, crew: state.crew,
     tripIndex: state.tripIndex, trips
   };
-  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  const json = JSON.stringify(payload, null, 2);
+  const filename = `sail-la-vie-backup-${new Date().toISOString().slice(0,10)}.json`;
+
+  // The browser "invisible link + click" download trick below only works in
+  // an actual browser tab (the PWA build) — there's no download manager to
+  // catch it inside a native Capacitor WebView, so on native it silently
+  // wrote nowhere findable. On native, write the file via the Filesystem
+  // plugin, then hand off to the OS Share sheet so the person explicitly
+  // picks where it goes (Drive, email, Files, etc.) — that also means
+  // there's never any ambiguity about the save location, since they choose
+  // it themselves every time.
+  const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+  if(isNative && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem){
+    try{
+      const { Filesystem, Directory } = window.Capacitor.Plugins;
+      const written = await Filesystem.writeFile({
+        path: filename,
+        data: json,
+        directory: Directory.Cache,
+        encoding: 'utf8'
+      });
+      if(window.Capacitor.Plugins.Share){
+        await window.Capacitor.Plugins.Share.share({ title: 'Sail la Vie backup', url: written.uri });
+      }
+      showToast(t('toast.backupDownloaded'));
+    }catch(e){
+      console.error('native backup failed', e);
+      showToast('Backup failed: ' + (e.message || String(e)));
+    }
+    return;
+  }
+
+  const blob = new Blob([json], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `sail-la-vie-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.href = url; a.download = filename;
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
   showToast(t('toast.backupDownloaded'));
