@@ -79,20 +79,26 @@ async function saveBoatForm(){
   const name = document.getElementById('boatName').value.trim();
   if(!name){ showToast(t('toast.giveBoatName')); return; }
   const type = document.getElementById('boatType').value, notes = document.getElementById('boatNotes').value;
+  let savedBoat;
   if(editingBoatId){
     const b = state.boats.find(x=>x.id===editingBoatId);
     b.name=name; b.type=type; b.notes=notes; b.photos=[...pendingBoatPhotos]; b.photo=pendingBoatPhoto;
+    b.updatedAt = new Date().toISOString();
+    savedBoat = b;
   } else {
-    state.boats.push({ id:uid(), name, type, notes, photos:[...pendingBoatPhotos], photo:pendingBoatPhoto });
+    savedBoat = { id:uid(), name, type, notes, photos:[...pendingBoatPhotos], photo:pendingBoatPhoto, updatedAt: new Date().toISOString() };
+    state.boats.push(savedBoat);
   }
   const ok = await storeSet(KEYS.BOATS, state.boats);
-  if(ok){ showToast(t('toast.boatSaved')); closeSheets(); renderBoats(); }
+  if(ok){ showToast(t('toast.boatSaved')); closeSheets(); renderBoats(); syncBoatIfSignedIn(savedBoat); }
 }
 async function deleteBoatForm(){
   if(!confirm(t('confirm.removeBoat'))) return;
+  const deletedId = editingBoatId;
   state.boats = state.boats.filter(b=>b.id!==editingBoatId);
   await storeSet(KEYS.BOATS, state.boats);
   closeSheets(); renderBoats();
+  syncBoatDeleteIfSignedIn(deletedId);
 }
 function renderBoats(){
   const el = document.getElementById('boatsList');
