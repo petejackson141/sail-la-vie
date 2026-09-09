@@ -179,11 +179,16 @@ async function backupToFile(){
   const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
   if(isNative && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem){
     try{
-      const { Filesystem, Directory } = window.Capacitor.Plugins;
+      const { Filesystem } = window.Capacitor.Plugins;
+      // Directory.Cache isn't available here — 'Directory' is a plain JS
+      // constants object exported by the @capacitor/filesystem npm package,
+      // not something the native bridge exposes on window.Capacitor.Plugins,
+      // and this app doesn't bundle that package. Pass the raw string value
+      // the native side expects instead.
       const written = await Filesystem.writeFile({
         path: filename,
         data: json,
-        directory: Directory.Cache,
+        directory: 'CACHE',
         encoding: 'utf8'
       });
       if(window.Capacitor.Plugins.Share){
