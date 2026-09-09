@@ -31,6 +31,25 @@ function getSupabaseClient(){
   return _supabaseClient;
 }
 
+// Serializes every cloud read/write for profile/boats/crew through one
+// queue, so a push or delete can never be "overtaken" by a pull that
+// started a moment later (or vice versa). Without this, deleting a boat
+// and then syncing in quick succession could let the pull's SELECT run
+// before the delete's tombstone write had actually landed — the pull would
+// see the still-there row, and since this device no longer has it locally,
+// pull it right back in. Every entry point below (push, delete, and the
+// resolve*SyncOnSignIn functions) goes through this queue; the "Impl"
+// versions they call internally do NOT re-enter it, since resolve* already
+// holds the queue's single slot while it runs and re-entering would
+// deadlock (the queued push would wait for a turn that can't come until
+// resolve* — which is waiting on that same push — finishes).
+let _cloudSyncQueue = Promise.resolve();
+function withCloudSyncQueue(fn){
+  const run = _cloudSyncQueue.then(fn, fn);
+  _cloudSyncQueue = run.catch(()=>{}); // swallow so one failure doesn't wedge the queue
+  return run;
+}
+
 let authMode = 'signin'; // 'signin' | 'signup' — which mode sheetAuth is currently showing
 
 /* ---------- boot-time session check ----------
@@ -209,7 +228,10 @@ async function signOutUser(){
    - Cloud has a profile AND this device already has its own local data that
      differs → ask before overwriting either side, rather than silently
      picking one. */
-async function resolveProfileSyncOnSignIn(){
+function resolveProfileSyncOnSignIn(){
+  return withCloudSyncQueue(resolveProfileSyncOnSignInImpl);
+}
+async function resolveProfileSyncOnSignInImpl(){
   if(!state.user) return;
 
   let cloudProfile = null;
@@ -241,7 +263,7 @@ async function resolveProfileSyncOnSignIn(){
     // They chose to keep what's on this device — fall through and push it up instead.
   }
 
-  await syncLocalProfileToCloud();
+  await syncLocalProfileToCloudImpl();
 }
 
 // Applies a profile fetched from the cloud onto this device — saves it to
@@ -270,8 +292,12 @@ async function applyCloudProfile(cloudProfile){
 
 // Push a single boat. Called after every local save (add or edit) — never
 // batches the whole boats list, so this can't accidentally drop boats this
-// device doesn't know about yet.
-async function pushBoatToCloud(boat){
+// device doesn't know about yet. Goes through the cloud sync queue (see
+// above) so it can't race a concurrent pull.
+function pushBoatToCloud(boat){
+  return withCloudSyncQueue(() => pushBoatToCloudImpl(boat));
+}
+async function pushBoatToCloudImpl(boat){
   if(!state.user) return { ok:false };
   try{
     const { error } = await getSupabaseClient()
@@ -291,8 +317,12 @@ async function pushBoatToCloud(boat){
 // (push it up) apart from "the cloud knows this was deleted" (remove it
 // locally, never resurrect it) — see mergeBoats below. A real row delete
 // couldn't carry that distinction, which is exactly why a boat deleted on
-// one device used to come back after syncing another.
-async function deleteBoatFromCloud(boatId){
+// one device used to come back after syncing another. Also goes through
+// the cloud sync queue, same reason as pushBoatToCloud.
+function deleteBoatFromCloud(boatId){
+  return withCloudSyncQueue(() => deleteBoatFromCloudImpl(boatId));
+}
+async function deleteBoatFromCloudImpl(boatId){
   if(!state.user) return { ok:false };
   try{
     const { error } = await getSupabaseClient()
@@ -370,8 +400,15 @@ function mergeBoats(localBoats, cloudRows){
 // whatever's local, saves + renders the merged result, then pushes up any
 // boats where the local copy won the merge. Safe to call from a device with
 // zero local boats (nothing to push, everything just gets pulled in) or a
-// device with real data the cloud hasn't seen yet (nothing gets lost).
-async function resolveBoatsSyncOnSignIn(){
+// device with real data the cloud hasn't seen yet (nothing gets lost). Goes
+// through the cloud sync queue as a whole (see above) so it can't
+// interleave with a push or delete that's still in flight — uses the
+// unqueued *Impl push internally since this function already holds the
+// queue's one slot.
+function resolveBoatsSyncOnSignIn(){
+  return withCloudSyncQueue(resolveBoatsSyncOnSignInImpl);
+}
+async function resolveBoatsSyncOnSignInImpl(){
   if(!state.user) return { ok:true };
 
   let cloudRows;
@@ -393,7 +430,7 @@ async function resolveBoatsSyncOnSignIn(){
   renderBoats();
 
   for(const boat of toPushUp){
-    const result = await pushBoatToCloud(boat);
+    const result = await pushBoatToCloudImpl(boat);
     if(!result.ok) return { ok:false, message: result.message };
   }
   return { ok:true };
@@ -406,7 +443,11 @@ async function resolveBoatsSyncOnSignIn(){
    above for why. */
 
 // Push a single crew member. Called after every local save (add or edit).
-async function pushCrewToCloud(crewMember){
+// Goes through the cloud sync queue, same reason as pushBoatToCloud.
+function pushCrewToCloud(crewMember){
+  return withCloudSyncQueue(() => pushCrewToCloudImpl(crewMember));
+}
+async function pushCrewToCloudImpl(crewMember){
   if(!state.user) return { ok:false };
   try{
     const { error } = await getSupabaseClient()
@@ -422,8 +463,11 @@ async function pushCrewToCloud(crewMember){
 
 // Marks a crew member deleted — a soft-delete (tombstone), same reasoning
 // as deleteBoatFromCloud above. The ONLY way a crew member is ever removed
-// from the cloud.
-async function deleteCrewFromCloud(crewId){
+// from the cloud. Also goes through the cloud sync queue.
+function deleteCrewFromCloud(crewId){
+  return withCloudSyncQueue(() => deleteCrewFromCloudImpl(crewId));
+}
+async function deleteCrewFromCloudImpl(crewId){
   if(!state.user) return { ok:false };
   try{
     const { error } = await getSupabaseClient()
@@ -486,8 +530,13 @@ function mergeCrew(localCrew, cloudRows){
 }
 
 // Runs on sign-in, boot-time session restore, and manual sync — same
-// safety properties as resolveBoatsSyncOnSignIn.
-async function resolveCrewSyncOnSignIn(){
+// safety properties as resolveBoatsSyncOnSignIn, including going through
+// the cloud sync queue as a whole and using the unqueued *Impl push
+// internally.
+function resolveCrewSyncOnSignIn(){
+  return withCloudSyncQueue(resolveCrewSyncOnSignInImpl);
+}
+async function resolveCrewSyncOnSignInImpl(){
   if(!state.user) return { ok:true };
 
   let cloudRows;
@@ -509,7 +558,7 @@ async function resolveCrewSyncOnSignIn(){
   renderCrew();
 
   for(const crewMember of toPushUp){
-    const result = await pushCrewToCloud(crewMember);
+    const result = await pushCrewToCloudImpl(crewMember);
     if(!result.ok) return { ok:false, message: result.message };
   }
   return { ok:true };
@@ -527,7 +576,10 @@ async function resolveCrewSyncOnSignIn(){
    trigger didn't fire for some other reason) would silently no-op under
    update — upsert creates the row if it's missing. Returns true/false so
    callers can tell the person whether it actually worked. */
-async function syncLocalProfileToCloud(){
+function syncLocalProfileToCloud(){
+  return withCloudSyncQueue(syncLocalProfileToCloudImpl);
+}
+async function syncLocalProfileToCloudImpl(){
   if(!state.user) return { ok:false };
   try{
     const { error } = await getSupabaseClient()
