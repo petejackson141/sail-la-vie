@@ -3,9 +3,10 @@
 // sign up / sign in / sign out and keeps state.user in sync with whoever's
 // currently logged in.
 //
-// IMPORTANT — what this file does NOT do yet: it doesn't sync journeys, boats,
-// or crew to the cloud — only the profile. Those are separate features to
-// build next, on top of this.
+// Also owns the profile <-> cloud and boats <-> cloud sync (push-on-edit,
+// pull-and-merge on sign-in, boot-time session restore, and the manual
+// "Sync Now" button). Crew and journeys are NOT synced yet — those are
+// separate features to build next, following the same shape as boats.
 //
 // state.user is null when signed out, or { id, email } when signed in.
 // Set only by applySession() below — read it elsewhere in the app once we
@@ -41,6 +42,19 @@ let authMode = 'signin'; // 'signin' | 'signup' — which mode sheetAuth is curr
 async function initAuth(){
   const { data } = await getSupabaseClient().auth.getSession();
   applySession(data.session);
+
+  if(data.session){
+    // Silent pull on a restored session, so edits made on another device
+    // while this one was closed show up without the person having to sign
+    // out/in again or remember to tap "Sync Now". Relies on boot() in
+    // state-core.js having already loaded local boats/profile from storage
+    // before calling initAuth() — see the comment there. Same resolve
+    // functions as an explicit sign-in: silent when there's nothing to
+    // conflict with, a confirm prompt only if the cloud and local profile
+    // genuinely differ.
+    resolveProfileSyncOnSignIn().catch(e => console.error('boot-time profile sync failed', e));
+    resolveBoatsSyncOnSignIn().catch(e => console.error('boot-time boats sync failed', e));
+  }
 
   getSupabaseClient().auth.onAuthStateChange((_event, session) => {
     applySession(session);

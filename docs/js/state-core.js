@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '08.09.2026.1421';
+const APP_VERSION = '09.09.2026.1500';
 
 /* ============================================================
    CUSTOM CONFIRM DIALOG (shared across all screens)
@@ -145,9 +145,6 @@ function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(
    then reveals the app (hides the loading spinner) ---------- */
 async function boot(){
   await initStorage();
-  initAuth(); // checks for an existing Supabase session; not awaited so a slow/offline
-              // network doesn't delay the app opening — renderAccountUI() updates
-              // Settings whenever it resolves, even after the rest of boot() finishes.
 
   const [idx, boats, crew, profile] = await Promise.all([
     storeGet(KEYS.INDEX), storeGet(KEYS.BOATS), storeGet(KEYS.CREW), storeGet(KEYS.PROFILE)
@@ -156,6 +153,15 @@ async function boot(){
   state.boats = boats || [];
   state.crew = crew || [];
   state.profile = profile || state.profile;
+
+  // Only now that local boats/profile are loaded is it safe to check for an
+  // existing session and (if signed in) silently pull from the cloud — see
+  // initAuth(). Doing this any earlier would race: a cloud pull landing
+  // before local storage finished loading would just get overwritten by the
+  // lines above. Not awaited, same as before, so a slow/offline network
+  // doesn't delay the app opening — renderAccountUI() updates Settings
+  // whenever it resolves, even after the rest of boot() finishes.
+  initAuth();
   currentLang = 'en'; // language picker hidden for now — es/pt/he dictionaries kept intact for later
   applyStaticTranslations();
 
