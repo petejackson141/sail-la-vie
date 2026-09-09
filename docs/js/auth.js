@@ -3,10 +3,10 @@
 // sign up / sign in / sign out and keeps state.user in sync with whoever's
 // currently logged in.
 //
-// Also owns the profile <-> cloud and boats <-> cloud sync (push-on-edit,
-// pull-and-merge on sign-in, boot-time session restore, and the manual
-// "Sync Now" button). Crew and journeys are NOT synced yet — those are
-// separate features to build next, following the same shape as boats.
+// Also owns the profile <-> cloud, boats <-> cloud, and crew <-> cloud sync
+// (push-on-edit, pull-and-merge on sign-in, boot-time session restore, and
+// the manual "Sync Now" button). Journeys are NOT synced yet — that's the
+// next feature to build, following the same shape as boats/crew.
 //
 // state.user is null when signed out, or { id, email } when signed in.
 // Set only by applySession() below — read it elsewhere in the app once we
@@ -54,6 +54,7 @@ async function initAuth(){
     // genuinely differ.
     resolveProfileSyncOnSignIn().catch(e => console.error('boot-time profile sync failed', e));
     resolveBoatsSyncOnSignIn().catch(e => console.error('boot-time boats sync failed', e));
+    resolveCrewSyncOnSignIn().catch(e => console.error('boot-time crew sync failed', e));
   }
 
   getSupabaseClient().auth.onAuthStateChange((_event, session) => {
@@ -168,6 +169,7 @@ async function submitAuthForm(){
         // Email confirmation is off (or already satisfied) — signed in immediately.
         await resolveProfileSyncOnSignIn();
         await resolveBoatsSyncOnSignIn();
+        await resolveCrewSyncOnSignIn();
         showToast('Account created.');
       } else {
         // Normal case: Supabase emails a confirmation link and there's no
@@ -181,6 +183,7 @@ async function submitAuthForm(){
       closeSheets();
       await resolveProfileSyncOnSignIn();
       await resolveBoatsSyncOnSignIn();
+      await resolveCrewSyncOnSignIn();
       showToast('Signed in.');
     }
   } catch(e){
@@ -382,6 +385,119 @@ async function resolveBoatsSyncOnSignIn(){
   return { ok:true };
 }
 
+/* ---------- crew ↔ cloud ----------
+   Exactly the same shape as boats above: push-this-one-row on edit, explicit
+   single-row delete, merge-by-id-and-updated_at on sign-in/boot/manual sync.
+   Never a full-list replace in either direction — see the boats comment
+   above for why. */
+
+// Push a single crew member. Called after every local save (add or edit).
+async function pushCrewToCloud(crewMember){
+  if(!state.user) return { ok:false };
+  try{
+    const { error } = await getSupabaseClient()
+      .from('crew')
+      .upsert({ id: crewMember.id, user_id: state.user.id, data: crewMember, updated_at: crewMember.updatedAt || new Date().toISOString() });
+    if(error) throw error;
+    return { ok:true };
+  }catch(e){
+    console.error('crew cloud push failed', e);
+    return { ok:false, message: e.message || String(e) };
+  }
+}
+
+// Explicit single-row delete — the ONLY way a crew member is ever removed
+// from the cloud.
+async function deleteCrewFromCloud(crewId){
+  if(!state.user) return { ok:false };
+  try{
+    const { error } = await getSupabaseClient()
+      .from('crew')
+      .delete()
+      .eq('id', crewId)
+      .eq('user_id', state.user.id);
+    if(error) throw error;
+    return { ok:true };
+  }catch(e){
+    console.error('crew cloud delete failed', e);
+    return { ok:false, message: e.message || String(e) };
+  }
+}
+
+// Fire-and-forget wrappers, called right after routine local edits.
+async function syncCrewIfSignedIn(crewMember){
+  if(!state.user) return;
+  const result = await pushCrewToCloud(crewMember);
+  if(!result.ok) console.error('background crew sync failed', result.message);
+}
+async function syncCrewDeleteIfSignedIn(crewId){
+  if(!state.user) return;
+  const result = await deleteCrewFromCloud(crewId);
+  if(!result.ok) console.error('background crew delete sync failed', result.message);
+}
+
+// Same merge shape as mergeBoats — newest updated_at wins, nothing is ever
+// dropped just for being missing on one side.
+function mergeCrew(localCrew, cloudRows){
+  const localById = new Map((localCrew||[]).map(c=>[c.id, c]));
+  const cloudById = new Map((cloudRows||[]).map(r=>[r.id, r]));
+  const allIds = new Set([...localById.keys(), ...cloudById.keys()]);
+
+  const merged = [];
+  const toPushUp = [];
+
+  for(const id of allIds){
+    const local = localById.get(id);
+    const cloud = cloudById.get(id);
+    if(local && cloud){
+      const localTime = local.updatedAt ? Date.parse(local.updatedAt) : 0;
+      const cloudTime = cloud.updated_at ? Date.parse(cloud.updated_at) : 0;
+      if(cloudTime > localTime){
+        merged.push(cloud.data);
+      } else {
+        merged.push(local);
+        if(localTime > cloudTime) toPushUp.push(local);
+      }
+    } else if(local && !cloud){
+      merged.push(local);
+      toPushUp.push(local);
+    } else if(!local && cloud){
+      merged.push(cloud.data);
+    }
+  }
+  return { merged, toPushUp };
+}
+
+// Runs on sign-in, boot-time session restore, and manual sync — same
+// safety properties as resolveBoatsSyncOnSignIn.
+async function resolveCrewSyncOnSignIn(){
+  if(!state.user) return { ok:true };
+
+  let cloudRows;
+  try{
+    const { data, error } = await getSupabaseClient()
+      .from('crew')
+      .select('id,data,updated_at')
+      .eq('user_id', state.user.id);
+    if(error) throw error;
+    cloudRows = data || [];
+  }catch(e){
+    console.error('crew cloud fetch failed', e);
+    return { ok:false, message: 'fetch failed: ' + (e.message || String(e)) };
+  }
+
+  const { merged, toPushUp } = mergeCrew(state.crew, cloudRows);
+  state.crew = merged;
+  await storeSet(KEYS.CREW, state.crew);
+  renderCrew();
+
+  for(const crewMember of toPushUp){
+    const result = await pushCrewToCloud(crewMember);
+    if(!result.ok) return { ok:false, message: result.message };
+  }
+  return { ok:true };
+}
+
 /* ---------- profile → cloud sync ----------
    One-way for now: pushes this device's local profile up to the profiles
    table, overwriting whatever was there. Runs after every successful sign-in
@@ -433,10 +549,15 @@ async function manualSyncProfile(){
   try{
     await resolveProfileSyncOnSignIn();
     const boatsResult = await resolveBoatsSyncOnSignIn();
-    if(boatsResult.ok){
+    if(!boatsResult.ok){
+      showToast('Sync failed: ' + boatsResult.message);
+      return;
+    }
+    const crewResult = await resolveCrewSyncOnSignIn();
+    if(crewResult.ok){
       showToast('Synced to cloud.');
     } else {
-      showToast('Sync failed: ' + boatsResult.message);
+      showToast('Sync failed: ' + crewResult.message);
     }
   }catch(e){
     console.error('manual sync failed', e);

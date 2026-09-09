@@ -155,16 +155,21 @@ async function saveCrewForm(){
   const email = document.getElementById('crewEmail').value.trim();
   const social = document.getElementById('crewSocial').value.trim();
   const note = document.getElementById('crewNote').value;
+  let savedCrew;
   if(editingCrewId){
     const c = state.crew.find(x=>x.id===editingCrewId);
     c.name=name; c.phone=phone; c.email=email; c.social=social; c.note=note; c.photo=pendingCrewPhoto;
+    c.updatedAt = new Date().toISOString();
+    savedCrew = c;
   } else {
     newId = uid();
-    state.crew.push({ id:newId, name, phone, email, social, note, photo:pendingCrewPhoto });
+    savedCrew = { id:newId, name, phone, email, social, note, photo:pendingCrewPhoto, updatedAt: new Date().toISOString() };
+    state.crew.push(savedCrew);
   }
   const ok = await storeSet(KEYS.CREW, state.crew);
   if(!ok) return;
   showToast(t('toast.crewSaved'));
+  syncCrewIfSignedIn(savedCrew);
   if(crewPickerActive){
     crewPickerActive = false;
     if(newId) crewPickTempIds.push(newId);
@@ -176,9 +181,11 @@ async function saveCrewForm(){
 }
 async function deleteCrewForm(){
   if(!confirm(t('confirm.removeCrew'))) return;
+  const deletedId = editingCrewId;
   state.crew = state.crew.filter(c=>c.id!==editingCrewId);
   await storeSet(KEYS.CREW, state.crew);
   closeSheets(); renderCrew();
+  syncCrewDeleteIfSignedIn(deletedId);
 }
 function renderCrew(){
   const el = document.getElementById('crewList');
