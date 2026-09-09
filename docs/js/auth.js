@@ -285,16 +285,19 @@ async function pushBoatToCloud(boat){
   }
 }
 
-// Explicit single-row delete — the ONLY way a boat is ever removed from the
-// cloud. Called right after a local delete, never inferred elsewhere.
+// Marks a boat deleted — a soft-delete (tombstone) rather than a real SQL
+// delete. This is the ONLY way a boat is ever removed from the cloud, and
+// it's what lets other devices tell "the cloud has never heard of this id"
+// (push it up) apart from "the cloud knows this was deleted" (remove it
+// locally, never resurrect it) — see mergeBoats below. A real row delete
+// couldn't carry that distinction, which is exactly why a boat deleted on
+// one device used to come back after syncing another.
 async function deleteBoatFromCloud(boatId){
   if(!state.user) return { ok:false };
   try{
     const { error } = await getSupabaseClient()
       .from('boats')
-      .delete()
-      .eq('id', boatId)
-      .eq('user_id', state.user.id);
+      .upsert({ id: boatId, user_id: state.user.id, data: {}, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() });
     if(error) throw error;
     return { ok:true };
   }catch(e){
@@ -322,6 +325,14 @@ async function syncBoatDeleteIfSignedIn(boatId){
 // (and queued to push up); a boat in both keeps whichever copy is newer.
 // This is what makes it safe to run on every sign-in and every manual sync,
 // even from a device with an empty or stale local list.
+//
+// A cloud row with deleted_at set is a tombstone (see deleteBoatFromCloud)
+// and is handled before any of that: it's dropped from the merged result
+// unconditionally, and never queued to push back up — even if this device
+// still has a local copy. Without this, "cloud doesn't have it" was
+// indistinguishable from "cloud never heard of it", so a device that still
+// had the boat locally would keep it AND push it right back to the cloud,
+// undoing the delete every time it synced.
 function mergeBoats(localBoats, cloudRows){
   const localById = new Map((localBoats||[]).map(b=>[b.id, b]));
   const cloudById = new Map((cloudRows||[]).map(r=>[r.id, r]));
@@ -333,6 +344,9 @@ function mergeBoats(localBoats, cloudRows){
   for(const id of allIds){
     const local = localById.get(id);
     const cloud = cloudById.get(id);
+    if(cloud && cloud.deleted_at){
+      continue; // tombstoned — drop it locally, never resurrect it in the cloud
+    }
     if(local && cloud){
       const localTime = local.updatedAt ? Date.parse(local.updatedAt) : 0;
       const cloudTime = cloud.updated_at ? Date.parse(cloud.updated_at) : 0;
@@ -364,7 +378,7 @@ async function resolveBoatsSyncOnSignIn(){
   try{
     const { data, error } = await getSupabaseClient()
       .from('boats')
-      .select('id,data,updated_at')
+      .select('id,data,updated_at,deleted_at')
       .eq('user_id', state.user.id);
     if(error) throw error;
     cloudRows = data || [];
@@ -406,16 +420,15 @@ async function pushCrewToCloud(crewMember){
   }
 }
 
-// Explicit single-row delete — the ONLY way a crew member is ever removed
+// Marks a crew member deleted — a soft-delete (tombstone), same reasoning
+// as deleteBoatFromCloud above. The ONLY way a crew member is ever removed
 // from the cloud.
 async function deleteCrewFromCloud(crewId){
   if(!state.user) return { ok:false };
   try{
     const { error } = await getSupabaseClient()
       .from('crew')
-      .delete()
-      .eq('id', crewId)
-      .eq('user_id', state.user.id);
+      .upsert({ id: crewId, user_id: state.user.id, data: {}, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() });
     if(error) throw error;
     return { ok:true };
   }catch(e){
@@ -437,7 +450,8 @@ async function syncCrewDeleteIfSignedIn(crewId){
 }
 
 // Same merge shape as mergeBoats — newest updated_at wins, nothing is ever
-// dropped just for being missing on one side.
+// dropped just for being missing on one side, and a deleted_at tombstone is
+// honored unconditionally (see mergeBoats for why).
 function mergeCrew(localCrew, cloudRows){
   const localById = new Map((localCrew||[]).map(c=>[c.id, c]));
   const cloudById = new Map((cloudRows||[]).map(r=>[r.id, r]));
@@ -449,6 +463,9 @@ function mergeCrew(localCrew, cloudRows){
   for(const id of allIds){
     const local = localById.get(id);
     const cloud = cloudById.get(id);
+    if(cloud && cloud.deleted_at){
+      continue; // tombstoned — drop it locally, never resurrect it in the cloud
+    }
     if(local && cloud){
       const localTime = local.updatedAt ? Date.parse(local.updatedAt) : 0;
       const cloudTime = cloud.updated_at ? Date.parse(cloud.updated_at) : 0;
@@ -477,7 +494,7 @@ async function resolveCrewSyncOnSignIn(){
   try{
     const { data, error } = await getSupabaseClient()
       .from('crew')
-      .select('id,data,updated_at')
+      .select('id,data,updated_at,deleted_at')
       .eq('user_id', state.user.id);
     if(error) throw error;
     cloudRows = data || [];
