@@ -84,6 +84,72 @@ async function initAuth(){
 function applySession(session){
   state.user = session ? { id: session.user.id, email: session.user.email } : null;
   renderAccountUI();
+  ensureRealtimeSync();
+}
+
+/* ---------- live sync across devices (Supabase Realtime) ----------
+   Without this, profile/boats/crew only ever re-pull from the cloud at
+   sign-in, boot-time session restore, or the manual "Sync Now" button — an
+   app left open on another device never notices a change made elsewhere.
+   This subscribes to Postgres change notifications on the three synced
+   tables (scoped to this user's own rows, same as the RLS policies already
+   enforce) and re-runs the existing resolve*SyncOnSignIn merge whenever a
+   row changes — so a boat added on the phone shows up on an already-open
+   tablet within about a second, no reopen or manual tap required.
+   NOTE: this requires each of the "boats", "crew", and "profiles" tables to
+   have Realtime replication turned on in the Supabase dashboard (Database →
+   Replication → toggle the table on, or
+   `alter publication supabase_realtime add table boats;` etc. in the SQL
+   editor) — the subscription below silently receives nothing otherwise. */
+let _realtimeChannel = null;
+let _realtimeUserId = null;
+const _realtimeResyncTimers = {};
+
+// Called from applySession() on every sign-in, boot-time session restore,
+// and auth state change (including token refreshes) — guarded so a
+// same-user re-call (e.g. token refresh) doesn't tear down and rebuild the
+// channel for no reason, and a sign-out (state.user null) tears it down.
+function ensureRealtimeSync(){
+  if(!state.user){ teardownRealtimeSync(); return; }
+  if(_realtimeChannel && _realtimeUserId === state.user.id) return; // already live for this user
+  teardownRealtimeSync();
+  _realtimeUserId = state.user.id;
+  _realtimeChannel = getSupabaseClient()
+    .channel(`sync-${state.user.id}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'boats', filter: `user_id=eq.${state.user.id}` },
+      () => scheduleRealtimeResync('boats'))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'crew', filter: `user_id=eq.${state.user.id}` },
+      () => scheduleRealtimeResync('crew'))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${state.user.id}` },
+      () => scheduleRealtimeResync('profile'))
+    .subscribe((status) => {
+      if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
+        console.error('realtime sync channel', status);
+      }
+    });
+}
+function teardownRealtimeSync(){
+  if(_realtimeChannel){
+    getSupabaseClient().removeChannel(_realtimeChannel);
+    _realtimeChannel = null;
+    _realtimeUserId = null;
+  }
+  Object.values(_realtimeResyncTimers).forEach(clearTimeout);
+}
+
+// Debounced so a burst of changes (e.g. this same device's own push echoing
+// back, or several boats added in quick succession on another device)
+// triggers one re-pull instead of one per row event. Reuses the existing
+// resolve*SyncOnSignIn functions as-is — same merge-by-updated_at logic,
+// same cloud sync queue, same confirm-prompt behavior for a genuinely
+// conflicting profile — this just adds a new trigger that calls them.
+function scheduleRealtimeResync(kind){
+  clearTimeout(_realtimeResyncTimers[kind]);
+  _realtimeResyncTimers[kind] = setTimeout(() => {
+    if(kind === 'boats') resolveBoatsSyncOnSignIn().catch(e => console.error('realtime boats resync failed', e));
+    if(kind === 'crew') resolveCrewSyncOnSignIn().catch(e => console.error('realtime crew resync failed', e));
+    if(kind === 'profile') resolveProfileSyncOnSignIn().catch(e => console.error('realtime profile resync failed', e));
+  }, 600);
 }
 
 // Updates the Account card on the Settings screen. Safe to call any time —
