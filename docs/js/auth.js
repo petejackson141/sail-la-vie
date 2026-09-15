@@ -105,6 +105,32 @@ let _realtimeChannel = null;
 let _realtimeUserId = null;
 const _realtimeResyncTimers = {};
 
+// ---- on-screen debug overlay ----
+// console.log isn't reliably reaching Logcat or chrome://inspect on some
+// older Android WebViews (confirmed on an Android 7/API 24 test tablet), so
+// this writes straight to a small on-screen panel instead — no dependency
+// on any external debugging tool. Set SHOW_SYNC_DEBUG = false once realtime
+// sync is confirmed working, to hide this from real users.
+const SHOW_SYNC_DEBUG = true;
+function debugLog(msg){
+  console.log(msg); // kept in case a device *does* forward it
+  if(!SHOW_SYNC_DEBUG) return;
+  let panel = document.getElementById('syncDebugOverlay');
+  if(!panel){
+    panel = document.createElement('div');
+    panel.id = 'syncDebugOverlay';
+    panel.style.cssText = 'position:fixed;left:0;right:0;bottom:0;max-height:35vh;overflow-y:auto;'
+      + 'background:rgba(0,0,0,0.85);color:#0f0;font:11px/1.4 monospace;padding:6px 8px;z-index:99999;'
+      + 'white-space:pre-wrap;pointer-events:none;';
+    document.body.appendChild(panel);
+  }
+  const line = document.createElement('div');
+  line.textContent = `${new Date().toLocaleTimeString()}  ${msg}`;
+  panel.appendChild(line);
+  while(panel.childNodes.length > 40) panel.removeChild(panel.firstChild);
+  panel.scrollTop = panel.scrollHeight;
+}
+
 // Called from applySession() on every sign-in, boot-time session restore,
 // and auth state change (including token refreshes) — guarded so a
 // same-user re-call (e.g. token refresh) doesn't tear down and rebuild the
@@ -114,18 +140,17 @@ function ensureRealtimeSync(){
   if(_realtimeChannel && _realtimeUserId === state.user.id) return; // already live for this user
   teardownRealtimeSync();
   _realtimeUserId = state.user.id;
+  debugLog('[realtime] connecting for user ' + state.user.id);
   _realtimeChannel = getSupabaseClient()
     .channel(`sync-${state.user.id}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'boats', filter: `user_id=eq.${state.user.id}` },
-      () => scheduleRealtimeResync('boats'))
+      (payload) => { debugLog('[realtime] boats event: ' + payload.eventType); scheduleRealtimeResync('boats'); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'crew', filter: `user_id=eq.${state.user.id}` },
-      () => scheduleRealtimeResync('crew'))
+      (payload) => { debugLog('[realtime] crew event: ' + payload.eventType); scheduleRealtimeResync('crew'); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${state.user.id}` },
-      () => scheduleRealtimeResync('profile'))
-    .subscribe((status) => {
-      if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
-        console.error('realtime sync channel', status);
-      }
+      (payload) => { debugLog('[realtime] profiles event: ' + payload.eventType); scheduleRealtimeResync('profile'); })
+    .subscribe((status, err) => {
+      debugLog('[realtime] channel status: ' + status + (err ? (' — ' + (err.message || err)) : ''));
     });
 }
 function teardownRealtimeSync(){
@@ -146,9 +171,10 @@ function teardownRealtimeSync(){
 function scheduleRealtimeResync(kind){
   clearTimeout(_realtimeResyncTimers[kind]);
   _realtimeResyncTimers[kind] = setTimeout(() => {
-    if(kind === 'boats') resolveBoatsSyncOnSignIn().catch(e => console.error('realtime boats resync failed', e));
-    if(kind === 'crew') resolveCrewSyncOnSignIn().catch(e => console.error('realtime crew resync failed', e));
-    if(kind === 'profile') resolveProfileSyncOnSignIn().catch(e => console.error('realtime profile resync failed', e));
+    debugLog('[realtime] running resync: ' + kind);
+    if(kind === 'boats') resolveBoatsSyncOnSignIn().then(()=>debugLog('[realtime] boats resync done')).catch(e => debugLog('[realtime] boats resync FAILED: ' + (e.message||e)));
+    if(kind === 'crew') resolveCrewSyncOnSignIn().then(()=>debugLog('[realtime] crew resync done')).catch(e => debugLog('[realtime] crew resync FAILED: ' + (e.message||e)));
+    if(kind === 'profile') resolveProfileSyncOnSignIn().then(()=>debugLog('[realtime] profile resync done')).catch(e => debugLog('[realtime] profile resync FAILED: ' + (e.message||e)));
   }, 600);
 }
 
@@ -487,10 +513,14 @@ async function resolveBoatsSyncOnSignInImpl(){
     cloudRows = data || [];
   }catch(e){
     console.error('boats cloud fetch failed', e);
+    debugLog('[sync] boats fetch THREW: ' + (e.message || String(e)));
     return { ok:false, message: 'fetch failed: ' + (e.message || String(e)) };
   }
 
+  debugLog(`[sync] boats fetch OK — cloud rows: ${cloudRows.length} [${cloudRows.map(r=>r.id).join(',')}], local: ${(state.boats||[]).length} [${(state.boats||[]).map(b=>b.id).join(',')}]`);
+
   const { merged, toPushUp } = mergeBoats(state.boats, cloudRows);
+  debugLog(`[sync] boats merged -> ${merged.length} [${merged.map(b=>b.id).join(',')}], pushing up ${toPushUp.length}`);
   state.boats = merged;
   await storeSet(KEYS.BOATS, state.boats);
   renderBoats();
