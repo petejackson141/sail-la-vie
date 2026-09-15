@@ -432,8 +432,14 @@ async function deleteBoatFromCloudImpl(boatId){
 // no-op-when-signed-out, log-don't-toast pattern as the profile ones above.
 async function syncBoatIfSignedIn(boat){
   if(!state.user) return;
+  debugLog('[sync] pushing boat ' + boat.id + ' (' + boat.name + ')...');
   const result = await pushBoatToCloud(boat);
-  if(!result.ok) console.error('background boat sync failed', result.message);
+  if(!result.ok){
+    console.error('background boat sync failed', result.message);
+    debugLog('[sync] boat push FAILED: ' + result.message);
+  } else {
+    debugLog('[sync] boat push OK: ' + boat.id);
+  }
 }
 async function syncBoatDeleteIfSignedIn(boatId){
   if(!state.user) return;
