@@ -48,10 +48,21 @@ function getSupabaseClient(){
               finalUrl = u.toString();
             }catch(e){ /* if URL parsing ever fails, fall back to the original url unchanged */ }
           }
+          // Build headers via the real Headers API rather than object-spread —
+          // spreading a genuine Headers instance (as opposed to a plain {}
+          // object) silently produces an empty object, since Headers doesn't
+          // expose its entries as regular enumerable properties. That
+          // dropped Supabase's own apikey/Authorization headers entirely,
+          // causing every request to fail with "No API key found in
+          // request". The Headers constructor correctly merges regardless
+          // of whether the input was a plain object or a Headers instance.
+          const headers = new Headers((options && options.headers) || {});
+          headers.set('Cache-Control', 'no-cache');
+          headers.set('Pragma', 'no-cache');
           return fetch(finalUrl, {
             ...options,
             cache: 'no-store',
-            headers: { ...(options && options.headers), 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+            headers
           });
         }
       }
