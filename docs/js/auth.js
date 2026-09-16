@@ -26,28 +26,16 @@ let _supabaseClient = null;
 // client before it's actually needed.
 function getSupabaseClient(){
   if(!_supabaseClient){
-    // First attempt: cache:'no-store' + no-cache headers on the client's own
-    // fetch — confirmed on-device this did NOT change anything, meaning
-    // whatever is serving a stale, identical response for these GET
-    // requests sits somewhere between the device and Supabase (a CDN/edge
-    // cache in front of the API) and simply isn't honoring client
-    // cache-control headers at all. The only fix that works against a cache
-    // like that is making every GET request's URL genuinely unique, so
-    // there's nothing matching to serve from cache — done here by appending
-    // a constantly-changing dummy query param. PostgREST ignores unknown
-    // query params, so this is harmless to the actual request.
+    // The device's WebView was serving a stale, months-old cached response
+    // for these GET requests no matter what — turned out to be the WebView's
+    // own HTTP cache (now disabled directly in MainActivity.java) rather
+    // than anything reachable from JS. What's left here is just belt-and-
+    // suspenders no-cache headers, plus a fix for a real bug: Supabase's
+    // Headers object doesn't survive object-spread, which was silently
+    // stripping the apikey/Authorization headers off every request.
     _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       global: {
         fetch: (url, options) => {
-          const method = ((options && options.method) || 'GET').toUpperCase();
-          let finalUrl = url;
-          if(method === 'GET'){
-            try{
-              const u = new URL(url);
-              u.searchParams.set('_cb', Date.now() + '-' + Math.random().toString(36).slice(2));
-              finalUrl = u.toString();
-            }catch(e){ /* if URL parsing ever fails, fall back to the original url unchanged */ }
-          }
           // Build headers via the real Headers API rather than object-spread —
           // spreading a genuine Headers instance (as opposed to a plain {}
           // object) silently produces an empty object, since Headers doesn't
@@ -59,7 +47,7 @@ function getSupabaseClient(){
           const headers = new Headers((options && options.headers) || {});
           headers.set('Cache-Control', 'no-cache');
           headers.set('Pragma', 'no-cache');
-          return fetch(finalUrl, {
+          return fetch(url, {
             ...options,
             cache: 'no-store',
             headers
