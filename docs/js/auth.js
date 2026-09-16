@@ -115,13 +115,29 @@ const SHOW_SYNC_DEBUG = true;
 function debugLog(msg){
   console.log(msg); // kept in case a device *does* forward it
   if(!SHOW_SYNC_DEBUG) return;
+
+  // Small tap-to-open toggle, pinned to the middle of the right edge — out
+  // of the way of every header button and bottom-nav item we've hit so far.
+  // The log panel itself only appears once you tap the toggle, and starts
+  // hidden again on every fresh app launch, so it never sits in front of
+  // whatever you're trying to tap next.
+  let toggle = document.getElementById('syncDebugToggle');
   let panel = document.getElementById('syncDebugOverlay');
-  if(!panel){
+  if(!toggle){
+    toggle = document.createElement('div');
+    toggle.id = 'syncDebugToggle';
+    toggle.textContent = '🐛';
+    toggle.style.cssText = 'position:fixed;right:0;top:50%;transform:translateY(-50%);'
+      + 'background:rgba(0,0,0,0.55);color:#0f0;font-size:16px;line-height:1;padding:6px 4px;'
+      + 'border-radius:6px 0 0 6px;z-index:100000;';
+    toggle.onclick = () => { panel.style.display = (panel.style.display === 'none') ? 'block' : 'none'; };
+    document.body.appendChild(toggle);
+
     panel = document.createElement('div');
     panel.id = 'syncDebugOverlay';
-    panel.style.cssText = 'position:fixed;left:0;right:0;top:0;max-height:22vh;overflow-y:auto;'
-      + 'background:rgba(0,0,0,0.85);color:#0f0;font:10px/1.35 monospace;padding:4px 6px;z-index:99999;'
-      + 'white-space:pre-wrap;pointer-events:none;';
+    panel.style.cssText = 'position:fixed;left:0;right:0;top:0;max-height:40vh;overflow-y:auto;'
+      + 'background:rgba(0,0,0,0.9);color:#0f0;font:10px/1.35 monospace;padding:4px 6px;z-index:99999;'
+      + 'white-space:pre-wrap;display:none;'; // hidden until the toggle is tapped
     document.body.appendChild(panel);
   }
   const line = document.createElement('div');
