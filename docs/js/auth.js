@@ -546,12 +546,21 @@ async function resolveBoatsSyncOnSignInImpl(){
 
   const { merged, toPushUp } = mergeBoats(state.boats, cloudRows);
   debugLog(`[sync] boats merged -> ${merged.length} [${merged.map(b=>b.id).join(',')}], pushing up ${toPushUp.length}`);
+  if(toPushUp.length){
+    const cloudById = new Map(cloudRows.map(r=>[r.id, r]));
+    for(const b of toPushUp){
+      const cr = cloudById.get(b.id);
+      debugLog(`[sync] toPushUp: ${b.id} "${b.name}" local.updatedAt=${b.updatedAt} vs cloud.updated_at=${cr ? cr.updated_at : '(no cloud row)'}`);
+    }
+  }
   state.boats = merged;
   await storeSet(KEYS.BOATS, state.boats);
   renderBoats();
 
   for(const boat of toPushUp){
+    debugLog(`[sync] pushing up boat ${boat.id} with updatedAt=${boat.updatedAt}...`);
     const result = await pushBoatToCloudImpl(boat);
+    debugLog(`[sync] push result for ${boat.id}: ${result.ok ? 'OK' : ('FAILED — ' + result.message)}`);
     if(!result.ok) return { ok:false, message: result.message };
   }
   return { ok:true };
