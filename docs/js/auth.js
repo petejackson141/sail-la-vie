@@ -26,7 +26,26 @@ let _supabaseClient = null;
 // client before it's actually needed.
 function getSupabaseClient(){
   if(!_supabaseClient){
-    _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    // Some Android WebViews (confirmed on an Android 7/API 24 test device)
+    // aggressively cache GET requests that look identical byte-for-byte —
+    // and every .select().eq('user_id', ...) call from a given signed-in
+    // device IS byte-for-byte identical, request after request, even though
+    // the underlying data keeps changing server-side. That produced a bug
+    // where newly-pushed boats/crew rows were invisible to this same
+    // device's own next fetch, no matter how many times it re-synced —
+    // the WebView was just replaying its first cached response instead of
+    // asking Supabase again. Forcing cache:'no-store' on every request this
+    // client makes, and adding no-cache headers as a second layer of
+    // defense, stops that.
+    _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      global: {
+        fetch: (url, options) => fetch(url, {
+          ...options,
+          cache: 'no-store',
+          headers: { ...(options && options.headers), 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+        })
+      }
+    });
   }
   return _supabaseClient;
 }
