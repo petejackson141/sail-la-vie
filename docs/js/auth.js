@@ -119,8 +119,8 @@ function debugLog(msg){
   if(!panel){
     panel = document.createElement('div');
     panel.id = 'syncDebugOverlay';
-    panel.style.cssText = 'position:fixed;left:0;right:0;bottom:0;max-height:35vh;overflow-y:auto;'
-      + 'background:rgba(0,0,0,0.85);color:#0f0;font:11px/1.4 monospace;padding:6px 8px;z-index:99999;'
+    panel.style.cssText = 'position:fixed;left:0;right:0;top:0;max-height:22vh;overflow-y:auto;'
+      + 'background:rgba(0,0,0,0.85);color:#0f0;font:10px/1.35 monospace;padding:4px 6px;z-index:99999;'
       + 'white-space:pre-wrap;pointer-events:none;';
     document.body.appendChild(panel);
   }
