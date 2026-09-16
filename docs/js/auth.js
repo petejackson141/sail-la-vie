@@ -504,13 +504,16 @@ function mergeBoats(localBoats, cloudRows){
 // unqueued *Impl push internally since this function already holds the
 // queue's one slot.
 function resolveBoatsSyncOnSignIn(){
+  debugLog('[sync] resolveBoatsSyncOnSignIn() called — queuing...');
   return withCloudSyncQueue(resolveBoatsSyncOnSignInImpl);
 }
 async function resolveBoatsSyncOnSignInImpl(){
+  debugLog('[sync] boats task DEQUEUED, starting');
   if(!state.user) return { ok:true };
 
   let cloudRows;
   try{
+    debugLog('[sync] boats: sending fetch to Supabase...');
     const { data, error } = await getSupabaseClient()
       .from('boats')
       .select('id,data,updated_at,deleted_at')
