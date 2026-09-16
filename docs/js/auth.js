@@ -26,24 +26,34 @@ let _supabaseClient = null;
 // client before it's actually needed.
 function getSupabaseClient(){
   if(!_supabaseClient){
-    // Some Android WebViews (confirmed on an Android 7/API 24 test device)
-    // aggressively cache GET requests that look identical byte-for-byte —
-    // and every .select().eq('user_id', ...) call from a given signed-in
-    // device IS byte-for-byte identical, request after request, even though
-    // the underlying data keeps changing server-side. That produced a bug
-    // where newly-pushed boats/crew rows were invisible to this same
-    // device's own next fetch, no matter how many times it re-synced —
-    // the WebView was just replaying its first cached response instead of
-    // asking Supabase again. Forcing cache:'no-store' on every request this
-    // client makes, and adding no-cache headers as a second layer of
-    // defense, stops that.
+    // First attempt: cache:'no-store' + no-cache headers on the client's own
+    // fetch — confirmed on-device this did NOT change anything, meaning
+    // whatever is serving a stale, identical response for these GET
+    // requests sits somewhere between the device and Supabase (a CDN/edge
+    // cache in front of the API) and simply isn't honoring client
+    // cache-control headers at all. The only fix that works against a cache
+    // like that is making every GET request's URL genuinely unique, so
+    // there's nothing matching to serve from cache — done here by appending
+    // a constantly-changing dummy query param. PostgREST ignores unknown
+    // query params, so this is harmless to the actual request.
     _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       global: {
-        fetch: (url, options) => fetch(url, {
-          ...options,
-          cache: 'no-store',
-          headers: { ...(options && options.headers), 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-        })
+        fetch: (url, options) => {
+          const method = ((options && options.method) || 'GET').toUpperCase();
+          let finalUrl = url;
+          if(method === 'GET'){
+            try{
+              const u = new URL(url);
+              u.searchParams.set('_cb', Date.now() + '-' + Math.random().toString(36).slice(2));
+              finalUrl = u.toString();
+            }catch(e){ /* if URL parsing ever fails, fall back to the original url unchanged */ }
+          }
+          return fetch(finalUrl, {
+            ...options,
+            cache: 'no-store',
+            headers: { ...(options && options.headers), 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+          });
+        }
       }
     });
   }
