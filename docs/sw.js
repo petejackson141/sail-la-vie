@@ -26,8 +26,20 @@
   indefinitely, regardless of how many times you pushed, hard-refreshed, or
   cleared the browser's own cache. Switching those files to network-first
   (below) removes the dependency on that detection mechanism entirely.
+
+  --- Why Supabase reads used to go stale forever ---
+  The cache-first branch below was written for pinned third-party CDN
+  library URLs (Leaflet, jsPDF, etc.) — but it matched on "any cross-origin
+  GET request", and Supabase's API is cross-origin too. The very first
+  successful boats/crew/profile fetch got cached, and every identical
+  request after that (which is all of them, since the URL and query never
+  change) replayed that same first response forever — invisible to and
+  unfixable from any fetch-header or WebView cache-setting change, since the
+  service worker intercepts the request before either of those layers ever
+  sees it. Supabase (and any other live API traffic) is now explicitly
+  excluded from caching entirely, further down.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v6';
+const CACHE_NAME = 'sail-la-vie-shell-v7';
 
 const APP_SHELL = [
   './',
@@ -73,6 +85,18 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   const isSameOrigin = url.origin === self.location.origin;
   const isHtml = req.mode === 'navigate' || req.destination === 'document';
+
+  // Live API traffic (Supabase) must never be served from the service
+  // worker's cache, and must never be written into it either — it's
+  // per-user, constantly-changing data, not a static asset. This has to be
+  // checked before the same-origin/cross-origin split below, since Supabase
+  // requests are cross-origin and would otherwise fall into the cache-first
+  // branch meant only for pinned third-party library URLs.
+  const isSupabase = url.hostname.endsWith('.supabase.co');
+  if (isSupabase) {
+    event.respondWith(fetch(req));
+    return;
+  }
 
   if (isSameOrigin) {
     // Network-first for everything we own — the HTML shell and our own JS —
