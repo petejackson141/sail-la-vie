@@ -102,6 +102,7 @@ async function initAuth(){
     resolveProfileSyncOnSignIn().catch(e => console.error('boot-time profile sync failed', e));
     resolveBoatsSyncOnSignIn().catch(e => console.error('boot-time boats sync failed', e));
     resolveCrewSyncOnSignIn().catch(e => console.error('boot-time crew sync failed', e));
+    resolveTripsSyncOnSignIn().catch(e => console.error('boot-time trips sync failed', e));
   }
 
   getSupabaseClient().auth.onAuthStateChange((_event, session) => {
@@ -191,6 +192,8 @@ function ensureRealtimeSync(){
       (payload) => { debugLog('[realtime] boats event: ' + payload.eventType); scheduleRealtimeResync('boats'); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'crew', filter: `user_id=eq.${state.user.id}` },
       (payload) => { debugLog('[realtime] crew event: ' + payload.eventType); scheduleRealtimeResync('crew'); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'trips', filter: `user_id=eq.${state.user.id}` },
+      (payload) => { debugLog('[realtime] trips event: ' + payload.eventType); scheduleRealtimeResync('trips'); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${state.user.id}` },
       (payload) => { debugLog('[realtime] profiles event: ' + payload.eventType); scheduleRealtimeResync('profile'); })
     .subscribe((status, err) => {
@@ -218,6 +221,7 @@ function scheduleRealtimeResync(kind){
     debugLog('[realtime] running resync: ' + kind);
     if(kind === 'boats') resolveBoatsSyncOnSignIn().then(()=>debugLog('[realtime] boats resync done')).catch(e => debugLog('[realtime] boats resync FAILED: ' + (e.message||e)));
     if(kind === 'crew') resolveCrewSyncOnSignIn().then(()=>debugLog('[realtime] crew resync done')).catch(e => debugLog('[realtime] crew resync FAILED: ' + (e.message||e)));
+    if(kind === 'trips') resolveTripsSyncOnSignIn().then(()=>debugLog('[realtime] trips resync done')).catch(e => debugLog('[realtime] trips resync FAILED: ' + (e.message||e)));
     if(kind === 'profile') resolveProfileSyncOnSignIn().then(()=>debugLog('[realtime] profile resync done')).catch(e => debugLog('[realtime] profile resync FAILED: ' + (e.message||e)));
   }, 600);
 }
@@ -325,6 +329,7 @@ async function submitAuthForm(){
         await resolveProfileSyncOnSignIn();
         await resolveBoatsSyncOnSignIn();
         await resolveCrewSyncOnSignIn();
+        await resolveTripsSyncOnSignIn();
         showToast('Account created.');
       } else {
         // Normal case: Supabase emails a confirmation link and there's no
@@ -339,6 +344,7 @@ async function submitAuthForm(){
       await resolveProfileSyncOnSignIn();
       await resolveBoatsSyncOnSignIn();
       await resolveCrewSyncOnSignIn();
+      await resolveTripsSyncOnSignIn();
       showToast('Signed in.');
     }
   } catch(e){
@@ -594,6 +600,191 @@ async function resolveBoatsSyncOnSignInImpl(){
   return { ok:true };
 }
 
+/* ---------- trips ↔ cloud ----------
+   Same push-this-one-row-on-save/delete, pull-and-merge-on-sign-in shape as
+   boats and crew above — with one structural difference worth flagging:
+   boats/crew each live as a single array already in memory (state.boats /
+   state.crew), but trips don't. Only the lightweight state.tripIndex is
+   ever fully in memory; each trip's real data (GPS track, photos, notes)
+   lives on disk under 'trip:'+id and is loaded on demand (see storage.js's
+   backupToFile for the same load-every-trip pattern). So syncing trips
+   means: load every local trip's full record first, merge those full
+   records (not the index) against the cloud, write the merged full records
+   back to storage, then rebuild tripIndex from whatever survived — rather
+   than merging one in-memory array directly the way mergeBoats/mergeCrew
+   do.
+   NOTE: trip records can be considerably larger than boats/crew — a sail
+   with a long GPS track and several embedded photos — so this moves more
+   data per sync than boats/crew do. Same mechanism either way; just worth
+   knowing if a big backlog of old sails syncs slower over a weak
+   connection. */
+async function pushTripToCloudImpl(trip){
+  if(!state.user) return { ok:false };
+  try{
+    const { error } = await getSupabaseClient()
+      .from('trips')
+      .upsert({ id: trip.id, user_id: state.user.id, data: trip, updated_at: trip.updatedAt || new Date().toISOString() });
+    if(error) throw error;
+    return { ok:true };
+  }catch(e){
+    console.error('trip cloud push failed', e);
+    return { ok:false, message: e.message || String(e) };
+  }
+}
+function pushTripToCloud(trip){
+  return withCloudSyncQueue(() => pushTripToCloudImpl(trip));
+}
+// Fire-and-forget wrapper, called right after a trip is saved (see
+// finalizeSaveTrip() in journey.js) — same no-op-when-signed-out,
+// log-don't-toast pattern as the boats/crew ones above.
+async function syncTripIfSignedIn(trip){
+  if(!state.user) return;
+  const result = await pushTripToCloud(trip);
+  if(!result.ok) console.error('background trip sync failed', result.message);
+}
+
+// Soft-delete (tombstone) — same reasoning as deleteBoatFromCloudImpl
+// above: a real SQL delete would be indistinguishable from "the cloud never
+// heard of this trip", so a device that still has it locally would just
+// push it right back and undo the delete on the next sync.
+async function deleteTripFromCloudImpl(tripId){
+  if(!state.user) return { ok:false };
+  try{
+    const { error } = await getSupabaseClient()
+      .from('trips')
+      .upsert({ id: tripId, user_id: state.user.id, data: {}, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+    if(error) throw error;
+    return { ok:true };
+  }catch(e){
+    console.error('trip cloud delete failed', e);
+    return { ok:false, message: e.message || String(e) };
+  }
+}
+function deleteTripFromCloud(tripId){
+  return withCloudSyncQueue(() => deleteTripFromCloudImpl(tripId));
+}
+// Fire-and-forget wrapper, called right after a trip is deleted (see
+// deleteTripPrompt() in history-maps.js).
+async function syncTripDeleteIfSignedIn(tripId){
+  if(!state.user) return;
+  const result = await deleteTripFromCloud(tripId);
+  if(!result.ok) console.error('background trip delete sync failed', result.message);
+}
+
+// Identical shape to mergeBoats/mergeCrew — newest updated_at wins, a
+// tombstoned cloud row is dropped unconditionally and never resurrected,
+// and nothing is ever dropped just for being missing from one side.
+function mergeTrips(localTrips, cloudRows){
+  const localById = new Map((localTrips||[]).map(tr=>[tr.id, tr]));
+  const cloudById = new Map((cloudRows||[]).map(r=>[r.id, r]));
+  const allIds = new Set([...localById.keys(), ...cloudById.keys()]);
+
+  const merged = [];
+  const toPushUp = [];
+
+  for(const id of allIds){
+    const local = localById.get(id);
+    const cloud = cloudById.get(id);
+    if(cloud && cloud.deleted_at){
+      continue; // tombstoned — drop it locally, never resurrect it in the cloud
+    }
+    if(local && cloud){
+      const localTime = local.updatedAt ? Date.parse(local.updatedAt) : 0;
+      const cloudTime = cloud.updated_at ? Date.parse(cloud.updated_at) : 0;
+      if(cloudTime > localTime){
+        merged.push(cloud.data);
+      } else {
+        merged.push(local);
+        if(localTime > cloudTime) toPushUp.push(local);
+      }
+    } else if(local && !cloud){
+      merged.push(local);
+      toPushUp.push(local);
+    } else if(!local && cloud){
+      merged.push(cloud.data);
+    }
+  }
+  return { merged, toPushUp };
+}
+
+// Builds a tripIndex summary entry from a full trip record — the exact same
+// fields finalizeSaveTrip() computes in journey.js, kept in sync with that
+// shape so a trip pulled down from the cloud looks identical in History to
+// one saved locally on this device.
+function tripIndexEntryFrom(trip){
+  return {
+    id: trip.id, title: trip.title, date: trip.date,
+    elapsedSeconds: trip.elapsedSeconds, distanceNm: trip.distanceNm,
+    avgSpeed: trip.avgSpeed, maxSpeed: trip.maxSpeed,
+    coverPhoto: trip.coverPhoto, hasPhotos: (trip.photos||[]).length>0,
+    boatId: trip.boatId, notes: trip.notes, place: trip.place,
+    skipperId: trip.skipperId||null
+  };
+}
+
+function resolveTripsSyncOnSignIn(){
+  debugLog('[sync] resolveTripsSyncOnSignIn() called — queuing...');
+  return withCloudSyncQueue(resolveTripsSyncOnSignInImpl);
+}
+async function resolveTripsSyncOnSignInImpl(){
+  debugLog('[sync] trips task DEQUEUED, starting');
+  if(!state.user) return { ok:true };
+
+  // Load every trip this device actually has — not just the lightweight
+  // index — since the merge needs each trip's real content to compare
+  // updatedAt and to push up if this device's copy wins.
+  const localTrips = [];
+  for(const entry of state.tripIndex){
+    const full = await storeGet('trip:'+entry.id);
+    if(full) localTrips.push(full);
+  }
+
+  let cloudRows;
+  try{
+    debugLog('[sync] trips: sending fetch to Supabase...');
+    const { data, error } = await getSupabaseClient()
+      .from('trips')
+      .select('id,data,updated_at,deleted_at')
+      .eq('user_id', state.user.id);
+    if(error) throw error;
+    cloudRows = data || [];
+  }catch(e){
+    console.error('trips cloud fetch failed', e);
+    debugLog('[sync] trips fetch THREW: ' + (e.message || String(e)));
+    return { ok:false, message: 'fetch failed: ' + (e.message || String(e)) };
+  }
+
+  debugLog(`[sync] trips fetch OK — cloud rows: ${cloudRows.length} [${cloudRows.map(r=>r.id).join(',')}], local: ${localTrips.length} [${localTrips.map(tr=>tr.id).join(',')}]`);
+
+  const { merged, toPushUp } = mergeTrips(localTrips, cloudRows);
+  debugLog(`[sync] trips merged -> ${merged.length} [${merged.map(tr=>tr.id).join(',')}], pushing up ${toPushUp.length}`);
+
+  // Write every surviving trip's full record back to storage, and drop the
+  // full record for any local trip that didn't survive the merge (i.e. was
+  // tombstoned elsewhere) — otherwise a deleted trip's data would keep
+  // sitting on disk even after it disappears from the index.
+  const mergedIds = new Set(merged.map(tr=>tr.id));
+  for(const trip of merged){
+    await storeSet('trip:'+trip.id, trip);
+  }
+  for(const entry of state.tripIndex){
+    if(!mergedIds.has(entry.id)) await storeDelete('trip:'+entry.id);
+  }
+
+  state.tripIndex = merged.map(tripIndexEntryFrom);
+  await storeSet(KEYS.INDEX, state.tripIndex);
+  renderHistory();
+  renderHomeStats();
+
+  for(const trip of toPushUp){
+    debugLog(`[sync] pushing up trip ${trip.id} with updatedAt=${trip.updatedAt}...`);
+    const result = await pushTripToCloudImpl(trip);
+    debugLog(`[sync] push result for ${trip.id}: ${result.ok ? 'OK' : ('FAILED — ' + result.message)}`);
+    if(!result.ok) return { ok:false, message: result.message };
+  }
+  return { ok:true };
+}
+
 /* ---------- crew ↔ cloud ----------
    Exactly the same shape as boats above: push-this-one-row on edit, explicit
    single-row delete, merge-by-id-and-updated_at on sign-in/boot/manual sync.
@@ -781,10 +972,15 @@ async function manualSyncProfile(){
       return;
     }
     const crewResult = await resolveCrewSyncOnSignIn();
-    if(crewResult.ok){
+    if(!crewResult.ok){
+      showToast('Sync failed: ' + crewResult.message);
+      return;
+    }
+    const tripsResult = await resolveTripsSyncOnSignIn();
+    if(tripsResult.ok){
       showToast('Synced to cloud.');
     } else {
-      showToast('Sync failed: ' + crewResult.message);
+      showToast('Sync failed: ' + tripsResult.message);
     }
   }catch(e){
     console.error('manual sync failed', e);

@@ -1108,6 +1108,7 @@ function skipCoverPick(){
 // isEditing to decide whether to overwrite the existing tripIndex entry in
 // place or add a new one, since editing must never duplicate the trip.
 async function finalizeSaveTrip(){
+  currentTrip.updatedAt = new Date().toISOString();
   const ok = await storeSet('trip:'+currentTrip.id, currentTrip);
   if(!ok){ showToast(t('toast.saveFailed')); return; }
 
@@ -1127,6 +1128,7 @@ async function finalizeSaveTrip(){
   }
   await storeSet(KEYS.INDEX, state.tripIndex);
   showToast(currentTrip.isEditing ? t('toast.changesSaved') : t('toast.journeySaved'));
+  syncTripIfSignedIn(currentTrip);
   const savedId = currentTrip.id;
   currentTrip = null;
   clearActiveTripCheckpoint();

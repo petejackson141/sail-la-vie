@@ -625,10 +625,12 @@ function renderLiveTrack(){
 async function deleteTripPrompt(){
   if(!openTripId) return;
   if(!(await showConfirm("This will delete this log entry and you will lose all its data", {danger:true}))) return;
+  const deletedId = openTripId;
   await storeDelete('trip:'+openTripId);
   state.tripIndex = state.tripIndex.filter(t=>t.id!==openTripId);
   await storeSet(KEYS.INDEX, state.tripIndex);
   showToast(t('toast.tripDeleted'));
+  syncTripDeleteIfSignedIn(deletedId);
   nav('history'); renderHomeStats();
 }
 // Native share sheet if the browser supports it (navigator.share), otherwise
