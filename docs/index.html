@@ -125,6 +125,12 @@
     opacity:.06; pointer-events:none; z-index:0;
   }
   @media print{ #watermark{ display:none; } }
+  /* Faint topographic contour-line texture behind the whole app, like a
+     nautical chart's depth lines — matches the reef/azure reference image. */
+  #contourBg{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; opacity:.4; color:var(--navy); }
+  #contourBg svg{ width:100%; height:100%; display:block; }
+  html[data-theme="dark"] #contourBg{ opacity:.16; color:var(--ink-faint); }
+  @media print{ #contourBg{ display:none; } }
   @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
   @media (prefers-reduced-motion: reduce){ .screen{animation:none;} }
 
@@ -156,6 +162,7 @@
   .btn-ghost{ background:transparent; color:var(--ink-muted); }
   .btn-sm{ padding:10px 16px; font-size:13px; width:auto; }
   .btn svg{ width:18px; height:18px; }
+  .btn .icon-emoji{ font-size:19px; line-height:1; }
 
   /* ---------- compass logo ---------- */
   .compass-wrap{ display:flex; align-items:center; justify-content:center; margin:18px 0 28px; }
@@ -184,15 +191,13 @@
   .quicklink{ flex:1 1 calc(50% - 6px); background:var(--bg-elevated); border:1.5px solid var(--border); border-radius:var(--radius-md);
     padding:14px 10px; text-align:center; cursor:pointer; box-shadow:var(--shadow); }
   .quicklink svg{ width:22px; height:22px; color:var(--navy); margin-bottom:6px; }
+  .quicklink .icon-emoji{ display:block; font-size:26px; margin-bottom:6px; line-height:1; }
   html[data-theme="dark"] .quicklink svg{ color:var(--gold); }
-  .quicklink span{ display:block; font-size:12px; font-weight:600; color:var(--ink); }
-  /* Alternating teal/coral accent to match the reef theme's Fleet/Crew cards */
+  .quicklink span:not(.icon-emoji){ display:block; font-size:12px; font-weight:600; color:var(--ink); }
+  /* Alternating teal/coral accent border to match the reef theme's Fleet/Crew cards
+     (icons are now emoji, which carry their own color, so only the border alternates) */
   .quicklink:nth-child(odd){ border-color:var(--teal); }
-  .quicklink:nth-child(odd) svg{ color:var(--teal); }
   .quicklink:nth-child(even){ border-color:var(--coral); }
-  .quicklink:nth-child(even) svg{ color:var(--coral); }
-  html[data-theme="dark"] .quicklink:nth-child(odd) svg{ color:var(--teal); }
-  html[data-theme="dark"] .quicklink:nth-child(even) svg{ color:var(--coral); }
 
   /* ---------- bottom nav ---------- */
   .bottombar-wrap{ position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:480px; z-index:50; }
@@ -420,7 +425,7 @@
   /* ---------- grid view (boats/crew, toggled via toggleListView()) ---------- */
   .grid-cards{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
   .grid-card{ background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md);
-    padding:14px 10px 12px; box-shadow:var(--shadow); cursor:pointer; text-align:center; }
+    padding:14px 10px 12px; box-shadow:var(--shadow); cursor:pointer; text-align:center; min-width:0; overflow:hidden; }
   .grid-card .row-photo{ width:64px; height:64px; margin:0 auto 10px; border-radius:16px; }
   .grid-card .row-photo.round{ border-radius:50%; }
   .grid-card .row-info .name{ font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -854,6 +859,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 <body>
 
 <div id="app" style="display:flex;">
+  <div id="contourBg" aria-hidden="true"><svg viewBox="0 0 400 800" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M123.9 151.0 Q112.9 161.9 108.6 176.3 Q104.3 190.8 89.7 206.0 Q75.0 221.3 56.9 211.9 Q38.9 202.6 36.8 182.9 Q34.7 163.2 31.6 151.6 Q28.4 140.0 22.0 122.8 Q15.6 105.7 26.0 89.4 Q36.4 73.1 55.7 70.5 Q75.0 67.8 93.8 71.3 Q112.7 74.8 127.4 88.0 Q142.2 101.2 138.5 120.6 Q134.9 140.0 123.9 151.0 Z"/><path d="M124.2 155.0 Q126.9 170.0 119.3 186.7 Q111.6 203.3 93.3 202.4 Q75.0 201.5 65.9 186.6 Q56.7 171.7 52.7 163.4 Q48.8 155.1 40.0 147.6 Q31.3 140.0 30.8 127.1 Q30.3 114.2 40.6 106.2 Q50.8 98.1 62.9 94.8 Q75.0 91.6 88.0 93.3 Q100.9 95.1 108.8 105.5 Q116.8 115.9 119.1 127.9 Q121.4 140.0 124.2 155.0 Z"/><path d="M102.2 146.2 Q96.5 152.4 92.9 158.7 Q89.4 164.9 82.2 172.6 Q75.0 180.2 64.9 177.5 Q54.9 174.8 51.8 165.0 Q48.7 155.2 46.9 147.6 Q45.0 140.0 42.6 130.0 Q40.2 119.9 46.8 111.2 Q53.3 102.5 64.2 102.8 Q75.0 103.2 83.7 106.5 Q92.4 109.9 100.0 115.6 Q107.5 121.2 107.7 130.6 Q108.0 140.0 102.2 146.2 Z"/><path d="M392.2 105.4 Q383.3 120.7 367.8 124.7 Q352.3 128.6 341.1 131.9 Q330.0 135.3 317.3 134.6 Q304.7 133.8 298.0 123.1 Q291.3 112.3 289.2 101.2 Q287.1 90.0 284.6 76.2 Q282.2 62.4 291.6 51.0 Q300.9 39.6 315.5 44.5 Q330.0 49.3 338.2 55.5 Q346.3 61.7 361.0 62.7 Q375.6 63.7 388.4 76.8 Q401.1 90.0 392.2 105.4 Z"/><path d="M362.5 98.8 Q360.6 107.7 355.1 115.9 Q349.7 124.1 339.8 123.6 Q330.0 123.1 323.6 117.5 Q317.3 112.0 310.0 108.9 Q302.7 105.8 295.8 97.9 Q288.9 90.0 293.7 80.9 Q298.5 71.8 307.5 69.3 Q316.6 66.7 323.3 62.6 Q330.0 58.6 340.7 55.7 Q351.4 52.9 359.0 60.9 Q366.6 68.9 365.5 79.4 Q364.5 90.0 362.5 98.8 Z"/><path d="M348.9 95.4 Q348.9 100.9 343.6 102.7 Q338.3 104.4 334.2 103.1 Q330.0 101.7 325.8 103.1 Q321.6 104.5 314.8 103.6 Q308.0 102.7 305.9 96.3 Q303.8 90.0 307.2 84.4 Q310.7 78.8 314.8 74.8 Q318.9 70.7 324.4 68.8 Q330.0 66.9 334.8 70.2 Q339.6 73.4 341.6 77.8 Q343.6 82.1 346.3 86.1 Q349.0 90.0 348.9 95.4 Z"/><path d="M111.8 442.3 Q97.5 454.5 87.6 461.9 Q77.7 469.3 66.3 477.6 Q55.0 485.8 41.9 480.5 Q28.9 475.2 24.4 462.7 Q19.9 450.2 14.4 440.1 Q8.8 430.0 5.8 414.9 Q2.8 399.9 14.8 390.4 Q26.7 381.0 40.8 382.0 Q55.0 383.1 69.6 381.2 Q84.2 379.3 103.2 385.3 Q122.1 391.3 124.1 410.6 Q126.0 430.0 111.8 442.3 Z"/><path d="M84.1 437.5 Q80.9 444.9 77.2 453.5 Q73.5 462.1 64.3 467.2 Q55.0 472.4 43.9 470.4 Q32.8 468.4 22.8 461.4 Q12.7 454.4 8.5 442.2 Q4.4 430.0 11.7 419.6 Q18.9 409.2 29.1 406.0 Q39.3 402.8 47.1 399.1 Q55.0 395.4 66.0 393.6 Q77.1 391.8 84.5 400.2 Q91.9 408.7 89.7 419.3 Q87.4 430.0 84.1 437.5 Z"/><path d="M76.5 435.2 Q73.0 440.4 67.9 441.9 Q62.8 443.4 58.9 445.0 Q55.0 446.6 48.8 449.0 Q42.6 451.5 35.9 448.2 Q29.2 444.9 29.0 437.4 Q28.7 430.0 31.8 424.2 Q35.0 418.5 38.2 412.5 Q41.4 406.5 48.2 402.2 Q55.0 397.8 62.8 400.4 Q70.7 402.9 74.8 409.6 Q78.9 416.2 79.4 423.1 Q79.9 430.0 76.5 435.2 Z"/><path d="M401.1 481.9 Q386.1 493.7 380.1 507.1 Q374.1 520.4 359.6 536.1 Q345.0 551.8 325.9 544.0 Q306.7 536.3 302.7 516.5 Q298.6 496.8 297.4 483.4 Q296.2 470.0 295.7 455.6 Q295.2 441.2 305.9 431.0 Q316.6 420.7 330.8 416.2 Q345.0 411.6 364.6 406.8 Q384.3 402.0 404.2 413.2 Q424.1 424.3 420.1 447.2 Q416.1 470.0 401.1 481.9 Z"/><path d="M387.1 479.9 Q379.4 489.8 373.9 500.2 Q368.4 510.6 356.7 520.4 Q345.0 530.1 332.3 522.1 Q319.6 514.0 319.6 499.4 Q319.6 484.7 316.6 477.3 Q313.6 470.0 305.2 456.1 Q296.8 442.2 304.1 427.0 Q311.4 411.8 328.2 411.6 Q345.0 411.3 358.5 417.4 Q371.9 423.4 383.0 432.5 Q394.0 441.7 394.5 455.8 Q394.9 470.0 387.1 479.9 Z"/><path d="M382.3 478.5 Q374.4 487.0 367.9 492.7 Q361.4 498.5 353.2 505.2 Q345.0 511.9 334.1 509.8 Q323.3 507.6 318.7 497.7 Q314.1 487.9 313.8 478.9 Q313.6 470.0 315.9 462.3 Q318.3 454.6 325.3 451.4 Q332.4 448.1 338.7 448.3 Q345.0 448.5 352.9 445.5 Q360.9 442.5 372.9 444.7 Q385.0 446.9 387.6 458.5 Q390.2 470.0 382.3 478.5 Z"/><path d="M251.7 309.8 Q244.0 319.7 236.1 325.6 Q228.2 331.6 219.1 338.9 Q210.0 346.1 197.6 344.6 Q185.1 343.0 178.6 332.5 Q172.0 321.9 169.2 311.0 Q166.4 300.0 168.0 288.3 Q169.5 276.6 180.6 272.4 Q191.7 268.2 200.8 273.6 Q210.0 279.0 216.1 279.0 Q222.1 279.0 234.7 278.8 Q247.2 278.5 253.2 289.3 Q259.3 300.0 251.7 309.8 Z"/><path d="M228.8 304.6 Q225.9 309.2 223.1 313.6 Q220.4 318.0 215.2 322.4 Q210.0 326.8 203.3 325.0 Q196.6 323.3 193.8 317.1 Q191.0 311.0 189.0 305.5 Q187.0 300.0 185.2 292.3 Q183.4 284.6 188.3 277.7 Q193.2 270.9 201.6 271.2 Q210.0 271.5 216.0 275.3 Q222.0 279.2 226.3 283.7 Q230.5 288.1 231.1 294.1 Q231.7 300.0 228.8 304.6 Z"/><path d="M149.1 672.9 Q139.6 685.8 129.7 694.3 Q119.7 702.8 107.4 708.5 Q95.0 714.1 84.4 705.3 Q73.9 696.6 73.9 684.4 Q73.8 672.2 68.1 666.1 Q62.4 660.0 53.4 645.4 Q44.4 630.8 53.6 617.6 Q62.9 604.4 78.9 607.4 Q95.0 610.3 107.0 614.4 Q118.9 618.6 133.7 623.8 Q148.5 629.1 153.6 644.5 Q158.6 660.0 149.1 672.9 Z"/><path d="M127.6 668.0 Q122.6 676.0 117.2 682.5 Q111.7 689.0 103.4 691.4 Q95.0 693.9 88.4 688.5 Q81.7 683.0 77.1 678.0 Q72.5 673.0 63.5 666.5 Q54.5 660.0 52.8 647.3 Q51.1 634.6 62.8 629.5 Q74.5 624.4 84.7 628.2 Q95.0 632.0 102.7 632.7 Q110.4 633.3 119.8 636.8 Q129.2 640.3 130.9 650.1 Q132.6 660.0 127.6 668.0 Z"/><path d="M114.8 664.1 Q109.1 668.2 105.6 670.2 Q102.1 672.3 98.6 676.2 Q95.0 680.1 89.4 679.8 Q83.7 679.5 81.4 674.4 Q79.1 669.2 78.9 664.6 Q78.7 660.0 78.9 655.4 Q79.1 650.8 82.3 647.3 Q85.6 643.7 90.3 642.8 Q95.0 641.9 100.7 641.1 Q106.4 640.3 113.1 643.0 Q119.8 645.7 120.1 652.8 Q120.5 660.0 114.8 664.1 Z"/><path d="M371.6 720.8 Q367.4 731.6 360.1 740.6 Q352.8 749.5 341.4 756.3 Q330.0 763.1 318.1 757.1 Q306.3 751.1 305.3 738.0 Q304.3 724.8 304.5 717.4 Q304.7 710.0 299.7 699.8 Q294.6 689.6 299.4 677.5 Q304.3 665.5 317.2 665.9 Q330.0 666.2 339.1 672.4 Q348.2 678.5 357.0 683.9 Q365.8 689.3 370.8 699.7 Q375.8 710.0 371.6 720.8 Z"/><path d="M351.0 714.7 Q346.5 719.5 343.6 724.1 Q340.8 728.7 335.4 732.3 Q330.0 735.8 323.9 733.5 Q317.7 731.3 313.8 726.4 Q309.9 721.6 306.5 715.8 Q303.2 710.0 303.6 702.5 Q304.1 695.0 309.8 690.0 Q315.5 684.9 322.8 682.6 Q330.0 680.2 338.6 680.2 Q347.2 680.1 353.5 686.5 Q359.7 692.9 357.6 701.4 Q355.6 710.0 351.0 714.7 Z"/><path d="M278.6 606.9 Q273.8 613.8 268.6 618.5 Q263.4 623.2 256.7 629.6 Q250.0 636.0 239.7 635.8 Q229.5 635.6 224.7 626.4 Q220.0 617.3 220.9 608.7 Q221.8 600.0 223.4 592.8 Q225.0 585.5 230.4 580.6 Q235.9 575.6 243.0 576.6 Q250.0 577.5 255.6 579.0 Q261.2 580.5 268.8 582.7 Q276.3 584.8 279.8 592.4 Q283.3 600.0 278.6 606.9 Z"/><path d="M263.1 603.5 Q262.0 606.9 259.6 609.7 Q257.2 612.4 253.6 612.8 Q250.0 613.2 246.5 612.7 Q243.0 612.1 239.2 610.3 Q235.4 608.5 234.6 604.2 Q233.9 600.0 237.1 597.2 Q240.2 594.4 242.5 592.6 Q244.7 590.9 247.4 587.2 Q250.0 583.5 255.2 582.7 Q260.4 581.9 263.1 586.4 Q265.8 590.9 264.9 595.5 Q264.1 600.0 263.1 603.5 Z"/></svg></div>
   <div id="watermark" aria-hidden="true"></div>
 
   <!-- ============ HOME ============ -->
@@ -875,34 +881,34 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </div>
 
     <button class="btn btn-primary" onclick="openStartJourneySheet()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18l9-15 9 15z"/><path d="M12 3v13"/></svg>
+      <span class="icon-emoji" aria-hidden="true">⚠️</span>
       <span data-i18n="home.startJourney">Start New Journey</span>
     </button>
     <div style="height:12px;"></div>
     <button class="btn btn-outline" onclick="beginManualJourney()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3h8l3 4v14H5V7z"/><path d="M8 3v4H5"/><path d="M9 13h6M9 17h6"/></svg>
+      <span class="icon-emoji" aria-hidden="true">⛵</span>
       <span data-i18n="home.logPastSail">Log a Past Sail</span>
     </button>
     <div style="height:12px;"></div>
     <button class="btn btn-outline" onclick="nav('history')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+      <span class="icon-emoji" aria-hidden="true">📅</span>
       <span data-i18n="home.viewHistory">View History</span>
     </button>
           <div class="quicklinks">
       <div class="quicklink" onclick="nav('boats')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 16l1.5 4h15L21 16"/><path d="M5 16l1-9h12l1 9"/><path d="M12 3v4"/></svg>
+        <span class="icon-emoji" aria-hidden="true">⛵</span>
         <span data-i18n="home.fleet">Fleet</span>
       </div>
       <div class="quicklink" onclick="nav('crew')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.6.4 4.5 2.4 4.5 5.3"/></svg>
+        <span class="icon-emoji" aria-hidden="true">👥</span>
         <span data-i18n="nav.crew">Crew</span>
       </div>
       <div class="quicklink" onclick="nav('resume')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3h8l3 4v14H5V7z"/><path d="M8 3v4H5"/><path d="M9 13h6M9 17h6"/></svg>
+        <span class="icon-emoji" aria-hidden="true">📄</span>
         <span data-i18n="home.resume">Resume</span>
       </div>
       <div class="quicklink" onclick="nav('gallery')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="9.5" r="1.75"/><path d="M21 16l-5.5-5.5L5 21"/></svg>
+        <span class="icon-emoji" aria-hidden="true">🖼️</span>
         <span data-i18n="home.gallery">Gallery</span>
       </div>
     </div>

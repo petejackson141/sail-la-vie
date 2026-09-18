@@ -351,10 +351,23 @@ window.addEventListener('popstate', (event)=>{
    never fire this event, so this is a no-op there. ---------- */
 function initHardwareBackButton(){
   const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
-  if(!isNative) return;
+  if(!isNative){ console.log('[backbutton] not running in the native shell — skipping (expected on web/PWA).'); return; }
   const AppPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.App;
-  if(!AppPlugin || !AppPlugin.addListener) return;
+  if(!AppPlugin || !AppPlugin.addListener){
+    // If you see this line in chrome://inspect / Logcat, the @capacitor/app
+    // plugin isn't registered on the native side, so there is nothing here
+    // for the web layer to hook into — the hardware button keeps doing
+    // Android's own default (minimize) no matter what this file does.
+    // Fix: `npm install @capacitor/app` in the project root, then
+    // `npx cap sync android`, then rebuild in Android Studio. Also check
+    // android/app/src/main/java/.../MainActivity.java hasn't got its own
+    // onBackPressed() override — a custom one there would intercept the
+    // press before it ever reaches this JS listener.
+    console.warn('[backbutton] Capacitor.Plugins.App is not available — @capacitor/app is likely not installed/synced natively. See the comment above this line in state-core.js for the fix.');
+    return;
+  }
   AppPlugin.addListener('backButton', () => {
+    console.log('[backbutton] hardware back pressed — handling in-app.');
     const sheetOpen = [...document.querySelectorAll('.sheet')].some(s=>s.style.display==='block');
     const onHome = document.getElementById('screen-home').classList.contains('active');
     if(sheetOpen || !onHome){
@@ -366,6 +379,7 @@ function initHardwareBackButton(){
     if(AppPlugin.minimizeApp) AppPlugin.minimizeApp();
     else if(AppPlugin.exitApp) AppPlugin.exitApp();
   });
+  console.log('[backbutton] listener registered successfully.');
 }
 
 /* ---------- image resize helper (keeps localStorage payloads small) ---------- */
