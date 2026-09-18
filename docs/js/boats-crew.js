@@ -108,15 +108,19 @@ function renderBoats(){
       <h3>${t('boats.emptyTitle')}</h3><p>${t('boats.emptyHint')}</p></div>`;
     return;
   }
+  const isGrid = state.viewPrefs.boats==='grid';
+  el.className = isGrid ? 'grid-cards' : '';
+  const cardClass = isGrid ? 'grid-card' : 'row-card';
   // Alphabetical by name — [...array] copies so .sort() doesn't reorder state.boats itself
   el.innerHTML = [...state.boats].sort((a,b)=>a.name.localeCompare(b.name)).map(b=>{
     const trips = state.tripIndex.filter(trip=>trip.boatId===b.id).length;
     const sailsLabel = trips===1 ? t('boats.sailsSingular',{count:trips}) : t('boats.sailsPlural',{count:trips});
-    return `<div class="row-card" onclick='openBoatSheet(${JSON.stringify(b).replace(/'/g,"&apos;")})'>
+    return `<div class="${cardClass}" onclick='openBoatSheet(${JSON.stringify(b).replace(/'/g,"&apos;")})'>
       <img class="row-photo" src="${b.photo||placeholderAvatar()}">
       <div class="row-info"><div class="name">${escapeHtml(b.name)}</div><div class="sub">${escapeHtml(b.type||'')}${b.type?' · ':''}${sailsLabel}</div></div>
     </div>`;
   }).join('');
+  updateViewToggleBtn('boats');
 }
 
 /* ============================================================
@@ -195,15 +199,19 @@ function renderCrew(){
       <h3>${t('crew.emptyTitle')}</h3><p>${t('crew.emptyHint')}</p></div>`;
     return;
   }
+  const isGrid = state.viewPrefs.crew==='grid';
+  el.className = isGrid ? 'grid-cards' : '';
+  const cardClass = isGrid ? 'grid-card' : 'row-card';
   // Alphabetical by name — [...array] copies so .sort() doesn't reorder state.crew itself
   el.innerHTML = [...state.crew].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>{
     const contactBits = [c.phone, c.email].filter(Boolean).join(' · ');
     return `
-    <div class="row-card" onclick='openCrewSheet(${JSON.stringify(c).replace(/'/g,"&apos;")})'>
+    <div class="${cardClass}" onclick='openCrewSheet(${JSON.stringify(c).replace(/'/g,"&apos;")})'>
       <img class="row-photo round" src="${c.photo||placeholderAvatar()}">
       <div class="row-info"><div class="name">${escapeHtml(c.name)}</div><div class="sub">${escapeHtml(contactBits || c.note || '')}</div></div>
     </div>`;
   }).join('');
+  updateViewToggleBtn('crew');
 }
 
 /* ============================================================

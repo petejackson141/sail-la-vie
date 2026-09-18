@@ -140,7 +140,11 @@ const _realtimeResyncTimers = {};
 // this writes straight to a small on-screen panel instead — no dependency
 // on any external debugging tool. Set SHOW_SYNC_DEBUG = false once realtime
 // sync is confirmed working, to hide this from real users.
-const SHOW_SYNC_DEBUG = true;
+// Flipped off 18 Sep 2026 — realtime sync is confirmed working, so the
+// on-screen 🐛 toggle and log panel no longer appear. debugLog() calls
+// throughout this file are left in place (harmless no-ops via the early
+// return below) in case sync needs troubleshooting again later.
+const SHOW_SYNC_DEBUG = false;
 function debugLog(msg){
   console.log(msg); // kept in case a device *does* forward it
   if(!SHOW_SYNC_DEBUG) return;

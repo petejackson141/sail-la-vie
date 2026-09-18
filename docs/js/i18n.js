@@ -8,7 +8,7 @@
    Tiered storage: IndexedDB (largest quota) -> localStorage (fallback)
    -> in-memory (last resort, session-only, shows a persistent warning)
    ============================================================ */
-const KEYS = { INDEX:'trip-index', BOATS:'boats', CREW:'crew', PROFILE:'profile', ACTIVE_TRIP:'active-trip' };
+const KEYS = { INDEX:'trip-index', BOATS:'boats', CREW:'crew', PROFILE:'profile', ACTIVE_TRIP:'active-trip', VIEW_PREFS:'view-prefs' };
 const TRANSLATIONS = {
   en: {
   'action.cancel': 'Cancel',
@@ -22,6 +22,8 @@ const TRANSLATIONS = {
   'action.upload': 'Upload',
   'action.uploadPhotos': 'Upload Photos',
   'action.setAsDefault': 'Set as default',
+  'action.viewAsGrid': 'View as grid',
+  'action.viewAsList': 'View as list',
   'active.addCrew': '+ Add Crew',
   'active.addCrewTitle': 'Add Crew',
   'active.addNewCrew': '+ Add New Crew Member',
@@ -356,6 +358,8 @@ const TRANSLATIONS = {
   'action.takePhoto': 'Tomar Foto',
   'action.upload': 'Subir',
   'action.uploadPhotos': 'Subir Fotos',
+  'action.viewAsGrid': 'Ver como cuadrícula',
+  'action.viewAsList': 'Ver como lista',
   'active.addCrew': '+ Añadir Tripulante',
   'active.addCrewTitle': 'Añadir Tripulante',
   'active.addNewCrew': '+ Añadir Nuevo Tripulante',
@@ -649,6 +653,8 @@ const TRANSLATIONS = {
   'action.takePhoto': 'צילום תמונה',
   'action.upload': 'העלאה',
   'action.uploadPhotos': 'העלאת תמונות',
+  'action.viewAsGrid': 'הצג כרשת',
+  'action.viewAsList': 'הצג כרשימה',
   'active.addCrew': '+ הוספת צוות',
   'active.addCrewTitle': 'הוספת איש צוות',
   'active.addNewCrew': '+ הוספת איש צוות חדש',
@@ -942,6 +948,8 @@ const TRANSLATIONS = {
   'action.takePhoto': 'Tirar Foto',
   'action.upload': 'Carregar',
   'action.uploadPhotos': 'Carregar Fotos',
+  'action.viewAsGrid': 'Ver como grade',
+  'action.viewAsList': 'Ver como lista',
   'active.addCrew': '+ Adicionar Tripulante',
   'active.addCrewTitle': 'Adicionar Tripulante',
   'active.addNewCrew': '+ Adicionar Novo Tripulante',

@@ -96,6 +96,10 @@ let state = {
   boats: [],
   crew: [],
   profile: { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme:'light', unitSystem:'nautical', language:'en' },
+  // Per-screen list/grid display choice for the Fleet and Crew screens — see
+  // setListView()/renderBoats()/renderCrew(). Persisted so the choice sticks
+  // between app launches, same as everything else in `state`.
+  viewPrefs: { boats:'list', crew:'list' },
 };
 
 // The logged-in Supabase account, if any: null when signed out, or
@@ -146,13 +150,14 @@ function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(
 async function boot(){
   await initStorage();
 
-  const [idx, boats, crew, profile] = await Promise.all([
-    storeGet(KEYS.INDEX), storeGet(KEYS.BOATS), storeGet(KEYS.CREW), storeGet(KEYS.PROFILE)
+  const [idx, boats, crew, profile, viewPrefs] = await Promise.all([
+    storeGet(KEYS.INDEX), storeGet(KEYS.BOATS), storeGet(KEYS.CREW), storeGet(KEYS.PROFILE), storeGet(KEYS.VIEW_PREFS)
   ]);
   state.tripIndex = idx || [];
   state.boats = boats || [];
   state.crew = crew || [];
   state.profile = profile || state.profile;
+  state.viewPrefs = viewPrefs || state.viewPrefs;
 
   // Only now that local boats/profile are loaded is it safe to check for an
   // existing session and (if signed in) silently pull from the cloud — see
@@ -176,6 +181,7 @@ async function boot(){
   // Baseline history entry for the Android back-button integration below —
   // gives popstate a known "home" state to fall back to.
   history.replaceState({type:'screen', name:'home'}, '', location.href);
+  initHardwareBackButton();
 
   const resumed = await resumeActiveTripIfAny();
   if(!resumed) nav('home', true); // already home — skip pushing a duplicate entry
@@ -246,6 +252,30 @@ function updateRecordingBanner(currentScreen){
     }
   }
 }
+/* ---------- Fleet/Crew list ↔ grid toggle ----------
+   kind is 'boats' or 'crew'. Flips state.viewPrefs[kind] between 'list' and
+   'grid', persists it (so it's remembered next launch), updates the toggle
+   button's own icon/pressed state, and re-renders that screen's list.
+   renderBoats()/renderCrew() (boats-crew.js) read state.viewPrefs[kind] to
+   decide which markup (.row-card rows vs .grid-card tiles) to build. */
+function toggleListView(kind){
+  state.viewPrefs[kind] = (state.viewPrefs[kind]==='grid') ? 'list' : 'grid';
+  storeSet(KEYS.VIEW_PREFS, state.viewPrefs);
+  updateViewToggleBtn(kind);
+  if(kind==='boats') renderBoats(); else renderCrew();
+}
+function updateViewToggleBtn(kind){
+  const btn = document.getElementById(kind==='boats' ? 'boatsViewToggle' : 'crewViewToggle');
+  if(!btn) return;
+  const isGrid = state.viewPrefs[kind]==='grid';
+  btn.classList.toggle('active', isGrid);
+  // Icon shows the view you'd switch TO, matching the convention used by
+  // most list/grid toggles (tap the grid icon to switch into grid view).
+  btn.innerHTML = isGrid
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
+  btn.title = isGrid ? t('action.viewAsList') : t('action.viewAsGrid');
+}
 function showToast(msg){
   const toastEl = document.getElementById('toast'); toastEl.textContent = msg; toastEl.classList.add('show');
   clearTimeout(window._toastTimer);
@@ -306,6 +336,37 @@ window.addEventListener('popstate', (event)=>{
     nav(target, true);
   }
 });
+
+/* ---------- hardware back button (Capacitor native shell only) ----------
+   In the wrapped Android app, Capacitor's bridge dispatches a 'backButton'
+   event via the @capacitor/app plugin instead of firing a normal
+   popstate/history.back() the way a browser back gesture would. If nothing
+   listens for it, Capacitor's own default behavior is to minimize the app
+   (moveTaskToBack) — which is exactly the "hardware back just minimizes,
+   no matter what screen I'm on" behavior this replaces. Hooking it here and
+   funneling it into history.back() lets it reuse all the existing
+   popstate/closeSheets()/nav() logic above, so a sheet closes first, then
+   screens step back one at a time, and only a press from Home with nothing
+   open falls through to the platform default (minimize). Web/PWA installs
+   never fire this event, so this is a no-op there. ---------- */
+function initHardwareBackButton(){
+  const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+  if(!isNative) return;
+  const AppPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if(!AppPlugin || !AppPlugin.addListener) return;
+  AppPlugin.addListener('backButton', () => {
+    const sheetOpen = [...document.querySelectorAll('.sheet')].some(s=>s.style.display==='block');
+    const onHome = document.getElementById('screen-home').classList.contains('active');
+    if(sheetOpen || !onHome){
+      history.back(); // handled by the popstate listener above, same as a browser back gesture
+      return;
+    }
+    // Already at Home with nothing open — nothing left to step back through,
+    // so hand it to the platform's own default (minimizes on Android).
+    if(AppPlugin.minimizeApp) AppPlugin.minimizeApp();
+    else if(AppPlugin.exitApp) AppPlugin.exitApp();
+  });
+}
 
 /* ---------- image resize helper (keeps localStorage payloads small) ---------- */
 function resizeImage(file, maxDim, quality){
