@@ -11,6 +11,12 @@
 const KEYS = { INDEX:'trip-index', BOATS:'boats', CREW:'crew', PROFILE:'profile', ACTIVE_TRIP:'active-trip', VIEW_PREFS:'view-prefs' };
 const TRANSLATIONS = {
   en: {
+  'active.passage': 'Duration & Distance',
+  'active.weatherSea': 'Weather & Sea',
+  'picker.date': 'Date',
+  'picker.time': 'Time',
+  'picker.now': 'Now',
+  'picker.set': 'Set',
   'action.cancel': 'Cancel',
   'action.delete': 'Delete',
   'action.done': 'Done',
@@ -349,6 +355,12 @@ const TRANSLATIONS = {
   'map.waitingGps': 'Waiting for GPS signal…',
 },
   es: {
+  'active.passage': 'Duración y distancia',
+  'active.weatherSea': 'Tiempo y mar',
+  'picker.date': 'Fecha',
+  'picker.time': 'Hora',
+  'picker.now': 'Ahora',
+  'picker.set': 'Fijar',
   'action.cancel': 'Cancelar',
   'action.done': 'Listo',
   'action.edit': 'Editar',
@@ -644,6 +656,12 @@ const TRANSLATIONS = {
   'map.waitingGps': 'Esperando señal GPS…',
 },
   he: {
+  'active.passage': 'משך ומרחק',
+  'active.weatherSea': 'מזג אוויר וים',
+  'picker.date': 'תאריך',
+  'picker.time': 'שעה',
+  'picker.now': 'עכשיו',
+  'picker.set': 'אישור',
   'action.cancel': 'ביטול',
   'action.done': 'סיום',
   'action.edit': 'עריכה',
@@ -939,6 +957,12 @@ const TRANSLATIONS = {
   'unit.nautical': 'ימי (קשר / מייל ימי)',
 },
   pt: {
+  'active.passage': 'Duração e distância',
+  'active.weatherSea': 'Tempo e mar',
+  'picker.date': 'Data',
+  'picker.time': 'Hora',
+  'picker.now': 'Agora',
+  'picker.set': 'Definir',
   'action.cancel': 'Cancelar',
   'action.done': 'Concluído',
   'action.edit': 'Editar',
@@ -1286,6 +1310,7 @@ function refreshDynamicScreensForLanguage(){
     const label = document.getElementById('endJourneyBtnLabel');
     if(label) label.textContent = currentTrip.isEditing ? t('active.saveChanges') : currentTrip.isManual ? t('active.saveLogEntry') : t('active.endJourney');
     refreshLogUnitsUI();
+    refreshPastDateDisplay();
   }
   updateRecordingBanner(activeName);
 }

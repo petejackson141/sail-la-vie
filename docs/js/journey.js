@@ -469,6 +469,7 @@ function editTrip(){
   const d = new Date(trip.date);
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   document.getElementById('pastDate').value = d.toISOString().slice(0,16);
+  refreshPastDateDisplay();
   const totalMin = Math.round((trip.elapsedSeconds||0)/60);
   document.getElementById('pastHours').value = Math.floor(totalMin/60);
   document.getElementById('pastMinutes').value = totalMin%60;
@@ -540,6 +541,7 @@ async function resumeActiveTripIfAny(){
     const d = new Date(currentTrip.date);
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     document.getElementById('pastDate').value = d.toISOString().slice(0,16);
+    refreshPastDateDisplay();
     const totalMin = Math.round((currentTrip.elapsedSeconds||0)/60);
     document.getElementById('pastHours').value = Math.floor(totalMin/60);
     document.getElementById('pastMinutes').value = totalMin%60;
@@ -584,6 +586,7 @@ async function beginManualJourney(){
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   document.getElementById('pastDate').value = now.toISOString().slice(0,16);
+  refreshPastDateDisplay();
   document.getElementById('pastHours').value = '';
   document.getElementById('pastMinutes').value = '';
   document.getElementById('pastDistance').value = '';
@@ -1140,3 +1143,166 @@ async function finalizeSaveTrip(){
 /* ============================================================
    HISTORY
    ============================================================ */
+
+/* ============================================================
+   THEMED DATE & TIME PICKER — past-sail entry (and editing a saved sail)
+   ------------------------------------------------------------
+   Replaces the browser's own datetime-local widget (which ignored the app
+   theme and, on Android, opened a plain spinner dialog). The form now shows
+   two tap targets (Date / Time); tapping either opens #sheetDateTime with a
+   month calendar and hour/minute scroll-wheels.
+
+   #pastDate (a hidden <input type="datetime-local">) stays the single source
+   of truth, in the same 'YYYY-MM-DDTHH:mm' local-time format as before, so
+   endJourney()'s save code is untouched. The sheet edits a private draft (DT)
+   and only writes to #pastDate when "Set" is tapped; "Cancel"/back discards it.
+   Anything that assigns #pastDate.value must call refreshPastDateDisplay()
+   afterwards so the two tap targets show the new value.
+   ============================================================ */
+const DT_ITEM_PX = 44; // wheel row height — must match .wheel-item in the CSS
+const DT = { y:0, m:0, d:1, h:0, mi:0, viewY:0, viewM:0, tab:'date', months:false, wheelsBuilt:false };
+
+// Locale for month/weekday names: the device's own locale when it matches the
+// app language (so an en-GB phone gets "19 Sept 2026"), else the app's default.
+function dtLocale(){
+  const nav = (navigator.language || '').toLowerCase();
+  return nav.startsWith(currentLang) ? navigator.language : currentLocale();
+}
+// First day of the week for the device's region, 0 = Sunday … 6 = Saturday.
+function dtWeekStart(){
+  try{
+    const loc = new Intl.Locale(dtLocale());
+    const wi = loc.getWeekInfo ? loc.getWeekInfo() : loc.weekInfo;
+    if(wi && wi.firstDay) return wi.firstDay % 7; // Intl uses 1 = Mon … 7 = Sun
+  }catch(e){}
+  return currentLang==='he' ? 0 : 1;
+}
+const dtPad = n => String(n).padStart(2,'0');
+function dtParse(v){ // 'YYYY-MM-DDTHH:mm' -> parts, or null
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v || '');
+  return m ? {y:+m[1], m:+m[2]-1, d:+m[3], h:+m[4], mi:+m[5]} : null;
+}
+function dtNowParts(){
+  const n = new Date();
+  return {y:n.getFullYear(), m:n.getMonth(), d:n.getDate(), h:n.getHours(), mi:n.getMinutes()};
+}
+function dtFmtDate(p, opts){ return new Intl.DateTimeFormat(dtLocale(), opts).format(new Date(p.y, p.m, p.d)); }
+
+// Shows the current #pastDate value on the two tap targets in the form.
+function refreshPastDateDisplay(){
+  const dEl = document.getElementById('pastDateDisplay'), tEl = document.getElementById('pastTimeDisplay');
+  if(!dEl || !tEl) return;
+  const p = dtParse(document.getElementById('pastDate').value);
+  if(!p){ dEl.textContent = tEl.textContent = '—'; return; }
+  dEl.textContent = dtFmtDate(p, {day:'numeric', month:'short', year:'numeric'});
+  tEl.textContent = dtPad(p.h) + ':' + dtPad(p.mi);
+}
+
+function openDateTimeSheet(tab){
+  Object.assign(DT, dtParse(document.getElementById('pastDate').value) || dtNowParts());
+  DT.viewY = DT.y; DT.viewM = DT.m; DT.months = false;
+  if(!DT.wheelsBuilt){
+    dtBuildWheel(document.getElementById('wheelHour'), 'h', 24);
+    dtBuildWheel(document.getElementById('wheelMin'), 'mi', 60);
+    DT.wheelsBuilt = true;
+  }
+  openSheet('sheetDateTime');
+  dtRenderDow();
+  dtSetTab(tab || 'date');
+}
+function dtSetTab(tab){
+  DT.tab = tab;
+  document.getElementById('dtPaneDate').style.display = tab==='date' ? 'block' : 'none';
+  document.getElementById('dtPaneTime').style.display = tab==='time' ? 'block' : 'none';
+  document.getElementById('dtTabDate').classList.toggle('active', tab==='date');
+  document.getElementById('dtTabTime').classList.toggle('active', tab==='time');
+  dtRenderTabs();
+  if(tab==='date') dtRenderCalendar();
+  // A wheel can only be scrolled into position once it is actually visible.
+  else requestAnimationFrame(()=>{ dtWheelSet(document.getElementById('wheelHour'), DT.h); dtWheelSet(document.getElementById('wheelMin'), DT.mi); });
+}
+function dtRenderTabs(){
+  document.getElementById('dtTabDateVal').textContent = dtFmtDate(DT, {weekday:'short', day:'numeric', month:'short'});
+  document.getElementById('dtTabTimeVal').textContent = dtPad(DT.h) + ':' + dtPad(DT.mi);
+}
+function dtRenderDow(){
+  const ws = dtWeekStart(), fmt = new Intl.DateTimeFormat(dtLocale(), {weekday:'narrow'});
+  let html = '';
+  for(let i=0;i<7;i++) html += '<span>' + fmt.format(new Date(2023, 0, 1 + (ws + i) % 7)) + '</span>'; // 1 Jan 2023 was a Sunday
+  document.getElementById('calDow').innerHTML = html;
+}
+function dtRenderCalendar(){
+  const title = document.getElementById('calTitle'), grid = document.getElementById('calGrid'),
+        dow = document.getElementById('calDow'), months = document.getElementById('calMonths');
+  const first = new Date(DT.viewY, DT.viewM, 1);
+  grid.style.display = dow.style.display = DT.months ? 'none' : '';
+  months.style.display = DT.months ? '' : 'none';
+  if(DT.months){
+    title.textContent = String(DT.viewY);
+    const fmt = new Intl.DateTimeFormat(dtLocale(), {month:'short'});
+    let mh = '';
+    for(let i=0;i<12;i++) mh += '<button type="button" class="cal-month' + (DT.viewY===DT.y && i===DT.m ? ' sel' : '') + '" onclick="dtPickMonth(' + i + ')">' + fmt.format(new Date(DT.viewY, i, 1)) + '</button>';
+    months.innerHTML = mh;
+    return;
+  }
+  title.textContent = new Intl.DateTimeFormat(dtLocale(), {month:'long', year:'numeric'}).format(first);
+  const lead = (first.getDay() - dtWeekStart() + 7) % 7;
+  const dim = new Date(DT.viewY, DT.viewM + 1, 0).getDate();
+  const now = new Date();
+  let html = '';
+  for(let i=0;i<lead;i++) html += '<span></span>';
+  for(let d=1; d<=dim; d++){
+    const isSel = DT.viewY===DT.y && DT.viewM===DT.m && d===DT.d;
+    const isToday = DT.viewY===now.getFullYear() && DT.viewM===now.getMonth() && d===now.getDate();
+    html += '<button type="button" class="cal-day' + (isSel ? ' sel' : isToday ? ' today' : '') + '" onclick="dtPickDay(' + d + ')">' + d + '</button>';
+  }
+  grid.innerHTML = html;
+}
+function dtNav(dir){ // ‹ › — a month at a time, or a year at a time in the month picker
+  if(DT.months){ DT.viewY += dir; }
+  else { DT.viewM += dir; if(DT.viewM < 0){ DT.viewM = 11; DT.viewY--; } else if(DT.viewM > 11){ DT.viewM = 0; DT.viewY++; } }
+  dtRenderCalendar();
+}
+function dtToggleMonths(){ DT.months = !DT.months; dtRenderCalendar(); }
+function dtPickMonth(i){ DT.viewM = i; DT.months = false; dtRenderCalendar(); }
+function dtPickDay(d){
+  DT.y = DT.viewY; DT.m = DT.viewM; DT.d = d;
+  dtRenderCalendar(); dtRenderTabs();
+}
+
+// Scroll-snap wheel: rows are DT_ITEM_PX tall, the row centred under the
+// highlight band is (scrollTop / DT_ITEM_PX) rounded.
+function dtBuildWheel(el, key, count){
+  let html = '';
+  for(let i=0;i<count;i++) html += '<div class="wheel-item" data-i="' + i + '">' + dtPad(i) + '</div>';
+  el.innerHTML = html;
+  el._sel = -1;
+  el.addEventListener('scroll', ()=>{
+    cancelAnimationFrame(el._raf);
+    el._raf = requestAnimationFrame(()=>{
+      const i = Math.max(0, Math.min(count-1, Math.round(el.scrollTop / DT_ITEM_PX)));
+      if(i !== el._sel){ dtWheelMark(el, i); DT[key] = i; dtRenderTabs(); }
+    });
+  }, {passive:true});
+  el.addEventListener('click', (e)=>{
+    const it = e.target.closest('.wheel-item');
+    if(it) el.scrollTo({top: (+it.dataset.i) * DT_ITEM_PX, behavior:'smooth'});
+  });
+}
+function dtWheelMark(el, i){
+  if(el._sel >= 0 && el.children[el._sel]) el.children[el._sel].classList.remove('sel');
+  el._sel = i;
+  if(el.children[i]) el.children[i].classList.add('sel');
+}
+function dtWheelSet(el, i){ dtWheelMark(el, i); el.scrollTop = i * DT_ITEM_PX; }
+
+function dtNow(){
+  Object.assign(DT, dtNowParts());
+  DT.viewY = DT.y; DT.viewM = DT.m; DT.months = false;
+  dtSetTab(DT.tab);
+}
+function dtApply(){
+  document.getElementById('pastDate').value = DT.y + '-' + dtPad(DT.m+1) + '-' + dtPad(DT.d) + 'T' + dtPad(DT.h) + ':' + dtPad(DT.mi);
+  refreshPastDateDisplay();
+  closeSheets();
+}
