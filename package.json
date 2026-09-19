@@ -20,6 +20,7 @@
   "homepage": "https://github.com/petejackson141/sail-la-vie#readme",
   "dependencies": {
     "@capacitor/android": "^8.5.0",
+    "@capacitor/app": "^8.1.1",
     "@capacitor/cli": "^8.5.0",
     "@capacitor/core": "^8.5.0",
     "@capacitor/filesystem": "^8.1.3",
