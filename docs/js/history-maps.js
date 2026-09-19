@@ -110,7 +110,13 @@ let openTripId = null;
 // Loads one full trip record from storage (tripIndex only has summaries) and
 // renders the whole detail screen: cover, stats, live-track-style map of
 // where the trip went, weather, notes, crew, and photo gallery.
-async function openTripDetail(id){
+// Where the detail screen's back arrow returns to: 'history' normally, 'home' when
+// opened from the Last Sail card. Kept while editing/re-rendering the same trip.
+let detailReturnTo = 'history';
+async function openTripDetail(id, from){
+  const curScreen = (document.querySelector('.screen.active')||{}).id;
+  if(from) detailReturnTo = from;
+  else if(curScreen!=='screen-detail' && curScreen!=='screen-active') detailReturnTo = 'history';
   openTripId = id;
   const trip = await storeGet('trip:'+id);
   if(!trip){ showToast(t('toast.tripLoadFail')); return; }
@@ -631,7 +637,7 @@ async function deleteTripPrompt(){
   await storeSet(KEYS.INDEX, state.tripIndex);
   showToast(t('toast.tripDeleted'));
   syncTripDeleteIfSignedIn(deletedId);
-  nav('history'); renderHomeStats();
+  nav(detailReturnTo); renderHomeStats();
 }
 // Native share sheet if the browser supports it (navigator.share), otherwise
 // falls back to copying a text summary to the clipboard.

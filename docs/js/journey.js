@@ -2,7 +2,30 @@
 // Home stats, starting a journey, crew/skipper pickers, GPS tracking, live photo capture, ending + saving a journey
 // Extracted from the original single-file app.js, lines 1777-2539, in original order.
 
+// "Last Sail" card under the Home buttons: the most recent sail by sail date
+// (same ordering as History — not by when the entry was saved), tapping it opens
+// that sail's detail screen. Called from renderHomeStats(), which already runs
+// everywhere the trip list changes (save, delete, edit, sync, language switch).
+function renderLastSail(){
+  const wrap = document.getElementById('lastSailWrap');
+  if(!wrap) return;
+  if(!state.tripIndex.length){ wrap.innerHTML = ''; return; }
+  const last = state.tripIndex.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  const dateStr = new Date(last.date).toLocaleDateString(currentLocale(), {day:'numeric', month:'short', year:'numeric'});
+  const meta = [dateStr, last.place ? escapeHtml(last.place) : ''].filter(Boolean).join(' · ');
+  wrap.innerHTML = `<div class="last-sail" onclick="openTripDetail('${last.id}','home')">
+    <span class="ls-pin" aria-hidden="true">📍</span>
+    <div class="ls-text">
+      <div class="ls-label">${t('home.lastSail')}</div>
+      <div class="ls-title">${escapeHtml(last.title || t('detail.tripFallback'))}</div>
+      <div class="ls-meta">${meta}</div>
+    </div>
+    ${last.coverPhoto ? `<img class="ls-thumb" src="${last.coverPhoto}" alt="">` : ''}
+    <svg class="ls-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+  </div>`;
+}
 function renderHomeStats(){
+  renderLastSail();
   const el = document.getElementById('homeStatsStrip');
   if(!state.tripIndex.length){ el.innerHTML=''; return; }
   const nm = state.tripIndex.reduce((s,t)=>s+(t.distanceNm||0),0);
