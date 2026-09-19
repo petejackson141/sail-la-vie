@@ -11,6 +11,7 @@
 const KEYS = { INDEX:'trip-index', BOATS:'boats', CREW:'crew', PROFILE:'profile', ACTIVE_TRIP:'active-trip', VIEW_PREFS:'view-prefs' };
 const TRANSLATIONS = {
   en: {
+  'home.yourSailing': 'Your Sailing',
   'home.lastSail': 'Last Sail',
   'home.diary': 'Diary',
   'home.diarySoon': 'Diary is coming soon',
@@ -358,6 +359,7 @@ const TRANSLATIONS = {
   'map.waitingGps': 'Waiting for GPS signal…',
 },
   es: {
+  'home.yourSailing': 'Tu navegación',
   'home.lastSail': 'Última salida',
   'home.diary': 'Diario',
   'home.diarySoon': 'El diario llegará pronto',
@@ -662,6 +664,7 @@ const TRANSLATIONS = {
   'map.waitingGps': 'Esperando señal GPS…',
 },
   he: {
+  'home.yourSailing': 'ההפלגות שלך',
   'home.lastSail': 'ההפלגה האחרונה',
   'home.diary': 'יומן',
   'home.diarySoon': 'היומן יגיע בקרוב',
@@ -966,6 +969,7 @@ const TRANSLATIONS = {
   'unit.nautical': 'ימי (קשר / מייל ימי)',
 },
   pt: {
+  'home.yourSailing': 'Sua navegação',
   'home.lastSail': 'Última navegação',
   'home.diary': 'Diário',
   'home.diarySoon': 'O diário chega em breve',

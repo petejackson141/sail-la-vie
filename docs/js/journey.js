@@ -13,7 +13,7 @@ function renderLastSail(){
   const last = state.tripIndex.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
   const dateStr = new Date(last.date).toLocaleDateString(currentLocale(), {day:'numeric', month:'short', year:'numeric'});
   const meta = [dateStr, last.place ? escapeHtml(last.place) : ''].filter(Boolean).join(' · ');
-  wrap.innerHTML = `<div class="last-sail" onclick="openTripDetail('${last.id}','home')">
+  wrap.innerHTML = `<div class="last-sail tint-blue" onclick="openTripDetail('${last.id}','home')">
     <span class="ls-pin" aria-hidden="true">📍</span>
     <div class="ls-text">
       <div class="ls-label">${t('home.lastSail')}</div>
@@ -30,9 +30,9 @@ function renderHomeStats(){
   if(!state.tripIndex.length){ el.innerHTML=''; return; }
   const nm = state.tripIndex.reduce((s,t)=>s+(t.distanceNm||0),0);
   const secs = state.tripIndex.reduce((s,t)=>s+(t.elapsedSeconds||0),0);
-  el.innerHTML = `<div class="stat-card stat-grid">
-    <div class="cell"><div class="stat-label">${t('resume.totalSails')}</div><div class="stat-value">${state.tripIndex.length}</div></div>
-    <div class="cell"><div class="stat-label">${t('home.distanceLogged')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
+  el.innerHTML = `<div class="home-stats">
+    <div class="hs-tile tint-rose"><div class="stat-label">${t('resume.totalSails')}</div><div class="stat-value">${state.tripIndex.length}</div></div>
+    <div class="hs-tile tint-blue"><div class="stat-label">${t('home.distanceLogged')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
   </div>`;
 }
 
