@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '19.09.2026.1750';
+const APP_VERSION = '19.09.2026.1818';
 
 /* ============================================================
    CUSTOM CONFIRM DIALOG (shared across all screens)
@@ -95,6 +95,7 @@ let state = {
   tripIndex: [],   // lightweight list for History screen — NOT the full trip records (those are stored separately as 'trip:<id>')
   boats: [],
   crew: [],
+  diary: [],       // planned future sails, written on the Diary screen — see diary.js
   profile: { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme:'light', unitSystem:'nautical', language:'en' },
   // Per-screen list/grid display choice for the Fleet and Crew screens — see
   // setListView()/renderBoats()/renderCrew(). Persisted so the choice sticks
@@ -150,12 +151,13 @@ function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(
 async function boot(){
   await initStorage();
 
-  const [idx, boats, crew, profile, viewPrefs] = await Promise.all([
-    storeGet(KEYS.INDEX), storeGet(KEYS.BOATS), storeGet(KEYS.CREW), storeGet(KEYS.PROFILE), storeGet(KEYS.VIEW_PREFS)
+  const [idx, boats, crew, profile, viewPrefs, diary] = await Promise.all([
+    storeGet(KEYS.INDEX), storeGet(KEYS.BOATS), storeGet(KEYS.CREW), storeGet(KEYS.PROFILE), storeGet(KEYS.VIEW_PREFS), storeGet(KEYS.DIARY)
   ]);
   state.tripIndex = idx || [];
   state.boats = boats || [];
   state.crew = crew || [];
+  state.diary = diary || [];
   state.profile = profile || state.profile;
   state.viewPrefs = viewPrefs || state.viewPrefs;
 
@@ -223,6 +225,7 @@ function nav(name, fromPopState){
   if(name==='profile') renderProfileScreen();
   if(name==='resume') renderResume();
   if(name==='gallery') renderGallery();
+  if(name==='diary') renderDiary();
   if(name==='active' && liveLeafletMap){
     // Leaflet sizes itself incorrectly if it was updated while its container was
     // hidden behind another screen (backgrounded journey) — fix it up now that

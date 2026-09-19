@@ -1168,22 +1168,28 @@ async function finalizeSaveTrip(){
    ============================================================ */
 
 /* ============================================================
-   THEMED DATE & TIME PICKER — past-sail entry (and editing a saved sail)
+   THEMED DATE & TIME PICKER — shared by the past-sail form and the Diary form
    ------------------------------------------------------------
    Replaces the browser's own datetime-local widget (which ignored the app
-   theme and, on Android, opened a plain spinner dialog). The form now shows
-   two tap targets (Date / Time); tapping either opens #sheetDateTime with a
-   month calendar and hour/minute scroll-wheels.
+   theme and, on Android, opened a plain spinner dialog). Tapping a Date/Time
+   tap target opens #sheetDateTime with a month calendar and hour/minute
+   scroll-wheels.
 
-   #pastDate (a hidden <input type="datetime-local">) stays the single source
-   of truth, in the same 'YYYY-MM-DDTHH:mm' local-time format as before, so
-   endJourney()'s save code is untouched. The sheet edits a private draft (DT)
-   and only writes to #pastDate when "Set" is tapped; "Cancel"/back discards it.
-   Anything that assigns #pastDate.value must call refreshPastDateDisplay()
-   afterwards so the two tap targets show the new value.
+   The sheet edits a private draft (DT) and only hands the result back through
+   DT.target.apply(dateStr, timeStr) when "Set" is tapped; Cancel/back discards it.
+   A "target" describes who is asking:
+     get()          -> {y,m,d,h,mi,hasTime} for the current value, or null if none yet
+                       (m is 0-based, like JS Dates)
+     apply(d, t)    -> called with 'YYYY-MM-DD' and 'HH:mm' ('' = no time chosen)
+     optionalTime   -> true if a date without a time is a valid answer (Diary)
+     returnSheet    -> id of a sheet to reopen afterwards (Diary form); null = just close
+   For the past-sail form the value lives in a hidden <input type="datetime-local">
+   (#pastDate, 'YYYY-MM-DDTHH:mm' local time) that endJourney()'s save code reads —
+   anything that assigns #pastDate.value must call refreshPastDateDisplay() after.
    ============================================================ */
 const DT_ITEM_PX = 44; // wheel row height — must match .wheel-item in the CSS
-const DT = { y:0, m:0, d:1, h:0, mi:0, viewY:0, viewM:0, tab:'date', months:false, wheelsBuilt:false };
+const DT = { y:0, m:0, d:1, h:0, mi:0, viewY:0, viewM:0, tab:'date', months:false, wheelsBuilt:false,
+             target:null, hadTime:true, timeTouched:false };
 
 // Locale for month/weekday names: the device's own locale when it matches the
 // app language (so an en-GB phone gets "19 Sept 2026"), else the app's default.
@@ -1205,12 +1211,17 @@ function dtParse(v){ // 'YYYY-MM-DDTHH:mm' -> parts, or null
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v || '');
   return m ? {y:+m[1], m:+m[2]-1, d:+m[3], h:+m[4], mi:+m[5]} : null;
 }
+function dtParseDate(v){ // 'YYYY-MM-DD' (optionally followed by a time) -> {y,m,d}, or null
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v || '');
+  return m ? {y:+m[1], m:+m[2]-1, d:+m[3]} : null;
+}
 function dtNowParts(){
   const n = new Date();
   return {y:n.getFullYear(), m:n.getMonth(), d:n.getDate(), h:n.getHours(), mi:n.getMinutes()};
 }
 function dtFmtDate(p, opts){ return new Intl.DateTimeFormat(dtLocale(), opts).format(new Date(p.y, p.m, p.d)); }
 
+/* ---- past-sail form ---- */
 // Shows the current #pastDate value on the two tap targets in the form.
 function refreshPastDateDisplay(){
   const dEl = document.getElementById('pastDateDisplay'), tEl = document.getElementById('pastTimeDisplay');
@@ -1220,15 +1231,31 @@ function refreshPastDateDisplay(){
   dEl.textContent = dtFmtDate(p, {day:'numeric', month:'short', year:'numeric'});
   tEl.textContent = dtPad(p.h) + ':' + dtPad(p.mi);
 }
-
 function openDateTimeSheet(tab){
-  Object.assign(DT, dtParse(document.getElementById('pastDate').value) || dtNowParts());
+  dtOpen(tab, {
+    get: ()=>{ const p = dtParse(document.getElementById('pastDate').value); return p ? Object.assign(p, {hasTime:true}) : null; },
+    apply: (d, t)=>{ document.getElementById('pastDate').value = d + 'T' + t; refreshPastDateDisplay(); },
+    optionalTime: false, returnSheet: null
+  });
+}
+
+/* ---- the sheet itself ---- */
+function dtOpen(tab, target){
+  DT.target = target;
+  const cur = target.get();
+  const base = cur || Object.assign(dtNowParts(), {hasTime:false});
+  DT.y = base.y; DT.m = base.m; DT.d = base.d;
+  DT.hadTime = target.optionalTime ? !!(cur && cur.hasTime) : true;
+  DT.h  = (cur && cur.hasTime) ? cur.h  : (target.optionalTime ? 9 : base.h);
+  DT.mi = (cur && cur.hasTime) ? cur.mi : (target.optionalTime ? 0 : base.mi);
+  DT.timeTouched = false;
   DT.viewY = DT.y; DT.viewM = DT.m; DT.months = false;
   if(!DT.wheelsBuilt){
     dtBuildWheel(document.getElementById('wheelHour'), 'h', 24);
     dtBuildWheel(document.getElementById('wheelMin'), 'mi', 60);
     DT.wheelsBuilt = true;
   }
+  document.getElementById('dtClearTimeRow').style.display = target.optionalTime ? 'block' : 'none';
   openSheet('sheetDateTime');
   dtRenderDow();
   dtSetTab(tab || 'date');
@@ -1244,9 +1271,10 @@ function dtSetTab(tab){
   // A wheel can only be scrolled into position once it is actually visible.
   else requestAnimationFrame(()=>{ dtWheelSet(document.getElementById('wheelHour'), DT.h); dtWheelSet(document.getElementById('wheelMin'), DT.mi); });
 }
+function dtHasTime(){ return !DT.target.optionalTime || DT.hadTime || DT.timeTouched; }
 function dtRenderTabs(){
   document.getElementById('dtTabDateVal').textContent = dtFmtDate(DT, {weekday:'short', day:'numeric', month:'short'});
-  document.getElementById('dtTabTimeVal').textContent = dtPad(DT.h) + ':' + dtPad(DT.mi);
+  document.getElementById('dtTabTimeVal').textContent = dtHasTime() ? dtPad(DT.h) + ':' + dtPad(DT.mi) : t('diary.anyTime');
 }
 function dtRenderDow(){
   const ws = dtWeekStart(), fmt = new Intl.DateTimeFormat(dtLocale(), {weekday:'narrow'});
@@ -1304,7 +1332,7 @@ function dtBuildWheel(el, key, count){
     cancelAnimationFrame(el._raf);
     el._raf = requestAnimationFrame(()=>{
       const i = Math.max(0, Math.min(count-1, Math.round(el.scrollTop / DT_ITEM_PX)));
-      if(i !== el._sel){ dtWheelMark(el, i); DT[key] = i; dtRenderTabs(); }
+      if(i !== el._sel){ dtWheelMark(el, i); DT[key] = i; DT.timeTouched = true; dtRenderTabs(); }
     });
   }, {passive:true});
   el.addEventListener('click', (e)=>{
@@ -1321,11 +1349,23 @@ function dtWheelSet(el, i){ dtWheelMark(el, i); el.scrollTop = i * DT_ITEM_PX; }
 
 function dtNow(){
   Object.assign(DT, dtNowParts());
+  DT.timeTouched = true;
   DT.viewY = DT.y; DT.viewM = DT.m; DT.months = false;
   dtSetTab(DT.tab);
 }
+// After Set/Cancel: back to the sheet that asked (Diary form), or just close.
+function dtFinish(){
+  const back = DT.target && DT.target.returnSheet;
+  if(back) openSheet(back); else closeSheets();
+}
+function dtCancel(){ dtFinish(); }
 function dtApply(){
-  document.getElementById('pastDate').value = DT.y + '-' + dtPad(DT.m+1) + '-' + dtPad(DT.d) + 'T' + dtPad(DT.h) + ':' + dtPad(DT.mi);
-  refreshPastDateDisplay();
-  closeSheets();
+  const time = dtHasTime() ? dtPad(DT.h) + ':' + dtPad(DT.mi) : '';
+  DT.target.apply(DT.y + '-' + dtPad(DT.m+1) + '-' + dtPad(DT.d), time);
+  dtFinish();
+}
+// Diary only: keep the date, drop the time ("any time that day")
+function dtClearTime(){
+  DT.hadTime = false; DT.timeTouched = false;
+  dtApply();
 }

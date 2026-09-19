@@ -100,9 +100,25 @@ async function deleteBoatForm(){
   closeSheets(); renderBoats();
   syncBoatDeleteIfSignedIn(deletedId);
 }
+// Shared by the Fleet and Crew search boxes: does any of these text fields contain
+// the search words? (case-insensitive; every word typed has to match somewhere)
+function matchesSearch(query, ...fields){
+  const words = (query||'').toLowerCase().split(/\s+/).filter(Boolean);
+  if(!words.length) return true;
+  const hay = fields.filter(Boolean).join(' ').toLowerCase();
+  return words.every(w=>hay.includes(w));
+}
+function noSearchResultsHtml(){
+  return `<div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <h3>${t('search.noResults')}</h3><p>${t('search.noResultsHint')}</p></div>`;
+}
 function renderBoats(){
   const el = document.getElementById('boatsList');
+  const searchEl = document.getElementById('boatsSearch');
+  searchEl.style.display = state.boats.length ? '' : 'none'; // nothing to search until a boat exists
   if(!state.boats.length){
+    el.className = '';
     el.innerHTML = `<div class="empty">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 16l1.5 4h15L21 16"/><path d="M5 16l1-9h12l1 9"/></svg>
       <h3>${t('boats.emptyTitle')}</h3><p>${t('boats.emptyHint')}</p></div>`;
@@ -111,8 +127,11 @@ function renderBoats(){
   const isGrid = state.viewPrefs.boats==='grid';
   el.className = isGrid ? 'grid-cards' : '';
   const cardClass = isGrid ? 'grid-card' : 'row-card';
+  const q = searchEl.value;
+  const shown = state.boats.filter(b=>matchesSearch(q, b.name, b.type, b.notes));
+  if(!shown.length){ el.className = ''; el.innerHTML = noSearchResultsHtml(); updateViewToggleBtn('boats'); return; }
   // Alphabetical by name — [...array] copies so .sort() doesn't reorder state.boats itself
-  el.innerHTML = [...state.boats].sort((a,b)=>a.name.localeCompare(b.name)).map(b=>{
+  el.innerHTML = [...shown].sort((a,b)=>a.name.localeCompare(b.name)).map(b=>{
     const trips = state.tripIndex.filter(trip=>trip.boatId===b.id).length;
     const sailsLabel = trips===1 ? t('boats.sailsSingular',{count:trips}) : t('boats.sailsPlural',{count:trips});
     return `<div class="${cardClass}" onclick='openBoatSheet(${JSON.stringify(b).replace(/'/g,"&apos;")})'>
@@ -193,7 +212,10 @@ async function deleteCrewForm(){
 }
 function renderCrew(){
   const el = document.getElementById('crewList');
+  const searchEl = document.getElementById('crewSearch');
+  searchEl.style.display = state.crew.length ? '' : 'none'; // nothing to search until someone is added
   if(!state.crew.length){
+    el.className = '';
     el.innerHTML = `<div class="empty">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
       <h3>${t('crew.emptyTitle')}</h3><p>${t('crew.emptyHint')}</p></div>`;
@@ -202,8 +224,11 @@ function renderCrew(){
   const isGrid = state.viewPrefs.crew==='grid';
   el.className = isGrid ? 'grid-cards' : '';
   const cardClass = isGrid ? 'grid-card' : 'row-card';
+  const q = searchEl.value;
+  const shown = state.crew.filter(c=>matchesSearch(q, c.name, c.phone, c.email, c.social, c.note));
+  if(!shown.length){ el.className = ''; el.innerHTML = noSearchResultsHtml(); updateViewToggleBtn('crew'); return; }
   // Alphabetical by name — [...array] copies so .sort() doesn't reorder state.crew itself
-  el.innerHTML = [...state.crew].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>{
+  el.innerHTML = [...shown].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>{
     const contactBits = [c.phone, c.email].filter(Boolean).join(' · ');
     return `
     <div class="${cardClass}" onclick='openCrewSheet(${JSON.stringify(c).replace(/'/g,"&apos;")})'>

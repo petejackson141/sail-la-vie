@@ -162,7 +162,7 @@ async function backupToFile(){
   }
   const payload = {
     app:'Sail la Vie', version:1, exportedAt:new Date().toISOString(),
-    profile: state.profile, boats: state.boats, crew: state.crew,
+    profile: state.profile, boats: state.boats, crew: state.crew, diary: state.diary,
     tripIndex: state.tripIndex, trips
   };
   const json = JSON.stringify(payload, null, 2);
@@ -222,12 +222,14 @@ async function restoreFromFile(ev){
     await storeSet(KEYS.PROFILE, data.profile);
     await storeSet(KEYS.BOATS, data.boats||[]);
     await storeSet(KEYS.CREW, data.crew||[]);
+    await storeSet(KEYS.DIARY, data.diary||[]);
     await storeSet(KEYS.INDEX, data.tripIndex||[]);
     for(const trip of data.trips){ await storeSet('trip:'+trip.id, trip); }
 
     state.profile = data.profile;
     state.boats = data.boats||[];
     state.crew = data.crew||[];
+    state.diary = data.diary||[];
     state.tripIndex = data.tripIndex||[];
 
     currentLang = 'en'; // language picker hidden for now — es/pt/he dictionaries kept intact for later

@@ -239,6 +239,27 @@
   html[data-theme="dark"] .last-sail .ls-chev{ color:var(--gold); }
   [dir="rtl"] .last-sail .ls-chev{ transform:scaleX(-1); }
 
+
+  /* ---------- Diary ---------- */
+  .dt-clear-row{ text-align:center; margin-top:-30px; height:30px; }
+  .diary-intro{ font-size:13px; color:var(--ink-muted); margin:-2px 2px 4px; }
+  .diary-card{ display:flex; gap:14px; align-items:center; margin-top:12px; padding:12px 14px; cursor:pointer;
+    border:1.5px solid var(--gold); border-radius:var(--radius-md); box-shadow:var(--shadow); }
+  .diary-card:active{ transform:scale(.99); }
+  .diary-card.is-today{ border-color:var(--coral) !important; }
+  .diary-card.is-past{ opacity:.78; }
+  .dc-date{ flex:0 0 58px; text-align:center; background:var(--bg-elevated); border:1px solid var(--border); border-radius:14px; padding:7px 0 6px; }
+  .dc-mon{ font-size:10.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--coral); }
+  .dc-day{ font-family:var(--font-display); font-weight:700; font-size:24px; line-height:1.05; color:var(--navy); }
+  html[data-theme="dark"] .dc-day{ color:var(--gold); }
+  .dc-wd{ font-size:10.5px; color:var(--ink-muted); font-weight:600; }
+  .dc-body{ flex:1; min-width:0; }
+  .dc-top{ display:flex; align-items:flex-start; gap:8px; justify-content:space-between; }
+  .dc-title{ font-family:var(--font-display); font-weight:700; font-size:15.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .dc-when{ flex:0 0 auto; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; background:rgba(23,117,143,.14); color:var(--teal); white-space:nowrap; }
+  .diary-card.is-today .dc-when{ background:rgba(222,68,87,.14); color:var(--coral); }
+  .dc-meta{ font-size:12.5px; color:var(--ink-muted); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dc-notes{ font-size:12.5px; color:var(--ink-muted); margin-top:4px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   /* ---------- bottom nav ---------- */
   .bottombar-wrap{ position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:480px; z-index:50; }
   .bottomnav{ background:var(--bg-elevated); border-top:1px solid var(--border); display:flex; padding:10px 6px calc(10px + env(safe-area-inset-bottom)); }
@@ -951,20 +972,21 @@ html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
 .pdf-theme-memory .m-tagline{ display:flex; align-items:center; gap:7px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:9.2px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--m-navy); }
 .pdf-theme-memory .m-tagline .m-tagline-heart{ color:var(--m-gold); display:flex; }
 
-.lightbox{ position:fixed; inset:0; background:rgba(10,20,30,.95); z-index:2000; display:none; align-items:center; justify-content:center; flex-direction:column; padding:20px; }
+.lightbox{ position:fixed; inset:0; background:rgba(10,20,30,.95); z-index:2000; display:none; flex-direction:column; align-items:center;
+  padding-bottom:calc(18px + env(safe-area-inset-bottom)); }
 .lightbox.show{ display:flex; }
-.lightbox img{ max-width:92vw; max-height:70vh; object-fit:contain; border-radius:10px; }
-.lightbox-actions{ display:flex; gap:12px; margin-top:20px; }
+.lightbox-stage{ position:relative; flex:1; width:100%; min-height:0; overflow:hidden; touch-action:none; user-select:none; -webkit-user-select:none; }
+.lightbox-track{ position:absolute; inset:0; will-change:transform; }
+.lb-slide{ position:absolute; top:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; padding:64px 10px 6px; }
+.lb-prev{ left:-100%; } .lb-cur{ left:0; } .lb-next{ left:100%; }
+.lb-slide img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:10px; will-change:transform; user-select:none; -webkit-user-drag:none; }
+.lightbox-actions{ display:flex; gap:12px; margin-top:14px; }
 .lightbox-btn.danger{ background:rgba(214,90,74,.22); border-color:rgba(214,90,74,.55); color:#F3B4AB; }
 .lightbox-btn{ display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.25);
   border-radius:999px; padding:11px 20px; font-weight:600; font-size:14px; cursor:pointer; }
-.lightbox-close{ position:absolute; top:18px; right:18px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.14);
-  display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; }
-.lightbox-nav{ position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,.14);
-  display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; z-index:1; }
-.lightbox-nav-prev{ left:10px; }
-.lightbox-nav-next{ right:10px; }
-.lightbox-counter{ margin-top:12px; font-size:12.5px; color:rgba(255,255,255,.7); letter-spacing:.03em; }
+.lightbox-close{ position:absolute; top:calc(14px + env(safe-area-inset-top)); right:16px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.14);
+  display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; z-index:3; }
+.lightbox-counter{ margin-top:10px; font-size:12.5px; color:rgba(255,255,255,.7); letter-spacing:.03em; }
 
 /* ---------- RTL (Hebrew) ----------
    Most layout is flexbox with `gap`, which reverses correctly on its own
@@ -1027,8 +1049,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
         <span class="icon-emoji" aria-hidden="true">🖼️</span>
         <span data-i18n="home.gallery">Gallery</span>
       </div>
-      <!-- Diary: placeholder for now — not linked to a screen yet, just says so -->
-      <div class="quicklink tint-cream" onclick="showToast(t('home.diarySoon'))">
+      <div class="quicklink tint-cream" onclick="nav('diary')">
         <span class="icon-emoji" aria-hidden="true">📓</span>
         <span data-i18n="home.diary">Diary</span>
       </div>
@@ -1338,6 +1359,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       </div>
       <div class="iconbtn" onclick="openBoatSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
     </div>
+    <input type="text" class="search-input" id="boatsSearch" placeholder="Search fleet (name, type, notes)…" oninput="renderBoats()" data-i18n-ph="boats.searchPh">
     <div id="boatsList"></div>
   </section>
 
@@ -1351,6 +1373,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       </div>
       <div class="iconbtn" onclick="openCrewSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
     </div>
+    <input type="text" class="search-input" id="crewSearch" placeholder="Search crew (name, contact, notes)…" oninput="renderCrew()" data-i18n-ph="crew.searchPh">
     <div id="crewList"></div>
   </section>
 
@@ -1407,12 +1430,6 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 
     <div class="section-title" data-i18n="profile.lifetimeStats">Lifetime Stats</div>
     <div id="profileStats"></div>
-
-    <div class="section-title" data-i18n="profile.backupRestore">Backup &amp; Restore</div>
-    <p style="font-size:12.5px;margin-bottom:10px;" data-i18n="profile.backupHint">Save everything to a file you can keep in the cloud (Drive, iCloud, email) or move to a new phone.</p>
-    <button class="btn btn-outline" onclick="backupToFile()" data-i18n="profile.backupToFile">Backup to File</button>
-    <button class="btn btn-outline" style="margin-top:8px;" onclick="document.getElementById('restoreFileInput').click()" data-i18n="profile.restoreFromFile">Restore from File</button>
-    <input type="file" id="restoreFileInput" accept="application/json" style="display:none;" onchange="restoreFromFile(event)">
   </section>
 
   <!-- ============ SETTINGS ============ -->
@@ -1469,9 +1486,17 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div class="divider"></div>
     <div class="link-plain" onclick="clearProfilePrompt()" style="color:var(--coral);" data-i18n="settings.clearProfile">Clear profile…</div>
 
+    <div class="section-title" data-i18n="profile.backupRestore">Backup &amp; Restore</div>
+    <div class="card" style="padding:16px;">
+      <p style="font-size:12.5px;margin-bottom:12px;" data-i18n="profile.backupHint">Save everything to a file you can keep in the cloud (Drive, iCloud, email) or move to a new phone.</p>
+      <button class="btn btn-outline" onclick="backupToFile()" data-i18n="profile.backupToFile">Backup to File</button>
+      <button class="btn btn-outline" style="margin-top:8px;" onclick="document.getElementById('restoreFileInput').click()" data-i18n="profile.restoreFromFile">Restore from File</button>
+      <input type="file" id="restoreFileInput" accept="application/json" style="display:none;" onchange="restoreFromFile(event)">
+    </div>
+
     <div class="section-title" style="color:var(--coral);" data-i18n="settings.dangerZone">Danger Zone</div>
     <div class="card" style="padding:16px;border:1px solid var(--coral);">
-      <p style="font-size:12.5px;margin-bottom:12px;" data-i18n="settings.resetHint">Permanently erases every trip, boat, crew member, and profile detail on this device. This can't be undone — back up first if you want to keep anything.</p>
+      <p style="font-size:12.5px;margin-bottom:12px;" data-i18n="settings.resetHint">Permanently erases every trip, boat, crew member, diary plan, and profile detail on this device. This can't be undone — back up first if you want to keep anything.</p>
       <button class="btn btn-danger" onclick="openResetSheet()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16" style="vertical-align:-3px;margin-right:6px;"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg>
         <span data-i18n="settings.resetApp">Reset App Data…</span>
@@ -1479,6 +1504,21 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </div>
 
     <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:18px;" id="appVersionLine"></div>
+  </section>
+
+  <!-- ============ DIARY ============ -->
+  <section class="screen" id="screen-diary">
+    <div class="backrow">
+      <div class="iconbtn back-icon" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2 data-i18n="diary.title">Sailing Diary</h2>
+      <div class="iconbtn" onclick="openDiarySheet()" title="New plan" data-i18n-title="diary.newTitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+    </div>
+    <p class="diary-intro" data-i18n="diary.intro">Write down your upcoming sailing plans — dates, places and notes.</p>
+    <div class="chiprow" id="diaryChips">
+      <div class="chip active" data-f="upcoming" onclick="setDiaryFilter('upcoming')" data-i18n="diary.upcoming">Upcoming</div>
+      <div class="chip" data-f="past" onclick="setDiaryFilter('past')" data-i18n="diary.past">Past</div>
+    </div>
+    <div id="diaryList"></div>
   </section>
 
   <!-- ============ RESUME / CERTIFICATE ============ -->
@@ -1588,12 +1628,40 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
         <div class="wheel-colon">:</div>
         <div class="wheel" id="wheelMin"></div>
       </div>
+      <!-- Diary only: a plan can have a date but no particular time -->
+      <div id="dtClearTimeRow" class="dt-clear-row" style="display:none;"><span class="link-plain" onclick="dtClearTime()" data-i18n="diary.clearTime">No specific time</span></div>
     </div>
     <div class="dt-actions">
       <button type="button" class="btn btn-tonal" onclick="dtNow()" data-i18n="picker.now">Now</button>
-      <button type="button" class="btn btn-outline" onclick="closeSheets()" data-i18n="action.cancel">Cancel</button>
+      <button type="button" class="btn btn-outline" onclick="dtCancel()" data-i18n="action.cancel">Cancel</button>
       <button type="button" class="btn btn-primary" onclick="dtApply()" data-i18n="picker.set">Set</button>
     </div>
+  </div>
+
+  <!-- New / edit a Diary plan. The date & time go through the themed picker (#sheetDateTime),
+       which returns here when done (see openDiaryPicker in diary.js). -->
+  <div class="sheet" id="sheetDiary" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3 id="diarySheetTitle">New Plan</h3>
+    <div class="field"><label data-i18n="diary.what">What's the plan?</label><input type="text" id="diaryTitle" placeholder="e.g. Weekend sail to Cyprus" data-i18n-ph="diary.whatPh"></div>
+    <div class="field">
+      <label data-i18n="diary.when">When</label>
+      <div class="when-row" style="grid-template-columns:1.15fr 1fr;">
+        <button type="button" class="when-pill" onclick="openDiaryPicker('date')">
+          <span class="wp-ico" aria-hidden="true">📅</span>
+          <span class="wp-txt"><span class="wp-lbl" data-i18n="picker.date">Date</span><span class="wp-val" id="diaryDateDisplay">—</span></span>
+        </button>
+        <button type="button" class="when-pill" onclick="openDiaryPicker('time')">
+          <span class="wp-ico" aria-hidden="true">🕐</span>
+          <span class="wp-txt"><span class="wp-lbl" data-i18n="picker.time">Time</span><span class="wp-val" id="diaryTimeDisplay">—</span></span>
+        </button>
+      </div>
+    </div>
+    <div class="field"><label data-i18n="diary.place">Place</label><input type="text" id="diaryPlace" placeholder="e.g. Herzliya Marina" data-i18n-ph="diary.placePh"></div>
+    <div class="field"><label data-i18n="diary.boat">Boat</label><select id="diaryBoat"></select></div>
+    <div class="field"><label data-i18n="active.notes">Notes</label><textarea id="diaryNotes" placeholder="Who's coming, what to bring, plans for the day…" data-i18n-ph="diary.notesPh"></textarea></div>
+    <button class="btn btn-primary" onclick="saveDiaryForm()" data-i18n="diary.save">Save Plan</button>
+    <button class="btn btn-ghost" id="deleteDiaryBtn" style="display:none;color:var(--coral);" onclick="deleteDiaryEntry()" data-i18n="diary.delete">Delete Plan</button>
   </div>
 
   <div class="sheet" id="sheetBoat" style="display:none;">
@@ -1746,16 +1814,19 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 <div class="toast" id="toast"></div>
 <div id="printArea" style="display:none;"></div>
 
-<div class="lightbox" id="photoLightbox" onclick="if(event.target===this) closeLightbox()">
+<div class="lightbox" id="photoLightbox">
   <div class="lightbox-close" onclick="closeLightbox()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M18 6L6 18M6 6l12 12"/></svg>
   </div>
-  <div class="lightbox-nav lightbox-nav-prev" onclick="lightboxPrev()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M15 18l-6-6 6-6"/></svg>
-  </div>
-  <img id="lightboxImg" src="" alt="">
-  <div class="lightbox-nav lightbox-nav-next" onclick="lightboxNext()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 18l6-6-6-6"/></svg>
+  <!-- Swipe left/right for the next/previous photo, pinch or double-tap to zoom, drag to pan
+       while zoomed (see setupLightboxGestures() in pdf-export.js). Three slides sit side by
+       side so the neighbouring photos slide in under your finger. -->
+  <div class="lightbox-stage" id="lightboxStage">
+    <div class="lightbox-track" id="lightboxTrack">
+      <div class="lb-slide lb-prev"><img id="lightboxImgPrev" alt="" draggable="false"></div>
+      <div class="lb-slide lb-cur"><img id="lightboxImg" alt="" draggable="false"></div>
+      <div class="lb-slide lb-next"><img id="lightboxImgNext" alt="" draggable="false"></div>
+    </div>
   </div>
   <div class="lightbox-counter" id="lightboxCounter"></div>
   <div class="lightbox-actions">
@@ -1785,6 +1856,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 <script src="js/journey.js"></script>
 <script src="js/history-maps.js"></script>
 <script src="js/boats-crew.js"></script>
+<script src="js/diary.js"></script>
 <script src="js/profile-settings.js"></script>
 <script src="js/pdf-export.js"></script>
 <script src="js/units.js"></script>
