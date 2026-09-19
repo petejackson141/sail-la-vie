@@ -30,9 +30,10 @@ function renderHomeStats(){
   if(!state.tripIndex.length){ el.innerHTML=''; return; }
   const nm = state.tripIndex.reduce((s,t)=>s+(t.distanceNm||0),0);
   const secs = state.tripIndex.reduce((s,t)=>s+(t.elapsedSeconds||0),0);
+  // One box, two halves: total sails (rose) | distance logged (blue), with a divider line between
   el.innerHTML = `<div class="home-stats">
-    <div class="hs-tile tint-rose"><div class="stat-label">${t('resume.totalSails')}</div><div class="stat-value">${state.tripIndex.length}</div></div>
-    <div class="hs-tile tint-blue"><div class="stat-label">${t('home.distanceLogged')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
+    <div class="hs-cell tint-rose"><div class="stat-label">${t('resume.totalSails')}</div><div class="stat-value">${state.tripIndex.length}</div></div>
+    <div class="hs-cell tint-blue"><div class="stat-label">${t('home.distanceLogged')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
   </div>`;
 }
 
@@ -1168,7 +1169,7 @@ async function finalizeSaveTrip(){
    ============================================================ */
 
 /* ============================================================
-   THEMED DATE & TIME PICKER — shared by the past-sail form and the Diary form
+   THEMED DATE & TIME PICKER — shared by the past-sail form and the Noticeboard form
    ------------------------------------------------------------
    Replaces the browser's own datetime-local widget (which ignored the app
    theme and, on Android, opened a plain spinner dialog). Tapping a Date/Time
@@ -1181,8 +1182,8 @@ async function finalizeSaveTrip(){
      get()          -> {y,m,d,h,mi,hasTime} for the current value, or null if none yet
                        (m is 0-based, like JS Dates)
      apply(d, t)    -> called with 'YYYY-MM-DD' and 'HH:mm' ('' = no time chosen)
-     optionalTime   -> true if a date without a time is a valid answer (Diary)
-     returnSheet    -> id of a sheet to reopen afterwards (Diary form); null = just close
+     optionalTime   -> true if a date without a time is a valid answer (Noticeboard)
+     returnSheet    -> id of a sheet to reopen afterwards (Noticeboard form); null = just close
    For the past-sail form the value lives in a hidden <input type="datetime-local">
    (#pastDate, 'YYYY-MM-DDTHH:mm' local time) that endJourney()'s save code reads —
    anything that assigns #pastDate.value must call refreshPastDateDisplay() after.
@@ -1274,7 +1275,7 @@ function dtSetTab(tab){
 function dtHasTime(){ return !DT.target.optionalTime || DT.hadTime || DT.timeTouched; }
 function dtRenderTabs(){
   document.getElementById('dtTabDateVal').textContent = dtFmtDate(DT, {weekday:'short', day:'numeric', month:'short'});
-  document.getElementById('dtTabTimeVal').textContent = dtHasTime() ? dtPad(DT.h) + ':' + dtPad(DT.mi) : t('diary.anyTime');
+  document.getElementById('dtTabTimeVal').textContent = dtHasTime() ? dtPad(DT.h) + ':' + dtPad(DT.mi) : t('noticeboard.anyTime');
 }
 function dtRenderDow(){
   const ws = dtWeekStart(), fmt = new Intl.DateTimeFormat(dtLocale(), {weekday:'narrow'});
@@ -1353,7 +1354,7 @@ function dtNow(){
   DT.viewY = DT.y; DT.viewM = DT.m; DT.months = false;
   dtSetTab(DT.tab);
 }
-// After Set/Cancel: back to the sheet that asked (Diary form), or just close.
+// After Set/Cancel: back to the sheet that asked (Noticeboard form), or just close.
 function dtFinish(){
   const back = DT.target && DT.target.returnSheet;
   if(back) openSheet(back); else closeSheets();
@@ -1364,7 +1365,7 @@ function dtApply(){
   DT.target.apply(DT.y + '-' + dtPad(DT.m+1) + '-' + dtPad(DT.d), time);
   dtFinish();
 }
-// Diary only: keep the date, drop the time ("any time that day")
+// Noticeboard only: keep the date, drop the time ("any time that day")
 function dtClearTime(){
   DT.hadTime = false; DT.timeTouched = false;
   dtApply();

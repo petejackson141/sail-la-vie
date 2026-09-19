@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '19.09.2026.1818';
+const APP_VERSION = '19.09.2026.2301';
 
 /* ============================================================
    CUSTOM CONFIRM DIALOG (shared across all screens)
@@ -95,7 +95,7 @@ let state = {
   tripIndex: [],   // lightweight list for History screen — NOT the full trip records (those are stored separately as 'trip:<id>')
   boats: [],
   crew: [],
-  diary: [],       // planned future sails, written on the Diary screen — see diary.js
+  noticeboard: [],       // planned future sails, written on the Noticeboard screen — see noticeboard.js
   profile: { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme:'light', unitSystem:'nautical', language:'en' },
   // Per-screen list/grid display choice for the Fleet and Crew screens — see
   // setListView()/renderBoats()/renderCrew(). Persisted so the choice sticks
@@ -151,13 +151,20 @@ function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(
 async function boot(){
   await initStorage();
 
-  const [idx, boats, crew, profile, viewPrefs, diary] = await Promise.all([
-    storeGet(KEYS.INDEX), storeGet(KEYS.BOATS), storeGet(KEYS.CREW), storeGet(KEYS.PROFILE), storeGet(KEYS.VIEW_PREFS), storeGet(KEYS.DIARY)
+  const [idx, boats, crew, profile, viewPrefs, noticeboard] = await Promise.all([
+    storeGet(KEYS.INDEX), storeGet(KEYS.BOATS), storeGet(KEYS.CREW), storeGet(KEYS.PROFILE), storeGet(KEYS.VIEW_PREFS), storeGet(KEYS.NOTICEBOARD)
   ]);
   state.tripIndex = idx || [];
   state.boats = boats || [];
   state.crew = crew || [];
-  state.diary = diary || [];
+  state.noticeboard = noticeboard || [];
+  // The Noticeboard was called "Diary" in the build just before this one — carry any plans
+  // saved under the old storage key over to the new one (one-off, then the old key is removed).
+  if(!noticeboard){
+    const legacy = await storeGet('diary');
+    if(legacy && legacy.length){ state.noticeboard = legacy; await storeSet(KEYS.NOTICEBOARD, legacy); }
+    if(legacy) await storeDelete('diary');
+  }
   state.profile = profile || state.profile;
   state.viewPrefs = viewPrefs || state.viewPrefs;
 
@@ -225,7 +232,7 @@ function nav(name, fromPopState){
   if(name==='profile') renderProfileScreen();
   if(name==='resume') renderResume();
   if(name==='gallery') renderGallery();
-  if(name==='diary') renderDiary();
+  if(name==='noticeboard') renderNoticeboard();
   if(name==='active' && liveLeafletMap){
     // Leaflet sizes itself incorrectly if it was updated while its container was
     // hidden behind another screen (backgrounded journey) — fix it up now that

@@ -3,7 +3,7 @@
 // sign up / sign in / sign out and keeps state.user in sync with whoever's
 // currently logged in.
 //
-// Also owns the profile <-> cloud, boats <-> cloud, and crew <-> cloud sync
+// Also owns the profile <-> cloud, boats <-> cloud, crew <-> cloud and noticeboard <-> cloud sync
 // (push-on-edit, pull-and-merge on sign-in, boot-time session restore, and
 // the manual "Sync Now" button). Journeys are NOT synced yet — that's the
 // next feature to build, following the same shape as boats/crew.
@@ -103,6 +103,7 @@ async function initAuth(){
     resolveBoatsSyncOnSignIn().catch(e => console.error('boot-time boats sync failed', e));
     resolveCrewSyncOnSignIn().catch(e => console.error('boot-time crew sync failed', e));
     resolveTripsSyncOnSignIn().catch(e => console.error('boot-time trips sync failed', e));
+    resolveNoticeboardSyncOnSignIn().catch(e => console.error('boot-time noticeboard sync failed', e));
   }
 
   getSupabaseClient().auth.onAuthStateChange((_event, session) => {
@@ -198,6 +199,8 @@ function ensureRealtimeSync(){
       (payload) => { debugLog('[realtime] crew event: ' + payload.eventType); scheduleRealtimeResync('crew'); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'trips', filter: `user_id=eq.${state.user.id}` },
       (payload) => { debugLog('[realtime] trips event: ' + payload.eventType); scheduleRealtimeResync('trips'); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'noticeboard', filter: `user_id=eq.${state.user.id}` },
+      (payload) => { debugLog('[realtime] noticeboard event: ' + payload.eventType); scheduleRealtimeResync('noticeboard'); })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${state.user.id}` },
       (payload) => { debugLog('[realtime] profiles event: ' + payload.eventType); scheduleRealtimeResync('profile'); })
     .subscribe((status, err) => {
@@ -226,6 +229,7 @@ function scheduleRealtimeResync(kind){
     if(kind === 'boats') resolveBoatsSyncOnSignIn().then(()=>debugLog('[realtime] boats resync done')).catch(e => debugLog('[realtime] boats resync FAILED: ' + (e.message||e)));
     if(kind === 'crew') resolveCrewSyncOnSignIn().then(()=>debugLog('[realtime] crew resync done')).catch(e => debugLog('[realtime] crew resync FAILED: ' + (e.message||e)));
     if(kind === 'trips') resolveTripsSyncOnSignIn().then(()=>debugLog('[realtime] trips resync done')).catch(e => debugLog('[realtime] trips resync FAILED: ' + (e.message||e)));
+    if(kind === 'noticeboard') resolveNoticeboardSyncOnSignIn().then(()=>debugLog('[realtime] noticeboard resync done')).catch(e => debugLog('[realtime] noticeboard resync FAILED: ' + (e.message||e)));
     if(kind === 'profile') resolveProfileSyncOnSignIn().then(()=>debugLog('[realtime] profile resync done')).catch(e => debugLog('[realtime] profile resync FAILED: ' + (e.message||e)));
   }, 600);
 }
@@ -334,6 +338,7 @@ async function submitAuthForm(){
         await resolveBoatsSyncOnSignIn();
         await resolveCrewSyncOnSignIn();
         await resolveTripsSyncOnSignIn();
+        await resolveNoticeboardSyncOnSignIn();
         showToast('Account created.');
       } else {
         // Normal case: Supabase emails a confirmation link and there's no
@@ -349,6 +354,7 @@ async function submitAuthForm(){
       await resolveBoatsSyncOnSignIn();
       await resolveCrewSyncOnSignIn();
       await resolveTripsSyncOnSignIn();
+      await resolveNoticeboardSyncOnSignIn();
       showToast('Signed in.');
     }
   } catch(e){
@@ -981,10 +987,15 @@ async function manualSyncProfile(){
       return;
     }
     const tripsResult = await resolveTripsSyncOnSignIn();
-    if(tripsResult.ok){
+    if(!tripsResult.ok){
+      showToast('Sync failed: ' + tripsResult.message);
+      return;
+    }
+    const noticeboardResult = await resolveNoticeboardSyncOnSignIn();
+    if(noticeboardResult.ok){
       showToast('Synced to cloud.');
     } else {
-      showToast('Sync failed: ' + tripsResult.message);
+      showToast('Sync failed: ' + noticeboardResult.message);
     }
   }catch(e){
     console.error('manual sync failed', e);
@@ -993,4 +1004,110 @@ async function manualSyncProfile(){
     btn.disabled = false;
     btn.textContent = originalLabel;
   }
+}
+
+/* ---------- noticeboard ↔ cloud ----------
+   Same shape as boats and crew above: one row per plan in the Supabase table
+   `noticeboard` (id, user_id, data jsonb, updated_at, deleted_at), pushed after every
+   local save, tombstoned (deleted_at) rather than really deleted, and pulled + merged
+   newest-updated_at-wins on sign-in, boot, "Sync Now" and whenever Realtime reports a
+   change on the table. Everything goes through the same cloud sync queue.
+   Needs the table + RLS policies + Realtime switched on — see noticeboard-supabase.sql.
+   Until that has been run, these calls just fail quietly (logged) and the Noticeboard
+   keeps working locally exactly as before. */
+function pushNoticeboardToCloud(entry){
+  return withCloudSyncQueue(() => pushNoticeboardToCloudImpl(entry));
+}
+async function pushNoticeboardToCloudImpl(entry){
+  if(!state.user) return { ok:false };
+  try{
+    const { error } = await getSupabaseClient()
+      .from('noticeboard')
+      .upsert({ id: entry.id, user_id: state.user.id, data: entry, updated_at: entry.updatedAt || new Date().toISOString() });
+    if(error) throw error;
+    return { ok:true };
+  }catch(e){
+    console.error('noticeboard cloud push failed', e);
+    return { ok:false, message: e.message || String(e) };
+  }
+}
+// Soft-delete (tombstone) — the only way a plan is ever removed from the cloud, so other
+// devices can tell "deleted" apart from "never heard of it" (see mergeNoticeboard).
+function deleteNoticeboardFromCloud(entryId){
+  return withCloudSyncQueue(() => deleteNoticeboardFromCloudImpl(entryId));
+}
+async function deleteNoticeboardFromCloudImpl(entryId){
+  if(!state.user) return { ok:false };
+  try{
+    const now = new Date().toISOString();
+    const { error } = await getSupabaseClient()
+      .from('noticeboard')
+      .upsert({ id: entryId, user_id: state.user.id, data: {}, deleted_at: now, updated_at: now });
+    if(error) throw error;
+    return { ok:true };
+  }catch(e){
+    console.error('noticeboard cloud delete failed', e);
+    return { ok:false, message: e.message || String(e) };
+  }
+}
+// Fire-and-forget wrappers called right after routine local edits (no-op when signed out).
+async function syncNoticeboardIfSignedIn(entry){
+  if(!state.user) return;
+  const result = await pushNoticeboardToCloud(entry);
+  if(!result.ok) console.error('background noticeboard sync failed', result.message);
+}
+async function syncNoticeboardDeleteIfSignedIn(entryId){
+  if(!state.user) return;
+  const result = await deleteNoticeboardFromCloud(entryId);
+  if(!result.ok) console.error('background noticeboard delete sync failed', result.message);
+}
+// Merge by id, newest updated_at wins; a plan only on one side is kept (and pushed up if it
+// is the local one); a tombstoned cloud row removes the plan locally and is never resurrected.
+function mergeNoticeboard(localEntries, cloudRows){
+  const localById = new Map((localEntries||[]).map(e=>[e.id, e]));
+  const cloudById = new Map((cloudRows||[]).map(r=>[r.id, r]));
+  const allIds = new Set([...localById.keys(), ...cloudById.keys()]);
+  const merged = [], toPushUp = [];
+  for(const id of allIds){
+    const local = localById.get(id), cloud = cloudById.get(id);
+    if(cloud && cloud.deleted_at) continue;
+    if(local && cloud){
+      const localTime = local.updatedAt ? Date.parse(local.updatedAt) : 0;
+      const cloudTime = cloud.updated_at ? Date.parse(cloud.updated_at) : 0;
+      if(cloudTime > localTime){ merged.push(cloud.data); }
+      else { merged.push(local); if(localTime > cloudTime) toPushUp.push(local); }
+    } else if(local && !cloud){
+      merged.push(local); toPushUp.push(local);
+    } else if(!local && cloud){
+      merged.push(cloud.data);
+    }
+  }
+  return { merged, toPushUp };
+}
+function resolveNoticeboardSyncOnSignIn(){
+  return withCloudSyncQueue(resolveNoticeboardSyncOnSignInImpl);
+}
+async function resolveNoticeboardSyncOnSignInImpl(){
+  if(!state.user) return { ok:true };
+  let cloudRows;
+  try{
+    const { data, error } = await getSupabaseClient()
+      .from('noticeboard')
+      .select('id,data,updated_at,deleted_at')
+      .eq('user_id', state.user.id);
+    if(error) throw error;
+    cloudRows = data || [];
+  }catch(e){
+    console.error('noticeboard cloud fetch failed', e);
+    return { ok:false, message: 'noticeboard fetch failed: ' + (e.message || String(e)) };
+  }
+  const { merged, toPushUp } = mergeNoticeboard(state.noticeboard, cloudRows);
+  state.noticeboard = merged;
+  await storeSet(KEYS.NOTICEBOARD, state.noticeboard);
+  renderNoticeboard();
+  for(const entry of toPushUp){
+    const result = await pushNoticeboardToCloudImpl(entry);
+    if(!result.ok) return { ok:false, message: result.message };
+  }
+  return { ok:true };
 }

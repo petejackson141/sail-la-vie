@@ -84,7 +84,7 @@
     --navy:#16324F; --navy-deep:#0E2338; --navy-soft:#2C5F91;
     --gold:#C9A24B; --water:#BFE0EA; --coral:#DE4457; --coral-deep:#C23348;
     --teal:#17758F; --sunset-orange:#FB8258;
-    /* soft pastel tints for the Home cards (Last Sail / Resume / Diary / Gallery / totals) */
+    /* soft pastel tints for the Home cards (Last Sail / Resume / Noticeboard / Gallery / totals) */
     --pastel-blue:#E9F5FD; --pastel-mint:#E7F7F2; --pastel-cream:#FEF5E1; --pastel-rose:#FDEDF0;
     --border:#DAE4EA; --shadow: 0 10px 30px -12px rgba(20,43,68,0.25);
     --radius-lg:26px; --radius-md:18px; --radius-sm:12px;
@@ -186,7 +186,7 @@
   .stat-label{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-muted); font-weight:600; }
   .stat-value{ font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--navy); }
   html[data-theme="dark"] .stat-value{ color:var(--gold); }
-  /* Home screen's Total Sails / Distance Logged tiles are styled in the .home-stats block further down */
+  /* Home screen's Total Sails / Distance Logged box is styled in the .home-stats block further down */
   .stat-unit{ font-size:13px; font-weight:500; color:var(--ink-muted); }
 
   /* ---------- quick links row ---------- */
@@ -202,7 +202,8 @@
   .quicklink:nth-child(odd){ border-color:var(--teal); }
   .quicklink:nth-child(even){ border-color:var(--coral); }
 
-  /* Three shortcuts across (Resume / Gallery / Diary) instead of the old 2-column grid */
+  /* Three shortcuts across (Resume / Gallery / Noticeboard) instead of the old 2-column grid */
+  .quicklinks.three{ margin-top:12px; }
   .quicklinks.three .quicklink{ flex:1 1 calc(33.333% - 8px); }
 
   /* ---------- "YOUR SAILING" section divider + pastel-tinted cards ---------- */
@@ -217,13 +218,16 @@
   .tint-cream{ background:var(--pastel-cream); border-color:var(--gold) !important; }
   .tint-rose { background:var(--pastel-rose);  border-color:var(--coral) !important; }
   /* totals: two tiles that match the shortcut cards */
-  .home-stats{ display:flex; gap:12px; }
-  .hs-tile{ flex:1; border:1.5px solid; border-radius:var(--radius-md); padding:14px 12px; text-align:center; box-shadow:var(--shadow); }
-  .hs-tile .stat-label{ font-size:11px; }
-  .hs-tile .stat-value{ font-size:26px; margin-top:2px; }
-  .hs-tile.tint-rose .stat-value{ color:var(--coral); }
-  .hs-tile.tint-blue .stat-value{ color:var(--navy-soft); }
-  html[data-theme="dark"] .hs-tile.tint-blue .stat-value{ color:var(--gold); }
+  .home-stats{ display:flex; border:1.5px solid var(--navy-soft); border-radius:var(--radius-md); box-shadow:var(--shadow); overflow:hidden; }
+  .hs-cell{ flex:1; padding:14px 12px; text-align:center; }
+  .hs-cell + .hs-cell{ border-inline-start:1.5px solid var(--navy-soft); }
+  .hs-cell.tint-rose{ background:var(--pastel-rose); }
+  .hs-cell.tint-blue{ background:var(--pastel-blue); }
+  .home-stats .stat-label{ font-size:11px; }
+  .home-stats .stat-value{ font-size:26px; margin-top:2px; }
+  .hs-cell.tint-rose .stat-value{ color:var(--coral); }
+  .hs-cell.tint-blue .stat-value{ color:var(--navy-soft); }
+  html[data-theme="dark"] .hs-cell.tint-blue .stat-value{ color:var(--gold); }
 
   /* ---------- "Last Sail" card on Home ---------- */
   .last-sail{ display:flex; align-items:center; gap:12px; margin-top:12px; padding:12px 14px; cursor:pointer;
@@ -240,14 +244,14 @@
   [dir="rtl"] .last-sail .ls-chev{ transform:scaleX(-1); }
 
 
-  /* ---------- Diary ---------- */
+  /* ---------- Noticeboard ---------- */
   .dt-clear-row{ text-align:center; margin-top:-30px; height:30px; }
-  .diary-intro{ font-size:13px; color:var(--ink-muted); margin:-2px 2px 4px; }
-  .diary-card{ display:flex; gap:14px; align-items:center; margin-top:12px; padding:12px 14px; cursor:pointer;
+  .noticeboard-intro{ font-size:13px; color:var(--ink-muted); margin:-2px 2px 4px; }
+  .noticeboard-card{ display:flex; gap:14px; align-items:center; margin-top:12px; padding:12px 14px; cursor:pointer;
     border:1.5px solid var(--gold); border-radius:var(--radius-md); box-shadow:var(--shadow); }
-  .diary-card:active{ transform:scale(.99); }
-  .diary-card.is-today{ border-color:var(--coral) !important; }
-  .diary-card.is-past{ opacity:.78; }
+  .noticeboard-card:active{ transform:scale(.99); }
+  .noticeboard-card.is-today{ border-color:var(--coral) !important; }
+  .noticeboard-card.is-past{ opacity:.78; }
   .dc-date{ flex:0 0 58px; text-align:center; background:var(--bg-elevated); border:1px solid var(--border); border-radius:14px; padding:7px 0 6px; }
   .dc-mon{ font-size:10.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--coral); }
   .dc-day{ font-family:var(--font-display); font-weight:700; font-size:24px; line-height:1.05; color:var(--navy); }
@@ -257,7 +261,7 @@
   .dc-top{ display:flex; align-items:flex-start; gap:8px; justify-content:space-between; }
   .dc-title{ font-family:var(--font-display); font-weight:700; font-size:15.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .dc-when{ flex:0 0 auto; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; background:rgba(23,117,143,.14); color:var(--teal); white-space:nowrap; }
-  .diary-card.is-today .dc-when{ background:rgba(222,68,87,.14); color:var(--coral); }
+  .noticeboard-card.is-today .dc-when{ background:rgba(222,68,87,.14); color:var(--coral); }
   .dc-meta{ font-size:12.5px; color:var(--ink-muted); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .dc-notes{ font-size:12.5px; color:var(--ink-muted); margin-top:4px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   /* ---------- bottom nav ---------- */
@@ -1036,8 +1040,10 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <span class="icon-emoji icon-svg" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><g stroke="#8A5527" stroke-width="2.4" stroke-linecap="round"><line x1="16" y1="16" x2="28.4" y2="16.0"/><line x1="16" y1="16" x2="24.8" y2="24.8"/><line x1="16" y1="16" x2="16.0" y2="28.4"/><line x1="16" y1="16" x2="7.2" y2="24.8"/><line x1="16" y1="16" x2="3.6" y2="16.0"/><line x1="16" y1="16" x2="7.2" y2="7.2"/><line x1="16" y1="16" x2="16.0" y2="3.6"/><line x1="16" y1="16" x2="24.8" y2="7.2"/></g><g fill="#D9973F" stroke="#8A5527" stroke-width="1"><circle cx="29.3" cy="16.0" r="2"/><circle cx="25.4" cy="25.4" r="2"/><circle cx="16.0" cy="29.3" r="2"/><circle cx="6.6" cy="25.4" r="2"/><circle cx="2.7" cy="16.0" r="2"/><circle cx="6.6" cy="6.6" r="2"/><circle cx="16.0" cy="2.7" r="2"/><circle cx="25.4" cy="6.6" r="2"/></g><circle cx="16" cy="16" r="9" fill="none" stroke="#8A5527" stroke-width="4.4"/><circle cx="16" cy="16" r="9" fill="none" stroke="#D9973F" stroke-width="2.6"/><circle cx="16" cy="16" r="3.6" fill="#F4C25B" stroke="#8A5527" stroke-width="1.2"/><circle cx="16" cy="16" r="1.1" fill="#8A5527"/></svg></span>
       <span data-i18n="home.logPastSail">Log a Past Sail</span>
     </button>
-    <!-- "Last Sail" shortcut: filled in by renderLastSail() (journey.js); stays empty until there is at least one saved sail -->
     <div class="section-divider"><span data-i18n="home.yourSailing">Your Sailing</span></div>
+    <!-- Total sails + distance in one box, filled by renderHomeStats() (journey.js); empty until there is a saved sail -->
+    <div id="homeStatsStrip" style="margin-top:12px;"></div>
+    <!-- "Last Sail" shortcut: filled in by renderLastSail() (journey.js); stays empty until there is at least one saved sail -->
     <div id="lastSailWrap"></div>
 
     <div class="quicklinks three">
@@ -1049,13 +1055,11 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
         <span class="icon-emoji" aria-hidden="true">🖼️</span>
         <span data-i18n="home.gallery">Gallery</span>
       </div>
-      <div class="quicklink tint-cream" onclick="nav('diary')">
-        <span class="icon-emoji" aria-hidden="true">📓</span>
-        <span data-i18n="home.diary">Diary</span>
+      <div class="quicklink tint-cream" onclick="nav('noticeboard')">
+        <span class="icon-emoji" aria-hidden="true">📌</span>
+        <span data-i18n="home.noticeboard">Noticeboard</span>
       </div>
     </div>
-
-    <div id="homeStatsStrip" style="margin-top:12px;"></div>
   </section>
 
   <!-- ============ ACTIVE JOURNEY ============ -->
@@ -1496,7 +1500,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 
     <div class="section-title" style="color:var(--coral);" data-i18n="settings.dangerZone">Danger Zone</div>
     <div class="card" style="padding:16px;border:1px solid var(--coral);">
-      <p style="font-size:12.5px;margin-bottom:12px;" data-i18n="settings.resetHint">Permanently erases every trip, boat, crew member, diary plan, and profile detail on this device. This can't be undone — back up first if you want to keep anything.</p>
+      <p style="font-size:12.5px;margin-bottom:12px;" data-i18n="settings.resetHint">Permanently erases every trip, boat, crew member, noticeboard plan, and profile detail on this device. This can't be undone — back up first if you want to keep anything.</p>
       <button class="btn btn-danger" onclick="openResetSheet()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16" style="vertical-align:-3px;margin-right:6px;"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg>
         <span data-i18n="settings.resetApp">Reset App Data…</span>
@@ -1506,19 +1510,19 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:18px;" id="appVersionLine"></div>
   </section>
 
-  <!-- ============ DIARY ============ -->
-  <section class="screen" id="screen-diary">
+  <!-- ============ NOTICEBOARD ============ -->
+  <section class="screen" id="screen-noticeboard">
     <div class="backrow">
       <div class="iconbtn back-icon" onclick="nav('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
-      <h2 data-i18n="diary.title">Sailing Diary</h2>
-      <div class="iconbtn" onclick="openDiarySheet()" title="New plan" data-i18n-title="diary.newTitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+      <h2 data-i18n="noticeboard.title">Noticeboard</h2>
+      <div class="iconbtn" onclick="openNoticeboardSheet()" title="New plan" data-i18n-title="noticeboard.newTitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
     </div>
-    <p class="diary-intro" data-i18n="diary.intro">Write down your upcoming sailing plans — dates, places and notes.</p>
-    <div class="chiprow" id="diaryChips">
-      <div class="chip active" data-f="upcoming" onclick="setDiaryFilter('upcoming')" data-i18n="diary.upcoming">Upcoming</div>
-      <div class="chip" data-f="past" onclick="setDiaryFilter('past')" data-i18n="diary.past">Past</div>
+    <p class="noticeboard-intro" data-i18n="noticeboard.intro">Write down your upcoming sailing plans — dates, places and notes.</p>
+    <div class="chiprow" id="noticeboardChips">
+      <div class="chip active" data-f="upcoming" onclick="setNoticeboardFilter('upcoming')" data-i18n="noticeboard.upcoming">Upcoming</div>
+      <div class="chip" data-f="past" onclick="setNoticeboardFilter('past')" data-i18n="noticeboard.past">Past</div>
     </div>
-    <div id="diaryList"></div>
+    <div id="noticeboardList"></div>
   </section>
 
   <!-- ============ RESUME / CERTIFICATE ============ -->
@@ -1628,8 +1632,8 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
         <div class="wheel-colon">:</div>
         <div class="wheel" id="wheelMin"></div>
       </div>
-      <!-- Diary only: a plan can have a date but no particular time -->
-      <div id="dtClearTimeRow" class="dt-clear-row" style="display:none;"><span class="link-plain" onclick="dtClearTime()" data-i18n="diary.clearTime">No specific time</span></div>
+      <!-- Noticeboard only: a plan can have a date but no particular time -->
+      <div id="dtClearTimeRow" class="dt-clear-row" style="display:none;"><span class="link-plain" onclick="dtClearTime()" data-i18n="noticeboard.clearTime">No specific time</span></div>
     </div>
     <div class="dt-actions">
       <button type="button" class="btn btn-tonal" onclick="dtNow()" data-i18n="picker.now">Now</button>
@@ -1638,30 +1642,30 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </div>
   </div>
 
-  <!-- New / edit a Diary plan. The date & time go through the themed picker (#sheetDateTime),
-       which returns here when done (see openDiaryPicker in diary.js). -->
-  <div class="sheet" id="sheetDiary" style="display:none;">
+  <!-- New / edit a Noticeboard plan. The date & time go through the themed picker (#sheetDateTime),
+       which returns here when done (see openNoticeboardPicker in noticeboard.js). -->
+  <div class="sheet" id="sheetNoticeboard" style="display:none;">
     <div class="sheet-handle"></div>
-    <h3 id="diarySheetTitle">New Plan</h3>
-    <div class="field"><label data-i18n="diary.what">What's the plan?</label><input type="text" id="diaryTitle" placeholder="e.g. Weekend sail to Cyprus" data-i18n-ph="diary.whatPh"></div>
+    <h3 id="noticeboardSheetTitle">New Plan</h3>
+    <div class="field"><label data-i18n="noticeboard.what">What's the plan?</label><input type="text" id="noticeboardTitle" placeholder="e.g. Weekend sail to Cyprus" data-i18n-ph="noticeboard.whatPh"></div>
     <div class="field">
-      <label data-i18n="diary.when">When</label>
+      <label data-i18n="noticeboard.when">When</label>
       <div class="when-row" style="grid-template-columns:1.15fr 1fr;">
-        <button type="button" class="when-pill" onclick="openDiaryPicker('date')">
+        <button type="button" class="when-pill" onclick="openNoticeboardPicker('date')">
           <span class="wp-ico" aria-hidden="true">📅</span>
-          <span class="wp-txt"><span class="wp-lbl" data-i18n="picker.date">Date</span><span class="wp-val" id="diaryDateDisplay">—</span></span>
+          <span class="wp-txt"><span class="wp-lbl" data-i18n="picker.date">Date</span><span class="wp-val" id="noticeboardDateDisplay">—</span></span>
         </button>
-        <button type="button" class="when-pill" onclick="openDiaryPicker('time')">
+        <button type="button" class="when-pill" onclick="openNoticeboardPicker('time')">
           <span class="wp-ico" aria-hidden="true">🕐</span>
-          <span class="wp-txt"><span class="wp-lbl" data-i18n="picker.time">Time</span><span class="wp-val" id="diaryTimeDisplay">—</span></span>
+          <span class="wp-txt"><span class="wp-lbl" data-i18n="picker.time">Time</span><span class="wp-val" id="noticeboardTimeDisplay">—</span></span>
         </button>
       </div>
     </div>
-    <div class="field"><label data-i18n="diary.place">Place</label><input type="text" id="diaryPlace" placeholder="e.g. Herzliya Marina" data-i18n-ph="diary.placePh"></div>
-    <div class="field"><label data-i18n="diary.boat">Boat</label><select id="diaryBoat"></select></div>
-    <div class="field"><label data-i18n="active.notes">Notes</label><textarea id="diaryNotes" placeholder="Who's coming, what to bring, plans for the day…" data-i18n-ph="diary.notesPh"></textarea></div>
-    <button class="btn btn-primary" onclick="saveDiaryForm()" data-i18n="diary.save">Save Plan</button>
-    <button class="btn btn-ghost" id="deleteDiaryBtn" style="display:none;color:var(--coral);" onclick="deleteDiaryEntry()" data-i18n="diary.delete">Delete Plan</button>
+    <div class="field"><label data-i18n="noticeboard.place">Place</label><input type="text" id="noticeboardPlace" placeholder="e.g. Herzliya Marina" data-i18n-ph="noticeboard.placePh"></div>
+    <div class="field"><label data-i18n="noticeboard.boat">Boat</label><select id="noticeboardBoat"></select></div>
+    <div class="field"><label data-i18n="active.notes">Notes</label><textarea id="noticeboardNotes" placeholder="Who's coming, what to bring, plans for the day…" data-i18n-ph="noticeboard.notesPh"></textarea></div>
+    <button class="btn btn-primary" onclick="saveNoticeboardForm()" data-i18n="noticeboard.save">Save Plan</button>
+    <button class="btn btn-ghost" id="deleteNoticeboardBtn" style="display:none;color:var(--coral);" onclick="deleteNoticeboardEntry()" data-i18n="noticeboard.delete">Delete Plan</button>
   </div>
 
   <div class="sheet" id="sheetBoat" style="display:none;">
@@ -1856,7 +1860,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 <script src="js/journey.js"></script>
 <script src="js/history-maps.js"></script>
 <script src="js/boats-crew.js"></script>
-<script src="js/diary.js"></script>
+<script src="js/noticeboard.js"></script>
 <script src="js/profile-settings.js"></script>
 <script src="js/pdf-export.js"></script>
 <script src="js/units.js"></script>

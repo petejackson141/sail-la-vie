@@ -207,8 +207,8 @@ function renderUnitsSettingUI(){
 function openResetSheet(){ openSheet('sheetReset'); }
 async function resetAllData(){
   for(const t of state.tripIndex){ await storeDelete('trip:'+t.id); }
-  await storeDelete(KEYS.INDEX); await storeDelete(KEYS.BOATS); await storeDelete(KEYS.CREW); await storeDelete(KEYS.DIARY); await storeDelete(KEYS.PROFILE);
-  state = { tripIndex:[], boats:[], crew:[], diary:[], viewPrefs:{ boats:'list', crew:'list' }, profile:{name:'',role:'',license:'',phone:'',email:'',social:'',bio:'',avatar:'',theme:'light',unitSystem:'nautical',language:'en'} };
+  await storeDelete(KEYS.INDEX); await storeDelete(KEYS.BOATS); await storeDelete(KEYS.CREW); await storeDelete(KEYS.NOTICEBOARD); await storeDelete(KEYS.PROFILE);
+  state = { tripIndex:[], boats:[], crew:[], noticeboard:[], viewPrefs:{ boats:'list', crew:'list' }, profile:{name:'',role:'',license:'',phone:'',email:'',social:'',bio:'',avatar:'',theme:'light',unitSystem:'nautical',language:'en'} };
   currentLang = 'en';
   stopAutoThemeWatch();
   cachedThemeCoords = null;
