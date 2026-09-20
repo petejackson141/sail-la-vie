@@ -40,6 +40,7 @@ function noticeboardWhenLabel(n){
 function noticeboardSortKey(e){ return (e.date || '') + ' ' + (e.time || '00:00'); }
 
 function renderNoticeboard(){
+  refreshProfileIfVisible(); // the Profile screen's posts include Noticeboard plans
   const el = document.getElementById('noticeboardList');
   if(!el) return;
   const items = state.noticeboard.map(e=>({e, n: noticeboardDaysFromToday(e.date)}));

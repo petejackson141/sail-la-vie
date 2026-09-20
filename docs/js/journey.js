@@ -25,6 +25,7 @@ function renderLastSail(){
   </div>`;
 }
 function renderHomeStats(){
+  refreshProfileIfVisible(); // Profile stats + posts follow the trip list too
   renderLastSail();
   const el = document.getElementById('homeStatsStrip');
   if(!state.tripIndex.length){ el.innerHTML=''; return; }

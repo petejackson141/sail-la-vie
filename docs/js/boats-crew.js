@@ -211,6 +211,7 @@ async function deleteCrewForm(){
   syncCrewDeleteIfSignedIn(deletedId);
 }
 function renderCrew(){
+  refreshProfileIfVisible(); // the Profile screen's crew row shows the same people
   const el = document.getElementById('crewList');
   const searchEl = document.getElementById('crewSearch');
   searchEl.style.display = state.crew.length ? '' : 'none'; // nothing to search until someone is added

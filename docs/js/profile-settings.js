@@ -2,28 +2,176 @@
 // Profile screen, auto/manual theme (day/night by sun position), unit system setting, reset all data, resume/stats screen, certificate view
 // Extracted from the original single-file app.js, lines 3303-3610, in original order.
 
+/* ============================================================
+   PROFILE SCREEN — Facebook-style page, top to bottom:
+     1. cover photo + round profile photo (camera badges change them)
+     2. bio card: name, role/license tags, bio, contact details — read-only here;
+        the "Edit Profile" button opens #sheetEditProfile with every field
+     3. lifetime stats
+     4. crew, as a sideways-scrolling row of people
+     5. posts, newest first: past sails and planned events from the Noticeboard
+   Everything is drawn by renderProfileScreen() each time the screen is opened
+   (see nav()) and re-drawn by refreshProfileIfVisible() when crew, trips or
+   Noticeboard plans change underneath it (cloud sync, edits from a sheet).
+   state.profile gains one field for this screen: `cover` (data-URL, like `avatar`).
+   ============================================================ */
+let profileFeedLimit = 10; // how many posts are shown before "Show more"
+
 function renderProfileScreen(){
-  document.getElementById('profileName').value = state.profile.name || '';
-  document.getElementById('profileRole').value = state.profile.role || '';
-  document.getElementById('profileLicense').value = state.profile.license || '';
-  document.getElementById('profilePhone').value = state.profile.phone || '';
-  document.getElementById('profileEmail').value = state.profile.email || '';
-  document.getElementById('profileSocial').value = state.profile.social || '';
-  document.getElementById('profileBio').value = state.profile.bio || '';
+  profileFeedLimit = 10;
+  renderProfileHeader();
+  renderProfileStats();
+  renderProfileCrew();
+  renderProfileFeed();
+}
+// Called from places that change data the profile shows; a no-op unless it is on screen.
+function refreshProfileIfVisible(){
+  const el = document.getElementById('screen-profile');
+  if(el && el.classList.contains('active')){
+    const keep = profileFeedLimit;
+    renderProfileScreen();
+    profileFeedLimit = keep; renderProfileFeed();
+  }
+}
+
+function renderProfileHeader(){
+  const p = state.profile;
+  const img = document.getElementById('profileCoverImg'), empty = document.getElementById('profileCoverEmpty');
+  if(p.cover){ img.src = p.cover; img.style.display = 'block'; empty.style.display = 'none'; }
+  else { img.removeAttribute('src'); img.style.display = 'none'; empty.style.display = 'flex'; }
   refreshAvatars();
+  document.getElementById('profileNameText').textContent = p.name || t('default.sailorName');
+  document.getElementById('profileTags').innerHTML =
+    (p.role ? `<span class="pf-tag role">${escapeHtml(p.role)}</span>` : '') +
+    (p.license ? `<span class="pf-tag license">${escapeHtml(p.license)}</span>` : '');
+  document.getElementById('profileBioText').textContent = p.bio || '';
+  // Contact details: phone and email are tappable; a website-looking value becomes a link too
+  const rows = [];
+  if(p.phone) rows.push(['📞', `<a href="tel:${escapeHtml(p.phone.replace(/\s+/g,''))}">${escapeHtml(p.phone)}</a>`]);
+  if(p.email) rows.push(['✉️', `<a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a>`]);
+  if(p.social){
+    const looksLikeSite = /^https?:\/\//i.test(p.social) || /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(p.social);
+    const href = /^https?:\/\//i.test(p.social) ? p.social : 'https://' + p.social;
+    rows.push(['🔗', looksLikeSite ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener">${escapeHtml(p.social)}</a>` : `<span>${escapeHtml(p.social)}</span>`]);
+  }
+  document.getElementById('profileContacts').innerHTML = rows.map(([ico, html])=>`<div class="pf-contact"><span aria-hidden="true">${ico}</span>${html}</div>`).join('');
+  document.getElementById('profileEmptyHint').style.display = (p.role || p.license || p.bio || rows.length) ? 'none' : 'block';
+}
+
+function renderProfileStats(){
   const nm = state.tripIndex.reduce((s,t)=>s+(t.distanceNm||0),0);
   const secs = state.tripIndex.reduce((s,t)=>s+(t.elapsedSeconds||0),0);
   document.getElementById('profileStats').innerHTML = `<div class="stat-card stat-grid">
     <div class="cell"><div class="stat-label">${t('resume.totalSails')}</div><div class="stat-value">${state.tripIndex.length}</div></div>
     <div class="cell"><div class="stat-label">${t('resume.totalDistance')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
-    <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('resume.timeAtSea')}</div><div class="stat-value" style="font-size:18px;">${fmtDuration(secs)}</div></div>
-    <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('profile.boatsSailed')}</div><div class="stat-value">${state.boats.length}</div></div>
+    <div class="cell"><div class="stat-label">${t('resume.timeAtSea')}</div><div class="stat-value" style="font-size:18px;">${fmtDuration(secs)}</div></div>
+    <div class="cell"><div class="stat-label">${t('profile.boatsSailed')}</div><div class="stat-value">${state.boats.length}</div></div>
   </div>`;
 }
+
+// Crew as a sideways-scrolling row of photo cards (tap one to open that crew member),
+// ending with a dashed "Add crew" card.
+function openCrewById(id){ openCrewSheet(state.crew.find(c=>c.id===id)); }
+function renderProfileCrew(){
+  const sorted = [...state.crew].sort((a,b)=>a.name.localeCompare(b.name));
+  const cards = sorted.map(c=>`<div class="pf-crew-card" onclick="openCrewById('${c.id}')">
+      <img src="${c.photo || placeholderAvatar()}" alt="">
+      <div class="nm">${escapeHtml(c.name)}</div>
+      <div class="sb">${escapeHtml(c.note || '')}</div>
+    </div>`).join('');
+  document.getElementById('profileCrew').innerHTML = `<div class="pf-crew-scroll">${cards}
+    <div class="pf-crew-add" onclick="openCrewSheet()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      <span>${t('profile.addCrewCard')}</span>
+    </div>
+  </div>`;
+}
+
+// Posts: every logged sail plus every Noticeboard plan, newest first. Built as a
+// generic list of {kind, ts, ...} items so other kinds (comments…) can be added later.
+function buildProfileFeed(){
+  const items = [];
+  state.tripIndex.forEach(tr=> items.push({kind:'sail', ts: Date.parse(tr.date) || 0, tr}));
+  (state.noticeboard||[]).forEach(e=>{
+    const d = dtParseDate(e.date);
+    const tm = /^(\d{2}):(\d{2})$/.exec(e.time || '');
+    items.push({kind:'plan', ts: d ? new Date(d.y, d.m, d.d, tm ? +tm[1] : 12, tm ? +tm[2] : 0).getTime() : 0, e});
+  });
+  return items.sort((a,b)=>b.ts - a.ts);
+}
+function renderProfileFeed(){
+  const el = document.getElementById('profileFeed');
+  const items = buildProfileFeed();
+  if(!items.length){
+    el.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5h16v11H8l-4 4z"/></svg>
+      <h3>${t('profile.noPosts')}</h3><p>${t('profile.noPostsHint')}</p></div>`;
+    return;
+  }
+  const avatar = state.profile.avatar || placeholderAvatar();
+  const who = escapeHtml(state.profile.name || t('default.sailorName'));
+  const shown = items.slice(0, profileFeedLimit);
+  el.innerHTML = shown.map(it=> it.kind === 'sail' ? sailPostHtml(it.tr, avatar, who) : planPostHtml(it.e, avatar, who)).join('') +
+    (items.length > shown.length ? `<button class="btn btn-tonal" style="margin-top:14px;" onclick="showMoreProfilePosts()">${t('profile.showMore')}</button>` : '');
+}
+function showMoreProfilePosts(){ profileFeedLimit += 10; renderProfileFeed(); }
+
+function sailPostHtml(tr, avatar, who){
+  const boat = tr.boatId ? state.boats.find(b=>b.id===tr.boatId) : null;
+  const dateStr = new Date(tr.date).toLocaleDateString(currentLocale(), {day:'numeric', month:'short', year:'numeric'});
+  const meta = [tr.place ? '📍 ' + escapeHtml(tr.place) : '', boat ? '⛵ ' + escapeHtml(boat.name) : ''].filter(Boolean).join(' · ');
+  const chips = [];
+  if(tr.distanceNm) chips.push('📏 ' + fmtDistance(tr.distanceNm));
+  if(tr.elapsedSeconds) chips.push('⏱ ' + fmtDuration(tr.elapsedSeconds));
+  if(tr.avgSpeed) chips.push('💨 ' + fmtSpeed(tr.avgSpeed));
+  return `<div class="post-card" onclick="openTripDetail('${tr.id}','profile')">
+    <div class="post-head"><img src="${avatar}" alt=""><div class="post-who"><div class="post-name">${who}</div><div class="post-when">${dateStr}</div></div><span class="post-badge sail">⛵ ${t('profile.postSail')}</span></div>
+    <div class="post-title">${escapeHtml(tr.title || t('detail.tripFallback'))}</div>
+    ${meta ? `<div class="post-meta">${meta}</div>` : ''}
+    ${tr.notes ? `<div class="post-text">${escapeHtml(tr.notes)}</div>` : ''}
+    ${tr.coverPhoto ? `<img class="post-photo" src="${tr.coverPhoto}" alt="">` : ''}
+    ${chips.length ? `<div class="post-chips">${chips.map(c=>`<span class="post-chip">${c}</span>`).join('')}</div>` : ''}
+  </div>`;
+}
+function planPostHtml(e, avatar, who){
+  const p = dtParseDate(e.date);
+  const boat = e.boatId ? state.boats.find(b=>b.id===e.boatId) : null;
+  const dateStr = p ? dtFmtDate(p, {weekday:'short', day:'numeric', month:'short', year:'numeric'}) : '';
+  const meta = [e.time ? '🕐 ' + e.time : '', e.place ? '📍 ' + escapeHtml(e.place) : '', boat ? '⛵ ' + escapeHtml(boat.name) : ''].filter(Boolean).join(' · ');
+  return `<div class="post-card plan" onclick="openNoticeboardSheet('${e.id}')">
+    <div class="post-head"><img src="${avatar}" alt=""><div class="post-who"><div class="post-name">${who}</div><div class="post-when">${dateStr} · ${noticeboardWhenLabel(noticeboardDaysFromToday(e.date))}</div></div><span class="post-badge plan">📌 ${t('profile.postPlan')}</span></div>
+    <div class="post-title">${escapeHtml(e.title)}</div>
+    ${meta ? `<div class="post-meta">${meta}</div>` : ''}
+    ${e.notes ? `<div class="post-text">${escapeHtml(e.notes)}</div>` : ''}
+  </div>`;
+}
+
+/* ---------- photos ---------- */
+// Both photo pickers can be started from the Edit Profile sheet; if it's open, come back to it
+// afterwards (so half-typed edits aren't lost) instead of closing everything.
+function profileReturnSheet(){ return document.getElementById('sheetEditProfile').style.display === 'block' ? 'sheetEditProfile' : null; }
 async function handleAvatarUpload(ev){
   const f = ev.target.files[0]; if(!f) return;
   ev.target.value='';
-  openPhotoAdjuster(f, 'profile', null);
+  openPhotoAdjuster(f, 'profile', profileReturnSheet());
+}
+async function handleCoverUpload(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  ev.target.value='';
+  // wide crop, roughly Facebook's cover shape (8:3)
+  openPhotoAdjuster(f, 'profileCover', profileReturnSheet(), {shape:'rect', vw:320, vh:120, outputW:1000, outputH:375});
+}
+
+/* ---------- Edit Profile sheet ---------- */
+function openEditProfileSheet(){
+  const p = state.profile;
+  document.getElementById('profileName').value = p.name || '';
+  document.getElementById('profileRole').value = p.role || '';
+  document.getElementById('profileLicense').value = p.license || '';
+  document.getElementById('profilePhone').value = p.phone || '';
+  document.getElementById('profileEmail').value = p.email || '';
+  document.getElementById('profileSocial').value = p.social || '';
+  document.getElementById('profileBio').value = p.bio || '';
+  openSheet('sheetEditProfile');
 }
 async function saveProfileForm(){
   state.profile.name = document.getElementById('profileName').value.trim() || t('default.sailorName');
@@ -34,14 +182,21 @@ async function saveProfileForm(){
   state.profile.social = document.getElementById('profileSocial').value.trim();
   state.profile.bio = document.getElementById('profileBio').value;
   const ok = await storeSet(KEYS.PROFILE, state.profile);
-  if(ok){ showToast(t('toast.profileSaved')); document.getElementById('homeName').textContent = state.profile.name; syncProfileIfSignedIn(); }
+  if(ok){
+    showToast(t('toast.profileSaved'));
+    document.getElementById('homeName').textContent = state.profile.name;
+    syncProfileIfSignedIn();
+    closeSheets();
+    renderProfileHeader();
+    renderProfileFeed(); // posts carry the name
+  }
 }
 async function clearProfilePrompt(){
   if(!confirm(t('confirm.clearProfile'))) return;
   const theme = state.profile.theme; // keep the current theme, units, and language choices
   const unitSystem = state.profile.unitSystem;
   const language = state.profile.language;
-  state.profile = { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme, unitSystem, language };
+  state.profile = { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', cover:'', theme, unitSystem, language };
   const ok = await storeSet(KEYS.PROFILE, state.profile);
   if(ok){
     showToast(t('toast.profileCleared'));

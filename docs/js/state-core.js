@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '19.09.2026.2301';
+const APP_VERSION = '19.09.2026.2342';
 
 /* ============================================================
    CUSTOM CONFIRM DIALOG (shared across all screens)
@@ -96,7 +96,7 @@ let state = {
   boats: [],
   crew: [],
   noticeboard: [],       // planned future sails, written on the Noticeboard screen — see noticeboard.js
-  profile: { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', theme:'light', unitSystem:'nautical', language:'en' },
+  profile: { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', cover:'', theme:'light', unitSystem:'nautical', language:'en' },
   // Per-screen list/grid display choice for the Fleet and Crew screens — see
   // setListView()/renderBoats()/renderCrew(). Persisted so the choice sticks
   // between app launches, same as everything else in `state`.
@@ -540,6 +540,14 @@ async function confirmPhotoAdjust(){
     state.profile.avatar = dataUrl;
     await storeSet(KEYS.PROFILE, state.profile);
     refreshAvatars();
+    syncProfileIfSignedIn();
+    refreshProfileIfVisible(); // post avatars
+    showToast(t('toast.photoUpdated'));
+  } else if(s.target==='profileCover'){
+    state.profile.cover = dataUrl;
+    await storeSet(KEYS.PROFILE, state.profile);
+    renderProfileHeader();
+    syncProfileIfSignedIn();
     showToast(t('toast.photoUpdated'));
   } else if(s.target==='crew'){
     pendingCrewPhoto = dataUrl;
