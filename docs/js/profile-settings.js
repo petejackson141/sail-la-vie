@@ -146,6 +146,12 @@ function planPostHtml(e, avatar, who){
 }
 
 /* ---------- photos ---------- */
+// Tapping the cover or profile picture just enlarges it in the photo viewer (swipe/zoom like any
+// other photo). Changing a picture only happens through the camera buttons / Edit Profile.
+function viewProfilePhoto(which){
+  const src = which === 'cover' ? state.profile.cover : state.profile.avatar;
+  if(src) openLightbox([src], 0, null);
+}
 // Both photo pickers can be started from the Edit Profile sheet; if it's open, come back to it
 // afterwards (so half-typed edits aren't lost) instead of closing everything.
 function profileReturnSheet(){ return document.getElementById('sheetEditProfile').style.display === 'block' ? 'sheetEditProfile' : null; }

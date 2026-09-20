@@ -791,7 +791,11 @@ function openLightbox(photos, index, tripId){
   lightboxPhotos = (photos||[]).filter(Boolean);
   lightboxIndex = Math.max(0, Math.min(index||0, lightboxPhotos.length-1));
   lightboxTripId = tripId || null;
-  document.getElementById('photoLightbox').classList.add('show');
+  const box = document.getElementById('photoLightbox');
+  // The viewer takes a history entry, like sheets and screens do, so the phone's back
+  // button/gesture closes the viewer first instead of going back a screen behind it.
+  if(!box.classList.contains('show')) history.pushState({type:'lightbox'}, '', location.href);
+  box.classList.add('show');
   renderLightboxImage();
 }
 // (Re)draws the three slides (previous / current / next photo), puts the strip back
@@ -824,10 +828,18 @@ function lightboxStep(dir){
 }
 function lightboxPrev(){ lightboxStep(-1); }
 function lightboxNext(){ lightboxStep(1); }
-function closeLightbox(){
-  document.getElementById('photoLightbox').classList.remove('show');
+// fromPopState = true when this close is the reaction to the back button (the browser has
+// already stepped back, so we must not call history.back() a second time) — same rule as closeSheets().
+function closeLightbox(fromPopState){
+  const box = document.getElementById('photoLightbox');
+  const wasOpen = box.classList.contains('show');
+  box.classList.remove('show');
   lightboxPhotos = []; lightboxIndex = 0; lightboxTripId = null;
   lightboxResetView();
+  if(wasOpen && fromPopState !== true){
+    ignoreNextPopState = true;
+    history.back();
+  }
 }
 // Deletes the photo currently shown in the lightbox from its trip record —
 // confirms first (matching deleteTripPrompt/deleteBoatForm/deleteCrewForm

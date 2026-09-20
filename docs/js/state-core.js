@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '19.09.2026.2342';
+const APP_VERSION = '20.09.2026.1610';
 
 /* ============================================================
    CUSTOM CONFIRM DIALOG (shared across all screens)
@@ -338,6 +338,9 @@ function openSheet(id){
 let ignoreNextPopState = false;
 window.addEventListener('popstate', (event)=>{
   if(ignoreNextPopState){ ignoreNextPopState = false; return; }
+  // The photo viewer sits above everything (it can even be opened from a sheet), so it closes first.
+  const lightboxEl = document.getElementById('photoLightbox');
+  if(lightboxEl && lightboxEl.classList.contains('show')){ closeLightbox(true); return; }
   const sheetOpen = [...document.querySelectorAll('.sheet')].some(s=>s.style.display==='block');
   if(sheetOpen){
     closeSheets(true);
@@ -380,7 +383,8 @@ function initHardwareBackButton(){
     console.log('[backbutton] hardware back pressed — handling in-app.');
     const sheetOpen = [...document.querySelectorAll('.sheet')].some(s=>s.style.display==='block');
     const onHome = document.getElementById('screen-home').classList.contains('active');
-    if(sheetOpen || !onHome){
+    const lightboxOpen = document.getElementById('photoLightbox').classList.contains('show');
+    if(sheetOpen || lightboxOpen || !onHome){
       history.back(); // handled by the popstate listener above, same as a browser back gesture
       return;
     }
@@ -391,6 +395,36 @@ function initHardwareBackButton(){
   });
   console.log('[backbutton] listener registered successfully.');
 }
+
+/* ---------- fit the app to the device (phones vs tablets) ----------
+   The layout is a phone-shaped column (max 480px wide). On a phone that fills the screen.
+   On a tablet it used to sit in the middle as a small strip. Now, when the device's short
+   side is 600dp or more (the usual definition of "tablet"), the page's viewport is set so the
+   whole UI is scaled up to fill the screen — up to 1.5x, which keeps the column a comfortable
+   width (about 720dp) on big screens rather than stretching it. Phones are left exactly as they
+   were. Re-checked whenever the device is rotated. screen.width/height are in device-independent
+   pixels, so this doesn't depend on the current zoom. ---------- */
+(function fitToDevice(){
+  const meta = document.querySelector('meta[name="viewport"]');
+  if(!meta) return;
+  const BASE_W = 480, MAX_SCALE = 1.5, TABLET_MIN_SHORT_SIDE = 600;
+  const PHONE = 'width=device-width, initial-scale=1.0, viewport-fit=cover';
+  function apply(){
+    const shortSide = Math.min(screen.width, screen.height), longSide = Math.max(screen.width, screen.height);
+    const landscape = window.matchMedia('(orientation: landscape)').matches;
+    const deviceW = landscape ? longSide : shortSide;
+    let content = PHONE;
+    if(shortSide >= TABLET_MIN_SHORT_SIDE){
+      const scale = Math.min(deviceW / BASE_W, MAX_SCALE);
+      content = 'width=' + Math.round(deviceW / scale) + ', viewport-fit=cover';
+    }
+    if(meta.getAttribute('content') !== content) meta.setAttribute('content', content);
+  }
+  apply();
+  let t; const later = ()=>{ clearTimeout(t); t = setTimeout(apply, 250); };
+  window.addEventListener('orientationchange', later);
+  window.addEventListener('resize', later);
+})();
 
 /* ---------- image resize helper (keeps localStorage payloads small) ---------- */
 function resizeImage(file, maxDim, quality){
