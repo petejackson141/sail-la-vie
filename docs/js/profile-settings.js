@@ -16,7 +16,13 @@
    state.profile gains one field for this screen: `cover` (data-URL, like `avatar`).
    ============================================================ */
 let profileFeedLimit = 10; // how many posts are shown before "Show more"
+let profileFeedFilter = 'all'; // 'all' | 'plan' | 'sail' — the chips above the posts (more kinds can be added later)
 
+function setProfileFeedFilter(f){
+  profileFeedFilter = f;
+  profileFeedLimit = 10;
+  renderProfileFeed();
+}
 function renderProfileScreen(){
   profileFeedLimit = 10;
   renderProfileHeader();
@@ -97,14 +103,17 @@ function buildProfileFeed(){
     const tm = /^(\d{2}):(\d{2})$/.exec(e.time || '');
     items.push({kind:'plan', ts: d ? new Date(d.y, d.m, d.d, tm ? +tm[1] : 12, tm ? +tm[2] : 0).getTime() : 0, e});
   });
-  return items.sort((a,b)=>b.ts - a.ts);
+  return items.sort((a,b)=>b.ts - a.ts).filter(it=> profileFeedFilter === 'all' || it.kind === profileFeedFilter);
 }
 function renderProfileFeed(){
   const el = document.getElementById('profileFeed');
+  document.querySelectorAll('#profileFeedChips .chip').forEach(c=>c.classList.toggle('active', c.dataset.f === profileFeedFilter));
   const items = buildProfileFeed();
   if(!items.length){
+    // wording follows the chip that is selected: "No sails yet" under Sails, and so on
+    const key = profileFeedFilter === 'sail' ? 'noSails' : profileFeedFilter === 'plan' ? 'noPlans' : 'noPosts';
     el.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5h16v11H8l-4 4z"/></svg>
-      <h3>${t('profile.noPosts')}</h3><p>${t('profile.noPostsHint')}</p></div>`;
+      <h3>${t('profile.' + key)}</h3><p>${t('profile.' + key + 'Hint')}</p></div>`;
     return;
   }
   const avatar = state.profile.avatar || placeholderAvatar();
@@ -370,6 +379,7 @@ async function resetAllData(){
   for(const t of state.tripIndex){ await storeDelete('trip:'+t.id); }
   await storeDelete(KEYS.INDEX); await storeDelete(KEYS.BOATS); await storeDelete(KEYS.CREW); await storeDelete(KEYS.NOTICEBOARD); await storeDelete(KEYS.PROFILE);
   state = { tripIndex:[], boats:[], crew:[], noticeboard:[], viewPrefs:{ boats:'list', crew:'list' }, profile:{name:'',role:'',license:'',phone:'',email:'',social:'',bio:'',avatar:'',theme:'light',unitSystem:'nautical',language:'en'} };
+  syncNoticeboardReminders(); // nothing left on the Noticeboard -> cancel any pending reminders
   currentLang = 'en';
   stopAutoThemeWatch();
   cachedThemeCoords = null;

@@ -339,6 +339,18 @@
   .post-text{ font-size:13.5px; line-height:1.45; color:var(--ink); margin-top:10px; white-space:pre-wrap; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
   .post-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
   .post-chip{ font-size:12px; font-weight:600; padding:4px 10px; border-radius:999px; background:var(--bg-sunk); color:var(--ink-muted); }
+  /* ---------- welcome gate (signed-out app start) ---------- */
+  .welcome-gate{ position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; padding:24px;
+    background:rgba(10,22,34,.55); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  .welcome-gate.show{ display:flex; }
+  .wg-card{ width:100%; max-width:380px; text-align:center; background:var(--bg-elevated); border:1px solid var(--border);
+    border-radius:var(--radius-lg); box-shadow:0 30px 60px -20px rgba(10,22,34,.6); padding:26px 22px 18px; }
+  .wg-logo{ width:112px; height:112px; border-radius:50%; overflow:hidden; margin:0 auto 10px; box-shadow:0 12px 22px -8px rgba(20,43,68,.4); }
+  .wg-logo img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .wg-title{ font-size:28px; margin:0; color:var(--ink); }
+  .wg-sub{ font-size:14px; line-height:1.5; color:var(--ink-muted); margin:8px 4px 20px; }
+  .wg-note{ font-size:11px; color:var(--ink-faint); margin:6px 0 0; }
+
   /* ---------- bottom nav ---------- */
   .bottombar-wrap{ position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:480px; z-index:50; }
   .bottomnav{ background:var(--bg-elevated); border-top:1px solid var(--border); display:flex; padding:10px 6px calc(10px + env(safe-area-inset-bottom)); }
@@ -1503,6 +1515,11 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 
     <!-- 5. Posts: newest first — past sails and planned events (people's comments to come later) -->
     <div class="section-divider pf"><span data-i18n="profile.posts">Posts</span></div>
+    <div class="chiprow" id="profileFeedChips" style="margin-top:0;margin-bottom:12px;">
+      <div class="chip active" data-f="all" onclick="setProfileFeedFilter('all')" data-i18n="profile.filterAll">All</div>
+      <div class="chip" data-f="plan" onclick="setProfileFeedFilter('plan')" data-i18n="profile.filterPlans">Plans</div>
+      <div class="chip" data-f="sail" onclick="setProfileFeedFilter('sail')" data-i18n="profile.filterSails">Sails</div>
+    </div>
     <div id="profileFeed"></div>
   </section>
 
@@ -1930,6 +1947,21 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Welcome gate: shown at app start when nobody is signed in. Sign in / Create account open the
+     normal sign-in sheet on top of it. "Continue without an account" is a TEMPORARY option for
+     evaluating the app — delete that button (and welcome.continue / welcome.testNote) later. -->
+<div class="welcome-gate" id="welcomeGate">
+  <div class="wg-card">
+    <div class="wg-logo"><img src="images/Logo.png" alt=""></div>
+    <h1 class="app-title wg-title">Sail la Vie</h1>
+    <p class="wg-sub" data-i18n="welcome.subtitle">Sign in or create an account to keep your sailing safe and synced across all your devices.</p>
+    <button class="btn btn-primary" onclick="welcomeSignIn()" data-i18n="welcome.signIn">Sign in</button>
+    <button class="btn btn-outline" style="margin-top:10px;" onclick="welcomeSignUp()" data-i18n="welcome.signUp">Create account</button>
+    <button class="btn btn-ghost" style="margin-top:6px;" onclick="dismissWelcomeGate()" data-i18n="welcome.continue">Continue without an account</button>
+    <p class="wg-note" data-i18n="welcome.testNote">Testing option — this will be removed later.</p>
+  </div>
+</div>
 <div id="printArea" style="display:none;"></div>
 
 <div class="lightbox" id="photoLightbox">
@@ -1975,6 +2007,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 <script src="js/history-maps.js"></script>
 <script src="js/boats-crew.js"></script>
 <script src="js/noticeboard.js"></script>
+<script src="js/notifications.js"></script>
 <script src="js/profile-settings.js"></script>
 <script src="js/pdf-export.js"></script>
 <script src="js/units.js"></script>

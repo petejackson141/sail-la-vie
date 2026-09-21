@@ -133,6 +133,7 @@ async function saveNoticeboardForm(){
   const ok = await storeSet(KEYS.NOTICEBOARD, state.noticeboard);
   if(!ok) return;
   syncNoticeboardIfSignedIn(saved);
+  syncNoticeboardReminders({ask: true}); // schedule the 24-hour reminder (asks for notification permission the first time)
   showToast(t('noticeboard.saved'));
   // Show the list that now contains the plan just saved (e.g. saving a date in the past)
   const f = noticeboardDaysFromToday(fields.date) >= 0 ? 'upcoming' : 'past';
@@ -146,6 +147,7 @@ async function deleteNoticeboardEntry(){
   state.noticeboard = state.noticeboard.filter(e=>e.id!==deletedId);
   await storeSet(KEYS.NOTICEBOARD, state.noticeboard);
   syncNoticeboardDeleteIfSignedIn(deletedId);
+  syncNoticeboardReminders();
   showToast(t('noticeboard.deleted'));
   closeSheets();
   renderNoticeboard();

@@ -232,6 +232,7 @@ async function restoreFromFile(ev){
     state.boats = data.boats||[];
     state.crew = data.crew||[];
     state.noticeboard = restoredNoticeboard;
+    syncNoticeboardReminders();
     state.tripIndex = data.tripIndex||[];
 
     currentLang = 'en'; // language picker hidden for now — es/pt/he dictionaries kept intact for later

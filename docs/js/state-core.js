@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '20.09.2026.1610';
+const APP_VERSION = '21.09.2026.1705';
 
 /* ============================================================
    CUSTOM CONFIRM DIALOG (shared across all screens)
@@ -175,7 +175,7 @@ async function boot(){
   // lines above. Not awaited, same as before, so a slow/offline network
   // doesn't delay the app opening — renderAccountUI() updates Settings
   // whenever it resolves, even after the rest of boot() finishes.
-  initAuth();
+  const authReady = initAuth().catch(e => console.error('initAuth failed', e));
   currentLang = 'en'; // language picker hidden for now — es/pt/he dictionaries kept intact for later
   applyStaticTranslations();
 
@@ -192,9 +192,17 @@ async function boot(){
   history.replaceState({type:'screen', name:'home'}, '', location.href);
   initHardwareBackButton();
 
+  // Wait (briefly) for the session check so the sign-in gate can be decided before Home is shown:
+  // a signed-in person never sees it flash up. Capped at 2.5s so a slow network can't hold the app
+  // back — if the check finishes later and finds a session, applySession() hides the gate again.
+  await Promise.race([authReady, new Promise(r=>setTimeout(r, 2500))]);
+  showWelcomeGateIfSignedOut();
+
   const resumed = await resumeActiveTripIfAny();
   if(!resumed) nav('home', true); // already home — skip pushing a duplicate entry
   renderHomeStats();
+  initNoticeboardNotificationTap();
+  syncNoticeboardReminders(); // re-apply this phone's Noticeboard reminders (no-op outside the native app)
 }
 function greet(){
   const h = new Date().getHours();

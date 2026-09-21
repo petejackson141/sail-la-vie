@@ -115,7 +115,25 @@ function applySession(session){
   state.user = session ? { id: session.user.id, email: session.user.email } : null;
   renderAccountUI();
   ensureRealtimeSync();
+  if(session) hideWelcomeGate(); // signed in (from the gate or otherwise) — nothing left to ask
 }
+
+/* ---------- welcome gate ----------
+   When the app opens and nobody is signed in, #welcomeGate asks them to sign in or create an account
+   first. It is shown once per app start (boot() calls showWelcomeGateIfSignedOut after the session
+   check) and goes away when they sign in, or tap "Continue without an account" — a TEMPORARY
+   escape hatch for evaluating the app (remove that button when accounts become mandatory). The
+   choice isn't remembered, so the gate returns on the next launch until someone is signed in. */
+function showWelcomeGateIfSignedOut(){
+  if(!state.user) document.getElementById('welcomeGate').classList.add('show');
+}
+function hideWelcomeGate(){
+  const el = document.getElementById('welcomeGate');
+  if(el) el.classList.remove('show');
+}
+function welcomeSignIn(){ openAuthSheet('signin'); }
+function welcomeSignUp(){ openAuthSheet('signup'); }
+function dismissWelcomeGate(){ hideWelcomeGate(); }
 
 /* ---------- live sync across devices (Supabase Realtime) ----------
    Without this, profile/boats/crew only ever re-pull from the cloud at
@@ -1105,6 +1123,7 @@ async function resolveNoticeboardSyncOnSignInImpl(){
   state.noticeboard = merged;
   await storeSet(KEYS.NOTICEBOARD, state.noticeboard);
   renderNoticeboard();
+  syncNoticeboardReminders(); // plans added/changed/deleted on another device -> update this phone's reminders
   for(const entry of toPushUp){
     const result = await pushNoticeboardToCloudImpl(entry);
     if(!result.ok) return { ok:false, message: result.message };
