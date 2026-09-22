@@ -151,8 +151,8 @@
   .topbar .greet{ display:flex; align-items:center; gap:10px; }
   /* "Good morning, Pete" — 10% lighter than the normal eyebrow/ink colors, scoped to
      just this greeting so every other eyebrow/heading in the app is unaffected */
-  #homeGreeting{ color:color-mix(in srgb, var(--ink-muted) 90%, white 10%); }
-  #homeName{ color:color-mix(in srgb, var(--ink) 90%, white 10%); }
+  #homeGreeting{ color:color-mix(in srgb, var(--ink-muted) 76.5%, white 23.5%); }
+  #homeName{ color:color-mix(in srgb, var(--ink) 76.5%, white 23.5%); }
   .avatar{ width:40px; height:40px; border-radius:50%; object-fit:cover; background:var(--navy); border:2px solid var(--bg-elevated); box-shadow:var(--shadow); }
   .avatar.sm{width:28px;height:28px;}
   .iconbtn{ width:40px; height:40px; border-radius:50%; background:var(--bg-elevated); border:1px solid var(--border);
@@ -171,7 +171,7 @@
   html[data-theme="dark"] .btn-outline{ color:var(--ink); border-color:var(--navy-soft); }
   /* Deliberately quieter than the default outline button — used on Home so "Start New
      Journey" (btn-primary) stays the visual focal point and "Manually log a sail" recedes. */
-  .btn-subtle{ background:color-mix(in srgb, var(--bg-elevated) 85%, transparent); color:var(--ink-muted); border-color:var(--border); box-shadow:none; width:80%; margin:0 auto; }
+  .btn-subtle{ background:color-mix(in srgb, var(--bg-elevated) 72%, transparent); color:var(--ink-muted); border-color:var(--border); box-shadow:none; width:80%; margin:0 auto; }
   html[data-theme="dark"] .btn-subtle{ color:var(--ink-muted); border-color:var(--border); }
   .btn-danger{ background:linear-gradient(180deg,#E17B6C,var(--coral-deep)); color:#fff; box-shadow:0 12px 24px -10px rgba(182,68,58,.55); }
   .btn-ghost{ background:transparent; color:var(--ink-muted); }
@@ -1119,7 +1119,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 
     <h1 class="app-title" style="text-align:center;font-size:30px;margin-top:6px;">Sail la Vie</h1>
 
-<div class="compass-wrap" style="width: 187px; height: 187px; border-radius: 50%; overflow: hidden; box-shadow: 0 14px 24px rgba(20,43,68,.28); margin: 20px auto 40px auto;">
+<div class="compass-wrap" style="width: 140px; height: 140px; border-radius: 50%; overflow: hidden; box-shadow: 0 14px 24px rgba(20,43,68,.28); margin: 20px auto 40px auto;">
       <img src="images/Logo.png" alt="Sail la Vie Logo" style="width: 100%; height: 100%; object-fit: cover; display: block;">
     </div>
 
