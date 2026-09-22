@@ -125,7 +125,7 @@
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
     width:min(70%,340px); height:min(70%,340px); max-width:340px;
     background:url('images/Logo.png') center/contain no-repeat;
-    opacity:.06; pointer-events:none; z-index:0;
+    opacity:.051; pointer-events:none; z-index:0;
   }
   @media print{ #watermark{ display:none; } }
   /* Faint depth-contour (bathymetric) texture behind the whole app, like the
@@ -171,7 +171,7 @@
   html[data-theme="dark"] .btn-outline{ color:var(--ink); border-color:var(--navy-soft); }
   /* Deliberately quieter than the default outline button — used on Home so "Start New
      Journey" (btn-primary) stays the visual focal point and "Manually log a sail" recedes. */
-  .btn-subtle{ background:color-mix(in srgb, var(--bg-elevated) 72%, transparent); color:var(--ink-muted); border-color:var(--border); box-shadow:none; width:80%; margin:0 auto; }
+  .btn-subtle{ background:color-mix(in srgb, var(--bg-elevated) 79%, transparent); color:var(--ink-muted); border-color:var(--border); box-shadow:none; width:80%; margin:0 auto; }
   html[data-theme="dark"] .btn-subtle{ color:var(--ink-muted); border-color:var(--border); }
   .btn-danger{ background:linear-gradient(180deg,#E17B6C,var(--coral-deep)); color:#fff; box-shadow:0 12px 24px -10px rgba(182,68,58,.55); }
   .btn-ghost{ background:transparent; color:var(--ink-muted); }
@@ -229,11 +229,12 @@
      rose tint the "Total Sails" tile used before the two were combined */
   .home-stats{ display:flex; border:1.5px solid var(--coral); border-radius:var(--radius-md); box-shadow:var(--shadow); overflow:hidden; background:var(--pastel-rose); }
   .hs-cell{ flex:1; padding:14px 12px; text-align:center; }
+  .hs-cell + .hs-cell{ border-inline-start:1px solid color-mix(in srgb, var(--coral) 25%, transparent); }
   .home-stats .stat-label{ font-size:11px; }
   .home-stats .stat-value{ font-size:26px; margin-top:2px; color:var(--coral); }
 
   /* ---------- "Last Sail" card on Home ---------- */
-  .last-sail{ display:flex; align-items:center; gap:12px; margin-top:12px; padding:12px 14px; cursor:pointer;
+  .last-sail{ display:flex; align-items:center; gap:12px; margin-top:12px; padding:11.4px 14px; cursor:pointer;
     border:1.5px solid var(--navy-soft); border-radius:var(--radius-md); box-shadow:var(--shadow); }
   .last-sail:active{ transform:scale(.99); }
   .last-sail .ls-pin{ font-size:26px; line-height:1; flex:0 0 auto; }
@@ -1119,17 +1120,17 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 
     <h1 class="app-title" style="text-align:center;font-size:30px;margin-top:6px;">Sail la Vie</h1>
 
-<div class="compass-wrap" style="width: 140px; height: 140px; border-radius: 50%; overflow: hidden; box-shadow: 0 14px 24px rgba(20,43,68,.28); margin: 20px auto 40px auto;">
+<div class="compass-wrap" style="width: 151px; height: 151px; border-radius: 50%; overflow: hidden; box-shadow: 0 14px 24px rgba(20,43,68,.28); margin: 30px auto 40px auto;">
       <img src="images/Logo.png" alt="Sail la Vie Logo" style="width: 100%; height: 100%; object-fit: cover; display: block;">
     </div>
 
     <button class="btn btn-primary" onclick="openStartJourneySheet()">
-      <span class="icon-emoji icon-svg" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><line x1="16" y1="4" x2="16" y2="23" stroke="#16324F" stroke-width="1.6" stroke-linecap="round"/><path d="M16 5.5 L21.5 7.5 L16 9.5 Z" fill="#F4C25B" stroke="#8A5527" stroke-width="1"/><path d="M16.2 9 L16.2 22 L27 22 Z" fill="#FFFFFF" stroke="#16324F" stroke-width="1.4" stroke-linejoin="round"/><path d="M15.8 11 L15.8 22 L7.5 22 Z" fill="#EDE6D6" stroke="#16324F" stroke-width="1.2" stroke-linejoin="round"/><path d="M3.5 23 Q16 21 28.5 23 L24.5 28 Q16 30 7.5 28 Z" fill="#16324F" stroke="#0E2338" stroke-width="1.4" stroke-linejoin="round"/><path d="M2 27.5 Q7 25.5 12 27.5 T22 27.5 T30 27.5" fill="none" stroke="#3FA9C2" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+      <span class="icon-emoji icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.7 3h.6v11h-.6zM12.3 4.3l6.4 8.5h-6.4zM4.7 17h14.6l-1.6 3.4H6.3z"/><path d="M2.4 15.6c2 .95 3.85.95 5.85 0 2-.95 3.85-.95 5.85 0 2 .95 3.85.95 5.85 0l.55 1.5c-2.35 1.05-4.55 1.05-6.9 0-2-.95-3.85-.95-5.85 0-2.35 1.05-4.55 1.05-6.9 0z" fill-opacity=".55"/></svg></span>
       <span data-i18n="home.startJourney">Start New Journey</span>
     </button>
     <div style="height:12px;"></div>
     <button class="btn btn-outline btn-subtle" onclick="beginManualJourney()">
-      <span class="icon-emoji icon-svg" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><g stroke="#8A5527" stroke-width="2.4" stroke-linecap="round"><line x1="16" y1="16" x2="28.4" y2="16.0"/><line x1="16" y1="16" x2="24.8" y2="24.8"/><line x1="16" y1="16" x2="16.0" y2="28.4"/><line x1="16" y1="16" x2="7.2" y2="24.8"/><line x1="16" y1="16" x2="3.6" y2="16.0"/><line x1="16" y1="16" x2="7.2" y2="7.2"/><line x1="16" y1="16" x2="16.0" y2="3.6"/><line x1="16" y1="16" x2="24.8" y2="7.2"/></g><g fill="#D9973F" stroke="#8A5527" stroke-width="1"><circle cx="29.3" cy="16.0" r="2"/><circle cx="25.4" cy="25.4" r="2"/><circle cx="16.0" cy="29.3" r="2"/><circle cx="6.6" cy="25.4" r="2"/><circle cx="2.7" cy="16.0" r="2"/><circle cx="6.6" cy="6.6" r="2"/><circle cx="16.0" cy="2.7" r="2"/><circle cx="25.4" cy="6.6" r="2"/></g><circle cx="16" cy="16" r="9" fill="none" stroke="#8A5527" stroke-width="4.4"/><circle cx="16" cy="16" r="9" fill="none" stroke="#D9973F" stroke-width="2.6"/><circle cx="16" cy="16" r="3.6" fill="#F4C25B" stroke="#8A5527" stroke-width="1.2"/><circle cx="16" cy="16" r="1.1" fill="#8A5527"/></svg></span>
+      <span class="icon-emoji icon-svg" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="13" cy="13" r="10" fill="none" stroke="#16324F" stroke-width="1.6"/><path d="M13 4.2l2.7 8.8-2.7 8.8-2.7-8.8z" fill="#16324F"/><path d="M4.2 13l8.8-2.7 8.8 2.7-8.8 2.7z" fill="#16324F" fill-opacity=".5"/><circle cx="13" cy="13" r="1.7" fill="#C9A24B"/><line x1="19" y1="19" x2="25.3" y2="25.3" stroke="#D9973F" stroke-width="2.6" stroke-linecap="round"/><line x1="25.3" y1="25.3" x2="27.4" y2="27.4" stroke="#8A5527" stroke-width="2.6" stroke-linecap="round"/><path d="M27.1 27.1l2.3 2.3-1.7.6-1.2-1.2z" fill="#16324F"/></svg></span>
       <span data-i18n="home.logPastSail">Manually log a sail</span>
     </button>
     <div class="section-divider"><span data-i18n="home.yourSailing">Your Sailing</span></div>
@@ -1140,15 +1141,15 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 
     <div class="quicklinks three">
       <div class="quicklink tint-mint" onclick="nav('resume')">
-        <span class="icon-emoji icon-svg" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 7 L4 9 L4 26 L16 24 Z" fill="#F4EFE3" stroke="#0E4A5A" stroke-width="1.6" stroke-linejoin="round"/><path d="M16 7 L28 9 L28 26 L16 24 Z" fill="#FAF6EF" stroke="#0E4A5A" stroke-width="1.6" stroke-linejoin="round"/><line x1="16" y1="7" x2="16" y2="24" stroke="#0E4A5A" stroke-width="2"/><g stroke="#7FC4D4" stroke-width="1" stroke-linecap="round"><line x1="7" y1="14" x2="13.5" y2="13.2"/><line x1="7" y1="17.5" x2="13.5" y2="16.7"/><line x1="7" y1="21" x2="13.5" y2="20.2"/><line x1="18.5" y1="13.2" x2="25" y2="14"/><line x1="18.5" y1="16.7" x2="25" y2="17.5"/><line x1="18.5" y1="20.2" x2="25" y2="21"/></g><g transform="translate(16,9.5)"><circle cx="0" cy="-2.6" r="1.3" fill="none" stroke="#C9A24B" stroke-width="1"/><line x1="0" y1="-1.3" x2="0" y2="4" stroke="#C9A24B" stroke-width="1.3" stroke-linecap="round"/><path d="M-3.2,2.2 Q0,5.2 3.2,2.2" fill="none" stroke="#C9A24B" stroke-width="1.3" stroke-linecap="round"/><line x1="-2" y1="0.3" x2="2" y2="0.3" stroke="#C9A24B" stroke-width="1.1" stroke-linecap="round"/></g></svg></span>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 9c-2.2-1.6-5.6-2-9-1.3v15c3.4-.7 6.8-.3 9 1.3 2.2-1.6 5.6-2 9-1.3v-15c-3.4-.7-6.8-.3-9 1.3z" fill="none" stroke="#16324F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 9v15" stroke="#16324F" stroke-width="1.8" stroke-linecap="round"/><path d="M19 13h5M19 16h5M19 19h3.5" stroke="#16324F" stroke-width="1.3" stroke-linecap="round"/><path d="M16 4.6l1 2.3 2.5.3-1.8 1.7.4 2.4-2.1-1.2-2.1 1.2.4-2.4-1.8-1.7 2.5-.3z" fill="#C9A24B" stroke="#16324F" stroke-width="0.7" stroke-linejoin="round"/></svg>
         <span data-i18n="resume.title">Sailing Resume</span>
       </div>
       <div class="quicklink tint-rose" onclick="nav('gallery')">
-        <span class="icon-emoji icon-svg" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><defs><clipPath id="portholeGlassClip"><circle cx="16" cy="16" r="9.5"/></clipPath></defs><circle cx="16" cy="16" r="13" fill="none" stroke="#9C7440" stroke-width="3.2"/><circle cx="16" cy="16" r="13" fill="none" stroke="#D9973F" stroke-width="1.2"/><g fill="#C9A24B"><circle cx="16" cy="3.4" r="1.3"/><circle cx="25.2" cy="6.8" r="1.3"/><circle cx="28.6" cy="16" r="1.3"/><circle cx="25.2" cy="25.2" r="1.3"/><circle cx="16" cy="28.6" r="1.3"/><circle cx="6.8" cy="25.2" r="1.3"/><circle cx="3.4" cy="16" r="1.3"/><circle cx="6.8" cy="6.8" r="1.3"/></g><circle cx="16" cy="16" r="9.5" fill="#BFE0EA"/><g clip-path="url(#portholeGlassClip)"><circle cx="20.5" cy="11.5" r="2.6" fill="#F4C25B"/><path d="M5,20 Q11,15 16,19 T27,18 L27,27 L5,27 Z" fill="#17758F"/></g><circle cx="16" cy="16" r="9.5" fill="none" stroke="#8A5527" stroke-width="1"/></svg></span>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="7" width="22" height="18" rx="2.5" fill="none" stroke="#16324F" stroke-width="1.8"/><circle cx="20" cy="13" r="2.6" fill="#FB8258"/><path d="M7.5 20.5l4.7-4.9 3 3 3.6-4.8 6.7 6.7" fill="none" stroke="#16324F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span data-i18n="home.gallery">Gallery</span>
       </div>
       <div class="quicklink tint-cream" onclick="nav('noticeboard')">
-        <span class="icon-emoji icon-svg" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><line x1="10" y1="6" x2="10" y2="28" stroke="#16324F" stroke-width="2" stroke-linecap="round"/><path d="M10,7 L25,11.5 L10,16 Z" fill="#DE4457" stroke="#B8443A" stroke-width="1.2" stroke-linejoin="round"/><circle cx="10" cy="6" r="2.1" fill="#C9A24B" stroke="#8A5527" stroke-width="1"/><ellipse cx="10" cy="28.5" rx="5" ry="1.6" fill="#EFE6D5"/></svg></span>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 8l7-2.5 8 2.5 7-2.5v18l-7 2.5-8-2.5-7 2.5z" fill="none" stroke="#16324F" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 5.5v18M20 8v18" stroke="#16324F" stroke-width="1.3"/><path d="M8 13c3 1 5 4 8 3s4-4 7 0" stroke="#FB8258" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2.2 2.2" fill="none"/><path d="M21.6 12l2 2M23.6 12l-2 2" stroke="#DE4457" stroke-width="1.8" stroke-linecap="round"/></svg>
         <span data-i18n="home.noticeboard">Noticeboard</span>
       </div>
     </div>
@@ -1661,23 +1662,23 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   </div>
   <nav class="bottomnav" id="bottomNav">
     <div class="navitem" data-tab="home" onclick="nav('home')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M12 12.8l.9 2.1 2.2.3-1.6 1.6.4 2.2-1.9-1-1.9 1 .4-2.2-1.6-1.6 2.2-.3z" stroke-width="1.2" stroke-linejoin="round"/></svg>
       <span data-i18n="nav.home">Home</span>
     </div>
     <div class="navitem" data-tab="history" onclick="nav('history')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="12" r="8"/><path d="M11 7.5v5l3.2 2.4" stroke-width="1.8"/><path d="M15.3 18.2c1.3-1 2.2-1 3.3 0" stroke-width="1.3" stroke-dasharray="1.6 1.5"/><path d="M17.4 16.6l2.4 2.4M19.8 16.6l-2.4 2.4" stroke-width="1.6"/></svg>
       <span data-i18n="nav.history">History</span>
     </div>
     <div class="navitem" data-tab="boats" onclick="nav('boats')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 16l1.5 4h15L21 16"/><path d="M5 16l1-9h12l1 9"/><path d="M12 3v4"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3.3 8.3v4.6" stroke-width="1.3" opacity=".5"/><path d="M3.3 9.2l2.8 1.5-2.8 1.5z" fill="currentColor" opacity=".5" stroke="none"/><path d="M2.1 15l.9-5.5h4.6l.9 5.5z" opacity=".5"/><path d="M13 4v8" stroke-width="1.6"/><path d="M13 5.3l5 2.5-5 2.5z" fill="currentColor" stroke="none"/><path d="M8.5 17l1.3-8h9l1.3 8z" stroke-width="1.8"/><path d="M2 19.5c2.2 1 4 1 6.2 0 2.2-1 4-1 6.2 0 2.2 1 4 1 6.2 0" stroke-width="1.6"/></svg>
       <span data-i18n="home.fleet">Fleet</span>
     </div>
     <div class="navitem" data-tab="crew" onclick="nav('crew')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.6.4 4.5 2.4 4.5 5.3"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5.5" cy="10" r="2.1"/><path d="M1.5 20c0-2.8 1.8-4.7 4-4.7s4 1.9 4 4.7"/><circle cx="18.5" cy="10" r="2.1"/><path d="M14.5 20c0-2.8 1.8-4.7 4-4.7s4 1.9 4 4.7"/><circle cx="12" cy="7.2" r="2.5"/><path d="M7.8 20c0-3.6 1.9-6 4.2-6s4.2 2.4 4.2 6"/><path d="M8.7 6.2c1-1.1 5.6-1.1 6.6 0" stroke-width="1.5"/><path d="M9 6.5h6v1.2c0 .35-.3.65-.65.65H9.65c-.35 0-.65-.3-.65-.65z" fill="currentColor" stroke="none"/></svg>
       <span data-i18n="nav.crew">Crew</span>
     </div>
     <div class="navitem" data-tab="profile" onclick="nav('profile')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="9.5" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/><path d="M7.3 8c2.9-1.7 6.5-1.7 9.4 0" stroke-width="1.5"/><path d="M7.6 8.3h8.8v1.5c0 .5-.4.9-.9.9H8.5c-.5 0-.9-.4-.9-.9z" fill="currentColor" stroke="none"/><path d="M12 15v2.4M10.6 16.6h2.8M10.8 17.8c0 .7.5 1.2 1.2 1.2s1.2-.5 1.2-1.2" stroke-width="1.1"/></svg>
       <span data-i18n="profile.title">Profile</span>
     </div>
   </nav>
