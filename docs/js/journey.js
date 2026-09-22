@@ -13,11 +13,13 @@ function renderLastSail(){
   const last = state.tripIndex.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
   const dateStr = new Date(last.date).toLocaleDateString(currentLocale(), {day:'numeric', month:'short', year:'numeric'});
   const meta = [dateStr, last.place ? escapeHtml(last.place) : ''].filter(Boolean).join(' · ');
+  const stats = [fmtDistance(last.distanceNm||0), last.elapsedSeconds ? fmtDuration(last.elapsedSeconds) : ''].filter(Boolean).join(' · ');
   wrap.innerHTML = `<div class="last-sail tint-blue" onclick="openTripDetail('${last.id}','home')">
     <span class="ls-pin" aria-hidden="true">📍</span>
     <div class="ls-text">
       <div class="ls-label">${t('home.lastSail')}</div>
       <div class="ls-title">${escapeHtml(last.title || t('detail.tripFallback'))}</div>
+      ${stats ? `<div class="ls-stats">${stats}</div>` : ''}
       <div class="ls-meta">${meta}</div>
     </div>
     ${last.coverPhoto ? `<img class="ls-thumb" src="${last.coverPhoto}" alt="">` : ''}
@@ -33,8 +35,8 @@ function renderHomeStats(){
   const secs = state.tripIndex.reduce((s,t)=>s+(t.elapsedSeconds||0),0);
   // One box, two halves: total sails (rose) | distance logged (blue), with a divider line between
   el.innerHTML = `<div class="home-stats">
-    <div class="hs-cell tint-rose"><div class="stat-label">${t('resume.totalSails')}</div><div class="stat-value">${state.tripIndex.length}</div></div>
-    <div class="hs-cell tint-blue"><div class="stat-label">${t('home.distanceLogged')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
+    <div class="hs-cell"><div class="stat-label">${t('resume.totalSails')}</div><div class="stat-value">${state.tripIndex.length}</div></div>
+    <div class="hs-cell"><div class="stat-label">${t('home.distanceLogged')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
   </div>`;
 }
 
