@@ -401,6 +401,19 @@ async function signOutUser(){
 function resolveProfileSyncOnSignIn(){
   return withCloudSyncQueue(resolveProfileSyncOnSignInImpl);
 }
+// Plain JSON.stringify compares objects key-ORDER-sensitively, but Supabase's
+// jsonb column re-sorts keys alphabetically on the way back out — so a
+// profile that's genuinely identical to what was just pushed can still come
+// back "different" by that comparison, endlessly re-triggering the "load
+// from cloud?" prompt below every time this device's own push echoes back
+// through the realtime listener (scheduleRealtimeResync). Sorting keys
+// (recursively, so nested objects/arrays don't hit the same issue) before
+// comparing fixes that without changing what actually gets read or written.
+function stableStringify(value){
+  if(value === null || typeof value !== 'object') return JSON.stringify(value);
+  if(Array.isArray(value)) return '[' + value.map(stableStringify).join(',') + ']';
+  return '{' + Object.keys(value).sort().map(k => JSON.stringify(k) + ':' + stableStringify(value[k])).join(',') + '}';
+}
 async function resolveProfileSyncOnSignInImpl(){
   if(!state.user) return;
 
@@ -420,7 +433,7 @@ async function resolveProfileSyncOnSignInImpl(){
   const localHasData = !!(state.profile && state.profile.name);
 
   if(cloudProfile){
-    const sameAsLocal = JSON.stringify(cloudProfile) === JSON.stringify(state.profile);
+    const sameAsLocal = stableStringify(cloudProfile) === stableStringify(state.profile);
     if(!localHasData || sameAsLocal){
       await applyCloudProfile(cloudProfile);
       return;
