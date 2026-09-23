@@ -208,10 +208,11 @@ async function saveProfileForm(){
 }
 async function clearProfilePrompt(){
   if(!confirm(t('confirm.clearProfile'))) return;
-  const theme = state.profile.theme; // keep the current theme, units, and language choices
+  const theme = state.profile.theme; // keep the current theme, units, language, and home-theme choices
   const unitSystem = state.profile.unitSystem;
   const language = state.profile.language;
-  state.profile = { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', cover:'', theme, unitSystem, language };
+  const homeTheme = state.profile.homeTheme;
+  state.profile = { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', cover:'', theme, unitSystem, language, homeTheme };
   const ok = await storeSet(KEYS.PROFILE, state.profile);
   if(ok){
     showToast(t('toast.profileCleared'));
@@ -374,17 +375,40 @@ function renderUnitsSettingUI(){
   if(knob) knob.textContent = sys==='metric' ? '🌍' : '⚓';
   if(label) label.textContent = sys==='metric' ? t('unit.metric') : t('unit.nautical');
 }
+// TEMPORARY: lets the Home screen's look be flipped between the current
+// "Coral Reef" theme and the new "Nautical" one, for side-by-side testing.
+// Scoped purely via the html[data-home-theme] attribute + CSS in index.html
+// (search "TEMPORARY" there) — remove this + that block + the Settings
+// toggle markup together if/when one theme is chosen for good.
+async function toggleHomeThemeChoice(){
+  const next = (state.profile.homeTheme==='nautical') ? 'coralreef' : 'nautical';
+  state.profile.homeTheme = next;
+  document.documentElement.setAttribute('data-home-theme', next);
+  renderHomeThemeUI();
+  await storeSet(KEYS.PROFILE, state.profile);
+  showToast(next==='nautical' ? 'Nautical theme' : 'Coral Reef theme');
+  syncProfileIfSignedIn();
+}
+function renderHomeThemeUI(){
+  const choice = state.profile.homeTheme || 'coralreef';
+  const knob = document.getElementById('homeThemeKnob');
+  const label = document.getElementById('homeThemeLabel');
+  if(knob) knob.textContent = choice==='nautical' ? '🧭' : '🪸';
+  if(label) label.textContent = choice==='nautical' ? 'Nautical' : 'Coral Reef';
+}
 function openResetSheet(){ openSheet('sheetReset'); }
 async function resetAllData(){
   for(const t of state.tripIndex){ await storeDelete('trip:'+t.id); }
   await storeDelete(KEYS.INDEX); await storeDelete(KEYS.BOATS); await storeDelete(KEYS.CREW); await storeDelete(KEYS.NOTICEBOARD); await storeDelete(KEYS.PROFILE);
-  state = { tripIndex:[], boats:[], crew:[], noticeboard:[], viewPrefs:{ boats:'list', crew:'list' }, profile:{name:'',role:'',license:'',phone:'',email:'',social:'',bio:'',avatar:'',theme:'light',unitSystem:'nautical',language:'en'} };
+  state = { tripIndex:[], boats:[], crew:[], noticeboard:[], viewPrefs:{ boats:'list', crew:'list' }, profile:{name:'',role:'',license:'',phone:'',email:'',social:'',bio:'',avatar:'',theme:'light',unitSystem:'nautical',language:'en',homeTheme:'coralreef'} };
   syncNoticeboardReminders(); // nothing left on the Noticeboard -> cancel any pending reminders
   currentLang = 'en';
   stopAutoThemeWatch();
   cachedThemeCoords = null;
   autoThemeLocationDenied = false;
   document.documentElement.setAttribute('data-theme','light');
+  document.documentElement.setAttribute('data-home-theme','coralreef');
+  renderHomeThemeUI();
   applyStaticTranslations();
   renderThemeSettingUI('light');
   closeSheets(); showToast(t('toast.allDataErased'));
