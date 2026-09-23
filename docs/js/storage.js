@@ -238,6 +238,8 @@ async function restoreFromFile(ev){
     currentLang = 'en'; // language picker hidden for now — es/pt/he dictionaries kept intact for later
     applyStaticTranslations();
     await applyThemePreference();
+    document.documentElement.setAttribute('data-home-theme', state.profile.homeTheme || 'coralreef');
+    renderHomeThemeUI();
     document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
     refreshAvatars();
     showToast(t('toast.backupRestored'));
