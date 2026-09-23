@@ -225,37 +225,12 @@
   .tint-mint { background:var(--pastel-mint);  border-color:var(--teal) !important; }
   .tint-cream{ background:var(--pastel-cream); border-color:var(--gold) !important; }
   .tint-rose { background:var(--pastel-rose);  border-color:var(--coral) !important; }
-  /* totals: one merged section (total sails + distance logged), kept in the same
-     rose tint the "Total Sails" tile used before the two were combined */
-  .home-stats{ display:flex; border:1.5px solid var(--coral); border-radius:var(--radius-md); box-shadow:var(--shadow); overflow:hidden; background:var(--pastel-rose); }
-  .hs-cell{ flex:1; padding:14px 12px; text-align:center; }
-  .hs-cell + .hs-cell{ border-inline-start:1px solid color-mix(in srgb, var(--coral) 25%, transparent); }
-  .home-stats .stat-label{ font-size:11px; }
-  .home-stats .stat-value{ font-size:26px; margin-top:2px; color:var(--coral); }
 
-  /* ---------- "Last Sail" card on Home ---------- */
-  .last-sail{ display:flex; align-items:center; gap:12px; margin-top:12px; padding:11.4px 14px; cursor:pointer;
-    border:1.5px solid var(--navy-soft); border-radius:var(--radius-md); box-shadow:var(--shadow); }
-  .last-sail:active{ transform:scale(.99); }
-  .last-sail .ls-pin{ font-size:26px; line-height:1; flex:0 0 auto; }
-  .last-sail .ls-text{ flex:1; min-width:0; }
-  .last-sail .ls-label{ font-family:var(--font-display); font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-muted); }
-  .last-sail .ls-title{ font-family:var(--font-display); font-weight:700; font-size:16px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
-  .last-sail .ls-stats{ font-size:12.5px; font-weight:600; color:var(--navy-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
-  html[data-theme="dark"] .last-sail .ls-stats{ color:var(--gold); }
-  .last-sail .ls-meta{ font-size:12.5px; color:var(--ink-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
-  .last-sail .ls-thumb{ width:76px; height:56px; border-radius:10px; object-fit:cover; flex:0 0 auto; border:1px solid var(--border); }
-  .last-sail .ls-chev{ width:18px; height:18px; color:var(--navy); flex:0 0 auto; }
-  html[data-theme="dark"] .last-sail .ls-chev{ color:var(--gold); }
-  [dir="rtl"] .last-sail .ls-chev{ transform:scaleX(-1); }
-
-  /* ---------- "Nautical" alternate Home screen (toggle in Settings > Appearance) ----------
-     A second, fully independent screen/section (#screen-home-nautical below) rather than
-     CSS patched on top of #screen-home — every class here is unique to it, so nothing
-     needs !important and nothing here can ever fight the coral-reef rules above. It shares
-     the app's global background (#contourBg/#watermark) and the bottom nav automatically,
-     since both already sit outside any single .screen. Toggle wiring: state.profile.homeTheme,
-     nav()'s home routing, and toggleHomeThemeChoice()/renderHomeThemeUI() in profile-settings.js. */
+  /* ---------- Home screen (the "Nautical" look, now the app's only Home design) ----------
+     Its own class names throughout (nt-*), not shared with any other screen's classes,
+     so nothing here needs !important. Shares the app's global background
+     (#contourBg/#watermark) and the bottom nav automatically, since both already sit
+     outside any single .screen. */
   .nt-wordmark{ font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:36px; color:var(--navy); text-align:center; margin:22px 0 20px; }
   .nt-btn-primary{ width:100%; height:49px; border:none; border-radius:999px; display:flex; align-items:center; justify-content:center; gap:8px;
     background:linear-gradient(90deg, var(--navy) 0%, var(--teal) 100%); box-shadow:0 12px 24px -10px rgba(22,50,79,.5); color:#fff;
@@ -330,55 +305,50 @@
   .pf-name{ font-family:var(--font-display); font-weight:700; font-size:24px; color:var(--ink); line-height:1.15; }
   .pf-tags{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
   .pf-tags:empty{ display:none; }
-  .pf-tag{ font-size:12.5px; font-weight:600; padding:5px 12px; border-radius:999px; }
+  .pf-tag{ font-size:12px; font-weight:600; padding:5px 12px; border-radius:999px; }
   .pf-tag.role{ background:rgba(23,117,143,.13); color:var(--teal); }
-  .pf-tag.license{ background:rgba(201,162,75,.20); color:#8A6A1F; }
-  html[data-theme="dark"] .pf-tag.license{ color:var(--gold); }
-  .pf-bio{ margin-top:12px; font-size:14.5px; line-height:1.5; color:var(--ink); white-space:pre-wrap; }
+  .pf-tag.license{ background:rgba(201,123,74,.15); color:#C97B4A; }
+  .pf-bio{ margin-top:12px; font-size:14px; line-height:1.5; color:var(--ink); white-space:pre-wrap; }
   .pf-bio:empty{ display:none; }
   .pf-contacts{ margin-top:12px; display:flex; flex-direction:column; gap:7px; }
   .pf-contacts:empty{ display:none; }
-  .pf-contact{ display:flex; align-items:center; gap:10px; font-size:13.5px; color:var(--ink-muted); min-width:0; }
+  .pf-contact{ display:flex; align-items:center; gap:10px; font-size:14px; color:var(--ink-muted); min-width:0; }
   .pf-contact a{ color:inherit; text-decoration:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .section-divider.pf{ margin:28px 2px 12px; }
-  /* lifetime stats: same box-with-tinted-cells look as the Home totals */
-  .profile-stats .stat-card{ display:grid; grid-template-columns:1fr 1fr; gap:0; padding:0; overflow:hidden;
-    border:1.5px solid var(--navy-soft); border-radius:var(--radius-md); box-shadow:var(--shadow); }
-  .profile-stats .cell{ margin:0 !important; padding:14px 12px; text-align:center; }
-  .profile-stats .stat-card .cell + .cell{ border-left:0; }
-  .profile-stats .stat-card .cell:nth-child(1){ background:var(--pastel-rose); }
-  .profile-stats .stat-card .cell:nth-child(2){ background:var(--pastel-blue); border-inline-start:1.5px solid var(--navy-soft); }
-  .profile-stats .stat-card .cell:nth-child(3){ background:var(--pastel-mint); border-top:1.5px solid var(--navy-soft); }
-  .profile-stats .stat-card .cell:nth-child(4){ background:var(--pastel-cream); border-top:1.5px solid var(--navy-soft); border-inline-start:1.5px solid var(--navy-soft); }
+  /* lifetime stats: four separate pale cards (not one merged rose/blue/mint/cream grid) */
+  .profile-stats .stat-card{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .profile-stats .cell{ margin:0 !important; padding:12px 10px; text-align:center;
+    background:#FBF7EC; border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); }
+  .profile-stats .stat-value{ font-family:'Playfair Display',serif; font-style:italic; }
+  .profile-stats .stat-label{ font-size:12px; }
   /* crew row */
   .pf-crew-scroll{ display:flex; gap:12px; overflow-x:auto; margin:0 -20px; padding:2px 20px 12px; scroll-snap-type:x proximity; scroll-padding-inline:20px;
     scrollbar-width:none; -webkit-overflow-scrolling:touch; }
   .pf-crew-scroll::-webkit-scrollbar{ display:none; }
-  .pf-crew-card{ flex:0 0 124px; scroll-snap-align:start; overflow:hidden; cursor:pointer; background:var(--bg-elevated);
+  .pf-crew-card{ flex:0 0 124px; scroll-snap-align:start; overflow:hidden; cursor:pointer; background:#FBF7EC;
     border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); }
   .pf-crew-card:active{ transform:scale(.98); }
   .pf-crew-card img{ width:100%; height:124px; object-fit:cover; display:block; background:var(--navy); }
-  .pf-crew-card .nm{ font-family:var(--font-display); font-weight:700; font-size:14px; color:var(--ink); padding:8px 10px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pf-crew-card .nm{ font-family:var(--font-display); font-weight:700; font-size:16px; color:var(--ink); padding:8px 10px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .pf-crew-card .sb{ font-size:12px; color:var(--ink-muted); padding:1px 10px 10px; min-height:26px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .pf-crew-add{ flex:0 0 124px; scroll-snap-align:start; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer;
     background:var(--pastel-mint); border:1.5px dashed var(--teal); border-radius:var(--radius-md); color:var(--teal); font-weight:700; font-size:13px; min-height:176px; text-align:center; padding:0 8px; }
   .pf-crew-add svg{ width:26px; height:26px; }
   /* posts */
-  .post-card{ background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); padding:14px; margin-top:12px; cursor:pointer; }
+  .post-card{ background:#FBF7EC; border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); padding:14px; margin-top:12px; cursor:pointer; }
   .post-card:first-child{ margin-top:0; }
   .post-card:active{ transform:scale(.99); }
-  .post-card.plan{ background:var(--pastel-cream); border:1.5px solid var(--gold); }
+  .post-card.plan{ background:#FBF7EC; border:1px solid var(--border); }
   .post-head{ display:flex; align-items:center; gap:10px; }
   .post-head img{ width:38px; height:38px; border-radius:50%; object-fit:cover; background:var(--navy); flex:0 0 auto; }
   .post-who{ flex:1; min-width:0; }
-  .post-name{ font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .post-name{ font-weight:700; font-size:16px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .post-when{ font-size:12px; color:var(--ink-muted); }
-  .post-badge{ flex:0 0 auto; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; }
+  .post-badge{ flex:0 0 auto; font-size:12px; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; }
   .post-badge.sail{ background:rgba(23,117,143,.14); color:var(--teal); }
-  .post-badge.plan{ background:rgba(201,162,75,.22); color:#8A6A1F; }
-  html[data-theme="dark"] .post-badge.plan{ color:var(--gold); }
-  .post-title{ font-family:var(--font-display); font-weight:700; font-size:16.5px; color:var(--ink); margin-top:10px; }
-  .post-meta{ font-size:12.5px; color:var(--ink-muted); margin-top:3px; }
+  .post-badge.plan{ background:rgba(201,123,74,.16); color:#C97B4A; }
+  .post-title{ font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--ink); margin-top:10px; }
+  .post-meta{ font-size:12px; color:var(--ink-muted); margin-top:3px; }
   .post-photo{ width:100%; height:176px; object-fit:cover; border-radius:12px; margin-top:10px; display:block; }
   .post-text{ font-size:13.5px; line-height:1.45; color:var(--ink); margin-top:10px; white-space:pre-wrap; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
   .post-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
@@ -643,13 +613,7 @@
   .switch .knob{ width:24px; height:24px; border-radius:50%; background:var(--gold); position:absolute; top:3px; left:3px; transition:left .2s ease;
     display:flex; align-items:center; justify-content:center; font-size:13px; }
   html[data-theme="dark"] .switch .knob{ left:25px; }
-  #homeThemeKnob.on{ left:25px; }
 
-  /* ---------- TEMPORARY: "Nautical" home-theme, toggled from Settings > Appearance.
-     Scoped narrowly (Home screen's CTA / stats / last-sail only) so nothing
-     elsewhere in the app is affected. See #screen-settings for the toggle,
-     and boot()/toggleHomeThemeChoice() in js/profile-settings.js for the wiring. ---------- */
-  
   /* ---------- misc ---------- */
   .divider{ height:1px; background:var(--border); margin:22px 0; }
   .toast{ position:fixed; left:50%; bottom:100px; transform:translateX(-50%); background:var(--navy-deep); color:#fff; padding:12px 20px;
@@ -1157,56 +1121,6 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
         <img class="avatar" id="homeAvatar" src="" alt="">
         <div><div class="eyebrow" id="homeGreeting">Ahoy</div><div style="font-weight:700;" id="homeName">Sailor</div></div>
       </div>
-      <div class="iconbtn" onclick="nav('settings')" title="Settings" data-i18n-title="nav.settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
-      </div>
-    </div>
-
-    <h1 class="app-title" style="text-align:center;font-size:30px;margin-top:6px;">Sail la Vie</h1>
-
-<div class="compass-wrap" style="width: 151px; height: 151px; border-radius: 50%; overflow: hidden; box-shadow: 0 14px 24px rgba(20,43,68,.28); margin: 30px auto 40px auto;">
-      <img src="images/Logo.png" alt="Sail la Vie Logo" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-    </div>
-
-    <button class="btn btn-primary" onclick="openStartJourneySheet()">
-      <span class="icon-emoji icon-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.3 2L18 13.1H11.3z"/><path d="M10.7 3.6L5 13.1h5.7z"/><path d="M4 13.5c0 2.4 1.6 4.1 3.6 4.1h8.8c2 0 3.6-1.7 3.6-4.1z"/><path d="M2 19.6q3-2.2 6 0t6 0t6 0" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
-      <span data-i18n="home.startJourney">Start New Journey</span>
-    </button>
-    <div style="height:12px;"></div>
-    <button class="btn btn-outline btn-subtle" onclick="beginManualJourney()">
-      <span class="icon-emoji icon-svg" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="10.3" fill="none" stroke="#16324F" stroke-width="1.5"/><g stroke="#16324F" stroke-width="1.3" stroke-linecap="round"><line x1="22.9" y1="9.1" x2="24.2" y2="7.8"/><line x1="22.9" y1="22.9" x2="24.2" y2="24.2"/><line x1="9.1" y1="22.9" x2="7.8" y2="24.2"/><line x1="9.1" y1="9.1" x2="7.8" y2="7.8"/></g><g fill="#A9A08A"><path d="M16.92 16.92L20.6 11.4 15.08 15.08Z"/><path d="M15.08 16.92L20.6 20.6 16.92 15.08Z"/><path d="M15.08 15.08L11.4 20.6 16.92 16.92Z"/><path d="M16.92 15.08L11.4 11.4 15.08 16.92Z"/></g><g fill="#16324F"><path d="M14.4 16L16 5 17.6 16Z"/><path d="M16 14.4L27 16 16 17.6Z"/><path d="M17.6 16L16 27 14.4 16Z"/><path d="M16 17.6L5 16 16 14.4Z"/></g><circle cx="16" cy="16" r="1.7" fill="#D9B872" stroke="#16324F" stroke-width="0.6"/><line x1="19.3" y1="19.3" x2="21.6" y2="21.6" stroke="#2C5F91" stroke-width="3" stroke-linecap="round"/><line x1="21.6" y1="21.6" x2="25.6" y2="25.6" stroke="#E3A34E" stroke-width="3"/><path d="M25.3 25.3l2.6 2.6-2 .4-1-1z" fill="#16324F"/></svg></span>
-      <span data-i18n="home.logPastSail">Manually log a sail</span>
-    </button>
-    <div class="section-divider"><span data-i18n="home.yourSailing">Your Sailing</span></div>
-    <!-- Total sails + distance in one box, filled by renderHomeStats() (journey.js); empty until there is a saved sail -->
-    <div id="homeStatsStrip" style="margin-top:12px;"></div>
-    <!-- "Last Sail" shortcut: filled in by renderLastSail() (journey.js); stays empty until there is at least one saved sail -->
-    <div id="lastSailWrap"></div>
-
-    <div class="quicklinks three">
-      <div class="quicklink tint-mint" onclick="nav('resume')">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 9c-2.2-1.6-5.6-2-9-1.3v15c3.4-.7 6.8-.3 9 1.3 2.2-1.6 5.6-2 9-1.3v-15c-3.4-.7-6.8-.3-9 1.3z" fill="none" stroke="#16324F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 9v15" stroke="#16324F" stroke-width="1.8" stroke-linecap="round"/><path d="M19 13h5M19 16h5M19 19h3.5" stroke="#16324F" stroke-width="1.3" stroke-linecap="round"/><path d="M16 4.6l1 2.3 2.5.3-1.8 1.7.4 2.4-2.1-1.2-2.1 1.2.4-2.4-1.8-1.7 2.5-.3z" fill="#C9A24B" stroke="#16324F" stroke-width="0.7" stroke-linejoin="round"/></svg>
-        <span data-i18n="resume.title">Sailing Resume</span>
-      </div>
-      <div class="quicklink tint-rose" onclick="nav('gallery')">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="5" y="7" width="22" height="18" rx="2.5" fill="none" stroke="#16324F" stroke-width="1.8"/><circle cx="20" cy="13" r="2.6" fill="#FB8258"/><path d="M7.5 20.5l4.7-4.9 3 3 3.6-4.8 6.7 6.7" fill="none" stroke="#16324F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span data-i18n="home.gallery">Gallery</span>
-      </div>
-      <div class="quicklink tint-cream" onclick="nav('noticeboard')">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 8l7-2.5 8 2.5 7-2.5v18l-7 2.5-8-2.5-7 2.5z" fill="none" stroke="#16324F" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 5.5v18M20 8v18" stroke="#16324F" stroke-width="1.3"/><path d="M8 13c3 1 5 4 8 3s4-4 7 0" stroke="#FB8258" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2.2 2.2" fill="none"/><path d="M21.6 12l2 2M23.6 12l-2 2" stroke="#DE4457" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <span data-i18n="home.noticeboard">Noticeboard</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ HOME (Nautical theme — see "TEMPORARY" comment on the CSS block
-       above for how this whole thing can be found and removed later) ============ -->
-  <section class="screen" id="screen-home-nautical">
-    <div class="topbar">
-      <div class="greet" onclick="nav('profile')" style="cursor:pointer;">
-        <img class="avatar" id="homeAvatarNautical" src="" alt="">
-        <div><div class="eyebrow" id="homeGreetingNautical">Ahoy</div><div style="font-weight:700;" id="homeNameNautical">Sailor</div></div>
-      </div>
       <div class="iconbtn" onclick="nav('settings')" title="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
       </div>
@@ -1225,8 +1139,8 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </button>
 
     <div class="section-divider"><span data-i18n="home.yourSailing">Your Sailing</span></div>
-    <div id="homeStatsStripNautical" style="margin-top:12px;"></div>
-    <div id="lastSailWrapNautical"></div>
+    <div id="homeStatsStrip" style="margin-top:12px;"></div>
+    <div id="lastSailWrap"></div>
 
     <div class="nt-quicklinks">
       <div class="nt-quicklink" onclick="nav('resume')">
@@ -1243,6 +1157,10 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       </div>
     </div>
   </section>
+
+  <!-- ============ HOME (Nautical theme — see "TEMPORARY" comment on the CSS block
+       above for how this whole thing can be found and removed later) ============ -->
+  
 
   <!-- ============ ACTIVE JOURNEY ============ -->
   <section class="screen" id="screen-active">
@@ -1655,15 +1573,6 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
         <p style="font-size:12px;" data-i18n="settings.unitsHint">Default used throughout the app — you can still flip units for a single log entry while logging</p>
       </div>
       <div class="switch" onclick="toggleDefaultUnitSystem()"><div class="knob" id="unitsKnob">⚓</div></div>
-    </div>
-
-    <div class="section-title">Home Theme <span style="font-weight:400;color:var(--ink-muted);font-size:11.5px;">(temporary — testing)</span></div>
-    <div class="theme-toggle">
-      <div>
-        <div style="font-weight:600;font-size:14px;" id="homeThemeLabel">Coral Reef</div>
-        <p style="font-size:12px;">Try the new "Nautical" look for the Home screen's button, stats, and last-sail card</p>
-      </div>
-      <div class="switch" onclick="toggleHomeThemeChoice()"><div class="knob" id="homeThemeKnob">🪸</div></div>
     </div>
 
     <!-- Language picker hidden for now (Spanish/Portuguese/Hebrew put on hold) — the

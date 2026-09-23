@@ -456,7 +456,7 @@ async function applyCloudProfile(cloudProfile){
   state.profile = cloudProfile;
   await storeSet(KEYS.PROFILE, state.profile);
   await applyThemePreference();
-  updateHomeName(state.profile.name || t('default.sailorName'));
+  document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
   refreshAvatars();
   showToast('Profile loaded from your account.');
 }

@@ -8,32 +8,13 @@
 // everywhere the trip list changes (save, delete, edit, sync, language switch).
 function renderLastSail(){
   const wrap = document.getElementById('lastSailWrap');
-  const wrapNautical = document.getElementById('lastSailWrapNautical');
-  if(!wrap && !wrapNautical) return;
-  if(!state.tripIndex.length){
-    if(wrap) wrap.innerHTML = '';
-    if(wrapNautical) wrapNautical.innerHTML = '';
-    return;
-  }
+  if(!wrap) return;
+  if(!state.tripIndex.length){ wrap.innerHTML = ''; return; }
   const last = state.tripIndex.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
   const dateStr = new Date(last.date).toLocaleDateString(currentLocale(), {day:'numeric', month:'short', year:'numeric'});
   const meta = [dateStr, last.place ? escapeHtml(last.place) : ''].filter(Boolean).join(' · ');
   const stats = [fmtDistance(last.distanceNm||0), last.elapsedSeconds ? fmtDuration(last.elapsedSeconds) : ''].filter(Boolean).join(' · ');
-  if(wrap) wrap.innerHTML = `<div class="last-sail tint-blue" onclick="openTripDetail('${last.id}','home')">
-    <span class="ls-pin" aria-hidden="true">📍</span>
-    <div class="ls-text">
-      <div class="ls-label">${t('home.lastSail')}</div>
-      <div class="ls-title">${escapeHtml(last.title || t('detail.tripFallback'))}</div>
-      ${stats ? `<div class="ls-stats">${stats}</div>` : ''}
-      <div class="ls-meta">${meta}</div>
-    </div>
-    ${last.coverPhoto ? `<img class="ls-thumb" src="${last.coverPhoto}" alt="">` : ''}
-    <svg class="ls-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-  </div>`;
-  // "Nautical" alternate: same data, its own independent markup/classes (see index.html
-  // #screen-home-nautical and the .nt-* CSS) — deliberately not sharing .last-sail/.tint-blue
-  // so this and the coral-reef block above never need to fight over the same selectors.
-  if(wrapNautical) wrapNautical.innerHTML = `<div class="nt-last-sail" onclick="openTripDetail('${last.id}','home')">
+  wrap.innerHTML = `<div class="nt-last-sail" onclick="openTripDetail('${last.id}','home')">
     <span class="nt-ls-pin" aria-hidden="true">📍</span>
     <div class="nt-ls-text">
       <div class="nt-ls-label">${t('home.lastSail')}</div>
@@ -48,22 +29,11 @@ function renderHomeStats(){
   refreshProfileIfVisible(); // Profile stats + posts follow the trip list too
   renderLastSail();
   const el = document.getElementById('homeStatsStrip');
-  const elNautical = document.getElementById('homeStatsStripNautical');
-  if(!state.tripIndex.length){
-    if(el) el.innerHTML='';
-    if(elNautical) elNautical.innerHTML='';
-    return;
-  }
+  if(!state.tripIndex.length){ el.innerHTML=''; return; }
   const nm = state.tripIndex.reduce((s,t)=>s+(t.distanceNm||0),0);
   const secs = state.tripIndex.reduce((s,t)=>s+(t.elapsedSeconds||0),0);
-  // One box, two halves: total sails (rose) | distance logged (blue), with a divider line between
-  if(el) el.innerHTML = `<div class="home-stats">
-    <div class="hs-cell"><div class="stat-label">${t('resume.totalSails')}</div><div class="stat-value">${state.tripIndex.length}</div></div>
-    <div class="hs-cell"><div class="stat-label">${t('home.distanceLogged')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
-  </div>`;
-  // "Nautical" alternate: two separate cards (kept intentionally, rather than the
-  // coral-reef theme's single merged box) — its own .nt-stats/.nt-stat-cell classes.
-  if(elNautical) elNautical.innerHTML = `<div class="nt-stats">
+  // Two separate cards, not one merged box — see the Home mockup work this followed.
+  el.innerHTML = `<div class="nt-stats">
     <div class="nt-stat-cell"><div class="nt-stat-label">${t('resume.totalSails')}</div><div class="nt-stat-value">${state.tripIndex.length}</div></div>
     <div class="nt-stat-cell"><div class="nt-stat-label">${t('home.distanceLogged')}</div><div class="nt-stat-value">${nm.toFixed(1)}<span class="nt-stat-unit"> NM</span></div></div>
   </div>`;
