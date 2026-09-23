@@ -443,7 +443,7 @@ async function applyCloudProfile(cloudProfile){
   state.profile = cloudProfile;
   await storeSet(KEYS.PROFILE, state.profile);
   await applyThemePreference();
-  document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
+  updateHomeName(state.profile.name || t('default.sailorName'));
   refreshAvatars();
   showToast('Profile loaded from your account.');
 }

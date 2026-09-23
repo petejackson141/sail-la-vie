@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '21.09.2026.1705';
+const APP_VERSION = '23.09.2026.1145';
 
 /* ============================================================
    CUSTOM CONFIRM DIALOG (shared across all screens)
@@ -96,7 +96,7 @@ let state = {
   boats: [],
   crew: [],
   noticeboard: [],       // planned future sails, written on the Noticeboard screen — see noticeboard.js
-  profile: { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', cover:'', theme:'light', unitSystem:'nautical', language:'en' },
+  profile: { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', cover:'', theme:'light', unitSystem:'nautical', language:'en', homeTheme:'coralreef' },
   // Per-screen list/grid display choice for the Fleet and Crew screens — see
   // setListView()/renderBoats()/renderCrew(). Persisted so the choice sticks
   // between app launches, same as everything else in `state`.
@@ -181,9 +181,10 @@ async function boot(){
 
   await applyThemePreference();
   renderUnitsSettingUI();
+  renderHomeThemeUI();
 
   refreshAvatars();
-  document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
+  updateHomeName(state.profile.name || t('default.sailorName'));
   document.getElementById('appVersionLine').textContent = t('settings.version', {version: APP_VERSION});
   greet();
 
@@ -206,12 +207,23 @@ async function boot(){
 }
 function greet(){
   const h = new Date().getHours();
-  document.getElementById('homeGreeting').textContent = h<12 ? t('greet.morning') : h<18 ? t('greet.afternoon') : t('greet.evening');
+  const msg = h<12 ? t('greet.morning') : h<18 ? t('greet.afternoon') : t('greet.evening');
+  document.getElementById('homeGreeting').textContent = msg;
+  const elN = document.getElementById('homeGreetingNautical'); if(elN) elN.textContent = msg;
 }
 function refreshAvatars(){
   const a = state.profile.avatar || placeholderAvatar();
   document.getElementById('homeAvatar').src = a;
   document.getElementById('profileAvatarImg').src = a;
+  const an = document.getElementById('homeAvatarNautical'); if(an) an.src = a;
+}
+// Keeps the "Nautical" alternate Home screen's name in sync with the coral-reef
+// one, wherever either gets updated — see all 5 call sites (auth.js,
+// profile-settings.js x2, state-core.js, storage.js), each now routed through
+// this instead of writing #homeName directly.
+function updateHomeName(name){
+  const el = document.getElementById('homeName'); if(el) el.textContent = name;
+  const elN = document.getElementById('homeNameNautical'); if(elN) elN.textContent = name;
 }
 function placeholderAvatar(){
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#16324F"/><circle cx="40" cy="32" r="14" fill="#BFE0EA"/><path d="M14 70c0-16 12-26 26-26s26 10 26 26" fill="#BFE0EA"/></svg>`);
@@ -226,9 +238,15 @@ function placeholderAvatar(){
    the UI" — skips pushing a duplicate history entry. ---------- */
 function nav(name, fromPopState){
   const prevActiveEl = document.querySelector('.screen.active');
-  const prevName = prevActiveEl ? prevActiveEl.id.replace('screen-','') : null;
+  // 'screen-home-nautical' isn't a real nav name (there's no nav('home-nautical')) — it's
+  // just which element is currently showing for the logical name 'home', so map it back.
+  const prevName = prevActiveEl ? (prevActiveEl.id==='screen-home-nautical' ? 'home' : prevActiveEl.id.replace('screen-','')) : null;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('screen-'+name).classList.add('active');
+  // "Nautical" home theme (temporary, Settings > Appearance): a fully separate screen/section
+  // (#screen-home-nautical in index.html) rather than the same one restyled — see the CSS
+  // comment there for why. This is the one place that decides which of the two is shown.
+  const targetId = (name==='home' && state.profile.homeTheme==='nautical') ? 'screen-home-nautical' : 'screen-'+name;
+  document.getElementById(targetId).classList.add('active');
   document.querySelectorAll('.navitem').forEach(n=>n.classList.toggle('active', n.dataset.tab===name));
   window.scrollTo(0,0);
   if(!fromPopState && name!==prevName){
@@ -390,7 +408,7 @@ function initHardwareBackButton(){
   AppPlugin.addListener('backButton', () => {
     console.log('[backbutton] hardware back pressed — handling in-app.');
     const sheetOpen = [...document.querySelectorAll('.sheet')].some(s=>s.style.display==='block');
-    const onHome = document.getElementById('screen-home').classList.contains('active');
+    const onHome = document.getElementById('screen-home').classList.contains('active') || document.getElementById('screen-home-nautical').classList.contains('active');
     const lightboxOpen = document.getElementById('photoLightbox').classList.contains('show');
     if(sheetOpen || lightboxOpen || !onHome){
       history.back(); // handled by the popstate listener above, same as a browser back gesture
