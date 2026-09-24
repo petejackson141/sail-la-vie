@@ -70,7 +70,7 @@ function renderProfileStats(){
   document.getElementById('profileStats').innerHTML = `<div class="stat-card stat-grid">
     <div class="cell"><div class="stat-label">${t('resume.totalSails')}</div><div class="stat-value">${state.tripIndex.length}</div></div>
     <div class="cell"><div class="stat-label">${t('resume.totalDistance')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
-    <div class="cell"><div class="stat-label">${t('resume.timeAtSea')}</div><div class="stat-value" style="font-size:18px;">${fmtDuration(secs)}</div></div>
+    <div class="cell"><div class="stat-label">${t('resume.timeAtSea')}</div><div class="stat-value">${fmtDuration(secs)}</div></div>
     <div class="cell"><div class="stat-label">${t('profile.boatsSailed')}</div><div class="stat-value">${state.boats.length}</div></div>
   </div>`;
 }

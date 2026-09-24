@@ -167,7 +167,8 @@
     width:100%; transition:transform .12s ease, box-shadow .12s ease; }
   .btn:active{ transform:scale(0.98); }
   .btn-primary{ background:linear-gradient(90deg,var(--navy),var(--teal)); color:#fff; box-shadow:0 12px 24px -10px rgba(22,50,79,.5); }
-  .btn-outline{ background:var(--surface-ivory); color:var(--navy); border:1.5px solid var(--navy); }
+  .btn-outline{ background:rgba(23,117,143,.10); color:var(--navy); border:1.5px solid var(--navy); }
+  html[data-theme="dark"] .btn-outline{ background:rgba(63,169,194,.12); }
   html[data-theme="dark"] .btn-outline{ color:var(--ink); border-color:var(--navy-soft); }
   /* Deliberately quieter than the default outline button — used on Home so "Start New
      Journey" (btn-primary) stays the visual focal point and "Manually log a sail" recedes. */
@@ -238,8 +239,9 @@
     font-family:var(--font-body); font-weight:600; font-size:15px; cursor:pointer; }
   .nt-btn-primary svg{ width:22px; height:22px; flex:0 0 auto; }
   .nt-btn-secondary{ width:227px; height:49px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:8px;
-    background:var(--bg-elevated); border:1.5px solid var(--navy); border-radius:999px; cursor:pointer;
+    background:rgba(23,117,143,.10); border:1.5px solid var(--navy); border-radius:999px; cursor:pointer;
     font-family:var(--font-body); font-weight:600; font-size:14px; color:var(--navy); }
+  html[data-theme="dark"] .nt-btn-secondary{ background:rgba(63,169,194,.12); }
   .nt-btn-secondary svg{ width:18px; height:18px; flex:0 0 auto; }
   .nt-quicklinks{ display:flex; gap:12px; margin-top:12px; margin-bottom:14px; }
   .nt-quicklink{ flex:1; background:var(--surface-ivory); border:1px solid var(--border); border-radius:var(--radius-md);
@@ -1628,7 +1630,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div class="stat-card stat-grid" style="margin-top:10px;">
       <div class="cell"><div class="stat-label" data-i18n="resume.totalSails">Total Sails</div><div class="stat-value" id="resSails">0</div></div>
       <div class="cell"><div class="stat-label" data-i18n="resume.totalDistance">Total Distance</div><div class="stat-value" id="resDist">0<span class="stat-unit"> NM</span></div></div>
-      <div class="cell" style="margin-top:14px;"><div class="stat-label" data-i18n="resume.timeAtSea">Time at Sea</div><div class="stat-value" id="resTime" style="font-size:19px;">0h</div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label" data-i18n="resume.timeAtSea">Time at Sea</div><div class="stat-value" id="resTime">0h</div></div>
       <div class="cell" style="margin-top:14px;"><div class="stat-label" data-i18n="stat.avgSpeed">Avg Speed</div><div class="stat-value" id="resAvg">0.0<span class="stat-unit"> kts</span></div></div>
     </div>
 
