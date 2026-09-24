@@ -241,17 +241,17 @@
     font-family:var(--font-body); font-weight:600; font-size:14px; color:var(--navy); }
   .nt-btn-secondary svg{ width:18px; height:18px; flex:0 0 auto; }
   .nt-quicklinks{ display:flex; gap:12px; margin-top:12px; margin-bottom:14px; }
-  .nt-quicklink{ flex:1; background:#FBF7EC; border:1px solid var(--border); border-radius:var(--radius-md);
+  .nt-quicklink{ flex:1; background:var(--surface-ivory); border:1px solid var(--border); border-radius:var(--radius-md);
     box-shadow:var(--shadow); padding:10px 6px; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:8px; }
   .nt-quicklink svg{ width:52px; height:52px; }
   .nt-quicklink span{ display:block; font-size:12px; font-weight:600; color:var(--ink); line-height:1.25; }
   .nt-stats{ display:flex; gap:12px; }
-  .nt-stat-cell{ flex:1; background:#FBF7EC; border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); padding:12px 10px; text-align:center; }
+  .nt-stat-cell{ flex:1; background:var(--surface-ivory); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); padding:12px 10px; text-align:center; }
   .nt-stat-label{ font-family:var(--font-display); font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-muted); }
   .nt-stat-value{ font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:34px; color:var(--navy); margin-top:4px; }
   .nt-stat-unit{ font-size:14px; font-weight:600; font-family:var(--font-body); color:var(--ink-muted); }
   .nt-last-sail{ display:flex; align-items:center; gap:8px; margin-top:12px; padding:12px; cursor:pointer;
-    background:#FBF7EC; border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); }
+    background:var(--surface-ivory); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); }
   .nt-last-sail:active{ transform:scale(.99); }
   .nt-last-sail .nt-ls-pin{ font-size:22px; line-height:1; flex:0 0 auto; }
   .nt-last-sail .nt-ls-text{ flex:1; min-width:0; }
@@ -319,14 +319,14 @@
   .profile-stats .stat-card{ display:grid; grid-template-columns:1fr 1fr; gap:12px;
     background:none; border:none; border-radius:0; padding:0; box-shadow:none; }
   .profile-stats .cell{ margin:0 !important; padding:12px 10px; text-align:center;
-    background:#FBF7EC; border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); }
+    background:var(--surface-ivory); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); }
   .profile-stats .stat-value{ font-family:'Playfair Display',serif; font-style:italic; }
   .profile-stats .stat-label{ font-size:12px; }
   /* crew row */
   .pf-crew-scroll{ display:flex; gap:12px; overflow-x:auto; margin:0 -20px; padding:2px 20px 12px; scroll-snap-type:x proximity; scroll-padding-inline:20px;
     scrollbar-width:none; -webkit-overflow-scrolling:touch; }
   .pf-crew-scroll::-webkit-scrollbar{ display:none; }
-  .pf-crew-card{ flex:0 0 124px; scroll-snap-align:start; overflow:hidden; cursor:pointer; background:#FBF7EC;
+  .pf-crew-card{ flex:0 0 124px; scroll-snap-align:start; overflow:hidden; cursor:pointer; background:var(--surface-ivory);
     border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); }
   .pf-crew-card:active{ transform:scale(.98); }
   .pf-crew-card img{ width:100%; height:124px; object-fit:cover; display:block; background:var(--navy); }
@@ -336,10 +336,10 @@
     background:var(--pastel-mint); border:1.5px dashed var(--teal); border-radius:var(--radius-md); color:var(--teal); font-weight:700; font-size:13px; min-height:176px; text-align:center; padding:0 8px; }
   .pf-crew-add svg{ width:26px; height:26px; }
   /* posts */
-  .post-card{ background:#FBF7EC; border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); padding:14px; margin-top:12px; cursor:pointer; }
+  .post-card{ background:var(--surface-ivory); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); padding:14px; margin-top:12px; cursor:pointer; }
   .post-card:first-child{ margin-top:0; }
   .post-card:active{ transform:scale(.99); }
-  .post-card.plan{ background:#FBF7EC; border:1px solid var(--border); }
+  .post-card.plan{ background:var(--surface-ivory); border:1px solid var(--border); }
   .post-head{ display:flex; align-items:center; gap:10px; }
   .post-head img{ width:38px; height:38px; border-radius:50%; object-fit:cover; background:var(--navy); flex:0 0 auto; }
   .post-who{ flex:1; min-width:0; }
@@ -391,16 +391,16 @@
   html[data-theme="dark"] .navitem.active{ color:var(--gold); }
 
   /* ---------- search / filters ---------- */
-  .search-input{ width:100%; background:#FBF7EC; border:1px solid var(--border); border-radius:999px;
+  .search-input{ width:100%; background:var(--surface-ivory); border:1px solid var(--border); border-radius:999px;
     padding:14px 18px; font-size:14px; color:var(--ink); font-family:var(--font-body); }
   .search-input::placeholder{ color:var(--ink-faint); }
   .chiprow{ display:flex; gap:8px; margin:14px 0 4px; flex-wrap:wrap; }
-  .chip{ padding:8px 14px; border-radius:999px; background:#FBF7EC; border:1px solid var(--border); font-size:12px;
+  .chip{ padding:8px 14px; border-radius:999px; background:var(--surface-ivory); border:1px solid var(--border); font-size:12px;
     font-weight:600; color:var(--ink-muted); cursor:pointer; }
   .chip.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
 
   /* ---------- trip list cards ---------- */
-  .trip-card{ margin-top:16px; border-radius:var(--radius-lg); overflow:hidden; background:#FBF7EC;
+  .trip-card{ margin-top:16px; border-radius:var(--radius-lg); overflow:hidden; background:var(--surface-ivory);
     border:1px solid var(--border); box-shadow:var(--shadow); cursor:pointer; }
   .trip-cover{ width:100%; height:150px; object-fit:cover; display:block; background:var(--bg-sunk); }
   .trip-cover.placeholder{ display:flex; align-items:center; justify-content:center;
@@ -411,9 +411,6 @@
     padding:12px 16px; background:linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,.7) 100%); }
   .trip-cover-date{ font-family:var(--font-display); font-weight:700; font-size:16px; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.6); }
   .trip-cover-place{ font-size:12px; color:#fff; opacity:.92; margin-top:2px; text-shadow:0 1px 6px rgba(0,0,0,.6); }
-  html[data-theme="dark"] .search-input{ background:var(--bg-elevated); }
-  html[data-theme="dark"] .trip-card{ background:var(--bg-elevated); }
-  html[data-theme="dark"] .chip{ background:var(--bg-sunk); }
   .trip-body{ padding:14px 16px 16px; }
   .trip-title{ font-family:var(--font-display); font-weight:700; font-size:16px; margin-bottom:4px; }
   .trip-meta{ font-size:12px; color:var(--ink-muted); display:flex; flex-wrap:wrap; gap:2px 10px; margin-top:6px; }
@@ -428,13 +425,10 @@
   .field{ margin-bottom:16px; }
   .field label{ display:block; font-size:12px; font-weight:600; color:var(--ink-muted); margin-bottom:7px; text-transform:uppercase; letter-spacing:.05em; }
   select,input[type=text],input[type=number],input[type=date],input[type=tel],input[type=email],input[type=password],textarea{
-    width:100%; background:#FBF7EC; border:1px solid var(--border); border-radius:var(--radius-sm);
+    width:100%; background:var(--surface-ivory); border:1px solid var(--border); border-radius:var(--radius-sm);
     padding:13px 14px; font-size:14px; font-family:var(--font-body); color:var(--ink); }
   select:focus,input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[type=tel]:focus,input[type=email]:focus,input[type=password]:focus,textarea:focus{
     outline:none; border-color:var(--navy-soft); box-shadow:0 0 0 3px rgba(44,95,145,.18); }
-  html[data-theme="dark"] select,html[data-theme="dark"] input[type=text],html[data-theme="dark"] input[type=number],html[data-theme="dark"] input[type=date],
-  html[data-theme="dark"] input[type=tel],html[data-theme="dark"] input[type=email],html[data-theme="dark"] input[type=password],html[data-theme="dark"] textarea{
-    background:var(--bg-elevated); }
   html[data-theme="dark"] select:focus,html[data-theme="dark"] input[type=text]:focus,html[data-theme="dark"] input[type=number]:focus,
   html[data-theme="dark"] input[type=date]:focus,html[data-theme="dark"] input[type=tel]:focus,html[data-theme="dark"] input[type=email]:focus,html[data-theme="dark"] input[type=password]:focus,
   html[data-theme="dark"] textarea:focus{ border-color:var(--gold); box-shadow:0 0 0 3px rgba(217,187,110,.18); }
@@ -586,34 +580,31 @@
   .yacht-marker-icon{ background:transparent; border:none; }
 
   /* ---------- list rows (boats/crew) ---------- */
-  .row-card{ display:flex; align-items:center; gap:14px; background:#FBF7EC; border:1px solid var(--border);
+  .row-card{ display:flex; align-items:center; gap:14px; background:var(--surface-ivory); border:1px solid var(--border);
     border-radius:var(--radius-md); padding:12px 14px; margin-top:12px; box-shadow:var(--shadow); cursor:pointer; }
   .row-photo{ width:52px; height:52px; border-radius:14px; object-fit:cover; background:var(--bg-sunk); flex:0 0 auto; }
   .row-photo.round{ border-radius:50%; }
   .row-info{ flex:1; min-width:0; }
   .row-info .name{ font-weight:700; font-size:16px; }
   .row-info .sub{ font-size:12px; color:var(--ink-muted); margin-top:2px; }
-  html[data-theme="dark"] .row-card{ background:var(--bg-elevated); }
   .view-toggle-btn.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
   html[data-theme="dark"] .view-toggle-btn.active{ background:var(--gold); color:var(--navy-deep); border-color:var(--gold); }
 
   /* ---------- grid view (boats/crew, toggled via toggleListView()) ---------- */
   .grid-cards{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
-  .grid-card{ background:#FBF7EC; border:1px solid var(--border); border-radius:var(--radius-md);
+  .grid-card{ background:var(--surface-ivory); border:1px solid var(--border); border-radius:var(--radius-md);
     padding:14px 10px 12px; box-shadow:var(--shadow); cursor:pointer; text-align:center; min-width:0; overflow:hidden; }
   .grid-card .row-photo{ width:64px; height:64px; margin:0 auto 10px; border-radius:16px; }
   .grid-card .row-photo.round{ border-radius:50%; }
   .grid-card .row-info .name{ font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .grid-card .row-info .sub{ font-size:12px; color:var(--ink-muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  html[data-theme="dark"] .grid-card{ background:var(--bg-elevated); }
 
   /* ---------- modal / sheet ---------- */
   .overlay{ position:fixed; inset:0; background:rgba(10,22,34,.5); display:none; align-items:flex-end; justify-content:center; z-index:100; }
   .overlay.active{ display:flex; }
-  .sheet{ background:#EFEAE0; width:100%; max-width:480px; border-radius:26px 26px 0 0; padding:20px 20px calc(24px + env(safe-area-inset-bottom));
+  .sheet{ background:var(--sheet-bg); width:100%; max-width:480px; border-radius:26px 26px 0 0; padding:20px 20px calc(24px + env(safe-area-inset-bottom));
     max-height:88vh; overflow-y:auto; animation:slideUp .22s ease; }
   @keyframes slideUp{ from{ transform:translateY(24px); opacity:.4; } to{ transform:translateY(0); opacity:1; } }
-  html[data-theme="dark"] .sheet{ background:var(--bg); }
   .sheet-handle{ width:38px; height:4px; background:var(--border); border-radius:4px; margin:0 auto 16px; }
   .sheet h3{ font-size:18px; margin-bottom:16px; }
 
@@ -638,6 +629,17 @@
      a small coloured emoji chip + title — same language as the home quick-links. */
   :root{ --field-bg:#F2F9FA; --field-border:rgba(23,117,143,.20); }
   html[data-theme="dark"]{ --field-bg:#0E1B2A; --field-border:var(--border); }
+
+  /* ---------- Nautical theme's pale card surface ----------
+     One token instead of the hardcoded #FBF7EC hex repeated across every
+     card/input/sheet in the Nautical redesign (Home, Profile, Edit Profile,
+     History, Fleet, Crew). Change the look in one place from now on.
+     Dark mode intentionally maps this back to the existing --bg-elevated
+     (its normal card color) rather than defining a separate dark ivory —
+     dark mode was never part of this redesign and should look exactly as
+     it did before it. */
+  :root{ --surface-ivory:#FBF7EC; --sheet-bg:#EFEAE0; }
+  html[data-theme="dark"]{ --surface-ivory:var(--bg-elevated); --sheet-bg:var(--bg); }
   .form-card{ background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-lg);
     box-shadow:var(--shadow); padding:16px 16px 18px; margin-top:14px; }
   .form-card-head{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
