@@ -586,24 +586,26 @@
   .yacht-marker-icon{ background:transparent; border:none; }
 
   /* ---------- list rows (boats/crew) ---------- */
-  .row-card{ display:flex; align-items:center; gap:14px; background:var(--bg-elevated); border:1px solid var(--border);
+  .row-card{ display:flex; align-items:center; gap:14px; background:#FBF7EC; border:1px solid var(--border);
     border-radius:var(--radius-md); padding:12px 14px; margin-top:12px; box-shadow:var(--shadow); cursor:pointer; }
   .row-photo{ width:52px; height:52px; border-radius:14px; object-fit:cover; background:var(--bg-sunk); flex:0 0 auto; }
   .row-photo.round{ border-radius:50%; }
   .row-info{ flex:1; min-width:0; }
-  .row-info .name{ font-weight:700; font-size:14.5px; }
-  .row-info .sub{ font-size:12.5px; color:var(--ink-muted); margin-top:2px; }
+  .row-info .name{ font-weight:700; font-size:16px; }
+  .row-info .sub{ font-size:12px; color:var(--ink-muted); margin-top:2px; }
+  html[data-theme="dark"] .row-card{ background:var(--bg-elevated); }
   .view-toggle-btn.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
   html[data-theme="dark"] .view-toggle-btn.active{ background:var(--gold); color:var(--navy-deep); border-color:var(--gold); }
 
   /* ---------- grid view (boats/crew, toggled via toggleListView()) ---------- */
   .grid-cards{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
-  .grid-card{ background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md);
+  .grid-card{ background:#FBF7EC; border:1px solid var(--border); border-radius:var(--radius-md);
     padding:14px 10px 12px; box-shadow:var(--shadow); cursor:pointer; text-align:center; min-width:0; overflow:hidden; }
   .grid-card .row-photo{ width:64px; height:64px; margin:0 auto 10px; border-radius:16px; }
   .grid-card .row-photo.round{ border-radius:50%; }
-  .grid-card .row-info .name{ font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .grid-card .row-info .sub{ font-size:11.5px; color:var(--ink-muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .grid-card .row-info .name{ font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .grid-card .row-info .sub{ font-size:12px; color:var(--ink-muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  html[data-theme="dark"] .grid-card{ background:var(--bg-elevated); }
 
   /* ---------- modal / sheet ---------- */
   .overlay{ position:fixed; inset:0; background:rgba(10,22,34,.5); display:none; align-items:flex-end; justify-content:center; z-index:100; }
