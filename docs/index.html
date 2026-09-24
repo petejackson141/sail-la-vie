@@ -422,12 +422,15 @@
 
   /* ---------- form elements ---------- */
   .field{ margin-bottom:16px; }
-  .field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-muted); margin-bottom:7px; text-transform:uppercase; letter-spacing:.05em; }
+  .field label{ display:block; font-size:12px; font-weight:600; color:var(--ink-muted); margin-bottom:7px; text-transform:uppercase; letter-spacing:.05em; }
   select,input[type=text],input[type=number],input[type=date],input[type=tel],input[type=email],input[type=password],textarea{
-    width:100%; background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-sm);
-    padding:13px 14px; font-size:14.5px; font-family:var(--font-body); color:var(--ink); }
+    width:100%; background:#FBF7EC; border:1px solid var(--border); border-radius:var(--radius-sm);
+    padding:13px 14px; font-size:14px; font-family:var(--font-body); color:var(--ink); }
   select:focus,input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[type=tel]:focus,input[type=email]:focus,input[type=password]:focus,textarea:focus{
     outline:none; border-color:var(--navy-soft); box-shadow:0 0 0 3px rgba(44,95,145,.18); }
+  html[data-theme="dark"] select,html[data-theme="dark"] input[type=text],html[data-theme="dark"] input[type=number],html[data-theme="dark"] input[type=date],
+  html[data-theme="dark"] input[type=tel],html[data-theme="dark"] input[type=email],html[data-theme="dark"] input[type=password],html[data-theme="dark"] textarea{
+    background:var(--bg-elevated); }
   html[data-theme="dark"] select:focus,html[data-theme="dark"] input[type=text]:focus,html[data-theme="dark"] input[type=number]:focus,
   html[data-theme="dark"] input[type=date]:focus,html[data-theme="dark"] input[type=tel]:focus,html[data-theme="dark"] input[type=email]:focus,html[data-theme="dark"] input[type=password]:focus,
   html[data-theme="dark"] textarea:focus{ border-color:var(--gold); box-shadow:0 0 0 3px rgba(217,187,110,.18); }
@@ -601,9 +604,10 @@
   /* ---------- modal / sheet ---------- */
   .overlay{ position:fixed; inset:0; background:rgba(10,22,34,.5); display:none; align-items:flex-end; justify-content:center; z-index:100; }
   .overlay.active{ display:flex; }
-  .sheet{ background:var(--bg); width:100%; max-width:480px; border-radius:26px 26px 0 0; padding:22px 20px calc(24px + env(safe-area-inset-bottom));
+  .sheet{ background:#EFEAE0; width:100%; max-width:480px; border-radius:26px 26px 0 0; padding:20px 20px calc(24px + env(safe-area-inset-bottom));
     max-height:88vh; overflow-y:auto; animation:slideUp .22s ease; }
   @keyframes slideUp{ from{ transform:translateY(24px); opacity:.4; } to{ transform:translateY(0); opacity:1; } }
+  html[data-theme="dark"] .sheet{ background:var(--bg); }
   .sheet-handle{ width:38px; height:4px; background:var(--border); border-radius:4px; margin:0 auto 16px; }
   .sheet h3{ font-size:18px; margin-bottom:16px; }
 
