@@ -155,7 +155,7 @@
   #homeName{ color:color-mix(in srgb, var(--ink) 76.5%, white 23.5%); }
   .avatar{ width:40px; height:40px; border-radius:50%; object-fit:cover; background:var(--navy); border:2px solid var(--bg-elevated); box-shadow:var(--shadow); }
   .avatar.sm{width:28px;height:28px;}
-  .iconbtn{ width:40px; height:40px; border-radius:50%; background:var(--bg-elevated); border:1px solid var(--border);
+  .iconbtn{ width:40px; height:40px; border-radius:50%; background:var(--surface-ivory); border:1px solid var(--border);
     display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:var(--shadow); color:var(--navy); }
   .iconbtn svg{ width:19px; height:19px; }
   .backrow{ display:flex; align-items:center; gap:12px; padding:6px 0 18px; }
@@ -167,7 +167,7 @@
     width:100%; transition:transform .12s ease, box-shadow .12s ease; }
   .btn:active{ transform:scale(0.98); }
   .btn-primary{ background:linear-gradient(90deg,var(--navy),var(--teal)); color:#fff; box-shadow:0 12px 24px -10px rgba(22,50,79,.5); }
-  .btn-outline{ background:var(--bg-elevated); color:var(--navy); border:1.5px solid var(--navy); }
+  .btn-outline{ background:var(--surface-ivory); color:var(--navy); border:1.5px solid var(--navy); }
   html[data-theme="dark"] .btn-outline{ color:var(--ink); border-color:var(--navy-soft); }
   /* Deliberately quieter than the default outline button — used on Home so "Start New
      Journey" (btn-primary) stays the visual focal point and "Manually log a sail" recedes. */
@@ -369,7 +369,7 @@
 
   /* ---------- bottom nav ---------- */
   .bottombar-wrap{ position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:480px; z-index:50; }
-  .bottomnav{ background:var(--bg-elevated); border-top:1px solid var(--border); display:flex; padding:10px 6px calc(10px + env(safe-area-inset-bottom)); }
+  .bottomnav{ background:var(--surface-ivory); border-top:1px solid var(--border); display:flex; padding:10px 6px calc(10px + env(safe-area-inset-bottom)); }
   .recording-banner{ display:none; align-items:center; justify-content:space-between; gap:10px; padding:10px 16px;
     background:var(--navy); color:#fff; cursor:pointer; border-top:1px solid var(--border); }
   html[data-theme="dark"] .recording-banner{ background:var(--gold); color:var(--navy-deep); }
@@ -460,26 +460,6 @@
   #authErrorMsg{ background:rgba(214,90,74,.1); border:1px solid rgba(214,90,74,.3); border-radius:var(--radius-sm);
     padding:10px 12px; margin-bottom:14px !important; }
   html[data-theme="dark"] .range-value{ color:var(--gold); }
-  /* ---------- guarded sliders ----------
-     Weather sliders sit inline in a long scrolling form, so a thumb resting
-     under a finger while the person scrolls the page used to drag the value
-     by accident. Until explicitly tapped ("armed"), the slider ignores touch
-     entirely and a "Tap to adjust" strip sits on top so a scroll gesture just
-     scrolls. Tapping arms it (removes the hint, the real slider becomes
-     touchable); releasing the thumb (native 'change') re-locks it, so the
-     next scroll past it is safe again without another explicit tap. */
-  .slider-guard{ position:relative; touch-action:pan-y; }
-  .slider-guard input[type=range]{ display:block; position:relative; z-index:1; }
-  .slider-guard:not(.armed) input[type=range]{ pointer-events:none; }
-  .slider-guard .slider-tap-hint{
-    position:absolute; inset:-14px 0; z-index:2; touch-action:pan-y;
-    display:flex; align-items:center; justify-content:center; cursor:pointer;
-  }
-  .slider-guard.armed .slider-tap-hint{ display:none; }
-  .slider-guard .slider-tap-hint span{
-    font-size:11px; font-weight:600; color:var(--ink-muted);
-    background:var(--surface-ivory); border:1px solid var(--border); padding:3px 10px; border-radius:999px;
-  }
   .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 
   /* ---------- photo strip ---------- */
@@ -1350,25 +1330,16 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </div>
     <div class="field">
       <label><span data-i18n="active.windSpeed">Wind Speed</span> <span class="range-value" id="windSpeedVal">12 kts</span></label>
-      <div class="slider-guard" id="windSpeedGuard">
-        <input type="range" id="windSpeed" min="0" max="19" value="8" oninput="updateWindSpeedLabel()" onchange="disarmSlider('windSpeedGuard')">
-        <div class="slider-tap-hint" onclick="armSlider('windSpeedGuard')"><span data-i18n="active.tapToAdjust">Tap to adjust</span></div>
-      </div>
+      <input type="number" id="windSpeed" min="0" max="19" value="8" oninput="updateWindSpeedLabel()">
     </div>
     <div class="field">
       <label><span data-i18n="active.gusts">Gusts</span> <span class="range-value" id="gustsVal">10 kts</span></label>
-      <div class="slider-guard" id="gustsGuard">
-        <input type="range" id="gusts" min="0" max="40" step="1" value="10" oninput="updateGustsLabel()" onchange="disarmSlider('gustsGuard')">
-        <div class="slider-tap-hint" onclick="armSlider('gustsGuard')"><span data-i18n="active.tapToAdjust">Tap to adjust</span></div>
-      </div>
+      <input type="number" id="gusts" min="0" max="40" step="1" value="10" oninput="updateGustsLabel()">
     </div>
     <div class="two-col">
       <div class="field">
         <label><span data-i18n="active.waveHeight">Wave Height</span> <span class="range-value" id="waveHeightVal">0.5 m</span></label>
-        <div class="slider-guard" id="waveHeightGuard">
-          <input type="range" id="waveHeight" min="0" max="5" step="0.1" value="0.5" oninput="updateWaveHeightLabel()" onchange="disarmSlider('waveHeightGuard')">
-          <div class="slider-tap-hint" onclick="armSlider('waveHeightGuard')"><span data-i18n="active.tapToAdjust">Tap to adjust</span></div>
-        </div>
+        <input type="number" id="waveHeight" min="0" max="5" step="0.1" value="0.5" oninput="updateWaveHeightLabel()">
       </div>
       <div class="field">
         <label data-i18n="active.waveDir">Wave Direction</label>
@@ -1377,10 +1348,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </div>
     <div class="field">
       <label><span data-i18n="active.temperature">Temperature</span> <span class="range-value" id="tempVal">20°C</span></label>
-      <div class="slider-guard" id="tempGuard">
-        <input type="range" id="temp" min="0" max="50" step="1" value="20" oninput="updateTempLabel()" onchange="disarmSlider('tempGuard')">
-        <div class="slider-tap-hint" onclick="armSlider('tempGuard')"><span data-i18n="active.tapToAdjust">Tap to adjust</span></div>
-      </div>
+      <input type="number" id="temp" min="0" max="50" step="1" value="20" oninput="updateTempLabel()">
     </div>
     </div>
 

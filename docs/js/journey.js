@@ -193,37 +193,10 @@ function scrollToLogEntryWeather(event){
   const el = document.getElementById('sky');
   if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
 }
-/* ---- guarded sliders ----
-   The weather sliders live inline in a long scrolling form, so a thumb
-   resting under a finger while the page scrolls used to drag the value by
-   accident. Each slider starts "disarmed" (pointer-events:none, a "Tap to
-   adjust" strip on top) so a scroll gesture just scrolls; tapping the strip
-   arms it for one drag, and releasing the thumb re-locks it automatically. */
-let armedSliderGuardId = null;
-function armSlider(guardId){
-  if(armedSliderGuardId && armedSliderGuardId!==guardId) disarmSlider(armedSliderGuardId);
-  const guard = document.getElementById(guardId);
-  if(!guard) return;
-  guard.classList.add('armed');
-  armedSliderGuardId = guardId;
-}
-function disarmSlider(guardId){
-  const id = guardId || armedSliderGuardId;
-  const guard = id && document.getElementById(id);
-  if(guard) guard.classList.remove('armed');
-  if(!guardId || guardId===armedSliderGuardId) armedSliderGuardId = null;
-}
-function disarmAllSliderGuards(){
-  document.querySelectorAll('.slider-guard.armed').forEach(g=>g.classList.remove('armed'));
-  armedSliderGuardId = null;
-}
-// Scrolling away (or navigating between screens) re-locks any slider left
-// armed without a value change, so it never lingers "hot".
-window.addEventListener('scroll', disarmAllSliderGuards, {passive:true, capture:true});
-// The little ⚓/🌍 switch on the log screen. Unlike the sliders (which stay in
-// kts and only relabel), the distance fields hold whatever unit is currently
-// selected — so flipping here has to actually convert their typed values,
-// not just relabel them.
+// The little ⚓/🌍 switch on the log screen. Unlike wind speed/gusts (which
+// stay in kts and only relabel), the distance fields hold whatever unit is
+// currently selected — so flipping here has to actually convert their typed
+// values, not just relabel them.
 function toggleLogUnitSystem(){
   const from = activeUnitSystem;
   const to = from==='metric' ? 'nautical' : 'metric';
