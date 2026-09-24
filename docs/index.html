@@ -196,6 +196,10 @@
   html[data-theme="dark"] .stat-value{ color:var(--gold); }
   /* Home screen's Total Sails / Distance Logged box is styled in the .home-stats block further down */
   .stat-unit{ font-size:13px; font-weight:500; color:var(--ink-muted); }
+  /* Matches Elapsed Time's font just above it on Active Journey's live-tracking view —
+     scoped to #liveStatsBlock specifically so Resume's identical .stat-value class
+     (a different screen, not reviewed as part of this) keeps its own Space Grotesk. */
+  #liveStatsBlock .stat-value{ font-family:'Playfair Display',serif; font-style:italic; }
 
   /* ---------- quick links row ---------- */
   .quicklinks{ display:flex; flex-wrap:wrap; gap:12px; margin-top:8px; }
@@ -489,8 +493,9 @@
     font-weight:700; padding:2px 6px; border-radius:8px; }
   .photo-thumb .rm{ position:absolute; top:3px; right:3px; width:18px; height:18px; background:rgba(20,43,68,.75); border-radius:50%;
     display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; cursor:pointer; }
-  .weather-autofill-banner{ display:flex; align-items:center; gap:10px; background:var(--gold); color:var(--navy-deep); border-radius:14px;
+  .weather-autofill-banner{ display:flex; align-items:center; gap:10px; background:rgba(23,117,143,.13); color:var(--ink); border-radius:14px;
     padding:10px 14px; margin-bottom:14px; font-size:12.5px; font-weight:600; line-height:1.4; cursor:pointer; }
+  html[data-theme="dark"] .weather-autofill-banner{ background:rgba(63,169,194,.14); color:var(--ink); }
   .weather-autofill-banner .dismiss{ flex:0 0 auto; width:20px; height:20px; border-radius:50%; background:rgba(14,35,56,.18);
     display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; }
   .photo-thumb .setdef{ position:absolute; top:3px; left:3px; width:18px; height:18px; background:rgba(20,43,68,.75); border-radius:50%;
@@ -640,13 +645,13 @@
      it did before it. */
   :root{ --surface-ivory:#FBF7EC; --sheet-bg:#EFEAE0; }
   html[data-theme="dark"]{ --surface-ivory:var(--bg-elevated); --sheet-bg:var(--bg); }
-  .form-card{ background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-lg);
+  .form-card{ background:var(--surface-ivory); border:1px solid var(--border); border-radius:var(--radius-lg);
     box-shadow:var(--shadow); padding:16px 16px 18px; margin-top:14px; }
   .form-card-head{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
   .fc-icon{ width:32px; height:32px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:17px; line-height:1; flex:0 0 auto; }
   .fc-icon.teal{ background:rgba(23,117,143,.13); }
-  .fc-icon.coral{ background:rgba(251,130,88,.18); }
-  .fc-title{ font-family:var(--font-display); font-weight:700; font-size:15.5px; color:var(--ink); }
+  .fc-icon.coral{ background:rgba(201,123,74,.15); }
+  .fc-title{ font-family:var(--font-display); font-weight:700; font-size:16px; color:var(--ink); }
   .fc-hint{ font-size:12px; color:var(--ink-muted); line-height:1.45; margin:0; }
   .fc-divider{ height:1px; background:var(--border); margin:4px 0 16px; }
   .form-card .field:last-child{ margin-bottom:0; }
@@ -1190,7 +1195,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       </div>
       <div class="stat-card" style="text-align:center;">
         <div class="stat-label" data-i18n="active.elapsedTime">Elapsed Time</div>
-        <div style="font-family:var(--font-display);font-size:42px;font-weight:700;color:var(--navy);letter-spacing:.02em;" id="elapsedDisplay">00:00:00</div>
+        <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:42px;font-weight:700;color:var(--navy);letter-spacing:.02em;" id="elapsedDisplay">00:00:00</div>
       </div>
 
       <div class="stat-card stat-grid" style="margin-top:14px;">
