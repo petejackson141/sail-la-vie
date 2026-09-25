@@ -309,7 +309,7 @@
   .pf-float{ position:absolute; background:rgba(255,255,255,.88); color:var(--navy); box-shadow:0 4px 12px -6px rgba(20,43,68,.5); z-index:2; }
   html[data-theme="dark"] .pf-float{ background:rgba(18,34,54,.85); color:var(--ink); }
   .pf-gear{ top:12px; right:12px; }
-  .pf-cam-cover{ bottom:11px; right:11px; width:39px; height:39px; }
+  .pf-cam-cover{ bottom:11px; right:11px; width:39px; height:39px; z-index:4; }
   .pf-idrow{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin:-55px 10px 0; position:relative; z-index:3; }
   .pf-avatar{ position:relative; width:115px; height:115px; flex:0 0 auto; }
   .pf-avatar-img{ width:115px; height:115px; cursor:zoom-in; border-radius:50%; object-fit:cover; background:var(--navy);
@@ -1779,10 +1779,6 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <div class="sheet" id="sheetEditProfile" style="display:none;">
     <div class="sheet-handle"></div>
     <h3 data-i18n="profile.editProfile">Edit Profile</h3>
-    <div class="tonal-row" style="margin-bottom:16px;">
-      <button type="button" class="btn btn-tonal" onclick="document.getElementById('profileAvatarInput').click()" data-i18n="profile.changePhoto">Profile photo</button>
-      <button type="button" class="btn btn-tonal" onclick="document.getElementById('profileCoverInput').click()" data-i18n="profile.changeCover">Cover photo</button>
-    </div>
     <div class="field">
       <label data-i18n="profile.name">Name</label>
       <input type="text" id="profileName" placeholder="Your name" data-i18n-ph="profile.namePh">

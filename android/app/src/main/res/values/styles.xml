@@ -18,5 +18,11 @@
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
+        <!-- Matches #webSplash's background in docs/index.html exactly (navy, the
+             top of that gradient) — without this, Android 12+'s native splash sits
+             on a plain white background by default, so the handoff to the web splash
+             reads as two separate screens (white flick, then navy) instead of one
+             continuous screen where only the small icon changes to the full logo. -->
+        <item name="android:windowSplashScreenBackground">#16324F</item>
     </style>
 </resources>
