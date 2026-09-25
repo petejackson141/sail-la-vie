@@ -24,7 +24,19 @@ document.addEventListener('visibilitychange', ()=>{
     requestWakeLock();
   }
 });
-boot();
+(async () => {
+  // Floor so the splash is never up for an awkwardly short flash on a fast
+  // load — boot() itself can take longer (up to ~2.5s worst case, see its
+  // own comments), in which case this floor has no effect and boot() alone
+  // decides how long the splash stays up.
+  const minDisplay = new Promise(r => setTimeout(r, 700));
+  await Promise.all([boot(), minDisplay]);
+  const splash = document.getElementById('webSplash');
+  if(splash){
+    splash.classList.add('hide');
+    setTimeout(() => splash.remove(), 450); // matches #webSplash's CSS transition, then cleans up
+  }
+})();
 
 // Register service worker for offline app-shell caching + installability.
 // Requires https (or localhost) — it will silently no-op over plain http/file://.
