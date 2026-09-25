@@ -2,10 +2,12 @@
   "appId": "com.saillavie.app",
   "appName": "Sail la Vie",
   "webDir": "docs",
+  "backgroundColor": "#16324F",
   "plugins": {
     "SplashScreen": {
-      "launchShowDuration": 500,
+      "launchShowDuration": 3000,
       "launchAutoHide": true,
+      "launchFadeOutDuration": 250,
       "backgroundColor": "#16324F",
       "androidScaleType": "CENTER_CROP",
       "showSpinner": false

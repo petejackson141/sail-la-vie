@@ -3,6 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Critical startup CSS: must stay ABOVE every external stylesheet. It is the only
+     CSS the browser needs to paint the splash, so the very first frame the WebView
+     draws is navy + logo instead of a blank white page while Google Fonts / Leaflet
+     CSS download. (Those two are now loaded non-blocking further down.) -->
+<style>
+  html{ background:#16324F; }
+  #webSplash{
+    position:fixed; inset:0; z-index:9999;
+    background:linear-gradient(180deg, #16324F 0%, #17758F 100%);
+    transition:opacity .25s ease .15s; /* background fades AFTER the logo, see .hide below */
+  }
+  /* Logo sits dead-centre of the screen, same as the native Android splash, so the
+     native -> web handoff doesn't jump. The wordmark hangs below it without pushing it up. */
+  #webSplash img{
+    position:absolute; left:50%; top:50%; width:180px; height:180px; margin:-90px 0 0 -90px;
+    border-radius:50%; box-shadow:0 8px 28px rgba(0,0,0,.35);
+    transition:opacity .15s ease;
+  }
+  #webSplash .wordmark{
+    position:absolute; left:0; right:0; top:calc(50% + 112px); text-align:center;
+    font-family:'Playfair Display',Georgia,serif; font-style:italic; font-weight:700;
+    font-size:32px; color:#fff; letter-spacing:.01em;
+    opacity:0; animation:splashWordIn .45s ease .2s forwards;
+    transition:opacity .15s ease;
+  }
+  @keyframes splashWordIn{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+  /* Hide in two steps: logo + wordmark vanish first, THEN the background fades, so
+     the compass never ghosts semi-transparently over the Home cards. */
+  #webSplash.hide{ opacity:0; pointer-events:none; }
+  #webSplash.hide img, #webSplash.hide .wordmark{ opacity:0; animation:none; }
+</style>
 <title>Sail la Vie</title>
 <!--
   SAIL LA VIE — a self-contained sailing logbook.
@@ -40,11 +71,15 @@
 <meta name="apple-mobile-web-app-title" content="Sail la Vie">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Libre+Baskerville:wght@400;700&family=Alex+Brush&display=swap" rel="stylesheet">
+<!-- Loaded non-blocking (media="print" then swapped to "all" once downloaded) so a
+     slow/offline font fetch can't hold up the first paint. display=swap already makes
+     text show in a fallback font until these arrive. -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Libre+Baskerville:wght@400;700&family=Alex+Brush&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Libre+Baskerville:wght@400;700&family=Alex+Brush&display=swap" rel="stylesheet"></noscript>
 <!-- Leaflet: only used for the live/real map when there's a connection (see
      buildPortholeSvg's notes) — the browser caches this after first load, so
      it doesn't cost anything offline beyond the very first time the app runs. -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" media="print" onload="this.media='all'"> <!-- non-blocking; maps are never on screen at startup -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" defer></script>
 <!-- jsPDF + html2canvas: only used to generate the shareable PDF export — lets
      us render the same styled HTML used for the in-app preview into a real
@@ -128,18 +163,7 @@
     opacity:.051; pointer-events:none; z-index:0;
   }
   @media print{ #watermark{ display:none; } }
-  #webSplash{
-    position:fixed; inset:0; z-index:9999;
-    background:linear-gradient(180deg, var(--navy) 0%, var(--teal) 100%);
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    transition:opacity .4s ease;
-  }
-  #webSplash img{ width:180px; height:180px; border-radius:50%; box-shadow:0 8px 28px rgba(0,0,0,.35); }
-  #webSplash .wordmark{
-    margin-top:22px; font-family:'Playfair Display',serif; font-style:italic; font-weight:700;
-    font-size:32px; color:#fff; letter-spacing:.01em;
-  }
-  #webSplash.hide{ opacity:0; pointer-events:none; }
+  /* #webSplash styles live in the critical <style> block at the top of <head>. */
   /* Faint depth-contour (bathymetric) texture behind the whole app, like the
      isobaths on a nautical chart: shelf lines crowd together on the slope,
      close into rings on seamounts, and never cross. It is a fixed backdrop,
@@ -1119,11 +1143,9 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 </head>
 <body>
 
-<!-- Web splash: covers the brief, size-capped native Android 12+ icon flash with our
-     own full-size branded loading screen, built the same way as every other screen in
-     this app so it isn't subject to the OS's splash-icon size limit. Hidden by
-     hideWebSplash() at the end of boot() in js/units.js, with a floor so it never
-     flashes away too quickly on a fast/cached load. -->
+<!-- Web splash: takes over seamlessly from the native Android splash (same navy,
+     same centred logo). The native splash is held until this has painted, then
+     hidden by js/units.js; this one is hidden at the end of boot(). -->
 <div id="webSplash">
   <img src="images/Logo.png" alt="">
   <div class="wordmark">Sail la Vie</div>

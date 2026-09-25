@@ -24,6 +24,24 @@ document.addEventListener('visibilitychange', ()=>{
     requestWakeLock();
   }
 });
+// Native splash handoff (Android app only). The native splash is configured to
+// stay up for up to 3s (capacitor.config.json: launchShowDuration 3000) instead
+// of vanishing the moment the WebView exists — that's what used to reveal a
+// blank white screen. The 3s is only a safety net in case this script never runs.
+// We hide it only once the web splash (#webSplash, identical navy + centred
+// logo) has actually been painted, so the swap between them is invisible.
+// Two requestAnimationFrames = "after the next real paint". Safe no-op in the
+// browser/PWA, or if the @capacitor/splash-screen plugin isn't installed.
+function hideNativeSplash(){
+  const SplashScreen = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SplashScreen;
+  if(!SplashScreen) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    SplashScreen.hide({ fadeOutDuration: 250 }).catch(() => {});
+  }));
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hideNativeSplash);
+else hideNativeSplash();
+
 (async () => {
   // Floor so the splash is never up for an awkwardly short flash on a fast
   // load — boot() itself can take longer (up to ~2.5s worst case, see its
@@ -34,7 +52,7 @@ document.addEventListener('visibilitychange', ()=>{
   const splash = document.getElementById('webSplash');
   if(splash){
     splash.classList.add('hide');
-    setTimeout(() => splash.remove(), 450); // matches #webSplash's CSS transition, then cleans up
+    setTimeout(() => splash.remove(), 450); // logo fades (.15s), then background (.25s after a .15s delay) — see the critical CSS in index.html
   }
 })();
 

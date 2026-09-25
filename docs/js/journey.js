@@ -632,7 +632,7 @@ const GPS_STALE_MS = 45000;
 // True when running inside the Capacitor native app (Android/iOS), false in
 // the browser/PWA. Everything below branches on this so the web version keeps
 // using the plain browser geolocation API unchanged, while the native app
-// uses the @capgo/background-geolocation plugin — the piece that actually
+// uses the @transistorsoft/capacitor-background-geolocation plugin — the piece that actually
 // survives the screen locking or the app being backgrounded, which
 // navigator.geolocation.watchPosition() cannot do on its own.
 function isNativeApp(){

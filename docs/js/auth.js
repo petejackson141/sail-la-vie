@@ -434,7 +434,11 @@ async function resolveProfileSyncOnSignInImpl(){
 
   if(cloudProfile){
     const sameAsLocal = stableStringify(cloudProfile) === stableStringify(state.profile);
-    if(!localHasData || sameAsLocal){
+    // Identical on both sides — nothing to load, so do nothing and say nothing.
+    // (This is the normal case on every app launch; it used to re-apply the same
+    // profile and flash "Profile loaded from your account." each time.)
+    if(sameAsLocal) return;
+    if(!localHasData){
       await applyCloudProfile(cloudProfile);
       return;
     }
