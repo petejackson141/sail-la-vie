@@ -138,11 +138,11 @@ async function openTripDetail(id, from){
         </div>`
       : `<p style="margin-top:12px;font-size:13px;">${d.toLocaleDateString(currentLocale(),{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · ${d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'})}${boat?' · '+escapeHtml(boat.name):''}${trip.place?' · 📍 '+escapeHtml(trip.place):''}</p>`}
 
-    <div class="stat-card stat-grid" style="margin-top:14px;">
-      <div class="cell"><div class="stat-label">${t('detail.elapsed')}</div><div class="stat-value" style="font-size:19px;">${fmtDuration(trip.elapsedSeconds)}</div></div>
-      <div class="cell"><div class="stat-label">${t('stat.distance')}</div><div class="stat-value">${fmtDistance(trip.distanceNm||0)}</div></div>
-      <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('stat.avgSpeed')}</div><div class="stat-value">${fmtSpeed(trip.avgSpeed||0)}</div></div>
-      <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('stat.maxSpeed')}</div><div class="stat-value">${fmtSpeed(trip.maxSpeed||0)}</div></div>
+    <div class="stat-card stat-grid detail-stats" style="margin-top:14px;">
+      <div class="cell"><div class="stat-label">${t('detail.elapsed')}</div><div class="stat-value">${fmtDuration(trip.elapsedSeconds)}</div></div>
+      <div class="cell"><div class="stat-label">${t('stat.distance')}</div><div class="stat-value">${statWithUnit(fmtDistance(trip.distanceNm||0))}</div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('stat.avgSpeed')}</div><div class="stat-value">${statWithUnit(fmtSpeed(trip.avgSpeed||0))}</div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('stat.maxSpeed')}</div><div class="stat-value">${statWithUnit(fmtSpeed(trip.maxSpeed||0))}</div></div>
     </div>
 
     <div id="detailMapArea"></div>

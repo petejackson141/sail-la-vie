@@ -13,6 +13,12 @@ function fmtDistance(nm, sys){
   sys = sys || appUnitSystem();
   return sys==='metric' ? (nm*NM_TO_KM).toFixed(1)+' km' : (nm||0).toFixed(1)+' NM';
 }
+// "12.6 km" -> "12.6<span class="stat-unit"> km</span>", so a stat box can show the
+// number big and the unit small (the same style as the Home page stats).
+function statWithUnit(text){
+  const i = text.lastIndexOf(' ');
+  return i > 0 ? `${text.slice(0,i)}<span class="stat-unit"> ${text.slice(i+1)}</span>` : text;
+}
 function speedUnitLabel(sys){ return (sys||appUnitSystem())==='metric' ? 'km/h' : 'kts'; }
 function distUnitLabel(sys){ return (sys||appUnitSystem())==='metric' ? 'km' : 'NM'; }
 
