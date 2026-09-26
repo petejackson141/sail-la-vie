@@ -191,7 +191,6 @@ async function collectCertificateData(trips){
   const sorted = trips.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
   const nm = trips.reduce((s,tr)=>s+(tr.distanceNm||0),0);
   const secs = trips.reduce((s,tr)=>s+(tr.elapsedSeconds||0),0);
-  const days = new Set(trips.map(tr=>{ const d=new Date(tr.date); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; })).size;
   const longestNm = trips.reduce((m,tr)=>Math.max(m, tr.distanceNm||0), 0);
   const boatNames = [...new Set(trips.map(tr=>tr.boatId).filter(Boolean)
     .map(id=>(state.boats.find(b=>b.id===id)||{}).name).filter(Boolean))];
@@ -200,7 +199,7 @@ async function collectCertificateData(trips){
     try{ const full = await storeGet('trip:'+tr.id); if(full && full.isManual) manual++; }catch(e){}
   }
   return {
-    count: trips.length, nm, secs, days, longestNm, boatNames,
+    count: trips.length, nm, secs, longestNm, boatNames,
     tracked: trips.length - manual, manual,
     fromISO: sorted.length ? sorted[0].date : new Date().toISOString(),
     toISO: sorted.length ? sorted[sorted.length-1].date : new Date().toISOString(),
@@ -261,7 +260,6 @@ function buildCertificateHtml(d){
         ${stat(d.count.toLocaleString(certLocale()), '', t('cert.voyages'))}
         ${stat(dist.value, dist.unit, t('cert.distance'))}
         ${stat(dur.value, '', t('resume.timeAtSea'))}
-        ${stat(d.days.toLocaleString(certLocale()), '', t('cert.daysAtSea'))}
         ${stat(longest.value, longest.unit, t('cert.longest'))}
       </div>
 
