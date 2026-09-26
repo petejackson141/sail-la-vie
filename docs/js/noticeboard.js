@@ -142,7 +142,7 @@ async function saveNoticeboardForm(){
 }
 async function deleteNoticeboardEntry(){
   if(!editingNoticeboardId) return;
-  if(!(await showConfirm(t('noticeboard.confirmDelete'), {danger:true}))) return;
+  if(!(await confirmDialog('deletePlan', {danger:true, icon:'trash'}))) return;
   const deletedId = editingNoticeboardId;
   state.noticeboard = state.noticeboard.filter(e=>e.id!==deletedId);
   await storeSet(KEYS.NOTICEBOARD, state.noticeboard);

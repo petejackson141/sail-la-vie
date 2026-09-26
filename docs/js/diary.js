@@ -134,7 +134,7 @@ async function saveDiaryForm(){
 }
 async function deleteDiaryEntry(){
   if(!editingDiaryId) return;
-  if(!(await showConfirm(t('diary.confirmDelete'), {danger:true}))) return;
+  if(!(await confirmDialog('deleteDiary', {danger:true, icon:'trash'}))) return;
   state.diary = state.diary.filter(e=>e.id!==editingDiaryId);
   await storeSet(KEYS.DIARY, state.diary);
   showToast(t('diary.deleted'));

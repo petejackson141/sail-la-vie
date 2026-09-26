@@ -207,7 +207,7 @@ async function saveProfileForm(){
   }
 }
 async function clearProfilePrompt(){
-  if(!confirm(t('confirm.clearProfile'))) return;
+  if(!(await confirmDialog('clearProfile', {danger:true, icon:'userMinus'}))) return;
   const theme = state.profile.theme; // keep the current theme, units, and language choices
   const unitSystem = state.profile.unitSystem;
   const language = state.profile.language;
@@ -421,6 +421,10 @@ function tripsInRange(){
   });
 }
 function renderResume(){
+  // Certificate button: dim it + show its "Coming soon" tag only while in development.
+  const certBtn = document.getElementById('certBtn'), certTag = document.getElementById('certSoonTag');
+  if(certBtn) certBtn.classList.toggle('btn-soon', !!FEATURES_IN_DEVELOPMENT.certificate);
+  if(certTag) certTag.style.display = FEATURES_IN_DEVELOPMENT.certificate ? '' : 'none';
   const trips = tripsInRange();
   const nm = trips.reduce((s,t)=>s+(t.distanceNm||0),0);
   const secs = trips.reduce((s,t)=>s+(t.elapsedSeconds||0),0);
@@ -439,6 +443,7 @@ function renderResume(){
   window._resumeStats = { count:trips.length, nm, secs, avg };
 }
 function openCertificateSheet(){
+  if(featureComingSoon('certificate')) return;
   document.getElementById('certName').value = state.profile.name || '';
   document.getElementById('certificateOutput').innerHTML = '';
   openSheet('sheetCertificate');

@@ -55,7 +55,7 @@ function populateBoatSelects(){
 }
 async function openStartJourneySheet(){
   if(currentTrip){
-    if(await showConfirm(t('confirm.alreadyRecordingNew'))){
+    if(await confirmDialog('journeyInProgress', {icon:'pin'})){
       nav('active');
       return;
     }
@@ -556,7 +556,7 @@ async function resumeActiveTripIfAny(){
 // person fills in date, duration, and distance by hand instead.
 async function beginManualJourney(){
   if(currentTrip){
-    if(await showConfirm(t('confirm.alreadyRecordingPast'))){
+    if(await confirmDialog('journeyInProgress', {icon:'pin'})){
       nav('active');
     }
     return;
@@ -646,6 +646,84 @@ function getBgGeo(){
 }
 let bgGeoReady = false; // true once .ready() has been called this app session — only needs doing once
 
+// ---- Native tracker choice ----
+// 'sail'           = our own free recorder (android/app/src/main/java/com/saillavie/app/tracking/)
+// 'transistorsoft' = the paid plugin, kept only as a fallback until SailTracker
+//                    has passed real-world testing. To switch back, change this
+//                    one line, run `npx cap sync`, and rebuild.
+// If 'sail' is chosen but the plugin isn't in the build, it falls back automatically.
+const NATIVE_TRACKER = 'sail';
+function getSailTracker(){
+  return (isNativeApp() && window.Capacitor.Plugins && window.Capacitor.Plugins.SailTracker) || null;
+}
+function useSailTracker(){ return NATIVE_TRACKER === 'sail' && !!getSailTracker(); }
+
+// SailTracker records every fix to phone storage first (so nothing is lost while
+// the screen is off or the app is closed) and fires "fixesAvailable". We then
+// take the whole queue and feed it through the SAME onFix() path as always —
+// real GPS timestamps and all — so none of the tested filtering logic changes.
+let sailTrackerListenerAdded = false;
+let drainingSailFixes = false;
+// True while replaying a batch: commitFix() then skips the per-fix redraw and
+// checkpoint save, and we do both once at the end instead. After 30 minutes of
+// screen-off that's one redraw instead of ~1,800.
+let batchingFixes = false;
+async function drainSailTrackerFixes(){
+  const tracker = getSailTracker();
+  if(!tracker || drainingSailFixes || !currentTrip || currentTrip.isManual) return;
+  drainingSailFixes = true;
+  try{
+    const { fixes } = await tracker.takeFixes();
+    if(fixes && fixes.length && currentTrip){
+      // Ignore anything from before this journey started, or already on the
+      // track (e.g. fixes replayed after the app was reopened).
+      const lastT = currentTrip.path.length ? currentTrip.path[currentTrip.path.length-1].t : 0;
+      const floorT = Math.max(lastT, startedAt || 0);
+      batchingFixes = fixes.length > 1;
+      for(const f of fixes){
+        if(!currentTrip) break;
+        if(!(f.timestamp > floorT)) continue;
+        onFix({
+          coords: { latitude: f.lat, longitude: f.lng, accuracy: f.accuracy, speed: f.speed, heading: f.heading, altitude: f.altitude },
+          timestamp: f.timestamp
+        });
+      }
+      if(batchingFixes && currentTrip){
+        batchingFixes = false;
+        renderLiveTrack();
+        updateLiveStatDisplays();
+        saveActiveTripCheckpoint();
+      }
+    }
+  }catch(e){
+    // Not fatal: anything left in the queue is picked up on the next event.
+  }finally{
+    batchingFixes = false;
+    drainingSailFixes = false;
+  }
+}
+async function startSailTracker(){
+  const tracker = getSailTracker();
+  try{
+    if(!sailTrackerListenerAdded){
+      await tracker.addListener('fixesAvailable', () => { drainSailTrackerFixes(); });
+      sailTrackerListenerAdded = true;
+    }
+    // Safe to call when it's already running (e.g. the app was reopened
+    // mid-journey): it just carries on recording.
+    await tracker.start({ title: t('notification.recordingTitle'), text: t('notification.recordingBody'), intervalMs: 1000 });
+    // Pick up anything recorded while the app was closed.
+    drainSailTrackerFixes();
+  }catch(e){
+    nativeGpsActive = false;
+    onGpsError();
+  }
+}
+// Coming back to the app: collect whatever was recorded while it was hidden.
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && nativeGpsActive && useSailTracker()) drainSailTrackerFixes();
+});
+
 function startGPS(){
   document.getElementById('manualDistanceWrap').style.display='none';
   const gpsEl = document.getElementById('gpsStatus');
@@ -661,7 +739,10 @@ function startGPS(){
   pendingJumpCandidate = null;
   pendingMaxSpeedCandidate = null;
   const bgGeo = getBgGeo();
-  if(isNativeApp() && bgGeo){
+  if(useSailTracker()){
+    nativeGpsActive = true;
+    startSailTracker();
+  } else if(isNativeApp() && bgGeo){
     nativeGpsActive = true;
     startNativeBackgroundGps(bgGeo);
   } else {
@@ -672,7 +753,9 @@ function startGPS(){
   }
   if(gpsWatchdogInterval) clearInterval(gpsWatchdogInterval);
   gpsWatchdogInterval = setInterval(checkGpsFreshness, 15000);
-  showRecordingNotification();
+  // The native trackers show their own "Recording" notification; only the
+  // web/PWA version needs this one (it used to show two in the app).
+  if(!nativeGpsActive) showRecordingNotification();
 }
 
 async function startNativeBackgroundGps(bgGeo){
@@ -855,9 +938,10 @@ function commitFix(point, countStats){
   currentTrip.path.push(point);
   bestRejectedFix = null;
   gpsEl.textContent = t('gps.live'); gpsEl.style.color='var(--navy)';
-  renderLiveTrack();
   const elapsedH = currentTrip.elapsedSeconds/3600;
   currentTrip.avgSpeed = elapsedH>0 ? currentTrip.distanceNm/elapsedH : 0;
+  if(batchingFixes) return; // drainSailTrackerFixes() redraws + saves once at the end of the batch
+  renderLiveTrack();
   updateLiveStatDisplays();
   saveActiveTripCheckpoint();
 }
@@ -897,9 +981,18 @@ function checkGpsFreshness(){
     // watcher has quietly stalled rather than the boat genuinely having no
     // signal. ready() only needs calling once per session (bgGeoReady stays
     // true), so this restart is just stop() then start() again.
-    const bgGeo = getBgGeo();
-    if(bgGeo) bgGeo.stop().finally(() => { nativeGpsActive = false; startGPS(); });
-    else { nativeGpsActive = false; startGPS(); }
+    if(useSailTracker()){
+      // Collect anything waiting first, then ask the recorder to re-request GPS.
+      // If the service has died altogether, start it again from scratch.
+      drainSailTrackerFixes();
+      getSailTracker().restart()
+        .then(r => { if(!r || !r.running){ nativeGpsActive = false; startGPS(); } })
+        .catch(() => {});
+    } else {
+      const bgGeo = getBgGeo();
+      if(bgGeo) bgGeo.stop().finally(() => { nativeGpsActive = false; startGPS(); });
+      else { nativeGpsActive = false; startGPS(); }
+    }
   } else if('geolocation' in navigator){
     navigator.geolocation.clearWatch(watchId);
     watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
@@ -909,8 +1002,12 @@ function stopGPS(){
   if(watchId!==null && 'geolocation' in navigator){ navigator.geolocation.clearWatch(watchId); watchId=null; }
   if(nativeGpsActive){
     nativeGpsActive = false;
-    const bgGeo = getBgGeo();
-    if(bgGeo) bgGeo.stop().catch(()=>{});
+    if(useSailTracker()){
+      getSailTracker().stop().catch(()=>{});
+    } else {
+      const bgGeo = getBgGeo();
+      if(bgGeo) bgGeo.stop().catch(()=>{});
+    }
   }
   if(timerId){ clearInterval(timerId); timerId=null; }
   if(gpsWatchdogInterval){ clearInterval(gpsWatchdogInterval); gpsWatchdogInterval=null; }
@@ -929,8 +1026,8 @@ function confirmLeaveActive(){
   showToast(currentTrip.isEditing ? t('toast.editsKept') : currentTrip.isManual ? t('toast.draftKept') : t('toast.stillRecording'));
 }
 async function discardJourney(){
-  const msg = "This will discard this journey and you will lose all its data";
-  if(await showConfirm(msg, {danger:true})){
+  const which = currentTrip.isEditing ? 'discardEdits' : currentTrip.isManual ? 'discardManual' : 'discardJourney';
+  if(await confirmDialog(which, {danger:true, icon:'trash'})){
     stopGPS();
     const wasEditing = currentTrip.isEditing, editedId = currentTrip.id;
     currentTrip = null;
@@ -995,8 +1092,8 @@ function removeActivePhoto(i){
 // into currentTrip, converting distance to canonical NM if the log was in metric.
 // Then either prompts for a cover photo (if any were added) or saves straight away.
 async function endJourney(){
-  const confirmMsg = currentTrip.isEditing ? t('confirm.saveChanges') : currentTrip.isManual ? t('confirm.savePastSail') : t('confirm.endJourney');
-  if(!(await showConfirm(confirmMsg))) return;
+  const which = currentTrip.isEditing ? 'saveChanges' : currentTrip.isManual ? 'savePastSail' : 'endJourney';
+  if(!(await confirmDialog(which, {icon: currentTrip.isEditing || currentTrip.isManual ? 'check' : 'flag'}))) return;
 
   if(currentTrip.isManual){
     const hrs = parseFloat(document.getElementById('pastHours').value)||0;

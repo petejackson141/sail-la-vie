@@ -555,6 +555,7 @@ function waitForImagesToLoad(container){
 // whether the content is tall enough to risk spilling onto a 2nd page.
 // Preview and export are both true single-page A4 portrait shrink-to-fit.
 function openTripPdfPreview(){
+  if(featureComingSoon('pdfExport')) return;
   const trip = window._detailTrip;
   if(!trip){ showToast(t('toast.openTripFirst')); return; }
   const theme = PDF_THEMES[currentPdfTheme];
@@ -847,7 +848,7 @@ function closeLightbox(fromPopState){
 // whichever screen (trip detail or Gallery) is currently showing it.
 async function deleteLightboxPhoto(){
   if(!lightboxTripId || !lightboxPhotos.length) return;
-  if(!confirm(t('confirm.deletePhoto'))) return;
+  if(!(await confirmDialog('deletePhoto', {danger:true, icon:'trash'}))) return;
   const photoToDelete = lightboxPhotos[lightboxIndex];
   const tripId = lightboxTripId;
   const trip = await storeGet('trip:'+tripId);

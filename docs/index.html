@@ -205,6 +205,14 @@
   .btn-primary{ background:linear-gradient(90deg,var(--navy),var(--teal)); color:#fff; box-shadow:0 12px 24px -10px rgba(22,50,79,.5); }
   .btn-outline{ background:rgba(23,117,143,.10); color:var(--navy); border:1.5px solid var(--navy); }
   html[data-theme="dark"] .btn-outline{ background:rgba(63,169,194,.12); }
+  /* "Coming soon" tag on buttons for features still in development (FEATURES_IN_DEVELOPMENT in state-core.js) */
+  .btn-soon{ opacity:.6; }
+  .soon-tag{
+    margin-inline-start:8px; padding:2px 8px; border-radius:999px;
+    font-size:11px; font-weight:700; letter-spacing:.02em; text-transform:uppercase;
+    background:var(--navy); color:#fff; white-space:nowrap;
+  }
+  html[data-theme="dark"] .soon-tag{ background:#3FA9C2; color:#0B1E2E; }
   html[data-theme="dark"] .btn-outline{ color:var(--ink); border-color:var(--navy-soft); }
   /* Deliberately quieter than the default outline button — used on Home so "Start New
      Journey" (btn-primary) stays the visual focal point and "Manually log a sail" recedes. */
@@ -1678,9 +1686,9 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <div class="cell" style="margin-top:14px;"><div class="stat-label" data-i18n="stat.avgSpeed">Avg Speed</div><div class="stat-value" id="resAvg">0.0<span class="stat-unit"> kts</span></div></div>
     </div>
 
-    <button class="btn btn-outline" style="margin-top:16px;" onclick="openCertificateSheet()">
+    <button class="btn btn-outline" id="certBtn" style="margin-top:16px;" onclick="openCertificateSheet()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M9 13.5L7 22l5-3 5 3-2-8.5"/></svg>
-      <span data-i18n="resume.generateCert">Generate Certificate</span>
+      <span data-i18n="resume.generateCert">Generate Certificate</span><span class="soon-tag" id="certSoonTag" data-i18n="common.comingSoon">Coming soon</span>
     </button>
 
     <div class="section-title" data-i18n="resume.includedSails">Included Sails</div>

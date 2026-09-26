@@ -384,7 +384,7 @@ async function submitAuthForm(){
 }
 
 async function signOutUser(){
-  if(!(await showConfirm('Sign out of your account?'))) return;
+  if(!(await confirmDialog('signOut', {icon:'logout'}))) return;
   await getSupabaseClient().auth.signOut();
   showToast('Signed out.');
 }
@@ -442,7 +442,7 @@ async function resolveProfileSyncOnSignInImpl(){
       await applyCloudProfile(cloudProfile);
       return;
     }
-    const loadCloud = await showConfirm("This account already has a profile saved in the cloud. Load it and replace what's on this device?");
+    const loadCloud = await confirmDialog('loadCloudProfile', {icon:'cloud'});
     if(loadCloud){
       await applyCloudProfile(cloudProfile);
       return;

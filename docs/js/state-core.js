@@ -9,51 +9,67 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '25.09.2026.1325';
+const APP_VERSION = '25.09.2026.1818';
 
 /* ============================================================
-   CUSTOM CONFIRM DIALOG (shared across all screens)
-   Drop-in replacement for the native confirm() popup (browser-styled,
-   can't be customized) so every confirmation in the app matches its look
-   instead of showing the browser's default alert box.
-   Usage: if(await showConfirm(message)) { ... }
-   Pass {danger:true} for destructive actions (discard/delete) to show
-   the confirm button in red with a warning icon instead of blue.
-   Lives here (state-core.js) rather than in journey.js/history-maps.js/etc.
-   since this file loads first and every screen needs this dialog.
+   CONFIRM DIALOG (shared across all screens)
+   The ONE pop-up style for every "are you sure?" question in the app, so they
+   all look the same and follow the current theme (light/dark and the nautical
+   themes) through the app's own colour variables and button classes.
+
+   Normal use — by name, with all wording in i18n.js (dlg.<name>.title/body/ok):
+     if(await confirmDialog('removeBoat', {danger:true, icon:'trash'})) { ... }
+   Low-level use (e.g. a message built on the fly):
+     if(await showConfirm(bodyText, {title, okLabel, cancelLabel, danger, icon})) { ... }
+
+   danger:true  -> red icon + red confirm button (anything that deletes/discards)
+   icon         -> one of the names in CONFIRM_ICONS below
+   Resolves true for the confirm button, false for Cancel or tapping outside.
    ============================================================ */
+const CONFIRM_ICONS = {
+  trash:   '<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>',
+  logout:  '<path d="M14 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2"/><path d="M9 12h12"/><path d="M18 9l3 3-3 3"/>',
+  cloud:   '<path d="M7 18a4.5 4.5 0 0 1-.5-9A6 6 0 0 1 18 9a4 4 0 0 1 0 9"/><path d="M12 12v8"/><path d="M9 17l3 3 3-3"/>',
+  flag:    '<path d="M5 21V4"/><path d="M5 4h12l-2.5 4L17 12H5"/>',
+  check:   '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  pin:     '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  restore: '<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v5h5"/>',
+  userMinus:'<circle cx="9" cy="8" r="4"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 11h6"/>',
+  alert:   '<path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
+  question:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><path d="M12 17h.01"/>',
+};
 function showConfirm(message, opts={}){
   const danger = !!opts.danger;
-  const okLabel = opts.okLabel || 'Confirm';
-  const cancelLabel = opts.cancelLabel || 'Cancel';
+  // No separate title given: show the message itself as the (bold) question.
+  const title = opts.title || message || '';
+  if(!opts.title) message = '';
+  const okLabel = opts.okLabel || t('dlg.confirm');
+  const cancelLabel = opts.cancelLabel || t('dlg.cancel');
+  const icon = CONFIRM_ICONS[opts.icon] || (danger ? CONFIRM_ICONS.alert : CONFIRM_ICONS.question);
 
   if(!document.getElementById('customConfirmStyles')){
     const style = document.createElement('style');
     style.id = 'customConfirmStyles';
     style.textContent = `
-      .cc-overlay{position:fixed;inset:0;background:rgba(8,15,26,0.55);backdrop-filter:blur(2px);
-        display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;
-        opacity:0;transition:opacity .18s ease;}
+      .cc-overlay{position:fixed;inset:0;z-index:9990;padding:24px;
+        background:rgba(10,22,34,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+        display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s ease;}
       .cc-overlay.show{opacity:1;}
-      .cc-card{background:#152233;color:#eaf1fb;border-radius:18px;max-width:340px;width:100%;
-        padding:24px 22px 18px;box-shadow:0 12px 40px rgba(0,0,0,0.45);
-        transform:scale(.92) translateY(6px);transition:transform .18s ease;
-        border:1px solid rgba(255,255,255,0.06);}
-      .cc-overlay.show .cc-card{transform:scale(1) translateY(0);}
-      .cc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-      .cc-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-        font-size:20px;flex-shrink:0;}
-      .cc-icon.danger{background:rgba(255,90,90,0.15);color:#ff6b6b;}
-      .cc-icon.normal{background:rgba(64,160,255,0.15);color:#4da3ff;}
-      .cc-icon.cc-icon-boat{background:rgba(255,255,255,0.08);color:#9fb3c8;}
-      .cc-msg{font-size:15.5px;line-height:1.45;color:#cdd8e6;margin:0 0 20px;}
+      .cc-card{width:100%;max-width:340px;padding:22px 20px 18px;
+        background:var(--surface-ivory, var(--bg-elevated));color:var(--ink);
+        border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);
+        transform:scale(.94) translateY(8px);transition:transform .2s ease;}
+      .cc-overlay.show .cc-card{transform:none;}
+      .cc-icon{width:46px;height:46px;border-radius:50%;margin-bottom:14px;
+        display:flex;align-items:center;justify-content:center;
+        background:color-mix(in srgb, var(--teal) 14%, transparent);color:var(--teal);}
+      .cc-icon.danger{background:color-mix(in srgb, var(--coral) 15%, transparent);color:var(--coral-deep);}
+      html[data-theme="dark"] .cc-icon.danger{color:var(--coral);}
+      .cc-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+      .cc-title{margin:0 0 6px;font-family:var(--font-display);font-size:19px;font-weight:600;line-height:1.3;color:var(--ink);}
+      .cc-msg{margin:0 0 20px;font-size:14.5px;line-height:1.5;color:var(--ink-muted);}
       .cc-actions{display:flex;gap:10px;}
-      .cc-btn{flex:1;padding:12px 0;border-radius:12px;border:none;font-size:15px;font-weight:600;
-        cursor:pointer;transition:opacity .12s ease;}
-      .cc-btn:active{opacity:.7;}
-      .cc-btn-cancel{background:rgba(255,255,255,0.08);color:#eaf1fb;}
-      .cc-btn-ok{background:#4da3ff;color:#06121f;}
-      .cc-btn-ok.danger{background:#ff5a5a;color:#22090a;}
+      .cc-actions .btn{padding:13px 12px;font-size:15px;flex:1;min-width:0;box-shadow:none;}
     `;
     document.head.appendChild(style);
   }
@@ -62,24 +78,24 @@ function showConfirm(message, opts={}){
     const overlay = document.createElement('div');
     overlay.className = 'cc-overlay';
     overlay.innerHTML = `
-      <div class="cc-card">
-        <div class="cc-header">
-          <div class="cc-icon ${danger?'danger':'normal'}">${danger?'⚠️':'❔'}</div>
-          <div class="cc-icon cc-icon-boat">⛵</div>
-        </div>
+      <div class="cc-card" role="alertdialog" aria-modal="true">
+        <div class="cc-icon ${danger?'danger':''}"><svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg></div>
+        <p class="cc-title"></p>
         <p class="cc-msg"></p>
         <div class="cc-actions">
-          <button class="cc-btn cc-btn-cancel" data-act="cancel"></button>
-          <button class="cc-btn cc-btn-ok ${danger?'danger':''}" data-act="ok"></button>
+          <button class="btn btn-outline" data-act="cancel"></button>
+          <button class="btn ${danger?'btn-danger':'btn-primary'}" data-act="ok"></button>
         </div>
       </div>`;
+    overlay.querySelector('.cc-title').textContent = title;
     overlay.querySelector('.cc-msg').textContent = message;
+    if(!message){ overlay.querySelector('.cc-msg').remove(); overlay.querySelector('.cc-title').style.marginBottom = '20px'; }
     overlay.querySelector('[data-act="cancel"]').textContent = cancelLabel;
     overlay.querySelector('[data-act="ok"]').textContent = okLabel;
 
     function close(result){
       overlay.classList.remove('show');
-      setTimeout(()=>overlay.remove(), 180);
+      setTimeout(()=>overlay.remove(), 200);
       resolve(result);
     }
     overlay.querySelector('[data-act="cancel"]').onclick = ()=>close(false);
@@ -88,6 +104,20 @@ function showConfirm(message, opts={}){
 
     document.body.appendChild(overlay);
     requestAnimationFrame(()=>overlay.classList.add('show'));
+  });
+}
+// Named dialogs: title, explanation and button wording all come from i18n.js
+// (dlg.<name>.title / .body / .ok), so every language gets the full text.
+// vars fills placeholders like {name}; any showConfirm option can be passed too.
+function confirmDialog(name, opts={}){
+  const { vars, ...rest } = opts;
+  const cancelKey = 'dlg.'+name+'.cancel';
+  const cancel = t(cancelKey);
+  return showConfirm(t('dlg.'+name+'.body', vars), {
+    title: t('dlg.'+name+'.title', vars),
+    okLabel: t('dlg.'+name+'.ok', vars),
+    cancelLabel: cancel !== cancelKey ? cancel : undefined,
+    ...rest,
   });
 }
 
@@ -111,7 +141,7 @@ state.user = null;
 
 let currentTrip = null;   // the ONE journey/manual-entry/edit in progress right now; null when nothing's active — check this first if the active screen misbehaves
 let watchId = null;       // navigator.geolocation.watchPosition() handle, so stopGPS() can cancel it
-let nativeGpsActive = false; // true while the native Transistorsoft background-geolocation watcher (not watchPosition) is running
+let nativeGpsActive = false; // true while a native recorder (SailTracker, or the Transistorsoft fallback) is running instead of watchPosition — see NATIVE_TRACKER in journey.js
 let timerId = null;       // setInterval() handle for the elapsed-time ticker
 let startedAt = null;     // Date.now() when the current live journey began, used to compute elapsed time
 let lastFixTime = null;   // Date.now() of the last GPS fix we RECEIVED (accepted or not) — drives the staleness watchdog in journey.js
@@ -293,6 +323,24 @@ function updateViewToggleBtn(kind){
     ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg>'
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
   btn.title = isGrid ? t('action.viewAsList') : t('action.viewAsGrid');
+}
+// Features still being built. While a flag is true, its button shows a
+// "Coming soon" tag and tapping it just explains that, instead of opening a
+// half-finished screen. Set to false (and remove nothing else) when it's ready.
+const FEATURES_IN_DEVELOPMENT = {
+  pdfExport: true,
+  certificate: true,
+};
+// Returns true (and shows the message) if the feature is still in development,
+// so callers can do: if(featureComingSoon('pdfExport')) return;
+function featureComingSoon(key){
+  if(!FEATURES_IN_DEVELOPMENT[key]) return false;
+  showToast(t('toast.comingSoon'));
+  return true;
+}
+// The little tag shown on a button whose feature is in development ('' otherwise).
+function comingSoonTag(key){
+  return FEATURES_IN_DEVELOPMENT[key] ? `<span class="soon-tag">${t('common.comingSoon')}</span>` : '';
 }
 function showToast(msg){
   const toastEl = document.getElementById('toast'); toastEl.textContent = msg; toastEl.classList.add('show');

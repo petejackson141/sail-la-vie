@@ -93,7 +93,7 @@ async function saveBoatForm(){
   if(ok){ showToast(t('toast.boatSaved')); closeSheets(); renderBoats(); syncBoatIfSignedIn(savedBoat); }
 }
 async function deleteBoatForm(){
-  if(!confirm(t('confirm.removeBoat'))) return;
+  if(!(await confirmDialog('removeBoat', {danger:true, icon:'trash'}))) return;
   const deletedId = editingBoatId;
   state.boats = state.boats.filter(b=>b.id!==editingBoatId);
   await storeSet(KEYS.BOATS, state.boats);
@@ -203,7 +203,7 @@ async function saveCrewForm(){
   }
 }
 async function deleteCrewForm(){
-  if(!confirm(t('confirm.removeCrew'))) return;
+  if(!(await confirmDialog('removeCrew', {danger:true, icon:'userMinus'}))) return;
   const deletedId = editingCrewId;
   state.crew = state.crew.filter(c=>c.id!==editingCrewId);
   await storeSet(KEYS.CREW, state.crew);
