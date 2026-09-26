@@ -757,16 +757,54 @@
   html[data-theme="dark"] .wheel-colon{ color:var(--gold); }
   .dt-actions{ display:grid; grid-template-columns:1fr 1fr 1.3fr; gap:10px; margin-top:14px; }
   .dt-actions .btn{ padding:14px 8px; }
-.certificate{ background:var(--bg-elevated); border:2px solid var(--gold); border-radius:20px; padding:28px 22px; text-align:center; margin-top:16px; }
-.certificate .cert-title{ font-family:var(--font-display); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-muted); }
-.certificate h2{ font-size:22px; margin:10px 0 4px; }
-.certificate .cert-name{ font-family:var(--font-display); font-size:26px; color:var(--navy); margin:14px 0; }
-html[data-theme="dark"] .certificate .cert-name{ color:var(--gold); }
-.certificate .cert-stats{ display:flex; justify-content:center; gap:26px; margin:18px 0; }
-.certificate .cert-stats div span{ display:block; font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--navy); }
-html[data-theme="dark"] .certificate .cert-stats div span{ color:var(--gold); }
-.certificate .cert-stats div small{ font-size:10.5px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em; }
-.certificate .cert-foot{ font-size:11px; color:var(--ink-faint); margin-top:16px; }
+/* ---------- Certificate of Sea Time (A4 landscape, 1123x794px) — see js/certificate.js ----------
+   Fixed pixel layout on purpose: it's captured by html2canvas and placed 1:1
+   onto an A4 landscape PDF page, so it must NOT respond to the app theme,
+   dark mode or screen size. Colours = Nautical palette on ivory paper. */
+.cert-a4{ position:relative; box-sizing:border-box; overflow:hidden; background:#FBF8F1; color:#142B44;
+  font-family:'Inter',system-ui,sans-serif; text-align:center; }
+.cert-a4 *{ box-sizing:border-box; }
+.cert-a4 .cert-contours, .cert-a4 .cert-frame{ position:absolute; left:0; top:0; display:block; }
+.cert-a4 .cert-body{ position:absolute; left:70px; right:70px; top:58px; bottom:84px; display:flex; flex-direction:column; align-items:center; }
+.cert-a4 .cert-head{ display:flex; flex-direction:column; align-items:center; }
+.cert-a4 .cert-logo{ width:88px; height:88px; border-radius:50%; display:block; box-shadow:0 0 0 3px #FBF8F1, 0 0 0 4.5px #C9A24B; }
+.cert-a4 .cert-brand{ margin-top:12px; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13px; letter-spacing:.42em; color:#16324F; padding-left:.42em; }
+.cert-a4 .cert-brand-sub{ margin-top:3px; font-family:'Space Grotesk',sans-serif; font-weight:500; font-size:9.5px; letter-spacing:.32em; text-transform:uppercase; color:#17758F; padding-left:.32em; }
+.cert-a4 .cert-title{ margin:20px 0 0; font-family:'Playfair Display',Georgia,serif; font-weight:700; font-size:50px; line-height:1.05; color:#16324F; letter-spacing:.01em; }
+.cert-a4 .cert-rule{ display:flex; align-items:center; gap:12px; margin-top:12px; }
+.cert-a4 .cert-rule span{ display:block; width:150px; height:1px; background:#C9A24B; }
+.cert-a4 .cert-certifies{ margin-top:18px; font-family:'Space Grotesk',sans-serif; font-weight:500; font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:#5C7A8F; }
+.cert-a4 .cert-name{ margin-top:6px; min-width:460px; padding:0 30px 6px; border-bottom:1.5px solid #C9A24B;
+  font-family:'Playfair Display',Georgia,serif; font-style:italic; font-weight:700; font-size:50px; line-height:1.15; color:#0E2338; }
+.cert-a4 .cert-period{ margin-top:18px; font-family:'Libre Baskerville',Georgia,serif; font-size:14px; line-height:1.5; color:#2A4560; }
+.cert-a4 .cert-period b{ color:#16324F; white-space:nowrap; }
+.cert-a4 .cert-vessels{ margin-top:4px; font-family:'Libre Baskerville',Georgia,serif; font-style:italic; font-size:12.5px; color:#5C7A8F; }
+.cert-a4 .cert-vessels span{ color:#16324F; font-style:normal; }
+.cert-a4 .cert-stats{ margin-top:28px; display:flex; justify-content:center; align-items:stretch;
+  background:rgba(255,255,255,.72); border-top:1.5px solid #16324F; border-bottom:1.5px solid #16324F; }
+.cert-a4 .cert-stat{ width:164px; padding:15px 8px 13px; position:relative; }
+.cert-a4 .cert-stat + .cert-stat::before{ content:''; position:absolute; left:0; top:14px; bottom:14px; width:1px; background:#C9A24B; }
+.cert-a4[dir="rtl"] .cert-stat + .cert-stat::before{ left:auto; right:0; }
+.cert-a4 .cert-stat-v{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:30px; line-height:1.1; color:#16324F; white-space:nowrap; }
+.cert-a4 .cert-stat-v small{ font-size:13px; font-weight:600; color:#17758F; margin-left:3px; }
+.cert-a4 .cert-stat-l{ margin-top:4px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:#DE4457; }
+.cert-a4 .cert-seal-row{ margin-top:auto; width:100%; display:flex; justify-content:center; }
+.cert-a4 .cert-seal{ width:150px; height:150px; margin-bottom:-6px; }
+.cert-a4 .cert-seal svg{ display:block; }
+.cert-a4 .cert-foot{ position:absolute; left:64px; right:64px; bottom:50px; display:flex; align-items:center; justify-content:space-between; gap:18px;
+  font-family:'Inter',sans-serif; font-size:8.5px; color:#5C7A8F; }
+.cert-a4 .cert-foot b{ color:#16324F; font-weight:600; letter-spacing:.04em; }
+.cert-a4 .cert-foot-l, .cert-a4 .cert-foot-r{ white-space:nowrap; }
+.cert-a4 .cert-foot-l span, .cert-a4 .cert-foot-r span{ text-transform:uppercase; letter-spacing:.14em; font-size:7.5px; }
+.cert-a4 .cert-foot-c{ flex:1; text-align:center; font-style:italic; }
+.cert-a4 .cert-name.cert-name-long{ font-size:40px; }
+.cert-a4 .cert-title.cert-title-long{ font-size:38px; }
+/* Hebrew: wide tracking breaks up Hebrew letterforms, so tighten it */
+.cert-a4[dir="rtl"] .cert-brand-sub, .cert-a4[dir="rtl"] .cert-certifies, .cert-a4[dir="rtl"] .cert-stat-l, .cert-a4[dir="rtl"] .cert-foot span{ letter-spacing:.04em; }
+/* in-sheet preview: the full-size certificate, shrunk to the sheet's width */
+.cert-preview-wrap{ margin-top:16px; overflow:hidden; border-radius:8px; box-shadow:0 6px 20px -8px rgba(20,43,68,.35); border:1px solid var(--border); }
+.cert-preview-scale{ width:1123px; height:794px; transform-origin:0 0; }
+[dir="rtl"] .cert-preview-scale{ transform-origin:100% 0; }
 .spinner{ width:30px; height:30px; border-radius:50%; border:3px solid rgba(255,255,255,.28); border-top-color:#fff; animation:spin .8s linear infinite; }
 @keyframes spin{ to{ transform:rotate(360deg); } }
 @media print{
@@ -1957,10 +1995,14 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <div class="sheet" id="sheetCertificate" style="display:none;">
     <div class="sheet-handle"></div>
     <h3 data-i18n="sheet.certDetails">Certificate Details</h3>
+    <p style="font-size:12.5px;margin:-4px 0 10px;" data-i18n="sheet.certHint">Uses the sails in the range selected on the Resume screen.</p>
     <div class="field"><label data-i18n="sheet.certTitle">Certificate Title</label><input type="text" id="certTitle"></div>
     <div class="field"><label data-i18n="sheet.sailorName">Sailor Name</label><input type="text" id="certName"></div>
     <button class="btn btn-primary" onclick="renderCertificate()" data-i18n="sheet.generate">Generate</button>
     <div id="certificateOutput"></div>
+    <div id="certActions" style="display:none;">
+      <button class="btn btn-primary" style="margin-top:14px;" onclick="saveCertificatePdf()" data-i18n="cert.savePdf">Save / Share PDF</button>
+    </div>
   </div>
 
   <div class="sheet" id="sheetAuth" style="display:none;">
@@ -2066,6 +2108,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 <script src="js/notifications.js"></script>
 <script src="js/profile-settings.js"></script>
 <script src="js/pdf-export.js"></script>
+<script src="js/certificate.js"></script>
 <script src="js/units.js"></script>
 </body>
 </html>

@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '26.09.2026.1004';
+const APP_VERSION = '26.09.2026.1609';
 
 /* ============================================================
    CONFIRM DIALOG (shared across all screens)
@@ -329,7 +329,7 @@ function updateViewToggleBtn(kind){
 // half-finished screen. Set to false (and remove nothing else) when it's ready.
 const FEATURES_IN_DEVELOPMENT = {
   pdfExport: true,
-  certificate: true,
+  certificate: false, // built (js/certificate.js) — A4 landscape PDF
 };
 // Returns true (and shows the message) if the feature is still in development,
 // so callers can do: if(featureComingSoon('pdfExport')) return;

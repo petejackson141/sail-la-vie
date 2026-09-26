@@ -393,10 +393,9 @@ async function resetAllData(){
 
 /* ============================================================
    RESUME / CERTIFICATE
-   A date-range summary (all-time, this year, last 30 days, or custom) that
-   can generate a printable "sea time" certificate. Shares the same
-   window.print() + #printArea trick as the trip PDF export below —
-   see the note there for how that works.
+   A date-range summary (all-time, this year, last 30 days, or custom). The
+   "Generate Certificate" button turns the sails in that range into an A4
+   landscape "Certificate of Sea Time" PDF — see js/certificate.js.
    ============================================================ */
 let resumeRange = 'all';
 function setResumeRange(r){
@@ -442,43 +441,8 @@ function renderResume(){
     : `<p style="margin-top:10px;">${t('resume.emptyRange')}</p>`;
   window._resumeStats = { count:trips.length, nm, secs, avg };
 }
-function openCertificateSheet(){
-  if(featureComingSoon('certificate')) return;
-  document.getElementById('certName').value = state.profile.name || '';
-  document.getElementById('certificateOutput').innerHTML = '';
-  openSheet('sheetCertificate');
-}
-function renderCertificate(){
-  const s = window._resumeStats || {count:0,nm:0,secs:0};
-  const title = document.getElementById('certTitle').value || t('cert.defaultTitle');
-  const name = document.getElementById('certName').value || t('default.sailorName');
-  const rangeLabel = resumeRange==='all' ? t('resume.allTime') : resumeRange==='year' ? new Date().getFullYear() : resumeRange==='30' ? t('resume.last30') :
-    `${document.getElementById('resumeFrom').value||'…'} ${t('cert.to')} ${document.getElementById('resumeTo').value||'…'}`;
-  const html = `<div class="certificate" id="certBlock">
-    <div class="cert-title">Sail la Vie · ${escapeHtml(String(rangeLabel))}</div>
-    <h2>${escapeHtml(title)}</h2>
-    <p style="font-size:12px;">${t('cert.certifiesThat')}</p>
-    <div class="cert-name">${escapeHtml(name)}</div>
-    <p style="font-size:12px;">${t('cert.hasLogged')}</p>
-    <div class="cert-stats">
-      <div><span>${s.count}</span><small>${t('cert.sails')}</small></div>
-      <div><span>${appUnitSystem()==='metric' ? (s.nm*NM_TO_KM).toFixed(1) : s.nm.toFixed(1)}</span><small>${distUnitLabel()}</small></div>
-      <div><span>${fmtDuration(s.secs)}</span><small>${t('resume.timeAtSea')}</small></div>
-    </div>
-    <div class="cert-foot">${t('cert.generated')} ${new Date().toLocaleDateString(currentLocale())} · Sail la Vie Logbook</div>
-  </div>
-  <button class="btn btn-outline" style="margin-top:14px;" onclick="printCertificate()">${t('cert.printSave')}</button>`;
-  document.getElementById('certificateOutput').innerHTML = html;
-}
-// Printing trick: build the certificate's HTML, drop it into the otherwise-
-// empty #printArea div, then call window.print(). The @media print CSS rule
-// (see <style>) hides everything else on the page during printing, so only
-// #printArea's content ends up on the printed page/PDF.
-function printCertificate(){
-  const block = document.getElementById('certBlock');
-  document.getElementById('printArea').innerHTML = block.outerHTML;
-  window.print();
-}
+// openCertificateSheet(), renderCertificate() and saveCertificatePdf() now live
+// in js/certificate.js (A4 landscape PDF certificate).
 
 /* ============================================================
    TRIP PDF EXPORT — themeable
