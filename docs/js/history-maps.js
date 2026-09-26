@@ -252,12 +252,11 @@ async function renderTripDetailMap(trip){
       <div class="stat-label" style="text-align:center;margin-top:16px;">${t('detail.map')}</div>
       <div style="position:relative;cursor:pointer;" onclick="openLightbox([window._detailTrip.mapImage],0)">
         <img src="${trip.mapImage}" style="width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);display:block;">
-        <div class="map-stats-overlay">
-          <div><b>${fmtDistance(trip.distanceNm||0)}</b><span>${t('stat.distance')}</span></div>
-          <div><b>${fmtSpeed(trip.avgSpeed||0)}</b><span>${t('stat.avgSpeed')}</span></div>
-          <div><b>${fmtDuration(trip.elapsedSeconds)}</b><span>${t('detail.duration')}</span></div>
-        </div>
       </div>`;
+    // No stats bar drawn over an uploaded map picture: it's the sailor's own
+    // screenshot or chart photo, which may already have stats of its own on it
+    // (they'd end up stacked on top of each other), and the same stats are
+    // shown in the box just above anyway.
   }
 }
 let detailLeafletMap = null, detailMapLocked = true;
