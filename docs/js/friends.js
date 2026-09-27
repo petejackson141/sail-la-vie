@@ -75,6 +75,13 @@ Object.assign(TRANSLATIONS.en, {
   'friends.remove': 'Remove friend',
   'friends.removed': 'Friend removed',
   'friends.sharedBy': 'Shared by {name}',
+  'friends.about': 'About',
+  'friends.statsShared': 'Shared sailing',
+  'friends.statSails': 'Sails',
+  'friends.statDistance': 'Distance',
+  'friends.statTime': 'Time at sea',
+  'friends.statLongest': 'Longest sail',
+  'friends.noDetails': "{name} hasn't added any profile details yet.",
   'friends.onApp': 'Sailors on Sail la Vie',
   'friends.onAppHint': 'Everyone testing the app who has chosen a username.',
   'friends.onAppEmpty': 'No other sailors yet.',
@@ -536,8 +543,64 @@ function openFriendPage(userId, from){
   const row = friendshipWith(userId);
   const isFriend = !!(row && row.status==='accepted');
   _friendSails = { userId, list:null, failed:false, requested:isFriend };
-  if(isFriend) loadFriendSails(userId);
+  _friendProfile = { userId, data:null, loaded:false };
+  if(isFriend){ loadFriendSails(userId); loadFriendProfile(userId); }
   nav('friend');
+}
+
+/* ---------- a friend's profile details ----------
+   Friends can read each other's full profile (cover, bio, role, licence, contact
+   details) — allowed by the "Friends can read profile" policy in
+   friends-profile.sql. Only the fields shown here are fetched (not theme, units etc.).
+   If that policy isn't in place yet, the query just returns nothing and the page
+   falls back to the public card (name, username, small photo). */
+let _friendProfile = { userId:null, data:null, loaded:false };
+async function loadFriendProfile(userId){
+  try{
+    const { data, error } = await getSupabaseClient().from('profiles')
+      .select('name:profile_data->>name,role:profile_data->>role,license:profile_data->>license,bio:profile_data->>bio,'+
+              'phone:profile_data->>phone,email:profile_data->>email,social:profile_data->>social,'+
+              'avatar:profile_data->>avatar,cover:profile_data->>cover')
+      .eq('id', userId).maybeSingle();
+    if(error) throw error;
+    if(openFriendId !== userId) return;
+    _friendProfile = { userId, data: data || null, loaded:true };
+  }catch(e){
+    console.error('friend profile load failed', e);
+    _friendProfile = { userId, data:null, loaded:true };
+  }
+  if((document.querySelector('.screen.active')||{}).id==='screen-friend') renderFriendPage();
+}
+// Tap the friend's cover or profile photo to see it full size.
+function viewFriendPhoto(which){
+  const fp = _friendProfile.userId===openFriendId ? _friendProfile.data : null;
+  const p = personById(openFriendId) || {};
+  const src = which==='cover' ? (fp && fp.cover) : ((fp && fp.avatar) || p.avatar_url);
+  if(src) openLightbox([src], 0, null);
+}
+// Phone / email / website lines, same style as your own profile.
+function friendContactsHtml(fp){
+  const rows = [];
+  if(fp.phone) rows.push(['📞', `<a href="tel:${escapeHtml(fp.phone.replace(/\s+/g,''))}">${escapeHtml(fp.phone)}</a>`]);
+  if(fp.email) rows.push(['✉️', `<a href="mailto:${escapeHtml(fp.email)}">${escapeHtml(fp.email)}</a>`]);
+  if(fp.social){
+    const looksLikeSite = /^https?:\/\//i.test(fp.social) || /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(fp.social);
+    const href = /^https?:\/\//i.test(fp.social) ? fp.social : 'https://' + fp.social;
+    rows.push(['🔗', looksLikeSite ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener">${escapeHtml(fp.social)}</a>` : `<span>${escapeHtml(fp.social)}</span>`]);
+  }
+  return rows.map(([ico, html])=>`<div class="pf-contact"><span aria-hidden="true">${ico}</span>${html}</div>`).join('');
+}
+// Totals from the sails this friend has shared (their private sails aren't visible to us).
+function friendStatsHtml(list){
+  const nm = list.reduce((a,s)=>a+(Number(s.distanceNm)||0),0);
+  const secs = list.reduce((a,s)=>a+(Number(s.elapsedSeconds)||0),0);
+  const longest = list.reduce((a,s)=>Math.max(a, Number(s.distanceNm)||0),0);
+  return `<div class="stat-card stat-grid">
+    <div class="cell"><div class="stat-label">${t('friends.statSails')}</div><div class="stat-value">${list.length}</div></div>
+    <div class="cell"><div class="stat-label">${t('friends.statDistance')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
+    <div class="cell"><div class="stat-label">${t('friends.statTime')}</div><div class="stat-value">${fmtDuration(secs)}</div></div>
+    <div class="cell"><div class="stat-label">${t('friends.statLongest')}</div><div class="stat-value">${longest.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
+  </div>`;
 }
 function friendPageBack(){ nav(friendPageFrom || 'friends'); }
 async function loadFriendSails(userId){
@@ -575,6 +638,7 @@ function renderFriendPage(){
   }
   else if(_friendSails.userId===openFriendId && !_friendSails.list && !_friendSails.failed && !_friendSails.requested){
     _friendSails.requested = true; loadFriendSails(openFriendId); // just became friends while on this page
+    if(!_friendProfile.loaded) loadFriendProfile(openFriendId);
     sails = `<div class="fr-hint">${t('friends.loading')}</div>`;
   }
   else if(_friendSails.failed) sails = `<div class="fr-hint">${t('friends.loadFailed')}</div>`;
@@ -589,12 +653,35 @@ function renderFriendPage(){
       <div class="row-info"><div class="name">${escapeHtml(s.title || t('detail.tripFallback'))}</div><div class="sub">${meta}</div></div>
     </div>`;
   }).join('');
+  // Laid out like your own Profile: cover + round photo, bio card, stats, then sails.
+  const fp = (isFriend && _friendProfile.userId===openFriendId) ? _friendProfile.data : null;
+  const fullName = (fp && fp.name) || name;
+  const avatar = (fp && fp.avatar) || p.avatar_url || placeholderAvatar();
+  const tags = fp ? (fp.role ? `<span class="pf-tag role">${escapeHtml(fp.role)}</span>` : '') +
+                    (fp.license ? `<span class="pf-tag license">${escapeHtml(fp.license)}</span>` : '') : '';
+  const contacts = fp ? friendContactsHtml(fp) : '';
+  const hasDetails = !!(tags || (fp && fp.bio) || contacts);
+  const detailsHint = isFriend && _friendProfile.loaded && !hasDetails
+    ? `<div class="fc-hint" style="margin-top:8px;">${t('friends.noDetails', {name: escapeHtml(fullName)})}</div>` : '';
+  const stats = isFriend && _friendSails.list && _friendSails.list.length
+    ? `<div class="section-divider pf"><span>${t('friends.statsShared')}</span></div>
+       <div class="profile-stats">${friendStatsHtml(_friendSails.list)}</div>` : '';
   body.innerHTML = `
-    <div class="fr-hero">
-      <img src="${p.avatar_url || placeholderAvatar()}" alt="">
-      <div class="fr-hero-name">${escapeHtml(name)}</div>
-      ${p.username ? `<div class="fr-hero-user">@${escapeHtml(p.username)}</div>` : ''}
+    <div class="pf-cover">
+      ${fp && fp.cover ? `<img src="${fp.cover}" alt="" style="cursor:zoom-in;" onclick="viewFriendPhoto('cover')">` : ''}
     </div>
+    <div class="pf-idrow">
+      <div class="pf-avatar"><img class="pf-avatar-img" src="${avatar}" alt="" onclick="viewFriendPhoto('avatar')"></div>
+    </div>
+    <div class="form-card pf-bio-card" style="margin-top:12px;">
+      <div class="pf-name">${escapeHtml(fullName)}</div>
+      ${p.username ? `<div class="fr-hero-user" style="margin-top:3px;">@${escapeHtml(p.username)}</div>` : ''}
+      ${tags ? `<div class="pf-tags">${tags}</div>` : ''}
+      ${fp && fp.bio ? `<div class="pf-bio">${escapeHtml(fp.bio)}</div>` : ''}
+      ${contacts ? `<div class="pf-contacts">${contacts}</div>` : ''}
+      ${detailsHint}
+    </div>
+    ${stats}
     <div class="section-divider pf"><span>${t('friends.sharedSails')}</span></div>
     ${sails}
     ${isFriend ? `<div class="link-plain" style="color:var(--coral);text-align:center;margin-top:22px;" onclick="removeFriendPrompt('${openFriendId}')">${t('friends.remove')}</div>` : ''}`;
