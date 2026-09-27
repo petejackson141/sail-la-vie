@@ -429,6 +429,7 @@ async function beginJourney(){
 function editTrip(){
   const trip = window._detailTrip;
   if(!trip){ showToast(t('toast.openTripFirst')); return; }
+  if(window._friendDetail) return; // a friend's sail is read-only
   if(currentTrip){
     showToast(t('toast.finishOrDiscardFirst'));
     return;
@@ -1207,6 +1208,14 @@ function skipCoverPick(){
 // isEditing to decide whether to overwrite the existing tripIndex entry in
 // place or add a new one, since editing must never duplicate the trip.
 async function finalizeSaveTrip(){
+  // New sails: ask who can see it (Only me / Friends) — only when signed in,
+  // since sharing needs an account. Edits keep their setting; it can be
+  // changed any time from the chip at the top of the sail's page.
+  if(!currentTrip.isEditing && !currentTrip.visibility){
+    currentTrip.visibility = state.user ? await askTripVisibility() : 'private';
+  }
+  const savedBoat = currentTrip.boatId ? state.boats.find(b=>b.id===currentTrip.boatId) : null;
+  currentTrip.boatName = savedBoat ? savedBoat.name : null; // shown to friends, who don't have your Fleet
   currentTrip.updatedAt = new Date().toISOString();
   const ok = await storeSet('trip:'+currentTrip.id, currentTrip);
   if(!ok){ showToast(t('toast.saveFailed')); return; }

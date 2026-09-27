@@ -28,6 +28,7 @@ function renderProfileScreen(){
   renderProfileHeader();
   renderProfileStats();
   renderProfileCrew();
+  renderProfileFriends(); // friends.js
   renderProfileFeed();
 }
 // Called from places that change data the profile shows; a no-op unless it is on screen.

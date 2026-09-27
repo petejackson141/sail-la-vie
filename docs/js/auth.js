@@ -225,6 +225,7 @@ function applySession(session){
   state.user = session ? { id: session.user.id, email: session.user.email } : null;
   renderAccountUI();
   ensureRealtimeSync();
+  if(typeof onFriendsSessionChanged === 'function') onFriendsSessionChanged(); // friends.js
   if(session) hideWelcomeGate(); // signed in (from the gate or otherwise) — nothing left to ask
 }
 
@@ -260,6 +261,7 @@ function dismissWelcomeGate(){ hideWelcomeGate(); }
    `alter publication supabase_realtime add table boats;` etc. in the SQL
    editor) — the subscription below silently receives nothing otherwise. */
 let _realtimeChannel = null;
+let _friendsChannel = null;
 let _realtimeUserId = null;
 const _realtimeResyncTimers = {};
 
@@ -334,8 +336,27 @@ function ensureRealtimeSync(){
     .subscribe((status, err) => {
       debugLog('[realtime] channel status: ' + status + (err ? (' — ' + (err.message || err)) : ''));
     });
+
+  // Friend requests sent to / by this person (friends.js) — on a SEPARATE
+  // channel, so if the friendships table is ever missing or misconfigured it
+  // can't take the boats/crew/trips/noticeboard/profile sync down with it.
+  // Supabase can't filter DELETE events by column, so deletes (decline /
+  // cancel / unfriend) arrive unfiltered and just trigger a cheap reload.
+  _friendsChannel = getSupabaseClient()
+    .channel(`friends-${state.user.id}`)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'friendships', filter: `addressee_id=eq.${state.user.id}` },
+      () => scheduleRealtimeResync('friends'))
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'friendships', filter: `requester_id=eq.${state.user.id}` },
+      () => scheduleRealtimeResync('friends'))
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'friendships' },
+      () => scheduleRealtimeResync('friends'))
+    .subscribe();
 }
 function teardownRealtimeSync(){
+  if(_friendsChannel){
+    getSupabaseClient().removeChannel(_friendsChannel);
+    _friendsChannel = null;
+  }
   if(_realtimeChannel){
     getSupabaseClient().removeChannel(_realtimeChannel);
     _realtimeChannel = null;
@@ -358,6 +379,7 @@ function scheduleRealtimeResync(kind){
     if(kind === 'crew') resolveCrewSyncOnSignIn().then(()=>debugLog('[realtime] crew resync done')).catch(e => debugLog('[realtime] crew resync FAILED: ' + (e.message||e)));
     if(kind === 'trips') resolveTripsSyncOnSignIn().then(()=>debugLog('[realtime] trips resync done')).catch(e => debugLog('[realtime] trips resync FAILED: ' + (e.message||e)));
     if(kind === 'noticeboard') resolveNoticeboardSyncOnSignIn().then(()=>debugLog('[realtime] noticeboard resync done')).catch(e => debugLog('[realtime] noticeboard resync FAILED: ' + (e.message||e)));
+    if(kind === 'friends' && typeof loadFriendsData === 'function') loadFriendsData();
     if(kind === 'profile') resolveProfileSyncOnSignIn().then(()=>debugLog('[realtime] profile resync done')).catch(e => debugLog('[realtime] profile resync FAILED: ' + (e.message||e)));
   }, 600);
 }
@@ -782,9 +804,21 @@ async function resolveBoatsSyncOnSignInImpl(){
 async function pushTripToCloudImpl(trip){
   if(!state.user) return { ok:false };
   try{
-    const { error } = await getSupabaseClient()
-      .from('trips')
-      .upsert({ id: trip.id, user_id: state.user.id, data: trip, updated_at: trip.updatedAt || new Date().toISOString() });
+    // boatName is copied into the shared record so a friend viewing this sail
+    // sees the boat's name (they don't have this person's Fleet). visibility
+    // is its own column (not just inside `data`) because the database's
+    // security rules read it to decide whether friends may see the sail.
+    const boat = trip.boatId ? state.boats.find(b=>b.id===trip.boatId) : null;
+    const data = { ...trip, boatName: trip.boatName || (boat ? boat.name : null) };
+    const row = { id: trip.id, user_id: state.user.id, data, visibility: trip.visibility === 'friends' ? 'friends' : 'private',
+      updated_at: trip.updatedAt || new Date().toISOString() };
+    let { error } = await getSupabaseClient().from('trips').upsert(row);
+    // Safety net: if friends-supabase.sql hasn't been run yet, the visibility
+    // column doesn't exist — push without it rather than breaking trip sync.
+    if(error && /visibility/i.test(error.message || '')){
+      delete row.visibility;
+      ({ error } = await getSupabaseClient().from('trips').upsert(row));
+    }
     if(error) throw error;
     return { ok:true };
   }catch(e){
@@ -1114,6 +1148,8 @@ async function syncProfileIfSignedIn(){
   if(!state.user) return;
   const result = await syncLocalProfileToCloud();
   if(!result.ok) console.error('background profile sync failed', result.message);
+  // Keep the public friends card (name + small photo) in step — see friends.js.
+  if(typeof syncPublicProfileIfSignedIn === 'function') syncPublicProfileIfSignedIn(true);
 }
 
 // Manual trigger from the Settings Account card. Reuses the same safe

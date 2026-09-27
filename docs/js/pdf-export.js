@@ -162,12 +162,12 @@ function openTripCoverLightbox(){
   if(!trip || !trip.coverPhoto) return;
   const photos = (trip.photos && trip.photos.length) ? trip.photos : [trip.coverPhoto];
   const idx = Math.max(0, photos.indexOf(trip.coverPhoto));
-  openLightbox(photos, idx, trip.id);
+  openLightbox(photos, idx, window._friendDetail ? null : trip.id); // no photo delete on a friend's sail
 }
 function openTripPhotoLightbox(i){
   const trip = window._detailTrip;
   if(!trip || !trip.photos) return;
-  openLightbox(trip.photos, i, trip.id);
+  openLightbox(trip.photos, i, window._friendDetail ? null : trip.id); // no photo delete on a friend's sail
 }
 let lightboxPhotos = [];
 let lightboxIndex = 0;

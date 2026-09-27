@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '26.09.2026.2159';
+const APP_VERSION = '27.09.2026.0556';
 
 /* ============================================================
    CONFIRM DIALOG (shared across all screens)
@@ -271,6 +271,8 @@ function nav(name, fromPopState){
   if(name==='resume') renderResume();
   if(name==='gallery') renderGallery();
   if(name==='noticeboard') renderNoticeboard();
+  if(name==='friends'){ renderFriendsScreen(); if(state.user) loadFriendsData(); } // fresh list each visit
+  if(name==='friend') renderFriendPage();
   if(name==='active' && liveLeafletMap){
     // Leaflet sizes itself incorrectly if it was updated while its container was
     // hidden behind another screen (backgrounded journey) — fix it up now that

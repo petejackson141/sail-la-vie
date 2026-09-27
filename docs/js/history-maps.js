@@ -113,21 +113,33 @@ let openTripId = null;
 // Where the detail screen's back arrow returns to: 'history' normally, 'home' when
 // opened from the Last Sail card. Kept while editing/re-rendering the same trip.
 let detailReturnTo = 'history';
-async function openTripDetail(id, from){
+// friendView = { trip, ownerName } shows a FRIEND's shared sail read-only (see
+// openFriendTrip() in friends.js): no edit/delete/share/PDF, the boat name comes
+// from the copy saved in the sail itself, and crew/skipper are left out (those
+// point at the friend's own Crew list, which this device doesn't have).
+async function openTripDetail(id, from, friendView){
   const curScreen = (document.querySelector('.screen.active')||{}).id;
   if(from) detailReturnTo = from;
   else if(curScreen!=='screen-detail' && curScreen!=='screen-active') detailReturnTo = 'history';
-  openTripId = id;
-  const trip = await storeGet('trip:'+id);
+  openTripId = friendView ? null : id;
+  const trip = friendView ? friendView.trip : await storeGet('trip:'+id);
   if(!trip){ showToast(t('toast.tripLoadFail')); return; }
-  const boat = state.boats.find(b=>b.id===trip.boatId);
+  window._friendDetail = friendView || null;
+  document.getElementById('detailEditBtn').style.display = friendView ? 'none' : '';
+  document.getElementById('detailDeleteBtn').style.display = friendView ? 'none' : '';
+  const boat = friendView ? (trip.boatName ? {name: trip.boatName} : null) : state.boats.find(b=>b.id===trip.boatId);
   document.getElementById('detailTitle').textContent = trip.title||t('detail.tripFallback');
-  const tripCrew = (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
+  const tripCrew = friendView ? [] : (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
   const crewNames = tripCrew.map(c=>c.name); // still used by shareTrip()'s plain-text summary
-  const tripSkipper = trip.skipperId ? skipperById(trip.skipperId) : null;
+  const tripSkipper = (!friendView && trip.skipperId) ? skipperById(trip.skipperId) : null;
+  // Top line: who shared it (friend's sail), or who can see it (your own, when signed in).
+  const topLine = friendView
+    ? `<div class="friend-shared-by">${escapeHtml(t('friends.sharedBy', {name: friendView.ownerName}))}</div>`
+    : (state.user ? tripVisibilityChipHtml(trip) : '');
   const d = new Date(trip.date);
 
   document.getElementById('detailBody').innerHTML = `
+    ${topLine}
     ${trip.coverPhoto
       ? `<div class="trip-cover-wrap" style="border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);cursor:pointer;" onclick="openTripCoverLightbox()">
           <img class="trip-cover" src="${trip.coverPhoto}" style="height:200px;">
@@ -168,7 +180,7 @@ async function openTripDetail(id, from){
 
     ${trip.photos && trip.photos.length ? `<div class="section-title">${t('active.photos')}</div><div class="photo-strip">${trip.photos.map((p,i)=>`<div class="photo-thumb" onclick="openTripPhotoLightbox(${i})"><img src="${p}"></div>`).join('')}</div>` : ''}
 
-    <div style="height:8px;"></div>
+    ${friendView ? '' : `<div style="height:8px;"></div>
     <button class="btn btn-outline" onclick="shareTrip('${trip.id}')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
       ${t('detail.shareCrewSocial')}
@@ -177,7 +189,7 @@ async function openTripDetail(id, from){
     <button class="btn btn-outline${FEATURES_IN_DEVELOPMENT.pdfExport ? ' btn-soon' : ''}" onclick="openTripPdfPreview()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
       ${t('detail.exportPdf')}${comingSoonTag('pdfExport')}
-    </button>
+    </button>`}
   `;
   window._detailTrip = trip;
   nav('detail');

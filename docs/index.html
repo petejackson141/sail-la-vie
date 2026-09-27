@@ -1016,6 +1016,36 @@ html[dir="rtl"] .crew-chip{ padding:6px 6px 6px 12px; }
 html[dir="rtl"] .crew-chip .rm{ margin-left:0; margin-right:2px; }
 html[dir="rtl"] .btn-danger svg[style*="margin-right"],
 html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !important; margin-left:6px; }
+
+  /* ---------- friends (js/friends.js) ---------- */
+  .navitem{ position:relative; }
+  .nav-badge{ position:absolute; top:-2px; left:calc(50% + 6px); min-width:17px; height:17px; padding:0 4px; border-radius:999px;
+    background:var(--coral); color:#fff; font-size:10px; font-weight:700; display:none; align-items:center; justify-content:center;
+    box-shadow:0 0 0 2px var(--surface-ivory); }
+  .fr-row{ cursor:default; }
+  .fr-row[onclick]{ cursor:pointer; }
+  .fr-actions{ display:flex; gap:6px; flex:0 0 auto; }
+  .fr-actions .btn-sm{ padding:8px 12px; font-size:12.5px; box-shadow:none; }
+  .fr-status{ font-size:12px; font-weight:600; color:var(--teal); white-space:nowrap; }
+  .fr-hint{ font-size:12.5px; color:var(--ink-muted); text-align:center; padding:8px 4px; }
+  .fr-error{ font-size:12.5px; color:var(--coral); margin-top:8px; }
+  .fr-card-title{ font-family:var(--font-display); font-weight:700; font-size:17px; color:var(--ink); }
+  .fr-summary{ gap:12px; }
+  .fr-faces{ display:flex; flex:0 0 auto; }
+  .fr-faces img{ width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid var(--surface-ivory); background:var(--bg-sunk); }
+  .fr-faces img + img{ margin-left:-12px; }
+  .fr-pill{ flex:0 0 auto; background:var(--coral); color:#fff; font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:999px; }
+  .fr-chev{ width:18px; height:18px; flex:0 0 auto; color:var(--ink-faint); }
+  .fr-noimg{ display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .fr-hero{ text-align:center; margin-top:10px; }
+  .fr-hero img{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:3px solid var(--surface-ivory); box-shadow:var(--shadow); background:var(--bg-sunk); }
+  .fr-hero-name{ font-family:var(--font-display); font-weight:700; font-size:21px; color:var(--ink); margin-top:10px; }
+  .fr-hero-user{ font-size:13px; color:var(--ink-muted); margin-top:2px; }
+  #friendSearchWrap .search-input{ margin-top:16px; }
+  .vis-chip{ display:inline-block; margin:12px 0 2px; padding:7px 13px; border-radius:999px; font-size:12.5px; font-weight:600; cursor:pointer;
+    background:var(--surface-ivory); border:1px solid var(--border); color:var(--ink-muted); }
+  .vis-chip.on{ background:rgba(23,117,143,.11); border-color:rgba(23,117,143,.3); color:var(--teal); }
+  .friend-shared-by{ margin:12px 0 2px; font-size:13px; font-weight:600; color:var(--teal); }
 </style>
 </head>
 <body>
@@ -1344,8 +1374,8 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div class="backrow">
       <div class="iconbtn back-icon" onclick="nav(detailReturnTo)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
       <h2 id="detailTitle" style="font-size:17px;">Trip</h2>
-      <div class="iconbtn" onclick="editTrip()" title="Edit" data-i18n-title="action.edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
-      <div class="iconbtn" onclick="deleteTripPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
+      <div class="iconbtn" id="detailEditBtn" onclick="editTrip()" title="Edit" data-i18n-title="action.edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
+      <div class="iconbtn" id="detailDeleteBtn" onclick="deleteTripPrompt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
     </div>
     <div id="detailBody"></div>
   </section>
@@ -1432,6 +1462,10 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div class="section-divider pf"><span data-i18n="nav.crew">Crew</span></div>
     <div id="profileCrew"></div>
 
+    <!-- 4b. Friends: summary card, tap for the Friends screen (js/friends.js) -->
+    <div class="section-divider pf"><span data-i18n="friends.title">Friends</span></div>
+    <div id="profileFriends"></div>
+
     <!-- 5. Posts: newest first — past sails and planned events (people's comments to come later) -->
     <div class="section-divider pf"><span data-i18n="profile.posts">Posts</span></div>
     <div class="chiprow" id="profileFeedChips" style="margin-top:0;margin-bottom:12px;">
@@ -1440,6 +1474,40 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <div class="chip" data-f="sail" onclick="setProfileFeedFilter('sail')" data-i18n="profile.filterSails">Sails</div>
     </div>
     <div id="profileFeed"></div>
+  </section>
+
+  <!-- ============ FRIENDS (js/friends.js) ============ -->
+  <section class="screen" id="screen-friends">
+    <div class="backrow">
+      <div class="iconbtn back-icon" onclick="nav('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2 data-i18n="friends.title">Friends</h2>
+    </div>
+    <div id="friendsSignedOut" style="display:none;">
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.4 2.7-6 6-6s6 2.6 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.3c2.5.4 4.5 2.5 4.5 5.4"/></svg>
+        <h3 data-i18n="friends.signedOutTitle">Sign in to add friends</h3>
+        <p data-i18n="friends.signedOutHint">Friends can see the sails you choose to share with them.</p>
+      </div>
+      <button class="btn btn-primary" onclick="openAuthSheet('signin')" data-i18n="friends.signIn">Sign In / Create Account</button>
+    </div>
+    <div id="friendsMain" style="display:none;">
+      <div id="friendsMeCard"></div>
+      <div id="friendSearchWrap" style="display:none;">
+        <input type="text" class="search-input" id="friendSearchInput" autocapitalize="none" autocomplete="off" spellcheck="false"
+          placeholder="Find sailors by username or name…" data-i18n-ph="friends.searchPh" oninput="onFriendSearchInput()">
+        <div id="friendSearchResults"></div>
+      </div>
+      <div id="friendsLists"></div>
+    </div>
+  </section>
+
+  <!-- ============ ONE FRIEND'S PAGE (js/friends.js) ============ -->
+  <section class="screen" id="screen-friend">
+    <div class="backrow">
+      <div class="iconbtn back-icon" onclick="nav('friends')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2 id="friendTitle" style="font-size:17px;">Friend</h2>
+    </div>
+    <div id="friendBody"></div>
   </section>
 
   <!-- ============ SETTINGS ============ -->
@@ -1593,6 +1661,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div class="navitem" data-tab="profile" onclick="nav('profile')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
       <span data-i18n="profile.title">Profile</span>
+      <span class="nav-badge" id="navFriendsBadge"></span>
     </div>
   </nav>
 </div>
@@ -1928,6 +1997,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 <script src="js/noticeboard.js"></script>
 <script src="js/notifications.js"></script>
 <script src="js/profile-settings.js"></script>
+<script src="js/friends.js"></script>
 <script src="js/pdf-export.js"></script>
 <script src="js/certificate.js"></script>
 <script src="js/trip-pdf.js"></script>
