@@ -16,6 +16,12 @@
 // (see openTripDetail(id, from, friendView) in history-maps.js).
 //
 // Everything here is a no-op while signed out.
+//
+// TESTING PHASE: SHOW_ALL_SAILORS_FOR_TESTING lists every sailor who has a public
+// card (i.e. has chosen a username) — at the bottom of the Friends screen and as a
+// sideways-scrolling row on the Profile screen — so testers can find each other
+// without knowing usernames. Set it to false before a wider release.
+const SHOW_ALL_SAILORS_FOR_TESTING = true;
 
 Object.assign(TRANSLATIONS.en, {
   'friends.title': 'Friends',
@@ -60,6 +66,15 @@ Object.assign(TRANSLATIONS.en, {
   'friends.remove': 'Remove friend',
   'friends.removed': 'Friend removed',
   'friends.sharedBy': 'Shared by {name}',
+  'friends.onApp': 'Sailors on Sail la Vie',
+  'friends.onAppHint': 'Everyone testing the app who has chosen a username.',
+  'friends.onAppEmpty': 'No other sailors yet.',
+  'friends.you': 'You',
+  'friends.notFriendsYet': 'Become friends with {name} to see the sails they share.',
+  'friends.addFriend': 'Add friend',
+  'friends.requestPending': 'Friend request sent — waiting for {name} to accept.',
+  'friends.acceptRequest': 'Accept friend request',
+  'friends.pickUsernameForList': 'Choose a username on the Friends screen so other testers can find you too.',
   'dlg.removeFriend.title': 'Remove {name}?',
   'dlg.removeFriend.body': "You'll stop seeing each other's shared sails. You can send a new request later.",
   'dlg.removeFriend.ok': 'Remove',
@@ -80,10 +95,14 @@ let _friendsReloadQueued = false;
 let friendsState = { loaded:false, loading:false, failed:false, me:null, rows:[], people:{} };
 let friendUsernameEditing = false;   // true while the "change username" form is open
 let openFriendId = null;             // whose page screen-friend is showing
+let friendPageFrom = 'friends';      // screen the friend page's back arrow returns to
+// TESTING: every public card on the app (see SHOW_ALL_SAILORS_FOR_TESTING)
+let allSailors = { list:null, loading:false, failed:false };
 
 function resetFriendsState(){
   friendsState = { loaded:false, loading:false, failed:false, me:null, rows:[], people:{} };
   friendUsernameEditing = false;
+  allSailors = { list:null, loading:false, failed:false };
 }
 
 /* ---------- derived lists ---------- */
@@ -92,6 +111,10 @@ function friendRows(){ return friendsState.rows.filter(r=>r.status==='accepted')
 function incomingRequests(){ return friendsState.rows.filter(r=>r.status==='pending' && r.addressee_id===state.user.id); }
 function outgoingRequests(){ return friendsState.rows.filter(r=>r.status==='pending' && r.requester_id===state.user.id); }
 function friendshipWith(userId){ return friendsState.rows.find(r=>friendOtherId(r)===userId) || null; }
+// Someone's public card: from the friends data, or failing that the all-sailors list.
+function personById(id){
+  return friendsState.people[id] || (allSailors.list||[]).find(p=>p.user_id===id) || null;
+}
 function personName(p){ return (p && (p.display_name || p.username)) || t('default.sailorName'); }
 
 /* ---------- loading ---------- */
@@ -151,7 +174,7 @@ function refreshFriendsUI(){
   const active = (document.querySelector('.screen.active')||{}).id;
   if(active==='screen-friends') renderFriendsScreen();
   if(active==='screen-friend') renderFriendPage();
-  if(active==='screen-profile' && typeof renderProfileFriends==='function') renderProfileFriends();
+  if(active==='screen-profile' && typeof renderProfileFriends==='function'){ renderProfileFriends(); renderProfileSailors(); }
 }
 function updateFriendsBadge(){
   const n = state.user && friendsState.loaded ? incomingRequests().length : 0;
@@ -299,15 +322,77 @@ function rerenderFriendSearch(){
   const box = document.getElementById('friendSearchResults');
   if(!box || !_friendSearchResults) return;
   if(!_friendSearchResults.length){ box.innerHTML = `<div class="fr-hint">${t('friends.noResults')}</div>`; return; }
-  box.innerHTML = _friendSearchResults.map(p=>{
-    const row = friendshipWith(p.user_id);
-    let action;
-    if(row && row.status==='accepted') action = `<span class="fr-status">${t('friends.isFriend')}</span>`;
-    else if(row && row.requester_id===state.user.id) action = `<span class="fr-status">${t('friends.requested')}</span>`;
-    else if(row) action = `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();acceptFriendRequest('${row.id}')">${t('friends.accept')}</button>`;
-    else action = `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();sendFriendRequest('${p.user_id}')">${t('friends.add')}</button>`;
-    return friendRowHtml(p, action, row && row.status==='accepted' ? `openFriendPage('${p.user_id}')` : '');
-  }).join('');
+  box.innerHTML = _friendSearchResults.map(p=>friendRowHtml(p, friendActionHtml(p.user_id), `openFriendPage('${p.user_id}')`)).join('');
+}
+// The status/button for one person: Friends ✓ / Requested / Accept / Add.
+function friendActionHtml(userId){
+  const row = friendshipWith(userId);
+  if(row && row.status==='accepted') return `<span class="fr-status">${t('friends.isFriend')}</span>`;
+  if(row && row.requester_id===state.user.id) return `<span class="fr-status">${t('friends.requested')}</span>`;
+  if(row) return `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();acceptFriendRequest('${row.id}')">${t('friends.accept')}</button>`;
+  return `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();sendFriendRequest('${userId}')">${t('friends.add')}</button>`;
+}
+
+/* ---------- TESTING: everyone on the app ---------- */
+// Every public card except your own, A–Z. Only people who've chosen a username have one.
+async function loadAllSailors(){
+  if(!SHOW_ALL_SAILORS_FOR_TESTING || !state.user || allSailors.loading) return;
+  allSailors.loading = true;
+  const me = state.user.id;
+  try{
+    const { data, error } = await getSupabaseClient().from('public_profiles')
+      .select('user_id,username,display_name,avatar_url').neq('user_id', me).limit(500);
+    if(error) throw error;
+    if(!state.user || state.user.id !== me) return;
+    allSailors = { list: (data||[]).sort((a,b)=>personName(a).localeCompare(personName(b))), loading:false, failed:false };
+  }catch(e){
+    console.error('all sailors load failed', e);
+    allSailors = { list: allSailors.list, loading:false, failed: !allSailors.list };
+  }finally{
+    allSailors.loading = false;
+  }
+  refreshFriendsUI();
+}
+function allSailorsListHtml(){
+  if(!allSailors.list){
+    if(!allSailors.loading && !allSailors.failed) loadAllSailors();
+    return `<div class="fr-hint">${allSailors.failed ? t('friends.loadFailed') : t('friends.loading')}</div>`;
+  }
+  if(!allSailors.list.length) return `<div class="fr-hint" style="padding:14px 4px;">${t('friends.onAppEmpty')}</div>`;
+  return allSailors.list.map(p=>friendRowHtml(p, friendActionHtml(p.user_id), `openFriendPage('${p.user_id}')`)).join('');
+}
+
+// Profile screen row: sideways-scrolling photo cards (same look as the old Crew row),
+// your own card first, then everyone else. Tap a card to open that sailor's page.
+function renderProfileSailors(){
+  const wrap = document.getElementById('profileSailorsWrap');
+  const el = document.getElementById('profileSailors');
+  if(!wrap || !el) return;
+  if(!SHOW_ALL_SAILORS_FOR_TESTING || !state.user){ wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  if(!allSailors.list){
+    if(!allSailors.loading && !allSailors.failed) loadAllSailors();
+    el.innerHTML = `<div class="fr-hint">${allSailors.failed ? t('friends.loadFailed') : t('friends.loading')}</div>`;
+    return;
+  }
+  const loaded = friendsState.loaded;
+  const meCard = friendsState.me
+    ? `<div class="pf-crew-card pf-sailor-card me">
+        <img src="${state.profile.avatar || friendsState.me.avatar_url || placeholderAvatar()}" alt="">
+        <div class="nm">${escapeHtml((state.profile.name||'').trim() || personName(friendsState.me))}</div>
+        <div class="sb">@${escapeHtml(friendsState.me.username)}</div>
+        <div class="pf-sailor-act"><span class="fr-status">${t('friends.you')}</span></div>
+      </div>` : '';
+  const cards = allSailors.list.map(p=>`<div class="pf-crew-card pf-sailor-card" onclick="openFriendPage('${p.user_id}','profile')">
+      <img src="${p.avatar_url || placeholderAvatar()}" alt="">
+      <div class="nm">${escapeHtml(personName(p))}</div>
+      <div class="sb">${p.username ? '@'+escapeHtml(p.username) : ''}</div>
+      ${loaded && friendsState.me ? `<div class="pf-sailor-act">${friendActionHtml(p.user_id)}</div>` : ''}
+    </div>`).join('');
+  const hint = loaded && !friendsState.me ? `<div class="fr-hint" style="text-align:left;padding:0 2px 10px;">${t('friends.pickUsernameForList')}</div>` : '';
+  el.innerHTML = (meCard || cards)
+    ? `${hint}<div class="pf-crew-scroll">${meCard}${cards}</div>`
+    : `${hint}<div class="fr-hint" style="padding:14px 4px;">${t('friends.onAppEmpty')}</div>`;
 }
 
 /* ---------- rendering ---------- */
@@ -376,6 +461,10 @@ function renderFriendsScreen(){
   html += sorted.length
     ? sorted.map(id=>friendRowHtml(P(id) || {user_id:id}, '', `openFriendPage('${id}')`)).join('')
     : `<div class="fr-hint" style="padding:14px 4px;">${t('friends.noFriends')}</div>`;
+  if(SHOW_ALL_SAILORS_FOR_TESTING && me){
+    html += `<div class="section-title">${t('friends.onApp')}</div>
+      <div class="fr-hint" style="text-align:left;padding:0 4px 8px;">${t('friends.onAppHint')}</div>` + allSailorsListHtml();
+  }
   lists.innerHTML = html;
   rerenderFriendSearch();
 }
@@ -405,12 +494,18 @@ function renderProfileFriends(){
 
 /* ---------- one friend's page ---------- */
 let _friendSails = { userId:null, list:null, failed:false };
-function openFriendPage(userId){
+// from = the screen the back arrow should return to ('friends' or 'profile').
+// Works for anyone: friends see shared sails; for everyone else the page offers Add / Accept.
+function openFriendPage(userId, from){
   openFriendId = userId;
-  _friendSails = { userId, list:null, failed:false };
+  friendPageFrom = from || 'friends';
+  const row = friendshipWith(userId);
+  const isFriend = !!(row && row.status==='accepted');
+  _friendSails = { userId, list:null, failed:false, requested:isFriend };
+  if(isFriend) loadFriendSails(userId);
   nav('friend');
-  loadFriendSails(userId);
 }
+function friendPageBack(){ nav(friendPageFrom || 'friends'); }
 async function loadFriendSails(userId){
   try{
     // Only the summary fields — photos and GPS tracks load when a sail is opened.
@@ -429,11 +524,26 @@ async function loadFriendSails(userId){
 function renderFriendPage(){
   const body = document.getElementById('friendBody');
   if(!body || !openFriendId) return;
-  const p = friendsState.people[openFriendId] || {};
+  const p = personById(openFriendId) || {};
   const name = personName(p);
   document.getElementById('friendTitle').textContent = name;
+  const row = friendshipWith(openFriendId);
+  const isFriend = !!(row && row.status==='accepted');
   let sails;
-  if(_friendSails.failed) sails = `<div class="fr-hint">${t('friends.loadFailed')}</div>`;
+  if(!isFriend){
+    // Not friends (yet): no sails to show — the database wouldn't return them anyway.
+    let action;
+    if(!friendsState.me) action = `<button class="btn btn-primary" onclick="nav('friends')">${t('friends.chooseTitle')}</button>`;
+    else if(row && row.requester_id===state.user.id) action = `<div class="fr-hint">${t('friends.requestPending', {name: escapeHtml(name)})}</div>`;
+    else if(row) action = `<button class="btn btn-primary" onclick="acceptFriendRequest('${row.id}')">${t('friends.acceptRequest')}</button>`;
+    else action = `<button class="btn btn-primary" onclick="sendFriendRequest('${openFriendId}')">${t('friends.addFriend')}</button>`;
+    sails = `<div class="fr-hint" style="padding:14px 4px;">${t('friends.notFriendsYet', {name: escapeHtml(name)})}</div>${action}`;
+  }
+  else if(_friendSails.userId===openFriendId && !_friendSails.list && !_friendSails.failed && !_friendSails.requested){
+    _friendSails.requested = true; loadFriendSails(openFriendId); // just became friends while on this page
+    sails = `<div class="fr-hint">${t('friends.loading')}</div>`;
+  }
+  else if(_friendSails.failed) sails = `<div class="fr-hint">${t('friends.loadFailed')}</div>`;
   else if(!_friendSails.list) sails = `<div class="fr-hint">${t('friends.loading')}</div>`;
   else if(!_friendSails.list.length) sails = `<div class="fr-hint" style="padding:14px 4px;">${t('friends.noSharedSails', {name: escapeHtml(name)})}</div>`;
   else sails = _friendSails.list.map(s=>{
@@ -453,13 +563,13 @@ function renderFriendPage(){
     </div>
     <div class="section-divider pf"><span>${t('friends.sharedSails')}</span></div>
     ${sails}
-    ${friendshipWith(openFriendId) ? `<div class="link-plain" style="color:var(--coral);text-align:center;margin-top:22px;" onclick="removeFriendPrompt('${openFriendId}')">${t('friends.remove')}</div>` : ''}`;
+    ${isFriend ? `<div class="link-plain" style="color:var(--coral);text-align:center;margin-top:22px;" onclick="removeFriendPrompt('${openFriendId}')">${t('friends.remove')}</div>` : ''}`;
 }
 async function openFriendTrip(tripId){
   try{
     const { data, error } = await getSupabaseClient().from('trips').select('data').eq('id', tripId).single();
     if(error) throw error;
-    const p = friendsState.people[openFriendId] || {};
+    const p = personById(openFriendId) || {};
     openTripDetail(null, 'friend', { trip: data.data, ownerName: personName(p) });
   }catch(e){
     console.error('friend trip load failed', e);

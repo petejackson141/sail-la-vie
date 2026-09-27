@@ -8,7 +8,10 @@
      2. bio card: name, role/license tags, bio, contact details — read-only here;
         the "Edit Profile" button opens #sheetEditProfile with every field
      3. lifetime stats
-     4. crew, as a sideways-scrolling row of people
+     4. friends summary card, then (while testing) a sideways-scrolling row of
+        every sailor using the app — both drawn by friends.js. The old Crew row was
+        removed: the Crew screen already lists crew, and crew + friends are to be
+        merged into one record later.
      5. posts, newest first: past sails and planned events from the Noticeboard
    Everything is drawn by renderProfileScreen() each time the screen is opened
    (see nav()) and re-drawn by refreshProfileIfVisible() when crew, trips or
@@ -27,8 +30,8 @@ function renderProfileScreen(){
   profileFeedLimit = 10;
   renderProfileHeader();
   renderProfileStats();
-  renderProfileCrew();
   renderProfileFriends(); // friends.js
+  renderProfileSailors(); // friends.js — testing-phase "sailors on the app" row
   renderProfileFeed();
 }
 // Called from places that change data the profile shows; a no-op unless it is on screen.
@@ -73,24 +76,6 @@ function renderProfileStats(){
     <div class="cell"><div class="stat-label">${t('resume.totalDistance')}</div><div class="stat-value">${nm.toFixed(1)}<span class="stat-unit"> NM</span></div></div>
     <div class="cell"><div class="stat-label">${t('resume.timeAtSea')}</div><div class="stat-value">${fmtDuration(secs)}</div></div>
     <div class="cell"><div class="stat-label">${t('profile.boatsSailed')}</div><div class="stat-value">${state.boats.length}</div></div>
-  </div>`;
-}
-
-// Crew as a sideways-scrolling row of photo cards (tap one to open that crew member),
-// ending with a dashed "Add crew" card.
-function openCrewById(id){ openCrewSheet(state.crew.find(c=>c.id===id)); }
-function renderProfileCrew(){
-  const sorted = [...state.crew].sort((a,b)=>a.name.localeCompare(b.name));
-  const cards = sorted.map(c=>`<div class="pf-crew-card" onclick="openCrewById('${c.id}')">
-      <img src="${c.photo || placeholderAvatar()}" alt="">
-      <div class="nm">${escapeHtml(c.name)}</div>
-      <div class="sb">${escapeHtml(c.note || '')}</div>
-    </div>`).join('');
-  document.getElementById('profileCrew').innerHTML = `<div class="pf-crew-scroll">${cards}
-    <div class="pf-crew-add" onclick="openCrewSheet()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-      <span>${t('profile.addCrewCard')}</span>
-    </div>
   </div>`;
 }
 

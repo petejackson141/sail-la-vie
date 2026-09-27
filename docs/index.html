@@ -388,6 +388,12 @@
   .pf-crew-add{ flex:0 0 124px; scroll-snap-align:start; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer;
     background:var(--pastel-mint); border:1.5px dashed var(--teal); border-radius:var(--radius-md); color:var(--teal); font-weight:700; font-size:13px; min-height:176px; text-align:center; padding:0 8px; }
   .pf-crew-add svg{ width:26px; height:26px; }
+  /* sailor cards (testing row) reuse .pf-crew-card; the status button sits under the name */
+  .pf-sailor-card .sb{ min-height:0; padding-bottom:6px; }
+  .pf-sailor-card .pf-sailor-act{ padding:0 10px 10px; }
+  .pf-sailor-card .pf-sailor-act .btn-sm{ width:100%; padding:6px 8px; font-size:12px; box-shadow:none; }
+  .pf-sailor-card .pf-sailor-act .fr-status{ display:block; text-align:center; padding:6px 0; }
+  .pf-sailor-card.me{ cursor:default; }
   /* posts */
   .post-card{ background:var(--surface-ivory); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); padding:14px; margin-top:12px; cursor:pointer; }
   .post-card:first-child{ margin-top:0; }
@@ -1462,13 +1468,16 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div class="section-divider pf"><span data-i18n="profile.lifetimeStats">Lifetime Stats</span></div>
     <div id="profileStats" class="profile-stats"></div>
 
-    <!-- 4. Crew: sideways-scrolling row of people, like "People you may know" -->
-    <div class="section-divider pf"><span data-i18n="nav.crew">Crew</span></div>
-    <div id="profileCrew"></div>
-
-    <!-- 4b. Friends: summary card, tap for the Friends screen (js/friends.js) -->
+    <!-- 4. Friends: summary card, tap for the Friends screen (js/friends.js) -->
     <div class="section-divider pf"><span data-i18n="friends.title">Friends</span></div>
     <div id="profileFriends"></div>
+
+    <!-- 4b. TESTING: every sailor on the app, as a sideways-scrolling row like "People you may know".
+         Replaces the old Crew row. Hidden while signed out / when the flag in friends.js is off. -->
+    <div id="profileSailorsWrap" style="display:none;">
+      <div class="section-divider pf"><span data-i18n="friends.onApp">Sailors on Sail la Vie</span></div>
+      <div id="profileSailors"></div>
+    </div>
 
     <!-- 5. Posts: newest first — past sails and planned events (people's comments to come later) -->
     <div class="section-divider pf"><span data-i18n="profile.posts">Posts</span></div>
@@ -1508,7 +1517,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <!-- ============ ONE FRIEND'S PAGE (js/friends.js) ============ -->
   <section class="screen" id="screen-friend">
     <div class="backrow">
-      <div class="iconbtn back-icon" onclick="nav('friends')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <div class="iconbtn back-icon" onclick="friendPageBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
       <h2 id="friendTitle" style="font-size:17px;">Friend</h2>
     </div>
     <div id="friendBody"></div>
