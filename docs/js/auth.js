@@ -350,7 +350,12 @@ function ensureRealtimeSync(){
       () => scheduleRealtimeResync('friends'))
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'friendships' },
       () => scheduleRealtimeResync('friends'))
-    .subscribe();
+    .subscribe((status, err) => {
+      // If this ever logs CHANNEL_ERROR, the friendships table probably isn't in the
+      // supabase_realtime publication — run friends-realtime.sql. Friend requests
+      // still arrive without it via the refresh safety net in friends.js, just slower.
+      debugLog('[realtime] friends channel status: ' + status + (err ? (' — ' + (err.message || err)) : ''));
+    });
 }
 function teardownRealtimeSync(){
   if(_friendsChannel){

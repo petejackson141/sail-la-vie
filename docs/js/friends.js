@@ -23,6 +23,15 @@
 // without knowing usernames. Set it to false before a wider release.
 const SHOW_ALL_SAILORS_FOR_TESTING = true;
 
+// SAFETY NET for live updates. Friend requests normally arrive instantly through
+// Supabase Realtime (the friends channel in auth.js). If that ever misses one —
+// the phone was asleep, the connection dropped, or realtime isn't switched on for
+// the friendships table — the app also re-checks:
+//   • every FRIENDS_POLL_MS while the app is open on screen, and
+//   • straight away whenever the app comes back to the foreground.
+// Each check is two or three tiny queries, so this is cheap.
+const FRIENDS_POLL_MS = 20000;
+
 Object.assign(TRANSLATIONS.en, {
   'friends.title': 'Friends',
   'friends.signedOutTitle': 'Sign in to add friends',
@@ -126,6 +135,7 @@ async function loadFriendsData(){
   friendsState.loading = true;
   _friendsReloadQueued = false;
   const me = state.user.id;
+  let unchanged = false;
   try{
     const sb = getSupabaseClient();
     const [mine, rel] = await Promise.all([
@@ -144,6 +154,10 @@ async function loadFriendsData(){
       (data||[]).forEach(p=>{ people[p.user_id] = p; });
     }
     if(!state.user || state.user.id !== me) return; // signed out / switched account while loading
+    // Nothing changed since last time (the usual case for the background re-checks)?
+    // Then don't redraw — keeps scroll positions and anything being typed untouched.
+    unchanged = friendsState.loaded && !friendsState.failed &&
+      JSON.stringify([friendsState.me, friendsState.rows, friendsState.people]) === JSON.stringify([mine.data || null, rows, people]);
     friendsState = { loaded:true, loading:false, failed:false, me: mine.data || null, rows, people };
   }catch(e){
     console.error('friends load failed', e);
@@ -153,7 +167,7 @@ async function loadFriendsData(){
   }
   if(!state.user || state.user.id !== me) return;
   if(_friendsReloadQueued){ _friendsReloadQueued = false; return loadFriendsData(); }
-  refreshFriendsUI();
+  if(!unchanged) refreshFriendsUI();
   // Keep the public card's name/photo in step with the local profile, quietly.
   if(friendsState.me) syncPublicProfileIfSignedIn(true);
 }
@@ -181,6 +195,16 @@ function updateFriendsBadge(){
   const el = document.getElementById('navFriendsBadge');
   if(el){ el.textContent = n>9 ? '9+' : String(n); el.style.display = n ? 'flex' : 'none'; }
 }
+
+// Re-fetch friends (and, on the screens that show it, the all-sailors list) quietly.
+function refreshFriendsNow(){
+  if(!state.user || document.visibilityState === 'hidden') return;
+  loadFriendsData();
+  const active = (document.querySelector('.screen.active')||{}).id;
+  if(SHOW_ALL_SAILORS_FOR_TESTING && (active==='screen-friends' || active==='screen-profile')) loadAllSailors();
+}
+setInterval(refreshFriendsNow, FRIENDS_POLL_MS);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') refreshFriendsNow(); });
 
 /* ---------- public card (username / name / small avatar) ---------- */
 // Shrinks the profile photo to a small square JPEG so the public card stays light.
@@ -344,7 +368,10 @@ async function loadAllSailors(){
       .select('user_id,username,display_name,avatar_url').neq('user_id', me).limit(500);
     if(error) throw error;
     if(!state.user || state.user.id !== me) return;
-    allSailors = { list: (data||[]).sort((a,b)=>personName(a).localeCompare(personName(b))), loading:false, failed:false };
+    const list = (data||[]).sort((a,b)=>personName(a).localeCompare(personName(b)));
+    const same = allSailors.list && JSON.stringify(allSailors.list) === JSON.stringify(list);
+    allSailors = { list, loading:false, failed:false };
+    if(same) return; // nothing new — skip the redraw
   }catch(e){
     console.error('all sailors load failed', e);
     allSailors = { list: allSailors.list, loading:false, failed: !allSailors.list };
@@ -390,9 +417,13 @@ function renderProfileSailors(){
       ${loaded && friendsState.me ? `<div class="pf-sailor-act">${friendActionHtml(p.user_id)}</div>` : ''}
     </div>`).join('');
   const hint = loaded && !friendsState.me ? `<div class="fr-hint" style="text-align:left;padding:0 2px 10px;">${t('friends.pickUsernameForList')}</div>` : '';
+  const oldScroll = el.querySelector('.pf-crew-scroll');
+  const keepLeft = oldScroll ? oldScroll.scrollLeft : 0; // redraws keep the row where it was swiped to
   el.innerHTML = (meCard || cards)
     ? `${hint}<div class="pf-crew-scroll">${meCard}${cards}</div>`
     : `${hint}<div class="fr-hint" style="padding:14px 4px;">${t('friends.onAppEmpty')}</div>`;
+  const newScroll = el.querySelector('.pf-crew-scroll');
+  if(newScroll && keepLeft) newScroll.scrollLeft = keepLeft;
 }
 
 /* ---------- rendering ---------- */
@@ -428,7 +459,10 @@ function renderFriendsScreen(){
   // 1. Your username — a form until one is chosen (or while changing it)
   const me = friendsState.me;
   if(!me || friendUsernameEditing){
-    meBox.innerHTML = `<div class="form-card">
+    // If the username form is already on screen, leave it alone so a background
+    // refresh never wipes what's being typed.
+    if(document.getElementById('friendUsernameInput')){ /* keep the form as is */ }
+    else meBox.innerHTML = `<div class="form-card">
       <div class="fr-card-title">${t('friends.chooseTitle')}</div>
       <p class="fr-hint" style="margin:4px 0 12px;text-align:left;">${t('friends.chooseHint')}</p>
       <input type="text" id="friendUsernameInput" maxlength="21" autocapitalize="none" autocomplete="off" spellcheck="false"

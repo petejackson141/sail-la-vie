@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '27.09.2026.1640';
+const APP_VERSION = '27.09.2026.1702';
 
 /* ============================================================
    CONFIRM DIALOG (shared across all screens)
@@ -271,7 +271,8 @@ function nav(name, fromPopState){
   if(name==='resume') renderResume();
   if(name==='gallery') renderGallery();
   if(name==='noticeboard') renderNoticeboard();
-  if(name==='friends'){ renderFriendsScreen(); if(state.user) loadFriendsData(); } // fresh list each visit
+  if(name==='friends'){ renderFriendsScreen(); if(typeof refreshFriendsNow==='function') refreshFriendsNow(); } // fresh lists each visit
+  if(name==='profile' && typeof refreshFriendsNow==='function') refreshFriendsNow(); // friends card + sailors row
   if(name==='friend') renderFriendPage();
   if(name==='active' && liveLeafletMap){
     // Leaflet sizes itself incorrectly if it was updated while its container was
