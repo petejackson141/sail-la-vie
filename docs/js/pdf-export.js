@@ -245,6 +245,9 @@ async function deleteLightboxPhoto(){
   const photoIdx = (trip.photos||[]).indexOf(photoToDelete);
   if(photoIdx>=0) trip.photos.splice(photoIdx,1);
   if(trip.coverPhoto===photoToDelete) trip.coverPhoto = trip.photos[0] || null;
+  // Newer timestamp + push, so the deletion reaches your other devices too
+  // (before, a deleted photo stayed in the cloud copy of the sail).
+  trip.updatedAt = new Date().toISOString();
 
   const ok = await storeSet('trip:'+tripId, trip);
   if(!ok){ showToast(t('toast.saveFailed')); return; }
@@ -252,6 +255,11 @@ async function deleteLightboxPhoto(){
   if(idxEntry){ idxEntry.hasPhotos = trip.photos.length>0; idxEntry.coverPhoto = trip.coverPhoto; }
   await storeSet(KEYS.INDEX, state.tripIndex);
   showToast(t('toast.photoDeleted'));
+  syncTripIfSignedIn(trip);
+  // Remove the file from cloud storage as well, unless the sail still uses it.
+  if(isPhotoRef(photoToDelete) && trip.coverPhoto !== photoToDelete && !trip.photos.includes(photoToDelete)){
+    deleteStoredPhotos([photoToDelete]);
+  }
 
   lightboxPhotos.splice(lightboxIndex,1);
   if(!lightboxPhotos.length){
@@ -269,8 +277,14 @@ async function shareLightboxPhoto(){
   const url = lightboxPhotos[lightboxIndex];
   if(!url) return;
   try{
-    const res = await fetch(url);
-    const blob = await res.blob();
+    let blob;
+    if(isPhotoRef(url)){
+      blob = await getPhotoBlob(url);
+      if(!blob){ showToast(t('toast.photoReadFail')); return; }
+    } else {
+      const res = await fetch(url);
+      blob = await res.blob();
+    }
     await shareOrDownloadFile(blob, 'sail-la-vie-photo.jpg', blob.type||'image/jpeg', 'Sail la Vie Photo', 'toast.photoDownloaded');
   }catch(e){
     if(e && e.name==='AbortError') return; // user cancelled the native share sheet

@@ -481,8 +481,9 @@ async function renderTripPdfPreview(){
   inner.style.width = TP_W+'px';
   inner.style.transformOrigin = currentLang==='he' ? 'top right' : 'top left';
   if(document.fonts && document.fonts.ready) await document.fonts.ready;
+  const pdfTrip = await inlineTripImages(trip); // stored photos -> real image data for the page layout
   if(token !== _tpPreviewToken) return;
-  const pages = layoutTripPdfPages(currentPdfTheme, tripPdfData(trip), inner);
+  const pages = layoutTripPdfPages(currentPdfTheme, tripPdfData(pdfTrip), inner);
   const s = (wrap.clientWidth || 360) / TP_W;
   inner.style.transform = `scale(${s})`;
   wrap.style.height = Math.ceil(inner.scrollHeight * s) + 'px';
@@ -503,7 +504,7 @@ async function generateAndShareTripPdf(){
   document.body.appendChild(host);
   try{
     if(document.fonts && document.fonts.ready) await document.fonts.ready;
-    const pages = layoutTripPdfPages(currentPdfTheme, tripPdfData(trip), host);
+    const pages = layoutTripPdfPages(currentPdfTheme, tripPdfData(await inlineTripImages(trip)), host);
     await waitForImagesToLoad(host);
     await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
     const { jsPDF } = window.jspdf;

@@ -648,6 +648,7 @@ async function deleteTripPrompt(){
   await storeSet(KEYS.INDEX, state.tripIndex);
   showToast(t('toast.tripDeleted'));
   syncTripDeleteIfSignedIn(deletedId);
+  deleteTripPhotoFolder(deletedId); // and its photos in cloud storage
   nav(detailReturnTo); renderHomeStats();
 }
 // Native share sheet if the browser supports it (navigator.share), otherwise

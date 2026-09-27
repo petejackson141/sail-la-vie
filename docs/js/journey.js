@@ -1038,8 +1038,8 @@ async function discardJourney(){
   }
 }
 /* ---- photos while logging: added via camera or upload tile, tap any thumb
-   to set it as the cover, ✕ to remove. Resized to 900px/72% quality on add to
-   keep storage usage down. ---- */
+   to set it as the cover, ✕ to remove. Compressed on add (see photo-store.js),
+   max MAX_PHOTOS_PER_SAIL per sail. ---- */
 // Optional reference map image for manual/edited entries, since there's no
 // GPS track to draw for a past sail. Just a plain resize (not the crop
 // adjuster) since the whole image content matters more than a tidy crop here.
@@ -1054,17 +1054,25 @@ function removeMapImage(){
   currentTrip.mapImage = null;
   document.getElementById('mapImagePreviewWrap').style.display = 'none';
 }
+// Photos are compressed on add (preparePhotoForSail in photo-store.js) and a
+// sail holds at most MAX_PHOTOS_PER_SAIL. Older sails that already have more
+// keep all of theirs — they just can't take any more.
 async function handleActivePhotos(ev){
   const files = Array.from(ev.target.files||[]);
-  for(const f of files){
+  ev.target.value='';
+  if(!files.length) return;
+  const room = MAX_PHOTOS_PER_SAIL - currentTrip.photos.length;
+  if(room <= 0){ showToast(t('photos.limitReached', {max: MAX_PHOTOS_PER_SAIL})); return; }
+  const accepted = files.slice(0, room);
+  for(const f of accepted){
     try{
-      const dataUrl = await resizeImage(f, 900, 0.72);
+      const dataUrl = await preparePhotoForSail(f);
       currentTrip.photos.push(dataUrl);
       if(!currentTrip.coverPhoto) currentTrip.coverPhoto = dataUrl;
     }catch(e){ showToast(t('toast.photoProcessFail')); }
   }
   renderActivePhotoStrip();
-  ev.target.value='';
+  if(files.length > accepted.length) showToast(t('photos.limitPartial', {n: accepted.length, max: MAX_PHOTOS_PER_SAIL}));
 }
 function renderActivePhotoStrip(){
   const strip = document.getElementById('activePhotoStrip');
@@ -1081,6 +1089,14 @@ function renderActivePhotoStrip(){
   // to re-pick on every save.
   const changeCoverLink = document.getElementById('changeCoverLink');
   if(changeCoverLink) changeCoverLink.style.display = (currentTrip.isEditing && currentTrip.photos.length) ? 'block' : 'none';
+  // "12 / 20" counter in the card header; the add tiles fade once the sail is full.
+  const n = currentTrip.photos.length, full = n >= MAX_PHOTOS_PER_SAIL;
+  const counter = document.getElementById('activePhotoCount');
+  if(counter){
+    counter.textContent = t('photos.counter', {n, max: MAX_PHOTOS_PER_SAIL});
+    counter.classList.toggle('full', full);
+  }
+  strip.querySelectorAll('.add-photo-tile').forEach(tile=> tile.classList.toggle('at-limit', full));
 }
 function setActiveCover(i){ currentTrip.coverPhoto = currentTrip.photos[i]; renderActivePhotoStrip(); }
 function removeActivePhoto(i){
@@ -1178,10 +1194,12 @@ function pickCoverThumb(i){
 // confirmPhotoAdjust() sets currentTrip.coverPhoto directly (target:'cover'),
 // which confirmCoverPick() below then respects instead of re-deriving from the
 // raw, unedited photo array.
-function openCoverPhotoAdjuster(){
+async function openCoverPhotoAdjuster(){
   const i = currentTrip._pickedCoverIndex ?? 0;
-  const src = currentTrip.photos[i];
-  if(!src) return;
+  // A photo already moved to cloud storage is a reference, not image data —
+  // the crop tool needs the real image (from this device's copy, or the cloud).
+  const src = await photoToDataUrl(currentTrip.photos[i]);
+  if(!src){ showToast(t('toast.photoReadFail')); return; }
   currentTrip._coverAdjusted = true;
   startPhotoAdjuster(src, 'cover', 'sheetCoverPick', {shape:'rect', vw:320, vh:150, outputW:800, outputH:375});
 }

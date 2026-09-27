@@ -803,6 +803,12 @@ async function resolveBoatsSyncOnSignInImpl(){
    connection. */
 async function pushTripToCloudImpl(trip){
   if(!state.user) return { ok:false };
+  // Photos go to Supabase Storage first (photo-store.js), so the database row
+  // only carries short references. If that fails (offline, or the storage
+  // bucket isn't set up yet), the sail is still pushed the old way — it will
+  // be retried on the next sync, so nothing is ever held back or lost.
+  try{ await offloadTripPhotos(trip); }
+  catch(e){ console.warn('photo upload failed — pushing this sail with photos inside for now', e); }
   try{
     // boatName is copied into the shared record so a friend viewing this sail
     // sees the boat's name (they don't have this person's Fleet). visibility
@@ -977,6 +983,20 @@ async function resolveTripsSyncOnSignInImpl(){
     debugLog(`[sync] push result for ${trip.id}: ${result.ok ? 'OK' : ('FAILED — ' + result.message)}`);
     if(!result.ok) return { ok:false, message: result.message };
   }
+
+  // One-off move of photos that are still stored inside older sails into
+  // Supabase Storage. Each sail is pushed again once its photos are uploaded;
+  // after that it has none left inside, so this finds nothing to do.
+  let movedAny = false;
+  for(const trip of merged){
+    if(!tripHasInlineImages(trip) || _photoStorageUnavailable) continue;
+    debugLog(`[sync] moving photos of trip ${trip.id} to storage...`);
+    const result = await pushTripToCloudImpl(trip);
+    if(!result.ok) console.warn('photo move push failed', trip.id, result.message);
+    else movedAny = true;
+  }
+  if(movedAny){ renderHistory(); renderHomeStats(); }
+  retryPendingPhotos();
   return { ok:true };
 }
 

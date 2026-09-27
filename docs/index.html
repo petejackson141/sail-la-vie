@@ -681,6 +681,10 @@
   .form-card{ background:var(--surface-ivory); border:1px solid var(--border); border-radius:var(--radius-lg);
     box-shadow:var(--shadow); padding:16px 16px 18px; margin-top:14px; }
   .form-card-head{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  /* "12 / 20" photo counter on the sail form; turns coral when the sail is full */
+  .form-card-head .photo-count{ margin-left:auto; font-size:12.5px; font-weight:600; color:var(--ink-muted); font-variant-numeric:tabular-nums; }
+  .form-card-head .photo-count.full{ color:var(--coral); }
+  .add-photo-tile.at-limit{ opacity:.4; }
   .fc-icon{ width:32px; height:32px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:17px; line-height:1; flex:0 0 auto; }
   .fc-icon.teal{ background:rgba(23,117,143,.13); }
   .fc-icon.coral{ background:rgba(201,123,74,.15); }
@@ -1329,7 +1333,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </div>
 
     <div class="form-card">
-    <div class="form-card-head"><span class="fc-icon teal" aria-hidden="true">📷</span><span class="fc-title" data-i18n="active.photos">Photos</span></div>
+    <div class="form-card-head"><span class="fc-icon teal" aria-hidden="true">📷</span><span class="fc-title" data-i18n="active.photos">Photos</span><span class="photo-count" id="activePhotoCount"></span></div>
     <p class="fc-hint" style="margin-top:-4px;margin-bottom:10px;" data-i18n="active.photosHint">— tap a photo to make it the cover</p>
 
     <div class="field" style="margin-bottom:0;">
@@ -1989,6 +1993,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 <script src="js/i18n.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/photo-store.js"></script>
 <script src="js/state-core.js"></script>
 <script src="js/vendor-background-geolocation.js"></script>
 <script src="js/journey.js"></script>

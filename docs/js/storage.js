@@ -158,7 +158,9 @@ async function backupToFile(){
   const trips = [];
   for(const t of state.tripIndex){
     const full = await storeGet('trip:'+t.id);
-    if(full) trips.push(full);
+    // Photos kept in cloud storage are written into the backup file as real
+    // images, so a backup still holds every photo (where they can be fetched).
+    if(full) trips.push(typeof inlineTripImages === 'function' ? await inlineTripImages(full) : full);
   }
   const payload = {
     app:'Sail la Vie', version:1, exportedAt:new Date().toISOString(),
