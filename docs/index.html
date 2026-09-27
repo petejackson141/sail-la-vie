@@ -1090,6 +1090,9 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   .vis-chip{ display:inline-block; margin:12px 0 2px; padding:7px 13px; border-radius:999px; font-size:12.5px; font-weight:600; cursor:pointer;
     background:var(--surface-ivory); border:1px solid var(--border); color:var(--ink-muted); }
   .vis-chip.on{ background:rgba(23,117,143,.11); border-color:rgba(23,117,143,.3); color:var(--teal); }
+  /* A friend's shared Noticeboard plans on their page (friends.js renderFriendPage) — read-only */
+  .fr-plan{ cursor:default; }
+  .fr-plan:active{ transform:none; }
   .friend-shared-by{ margin:12px 0 2px; font-size:13px; font-weight:600; color:var(--teal); }
 </style>
 </head>
@@ -1787,6 +1790,8 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <div class="field"><label data-i18n="noticeboard.place">Place</label><input type="text" id="noticeboardPlace" placeholder="e.g. Herzliya Marina" data-i18n-ph="noticeboard.placePh"></div>
     <div class="field"><label data-i18n="noticeboard.boat">Boat</label><select id="noticeboardBoat"></select></div>
     <div class="field"><label data-i18n="active.notes">Notes</label><textarea id="noticeboardNotes" placeholder="Who's coming, what to bring, plans for the day…" data-i18n-ph="noticeboard.notesPh"></textarea></div>
+    <!-- Who can see this plan (Only me / Friends) — shown when editing a plan while signed in; see refreshNoticeboardVisibility() in noticeboard.js -->
+    <div class="field" id="noticeboardVisRow" style="display:none;"><label data-i18n="plan.whoCanSee">Who can see this?</label><div><div class="vis-chip" style="margin-top:2px;" onclick="toggleNoticeboardVisibility()"></div></div></div>
     <button class="btn btn-primary" onclick="saveNoticeboardForm()" data-i18n="noticeboard.save">Save Plan</button>
     <button class="btn btn-ghost" id="deleteNoticeboardBtn" style="display:none;color:var(--coral);" onclick="deleteNoticeboardEntry()" data-i18n="noticeboard.delete">Delete Plan</button>
   </div>

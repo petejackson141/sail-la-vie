@@ -131,7 +131,8 @@ function planPostHtml(e, avatar, who){
   const p = dtParseDate(e.date);
   const boat = e.boatId ? state.boats.find(b=>b.id===e.boatId) : null;
   const dateStr = p ? dtFmtDate(p, {weekday:'short', day:'numeric', month:'short', year:'numeric'}) : '';
-  const meta = [e.time ? '🕐 ' + e.time : '', e.place ? '📍 ' + escapeHtml(e.place) : '', boat ? '⛵ ' + escapeHtml(boat.name) : ''].filter(Boolean).join(' · ');
+  const meta = [e.time ? '🕐 ' + e.time : '', e.place ? '📍 ' + escapeHtml(e.place) : '', boat ? '⛵ ' + escapeHtml(boat.name) : '',
+    (state.user && e.visibility === 'friends') ? t('plan.sharedTag') : ''].filter(Boolean).join(' · ');  // 👥 Shared = friends can see it
   return `<div class="post-card plan" onclick="openNoticeboardSheet('${e.id}')">
     <div class="post-head"><img src="${avatar}" alt=""><div class="post-who"><div class="post-name">${who}</div><div class="post-when">${dateStr} · ${noticeboardWhenLabel(noticeboardDaysFromToday(e.date))}</div></div><span class="post-badge plan">📌 ${t('profile.postPlan')}</span></div>
     <div class="post-title">${escapeHtml(e.title)}</div>

@@ -8,6 +8,8 @@
 //                      Declining, cancelling and unfriending all DELETE the row.
 //   trips.visibility — 'private' | 'friends'. Friends can read 'friends' sails only;
 //                      the database's security rules enforce that, not this file.
+//   noticeboard.visibility — the same for Noticeboard plans (noticeboard-friends.sql).
+//                      A friend's page shows their shared UPCOMING plans above their sails.
 //
 // Screens:
 //   screen-friends — your username, search for sailors, requests, your friends
@@ -102,6 +104,12 @@ Object.assign(TRANSLATIONS.en, {
   'vis.chipFriends': '👥 Friends can see this',
   'vis.nowPrivate': 'Only you can see this sail now',
   'vis.nowFriends': 'Your friends can see this sail now',
+  'plan.askTitle': 'Who can see this plan?',
+  'plan.askBody': 'You can change this later by opening the plan.',
+  'plan.whoCanSee': 'Who can see this?',
+  'plan.chipFriends': '👥 Friends can see this',
+  'plan.sharedTag': '👥 Shared',
+  'friends.upcomingPlans': 'Upcoming plans',
 });
 
 // A "two people" icon for the visibility question, used through showConfirm().
@@ -544,7 +552,8 @@ function openFriendPage(userId, from){
   const isFriend = !!(row && row.status==='accepted');
   _friendSails = { userId, list:null, failed:false, requested:isFriend };
   _friendProfile = { userId, data:null, loaded:false };
-  if(isFriend){ loadFriendSails(userId); loadFriendProfile(userId); }
+  _friendPlans = { userId, list:null };
+  if(isFriend){ loadFriendSails(userId); loadFriendProfile(userId); loadFriendPlans(userId); }
   nav('friend');
 }
 
@@ -618,6 +627,43 @@ async function loadFriendSails(userId){
   }
   if((document.querySelector('.screen.active')||{}).id==='screen-friend') renderFriendPage();
 }
+/* ---------- a friend's shared Noticeboard plans ----------
+   Only plans they marked "Friends", only upcoming ones (today onwards), soonest first.
+   Allowed by the "Friends can read shared plans" policy in noticeboard-friends.sql; if
+   that hasn't been run yet the query just fails/returns nothing and the section stays hidden. */
+let _friendPlans = { userId:null, list:null };
+async function loadFriendPlans(userId){
+  let list = [];
+  try{
+    const { data, error } = await getSupabaseClient().from('noticeboard')
+      .select('id,data').eq('user_id', userId).is('deleted_at', null).eq('visibility', 'friends');
+    if(error) throw error;
+    list = (data||[]).map(r=>r.data).filter(e=>e && e.date && noticeboardDaysFromToday(e.date) >= 0)
+      .sort((a,b)=>noticeboardSortKey(a).localeCompare(noticeboardSortKey(b)));
+  }catch(e){ console.error('friend plans load failed', e); }
+  if(openFriendId !== userId) return;
+  _friendPlans = { userId, list };
+  if((document.querySelector('.screen.active')||{}).id==='screen-friend') renderFriendPage();
+}
+// Same card as your own Noticeboard, but read-only (no tap-to-edit).
+function friendPlanCardHtml(e){
+  const p = dtParseDate(e.date);
+  if(!p) return '';
+  const n = noticeboardDaysFromToday(e.date);
+  const meta = [e.time ? '🕐 ' + escapeHtml(e.time) : '', e.place ? '📍 ' + escapeHtml(e.place) : '', e.boatName ? '⛵ ' + escapeHtml(e.boatName) : ''].filter(Boolean).join(' · ');
+  return `<div class="noticeboard-card tint-cream fr-plan${n === 0 ? ' is-today' : ''}">
+    <div class="dc-date">
+      <div class="dc-mon">${dtFmtDate(p, {month:'short'})}</div>
+      <div class="dc-day">${p.d}</div>
+      <div class="dc-wd">${dtFmtDate(p, {weekday:'short'})}</div>
+    </div>
+    <div class="dc-body">
+      <div class="dc-top"><div class="dc-title">${escapeHtml(e.title || '')}</div><span class="dc-when">${noticeboardWhenLabel(n)}</span></div>
+      ${meta ? `<div class="dc-meta">${meta}</div>` : ''}
+      ${e.notes ? `<div class="dc-notes">${escapeHtml(e.notes)}</div>` : ''}
+    </div>
+  </div>`;
+}
 function renderFriendPage(){
   const body = document.getElementById('friendBody');
   if(!body || !openFriendId) return;
@@ -639,6 +685,7 @@ function renderFriendPage(){
   else if(_friendSails.userId===openFriendId && !_friendSails.list && !_friendSails.failed && !_friendSails.requested){
     _friendSails.requested = true; loadFriendSails(openFriendId); // just became friends while on this page
     if(!_friendProfile.loaded) loadFriendProfile(openFriendId);
+    loadFriendPlans(openFriendId);
     sails = `<div class="fr-hint">${t('friends.loading')}</div>`;
   }
   else if(_friendSails.failed) sails = `<div class="fr-hint">${t('friends.loadFailed')}</div>`;
@@ -663,6 +710,9 @@ function renderFriendPage(){
   const hasDetails = !!(tags || (fp && fp.bio) || contacts);
   const detailsHint = isFriend && _friendProfile.loaded && !hasDetails
     ? `<div class="fc-hint" style="margin-top:8px;">${t('friends.noDetails', {name: escapeHtml(fullName)})}</div>` : '';
+  const planList = (isFriend && _friendPlans.userId===openFriendId && _friendPlans.list) || [];
+  const plans = planList.length
+    ? `<div class="section-divider pf"><span>${t('friends.upcomingPlans')}</span></div>${planList.map(friendPlanCardHtml).join('')}` : '';
   const stats = isFriend && _friendSails.list && _friendSails.list.length
     ? `<div class="section-divider pf"><span>${t('friends.statsShared')}</span></div>
        <div class="profile-stats">${friendStatsHtml(_friendSails.list)}</div>` : '';
@@ -682,6 +732,7 @@ function renderFriendPage(){
       ${detailsHint}
     </div>
     ${stats}
+    ${plans}
     <div class="section-divider pf"><span>${t('friends.sharedSails')}</span></div>
     ${sails}
     ${isFriend ? `<div class="link-plain" style="color:var(--coral);text-align:center;margin-top:22px;" onclick="removeFriendPrompt('${openFriendId}')">${t('friends.remove')}</div>` : ''}`;
@@ -696,6 +747,15 @@ async function openFriendTrip(tripId){
     console.error('friend trip load failed', e);
     showToast(t('toast.tripLoadFail'));
   }
+}
+
+/* ---------- plan visibility (Noticeboard) ---------- */
+// Asked once when a NEW Noticeboard plan is saved (signed in only). Tapping outside = Only me.
+async function askPlanVisibility(){
+  const friends = await showConfirm(t('plan.askBody'), {
+    title: t('plan.askTitle'), okLabel: t('vis.friends'), cancelLabel: t('vis.private'), icon: 'users'
+  });
+  return friends ? 'friends' : 'private';
 }
 
 /* ---------- sail visibility ---------- */

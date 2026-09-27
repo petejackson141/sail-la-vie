@@ -7,7 +7,12 @@
 // backup/restore file and in "Reset App Data". It also syncs to the signed-in account
 // (Supabase table `noticeboard`, same push/merge/tombstone scheme as boats and crew — see
 // the noticeboard section of auth.js). A plan looks like:
-//   { id, title, date:'YYYY-MM-DD', time:'HH:mm' or '', place, boatId, notes, updatedAt }
+//   { id, title, date:'YYYY-MM-DD', time:'HH:mm' or '', place, boatId, notes, visibility, updatedAt }
+// visibility is 'private' (only me) or 'friends', exactly like sails: asked once when a NEW
+// plan is saved while signed in, changeable afterwards from the plan's edit sheet (the
+// "Who can see this?" chip). Friends see shared plans on your page in the Friends screen —
+// the database's security rules decide that (noticeboard-friends.sql), not this file.
+// Plans written while signed out (or before this existed) have no visibility = private.
 // Dates are plain local calendar dates (no timezone maths), so "19 Sept" stays "19 Sept".
 //
 // The date/time controls reuse the themed picker (dtOpen in journey.js) — it hands the
@@ -15,7 +20,7 @@
 
 let noticeboardFilter = 'upcoming';   // 'upcoming' | 'past' — set by the chips above the list
 let editingNoticeboardId = null;      // null while adding a new plan, otherwise the id being edited
-let noticeboardDraft = { date:'', time:'' };  // the date/time currently chosen in the open form
+let noticeboardDraft = { date:'', time:'', visibility:null };  // date/time (and, when editing, visibility) chosen in the open form
 
 function setNoticeboardFilter(f){
   noticeboardFilter = f;
@@ -57,7 +62,8 @@ function renderNoticeboard(){
   el.innerHTML = list.map(({e, n})=>{
     const p = dtParseDate(e.date);
     const boat = e.boatId ? state.boats.find(b=>b.id===e.boatId) : null;
-    const meta = [e.time ? '🕐 ' + e.time : '', e.place ? '📍 ' + escapeHtml(e.place) : '', boat ? '⛵ ' + escapeHtml(boat.name) : ''].filter(Boolean).join(' · ');
+    const meta = [e.time ? '🕐 ' + e.time : '', e.place ? '📍 ' + escapeHtml(e.place) : '', boat ? '⛵ ' + escapeHtml(boat.name) : '',
+      (state.user && e.visibility === 'friends') ? t('plan.sharedTag') : ''].filter(Boolean).join(' · ');
     const cls = 'noticeboard-card tint-cream' + (n === 0 ? ' is-today' : '') + (n < 0 ? ' is-past' : '');
     return `<div class="${cls}" onclick="openNoticeboardSheet('${e.id}')">
       <div class="dc-date">
@@ -82,7 +88,8 @@ function noticeboardTodayStr(){
 function openNoticeboardSheet(id){
   const entry = id ? state.noticeboard.find(e=>e.id===id) : null;
   editingNoticeboardId = entry ? entry.id : null;
-  noticeboardDraft = { date: entry ? entry.date : noticeboardTodayStr(), time: entry ? (entry.time || '') : '' };
+  noticeboardDraft = { date: entry ? entry.date : noticeboardTodayStr(), time: entry ? (entry.time || '') : '',
+                       visibility: entry ? (entry.visibility === 'friends' ? 'friends' : 'private') : null };
   document.getElementById('noticeboardSheetTitle').textContent = entry ? t('noticeboard.editTitle') : t('noticeboard.newTitle');
   document.getElementById('noticeboardTitle').value = entry ? entry.title : '';
   document.getElementById('noticeboardPlace').value = entry ? (entry.place || '') : '';
@@ -91,12 +98,31 @@ function openNoticeboardSheet(id){
     state.boats.map(b=>`<option value="${b.id}"${entry && entry.boatId===b.id ? ' selected' : ''}>${escapeHtml(b.name)}</option>`).join('');
   document.getElementById('deleteNoticeboardBtn').style.display = entry ? 'flex' : 'none';
   refreshNoticeboardWhen();
+  refreshNoticeboardVisibility();
   openSheet('sheetNoticeboard');
 }
 function refreshNoticeboardWhen(){
   const p = dtParseDate(noticeboardDraft.date);
   document.getElementById('noticeboardDateDisplay').textContent = p ? dtFmtDate(p, {day:'numeric', month:'short', year:'numeric'}) : '—';
   document.getElementById('noticeboardTimeDisplay').textContent = noticeboardDraft.time || t('noticeboard.anyTime');
+}
+// "Who can see this?" chip — only when editing an existing plan while signed in (a new plan
+// is asked with the same pop-up as a new sail when it's saved). Tapping flips the draft;
+// it's stored when Save Plan is pressed, together with the rest of the form.
+function refreshNoticeboardVisibility(){
+  const row = document.getElementById('noticeboardVisRow');
+  if(!row) return;
+  const show = !!(state.user && editingNoticeboardId);
+  row.style.display = show ? '' : 'none';
+  if(!show) return;
+  row.querySelector('label').textContent = t('plan.whoCanSee');
+  const on = noticeboardDraft.visibility === 'friends';
+  row.querySelector('.vis-chip').className = 'vis-chip' + (on ? ' on' : '');
+  row.querySelector('.vis-chip').textContent = on ? t('plan.chipFriends') : t('vis.chipPrivate');
+}
+function toggleNoticeboardVisibility(){
+  noticeboardDraft.visibility = noticeboardDraft.visibility === 'friends' ? 'private' : 'friends';
+  refreshNoticeboardVisibility();
 }
 // Opens the shared date/time picker for this form; it comes back to this sheet afterwards.
 function openNoticeboardPicker(tab){
@@ -122,6 +148,10 @@ async function saveNoticeboardForm(){
     notes: document.getElementById('noticeboardNotes').value.trim(),
     updatedAt: new Date().toISOString()
   };
+  // Who can see it: editing keeps whatever the chip says; a brand-new plan asks (signed in
+  // only — same question as a new sail); signed out it simply stays private.
+  if(editingNoticeboardId) fields.visibility = noticeboardDraft.visibility || 'private';
+  else fields.visibility = state.user ? await askPlanVisibility() : 'private';
   let saved;
   if(editingNoticeboardId){
     saved = state.noticeboard.find(e=>e.id===editingNoticeboardId);

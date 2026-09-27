@@ -1229,7 +1229,9 @@ async function manualSyncProfile(){
    local save, tombstoned (deleted_at) rather than really deleted, and pulled + merged
    newest-updated_at-wins on sign-in, boot, "Sync Now" and whenever Realtime reports a
    change on the table. Everything goes through the same cloud sync queue.
-   Needs the table + RLS policies + Realtime switched on — see noticeboard-supabase.sql.
+   Needs the table + RLS policies + Realtime switched on — see noticeboard-supabase.sql —
+   and, for sharing plans with friends, the visibility column + friends policy from
+   noticeboard-friends.sql.
    Until that has been run, these calls just fail quietly (logged) and the Noticeboard
    keeps working locally exactly as before. */
 function pushNoticeboardToCloud(entry){
@@ -1238,9 +1240,20 @@ function pushNoticeboardToCloud(entry){
 async function pushNoticeboardToCloudImpl(entry){
   if(!state.user) return { ok:false };
   try{
-    const { error } = await getSupabaseClient()
-      .from('noticeboard')
-      .upsert({ id: entry.id, user_id: state.user.id, data: entry, updated_at: entry.updatedAt || new Date().toISOString() });
+    // Same idea as trips: boatName is copied into the shared record so a friend sees the
+    // boat's name (they don't have this person's Fleet), and visibility is its own column
+    // because the database's security rules read it to decide whether friends may see it.
+    const boat = entry.boatId ? state.boats.find(b=>b.id===entry.boatId) : null;
+    const data = { ...entry, boatName: boat ? boat.name : (entry.boatName || null) };
+    const row = { id: entry.id, user_id: state.user.id, data, visibility: entry.visibility === 'friends' ? 'friends' : 'private',
+      updated_at: entry.updatedAt || new Date().toISOString() };
+    let { error } = await getSupabaseClient().from('noticeboard').upsert(row);
+    // Safety net: if noticeboard-friends.sql hasn't been run yet, the visibility column
+    // doesn't exist — push without it rather than breaking Noticeboard sync.
+    if(error && /visibility/i.test(error.message || '')){
+      delete row.visibility;
+      ({ error } = await getSupabaseClient().from('noticeboard').upsert(row));
+    }
     if(error) throw error;
     return { ok:true };
   }catch(e){
