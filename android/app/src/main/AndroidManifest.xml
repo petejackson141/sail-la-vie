@@ -23,6 +23,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Deep link for the Supabase email confirmation link:
+                 saillavie://auth-callback opens this app (handled in docs/js/auth.js).
+                 The same URL must be in Supabase → Authentication → URL Configuration → Redirect URLs. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="saillavie" android:host="auth-callback" />
+            </intent-filter>
+
         </activity>
 
         <!-- Sail la Vie's own GPS recorder (tracking/SailTrackerService.java).

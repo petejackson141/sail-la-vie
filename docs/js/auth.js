@@ -80,6 +80,110 @@ function withCloudSyncQueue(fn){
 
 let authMode = 'signin'; // 'signin' | 'signup' — which mode sheetAuth is currently showing
 
+/* ---------- email-link deep link (Android app) ----------
+   Supabase's confirmation email link first verifies the account on
+   Supabase's servers, then redirects to `emailRedirectTo`. In the installed
+   Android app that's a custom link, saillavie://auth-callback, which Android
+   hands to this app thanks to the <intent-filter> on MainActivity in
+   android/app/src/main/AndroidManifest.xml. The link carries the new
+   session, which we hand to Supabase so the person lands signed in.
+
+   Two ways the link can arrive:
+     - app fully closed  → App.getLaunchUrl() at boot (called from initAuth)
+     - app already open / in background → the 'appUrlOpen' event
+   Both formats Supabase may use are handled: tokens in the #fragment
+   (implicit flow, supabase-js's default) or ?code=… (PKCE flow).
+
+   IMPORTANT: saillavie://auth-callback must be listed under Supabase →
+   Authentication → URL Configuration → Redirect URLs, or Supabase ignores
+   emailRedirectTo and falls back to the Site URL.
+
+   TODO (iOS): when the iPhone native build is started, the same link needs
+   registering on iOS too (CFBundleURLTypes in ios/App/App/Info.plist with the
+   `saillavie` scheme). The JS below already works for both platforms. */
+const AUTH_DEEP_LINK = 'saillavie://auth-callback';
+
+function isNativeAuthPlatform(){
+  return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+}
+
+// Where the confirmation link should send people after Supabase verifies them.
+function authRedirectUrl(){
+  if(isNativeAuthPlatform()) return AUTH_DEEP_LINK;
+  // Web / iPhone home-screen version: back to wherever the app is hosted
+  // (the GitHub Pages address), minus any file name like index.html.
+  return location.origin + location.pathname.replace(/[^/]*$/, '');
+}
+
+let _lastAuthDeepLink = null;
+// Returns true if the link was ours and a session was created from it.
+async function handleAuthDeepLink(url, {runSync} = {runSync:true}){
+  if(!url || !url.startsWith(AUTH_DEEP_LINK)) return false;
+  if(url === _lastAuthDeepLink) return false; // same link delivered twice — ignore
+  _lastAuthDeepLink = url;
+
+  // Tokens can be in the #fragment or the ?query — gather both.
+  const params = new URLSearchParams();
+  const hashIdx = url.indexOf('#');
+  const qIdx = url.indexOf('?');
+  if(qIdx !== -1) new URLSearchParams(url.slice(qIdx + 1, hashIdx > qIdx ? hashIdx : undefined)).forEach((v,k)=>params.set(k,v));
+  if(hashIdx !== -1) new URLSearchParams(url.slice(hashIdx + 1)).forEach((v,k)=>params.set(k,v));
+
+  try{
+    const errMsg = params.get('error_description') || params.get('error');
+    if(errMsg){
+      // e.g. an expired or already-used link
+      showToast(errMsg.replace(/\+/g,' ') + ' — try signing in.');
+      return false;
+    }
+    const client = getSupabaseClient();
+    if(params.get('code')){
+      const { error } = await client.auth.exchangeCodeForSession(params.get('code'));
+      if(error) throw error;
+    } else if(params.get('access_token') && params.get('refresh_token')){
+      const { error } = await client.auth.setSession({
+        access_token: params.get('access_token'),
+        refresh_token: params.get('refresh_token')
+      });
+      if(error) throw error;
+    } else {
+      return false; // nothing usable in the link
+    }
+    closeSheets();
+    hideWelcomeGate();
+    if(runSync){
+      // Same first-sign-in sync as signing in by hand.
+      await resolveProfileSyncOnSignIn();
+      await resolveBoatsSyncOnSignIn();
+      await resolveCrewSyncOnSignIn();
+      await resolveTripsSyncOnSignIn();
+      await resolveNoticeboardSyncOnSignIn();
+    }
+    showToast('Email confirmed — you\'re signed in.');
+    return true;
+  } catch(e){
+    console.error('auth deep link failed', e);
+    showToast('Email confirmed. Please sign in.');
+    return false;
+  }
+}
+
+async function setupAuthDeepLinks(){
+  if(!isNativeAuthPlatform()) return; // web handles its own link automatically
+  const AppPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if(!AppPlugin) return;
+  // App already running → link arrives as an event.
+  AppPlugin.addListener('appUrlOpen', (e) => {
+    handleAuthDeepLink(e && e.url).catch(err => console.error(err));
+  });
+  // App was closed → link is the launch URL. initAuth()'s own boot sync
+  // runs straight after this, so skip the sync here.
+  try{
+    const launch = await AppPlugin.getLaunchUrl();
+    if(launch && launch.url) await handleAuthDeepLink(launch.url, {runSync:false});
+  } catch(e){ console.error('getLaunchUrl failed', e); }
+}
+
 /* ---------- boot-time session check ----------
    Called once from boot() in state-core.js (not awaited there — see the
    comment at that call site). Checks whether a session already exists (e.g.
@@ -87,6 +191,12 @@ let authMode = 'signin'; // 'signin' | 'signup' — which mode sheetAuth is curr
    future auth changes so state.user + the Settings screen stay correct
    whenever the session changes (sign in, sign out, token refresh). */
 async function initAuth(){
+  // If the app was launched by tapping the confirmation link (app was fully
+  // closed), turn that link into a signed-in session FIRST, so the session
+  // check below finds it and the welcome gate never shows. The normal
+  // boot-time sync below then runs for it, so no extra sync here.
+  await setupAuthDeepLinks();
+
   const { data } = await getSupabaseClient().auth.getSession();
   applySession(data.session);
 
@@ -347,7 +457,13 @@ async function submitAuthForm(){
 
   try{
     if(authMode === 'signup'){
-      const { data, error } = await getSupabaseClient().auth.signUp({ email, password });
+      const { data, error } = await getSupabaseClient().auth.signUp({
+        email, password,
+        // Where the confirmation email's link sends people once Supabase has
+        // verified them — the installed Android app via its deep link, or the
+        // live web app. See authRedirectUrl() below.
+        options: { emailRedirectTo: authRedirectUrl() }
+      });
       if(error) throw error;
       closeSheets();
       if(data.session){
