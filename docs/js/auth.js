@@ -26,6 +26,11 @@ let _supabaseClient = null;
 // client before it's actually needed.
 function getSupabaseClient(){
   if(!_supabaseClient){
+    // Safety net: if the bundled library somehow didn't load, fail with a
+    // readable message instead of the raw "supabase is not defined".
+    if(typeof supabase === 'undefined' || !supabase.createClient){
+      throw new Error('Could not start the sign-in service. Please close the app completely and reopen it.');
+    }
     // The device's WebView was serving a stale, months-old cached response
     // for these GET requests no matter what — turned out to be the WebView's
     // own HTTP cache (now disabled directly in MainActivity.java) rather
