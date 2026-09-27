@@ -666,6 +666,41 @@
     border-radius:22px; font-size:13.5px; font-weight:600; box-shadow:var(--shadow); z-index:200; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; }
   .toast.show{ opacity:1; transform:translate(-50%,-6px); }
   .section-title{ font-family:var(--font-display); font-weight:700; font-size:15px; margin:22px 0 12px; color:var(--ink); }
+  /* ---- Weather on the water (sail detail — js/sail-weather.js) ---- */
+  .wx-title{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .wx-tag{ font-family:var(--font-body); font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:99px; background:var(--pastel-mint,#E7F7F2); color:var(--teal,var(--navy-soft)); }
+  .wx-tag.coral{ background:var(--pastel-rose,#FDEDF0); color:var(--coral-deep); }
+  .wx-card{ padding:14px; }
+  .wx-summary{ background:var(--pastel-cream,#FEF5E1); color:var(--ink); border-radius:var(--radius-sm); padding:10px 12px; font-size:14px; line-height:1.45; margin-bottom:10px; }
+  .wx-chart-legend{ display:flex; flex-wrap:wrap; gap:4px 14px; font-size:11px; color:var(--ink-muted); margin:2px 0 2px; }
+  .wx-chart-legend i{ display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle; margin-right:5px; }
+  .wx-chart{ display:block; }
+  .wx-tiles{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:6px; }
+  .wx-cell{ background:var(--bg-sunk); border-radius:var(--radius-sm); padding:8px 10px; min-width:0; }
+  .wx-cell small{ display:block; font-size:10.5px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.04em; font-weight:600; }
+  .wx-cell b{ font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+  .wx-vs{ margin-top:12px; display:flex; align-items:flex-start; gap:10px; border-radius:var(--radius-sm); padding:9px 12px; font-size:13px; line-height:1.4; background:var(--bg-sunk); color:var(--ink); }
+  .wx-vs.up{ background:var(--pastel-rose,#FDEDF0); }
+  .wx-vs.down{ background:var(--pastel-blue,#E9F5FD); }
+  .wx-vs > span:first-child{ font-size:16px; line-height:1.2; }
+  .wx-obs{ margin-top:12px; border:1px dashed var(--border); border-radius:var(--radius-sm); padding:9px 12px; font-size:13px; color:var(--ink-muted); cursor:pointer; }
+  .wx-obs.filled{ border-style:solid; background:var(--bg-elevated); color:var(--ink); }
+  .wx-obs.filled b{ font-size:12px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.04em; }
+  .wx-obs.filled p{ margin:4px 0 0; white-space:pre-wrap; }
+  .wx-obs.editing{ cursor:default; border-style:solid; }
+  .wx-obs textarea{ width:100%; border:1px solid var(--border); border-radius:10px; padding:8px 10px; font:inherit; font-size:14px; color:var(--ink); background:var(--bg-elevated); resize:vertical; }
+  .wx-obs-actions{ display:flex; gap:8px; margin-top:8px; }
+  .wx-obs-actions .btn{ flex:1; }
+  .wx-hourly{ margin-top:12px; border-top:1px solid var(--border); padding-top:10px; }
+  .wx-hourly summary{ font-size:13px; font-weight:600; color:var(--teal,var(--navy-soft)); cursor:pointer; }
+  .wx-hourly table{ width:100%; border-collapse:collapse; font-size:12.5px; margin-top:8px; color:var(--ink); }
+  .wx-hourly td, .wx-hourly th{ padding:6px 4px; text-align:start; border-bottom:1px solid var(--border); }
+  .wx-hourly th{ font-size:10.5px; color:var(--ink-muted); text-transform:uppercase; font-weight:600; }
+  .wx-source{ font-size:11px; color:var(--ink-muted); margin-top:10px; line-height:1.4; }
+  .wx-empty p{ font-size:13.5px; color:var(--ink-muted); margin:0 0 10px; }
+  .wx-pending{ display:flex; gap:12px; align-items:center; font-size:13.5px; line-height:1.4; color:var(--ink); }
+  .wx-spin{ width:28px; height:28px; flex:none; border-radius:50%; border:3px solid var(--bg-sunk); border-top-color:var(--teal,var(--navy-soft)); animation:wxspin 1s linear infinite; }
+  @keyframes wxspin{ to{ transform:rotate(360deg); } }
   .link-plain{ color:var(--navy-soft); font-weight:600; font-size:13px; cursor:pointer; }
 
   /* ---------- form cards (Active Journey Log / past-sail entry) ----------
@@ -2008,6 +2043,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 <script src="js/vendor-background-geolocation.js"></script>
 <script src="js/journey.js"></script>
 <script src="js/history-maps.js"></script>
+<script src="js/sail-weather.js"></script>
 <script src="js/boats-crew.js"></script>
 <script src="js/noticeboard.js"></script>
 <script src="js/notifications.js"></script>

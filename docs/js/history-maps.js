@@ -159,7 +159,7 @@ async function openTripDetail(id, from, friendView){
 
     <div id="detailMapArea"></div>
 
-    <div class="section-title">${t('detail.weather')}</div>
+    <div class="section-title">${wxHasTrack(trip) ? t('wx.departureTitle') : t('detail.weather')}</div>
     <div class="card" style="padding:16px;">
       <div class="trip-meta">
         <span>${trip.weather?.sky?`${skyIcon(trip.weather.sky)} ${skyLabel(trip.weather.sky)}`:''}</span>
@@ -169,6 +169,8 @@ async function openTripDetail(id, from, friendView){
         <span>🌡 ${trip.weather?.temp?trip.weather.temp+'°C':'—'}</span>
       </div>
     </div>
+
+    ${sailWeatherSectionHtml(trip, !!friendView)}
 
     ${trip.notes ? `<div class="section-title">${t('active.notes')}</div><div class="card" style="padding:16px;"><p style="color:var(--ink);">${escapeHtml(trip.notes)}</p></div>` : ''}
 
@@ -194,6 +196,7 @@ async function openTripDetail(id, from, friendView){
   window._detailTrip = trip;
   nav('detail');
   renderTripDetailMap(trip);
+  maybeFillSailWeatherOnOpen(trip);
 }
 // Fills in #detailMapArea after the rest of the detail screen has rendered.
 // Three cases: a GPS track (try real map, fall back to offline porthole), a

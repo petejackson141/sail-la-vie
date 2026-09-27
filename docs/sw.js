@@ -39,7 +39,7 @@
   sees it. Supabase (and any other live API traffic) is now explicitly
   excluded from caching entirely, further down.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v21';
+const CACHE_NAME = 'sail-la-vie-shell-v22';
 
 const APP_SHELL = [
   './',
@@ -57,6 +57,7 @@ const APP_SHELL = [
   './js/state-core.js',
   './js/journey.js',
   './js/history-maps.js',
+  './js/sail-weather.js',
   './js/boats-crew.js',
   './js/noticeboard.js',
   './js/notifications.js',
@@ -100,8 +101,11 @@ self.addEventListener('fetch', (event) => {
   // checked before the same-origin/cross-origin split below, since Supabase
   // requests are cross-origin and would otherwise fall into the cache-first
   // branch meant only for pinned third-party library URLs.
+  // Open-Meteo (weather at Cast Off + the sail's weather report) is live data
+  // too — a cached answer would be wrong or stuck, so it's never cached either.
   const isSupabase = url.hostname.endsWith('.supabase.co');
-  if (isSupabase) {
+  const isLiveApi = isSupabase || url.hostname.endsWith('open-meteo.com');
+  if (isLiveApi) {
     event.respondWith(fetch(req));
     return;
   }

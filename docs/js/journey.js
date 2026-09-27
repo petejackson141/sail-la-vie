@@ -1232,6 +1232,10 @@ async function finalizeSaveTrip(){
   if(!currentTrip.isEditing && !currentTrip.visibility){
     currentTrip.visibility = state.user ? await askTripVisibility() : 'private';
   }
+  // A newly recorded GPS sail gets an automatic "Weather on the water" report
+  // (see sail-weather.js) — marked waiting now, filled in once online.
+  const needsWeatherReport = !currentTrip.isEditing && !currentTrip.isManual && wxHasTrack(currentTrip) && !currentTrip.weatherReport;
+  if(needsWeatherReport) currentTrip.weatherReport = {status:'pending'};
   const savedBoat = currentTrip.boatId ? state.boats.find(b=>b.id===currentTrip.boatId) : null;
   currentTrip.boatName = savedBoat ? savedBoat.name : null; // shown to friends, who don't have your Fleet
   currentTrip.updatedAt = new Date().toISOString();
@@ -1260,6 +1264,7 @@ async function finalizeSaveTrip(){
   clearActiveTripCheckpoint();
   nav('home');
   renderHomeStats();
+  if(needsWeatherReport) await wxAddPending(savedId); // before opening, so an offline save is remembered
   openTripDetail(savedId);
 }
 
