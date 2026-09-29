@@ -80,6 +80,78 @@ function downloadAndroidApp(){
   showToast('Downloading. When it finishes, open the file and tap Install');
   openExternalUrl(ANDROID_APK_URL);
 }
+/* ---------- "Update available" check (Android app only) ----------
+   On launch, asks GitHub for the newest Release and compares its tag with
+   this build's APP_VERSION. If the release is newer, a prompt offers the
+   download, and the About row shows "Update available".
+   IMPORTANT when publishing: the release tag must be "v" + the APP_VERSION of
+   the APK you attach (e.g. v29.09.2026.0916 — the number shown in Settings).
+   "Later" hides the prompt for 24 hours; the About row keeps showing it. */
+const ANDROID_RELEASE_API = 'https://api.github.com/repos/petejackson141/sail-la-vie/releases/latest';
+const UPDATE_SNOOZE_KEY   = 'sailUpdateSnooze';
+const UPDATE_SNOOZE_MS    = 24 * 60 * 60 * 1000;
+
+function _isAndroidApp(){
+  try{ return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()
+                 && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'android'); }
+  catch(e){ return false; }
+}
+// "29.09.2026.0916" or "v29.09.2026.0916" -> 202609290916 (a comparable number). null if not a version.
+function _versionNumber(v){
+  const m = String(v || '').trim().replace(/^v/i, '').match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\.(\d{3,4}))?$/);
+  if(!m) return null;
+  const hhmm = (m[4] || '0000').padStart(4, '0');
+  return Number(m[3] + m[2].padStart(2, '0') + m[1].padStart(2, '0') + hhmm);
+}
+function _markAboutUpdate(newVersion){
+  const row = document.getElementById('aboutAndroidRow');
+  if(!row) return;
+  const sub = row.querySelector('.ab-sub');
+  if(sub){ sub.textContent = 'Update available: version ' + newVersion; sub.style.color = 'var(--coral-deep)'; sub.style.fontWeight = '600'; }
+  const title = row.querySelector('.ab-title');
+  if(title) title.textContent = 'Download the update';
+}
+
+async function checkForAppUpdate(){
+  if(!_isAndroidApp() || !ANDROID_APK_URL) return;
+  if(navigator.onLine === false) return;
+  try{
+    const ctrl = ('AbortController' in window) ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), 8000) : null;
+    const res = await fetch(ANDROID_RELEASE_API, {
+      cache: 'no-store',
+      headers: { 'Accept': 'application/vnd.github+json' },
+      signal: ctrl ? ctrl.signal : undefined
+    });
+    if(timer) clearTimeout(timer);
+    if(!res.ok) return; // no release yet (404) or GitHub busy: stay quiet
+    const rel = await res.json();
+    const latest = _versionNumber(rel && rel.tag_name);
+    const mine = _versionNumber(APP_VERSION);
+    if(!latest || !mine || latest <= mine) return;
+
+    const newVersion = String(rel.tag_name).replace(/^v/i, '');
+    _markAboutUpdate(newVersion);
+
+    // Snoozed recently for this same version? Don't pop up again yet.
+    try{
+      const snooze = JSON.parse(localStorage.getItem(UPDATE_SNOOZE_KEY) || 'null');
+      if(snooze && snooze.tag === rel.tag_name && (Date.now() - snooze.at) < UPDATE_SNOOZE_MS) return;
+    }catch(e){}
+
+    const ok = await showConfirm(
+      'Version ' + newVersion + ' of Sail la Vie is ready. Download it, open the file and tap Install. Your sails and settings stay as they are.',
+      { title: 'Update available', okLabel: 'Download', cancelLabel: 'Later', icon: 'cloud' }
+    ).catch(() => false);
+    if(ok){ downloadAndroidApp(); }
+    else{
+      try{ localStorage.setItem(UPDATE_SNOOZE_KEY, JSON.stringify({ tag: rel.tag_name, at: Date.now() })); }catch(e){}
+    }
+  }catch(e){
+    console.warn('update check failed', e);
+  }
+}
+
 function openLegalLink(kind){
   const url = kind === 'privacy' ? PRIVACY_URL : TERMS_URL;
   if(!url){ showToast((kind === 'privacy' ? 'The privacy policy' : 'The terms of use') + ' will be added before public release'); return; }
@@ -244,3 +316,5 @@ async function sendContactMessage(){
 
 initAboutPage();
 setContactTopic('feedback');
+// Give the app a few seconds to finish opening before checking for updates.
+setTimeout(checkForAppUpdate, 4000);

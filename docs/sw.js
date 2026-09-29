@@ -39,7 +39,7 @@
   sees it. Supabase (and any other live API traffic) is now explicitly
   excluded from caching entirely, further down.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v24';
+const CACHE_NAME = 'sail-la-vie-shell-v25';
 
 const APP_SHELL = [
   './',
@@ -105,7 +105,9 @@ self.addEventListener('fetch', (event) => {
   // Open-Meteo (weather at Cast Off + the sail's weather report) is live data
   // too — a cached answer would be wrong or stuck, so it's never cached either.
   const isSupabase = url.hostname.endsWith('.supabase.co');
-  const isLiveApi = isSupabase || url.hostname.endsWith('open-meteo.com');
+  // GitHub's API answers the in-app "Update available" check (js/about.js) —
+  // a cached answer would hide new releases forever, so it's never cached.
+  const isLiveApi = isSupabase || url.hostname.endsWith('open-meteo.com') || url.hostname === 'api.github.com';
   if (isLiveApi) {
     event.respondWith(fetch(req));
     return;
