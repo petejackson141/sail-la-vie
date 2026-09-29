@@ -29,7 +29,9 @@ const WHATS_NEW = [
     'Privacy policy and terms of use added.',
     'Delete your account from Settings → Account.',
     'Send feedback, report a problem or suggest a feature straight from the app.',
-    'Download the latest Android version from Settings → Help & About → About.'
+    'Download the latest Android version from Settings → Help & About → About.',
+    'An account is now needed to use the app, and you choose a username when you first sign in.',
+    'Usernames can now have spaces and capitals, like “Pete Jackson”.'
   ]},
   { version: '27.09.2026', items: [
     'Friends: find other sailors, send friend requests and see the sails they share with you.',

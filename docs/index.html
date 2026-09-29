@@ -424,6 +424,13 @@
   .wg-title{ font-size:28px; margin:0; color:var(--ink); }
   .wg-sub{ font-size:14px; line-height:1.5; color:var(--ink-muted); margin:8px 4px 20px; }
   .wg-note{ font-size:11px; color:var(--ink-faint); margin:6px 0 0; }
+  /* Username gate: same look as the welcome gate, one layer above it and below sheets/dialogs. */
+  .username-gate{ z-index:95; }
+  .username-gate .wg-logo{ width:84px; height:84px; }
+  .username-gate input{ width:100%; text-align:center; font-size:16px; }
+  .ug-rules{ font-size:12px; color:var(--ink-muted); margin-top:6px; }
+  .username-gate .fr-error{ margin-top:8px; }
+  .ug-public{ margin:14px 4px 0; line-height:1.45; font-size:11.5px; }
 
   /* ---------- bottom nav ---------- */
   .bottombar-wrap{ position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:480px; z-index:50; }
@@ -2222,9 +2229,9 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 
 <div class="toast" id="toast"></div>
 
-<!-- Welcome gate: shown at app start when nobody is signed in. Sign in / Create account open the
-     normal sign-in sheet on top of it. "Continue without an account" is a TEMPORARY option for
-     evaluating the app — delete that button (and welcome.continue / welcome.testNote) later. -->
+<!-- Welcome gate: shown whenever nobody is signed in (app start and after signing out). Sign in /
+     Create account open the normal sign-in sheet on top of it. There is no way past it without an
+     account: everyone must sign in to use the app. -->
 <div class="welcome-gate" id="welcomeGate">
   <div class="wg-card">
     <div class="wg-logo"><img src="images/Logo.png" alt=""></div>
@@ -2232,8 +2239,24 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <p class="wg-sub" data-i18n="welcome.subtitle">Sign in or create an account to keep your sailing safe and synced across all your devices.</p>
     <button class="btn btn-primary" onclick="welcomeSignIn()" data-i18n="welcome.signIn">Sign in</button>
     <button class="btn btn-outline" style="margin-top:10px;" onclick="welcomeSignUp()" data-i18n="welcome.signUp">Create account</button>
-    <button class="btn btn-ghost" style="margin-top:6px;" onclick="dismissWelcomeGate()" data-i18n="welcome.continue">Continue without an account</button>
-    <p class="wg-note" data-i18n="welcome.testNote">Testing option — this will be removed later.</p>
+  </div>
+</div>
+
+<!-- Username gate (js/friends.js): shown right after signing in to an account that has no username
+     yet. Choosing one creates the public card (username, name, photo), so other sailors can find
+     you straight away. Can't be skipped; "Sign out" is the only other way out. -->
+<div class="welcome-gate username-gate" id="usernameGate">
+  <div class="wg-card">
+    <div class="wg-logo"><img src="images/Logo.png" alt=""></div>
+    <h1 class="app-title wg-title" data-i18n="ugate.title">Choose your username</h1>
+    <p class="wg-sub" data-i18n="ugate.sub">This is how other sailors find you and add you as a friend.</p>
+    <input type="text" id="gateUsernameInput" maxlength="20" autocapitalize="words" autocomplete="off" spellcheck="false"
+      data-i18n-ph="ugate.ph" placeholder="e.g. Pete Jackson" onkeydown="if(event.key==='Enter')saveGateUsername()">
+    <div class="ug-rules" data-i18n="ugate.rules">3–20 characters. Letters, numbers and spaces are fine.</div>
+    <div class="fr-error" id="gateUsernameError" style="display:none;"></div>
+    <button class="btn btn-primary" id="gateUsernameSave" style="margin-top:14px;" onclick="saveGateUsername()" data-i18n="ugate.save">Save and continue</button>
+    <p class="wg-note ug-public" data-i18n="ugate.public">During testing, your username, name and profile photo can be seen by everyone using Sail la Vie. Your sails stay private unless you share them with friends.</p>
+    <button class="btn btn-ghost" style="margin-top:4px;" onclick="signOutUser()" data-i18n="ugate.signOut">Sign out</button>
   </div>
 </div>
 <div id="printArea" style="display:none;"></div>

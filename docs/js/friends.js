@@ -43,12 +43,19 @@ Object.assign(TRANSLATIONS.en, {
   'friends.loadFailed': "Couldn't load friends — check your connection.",
   'friends.retry': 'Try again',
   'friends.chooseTitle': 'Choose your username',
-  'friends.chooseHint': 'This is how other sailors find you. 3–20 characters: lowercase letters, numbers, _ and .',
-  'friends.usernamePh': 'e.g. pete_sails',
+  'friends.chooseHint': 'This is how other sailors find you. 3–20 characters: letters, numbers and spaces are fine.',
+  'friends.usernamePh': 'e.g. Pete Jackson',
   'friends.save': 'Save username',
   'friends.cancel': 'Cancel',
   'friends.change': 'Change',
-  'friends.badFormat': 'Use 3–20 characters: lowercase letters, numbers, _ or .',
+  'friends.badFormat': 'Use 3–20 characters: letters, numbers and single spaces (. _ - are fine too).',
+  'ugate.title': 'Choose your username',
+  'ugate.sub': 'This is how other sailors find you and add you as a friend.',
+  'ugate.ph': 'e.g. Pete Jackson',
+  'ugate.rules': '3–20 characters. Letters, numbers and spaces are fine.',
+  'ugate.save': 'Save and continue',
+  'ugate.public': 'During testing, your username, name and profile photo can be seen by everyone using Sail la Vie. Your sails stay private unless you share them with friends.',
+  'ugate.signOut': 'Sign out',
   'friends.taken': 'That username is already taken.',
   'friends.saved': 'Username saved ⚓',
   'friends.searchPh': 'Find sailors by username or name…',
@@ -182,6 +189,7 @@ async function loadFriendsData(){
   }
   if(!state.user || state.user.id !== me) return;
   if(_friendsReloadQueued){ _friendsReloadQueued = false; return loadFriendsData(); }
+  updateUsernameGate();
   if(!unchanged) refreshFriendsUI();
   // Keep the public card's name/photo in step with the local profile, quietly.
   if(friendsState.me) syncPublicProfileIfSignedIn(true);
@@ -194,6 +202,7 @@ function onFriendsSessionChanged(){
   onFriendsSessionChanged._last = uid;
   resetFriendsState();
   refreshFriendsUI();
+  updateUsernameGate();
   if(uid) loadFriendsData();
 }
 
@@ -257,13 +266,34 @@ async function syncPublicProfileIfSignedIn(onlyIfChanged){
   friendsState.me = { ...friendsState.me, display_name, avatar_url };
 }
 
+/* ---------- usernames ----------
+   Usernames can be written the way people write their names: "Pete Jackson", "Sea Breeze 2".
+   Rules (the database checks the same thing — see usernames-with-spaces.sql):
+     • 3–20 characters
+     • letters (any language, so Hebrew, Spanish accents etc. work), numbers, and . _ - '
+     • single spaces between words (extra spaces are tidied up automatically)
+   Capitals are kept as typed, but two usernames that differ only in capitals count as the
+   same name, so "pete jackson" is taken if "Pete Jackson" exists. */
+const USERNAME_RE = /^[\p{L}\p{N}._'’׳-]+(?: [\p{L}\p{N}._'’׳-]+)*$/u;
+function normaliseUsername(v){ return String(v||'').replace(/^\s*@/, '').replace(/\s+/g, ' ').trim(); }
+function isValidUsername(u){ return u.length >= 3 && u.length <= 20 && USERNAME_RE.test(u); }
+
 async function saveUsername(){
-  const input = document.getElementById('friendUsernameInput');
-  const errEl = document.getElementById('friendUsernameError');
-  const username = (input.value||'').trim().toLowerCase().replace(/^@/, '');
+  const ok = await saveUsernameFrom('friendUsernameInput', 'friendUsernameError', 'friendUsernameSave');
+  if(ok){ friendUsernameEditing = false; refreshFriendsUI(); }
+}
+// Validates and saves the username typed in inputId. Shared by the Friends screen form and the
+// username gate. Returns true when saved.
+async function saveUsernameFrom(inputId, errId, btnId){
+  const input = document.getElementById(inputId);
+  const errEl = document.getElementById(errId);
+  const username = normaliseUsername(input.value);
+  input.value = username;
   errEl.style.display = 'none';
-  if(!/^[a-z0-9_.]{3,20}$/.test(username)){ errEl.textContent = t('friends.badFormat'); errEl.style.display = 'block'; return; }
-  const btn = document.getElementById('friendUsernameSave');
+  if(!isValidUsername(username)){ errEl.textContent = t('friends.badFormat'); errEl.style.display = 'block'; return false; }
+  // Unchanged name (e.g. only re-saved from the Change form): nothing to do.
+  if(friendsState.me && friendsState.me.username === username) return true;
+  const btn = document.getElementById(btnId);
   btn.disabled = true;
   try{
     const row = {
@@ -274,19 +304,51 @@ async function saveUsername(){
     };
     const { error } = await getSupabaseClient().from('public_profiles').upsert(row);
     if(error){
-      if(error.code === '23505'){ errEl.textContent = t('friends.taken'); errEl.style.display = 'block'; return; }
+      if(error.code === '23505'){ errEl.textContent = t('friends.taken'); errEl.style.display = 'block'; return false; }
+      // 23514 = the database's format check said no (e.g. the new SQL hasn't been run yet).
+      if(error.code === '23514'){ errEl.textContent = t('friends.badFormat'); errEl.style.display = 'block'; return false; }
       throw error;
     }
     friendsState.me = row;
-    friendUsernameEditing = false;
     showToast(t('friends.saved'));
+    updateUsernameGate();
     refreshFriendsUI();
+    if(SHOW_ALL_SAILORS_FOR_TESTING) loadAllSailors();
+    return true;
   }catch(e){
     console.error('username save failed', e);
     errEl.textContent = t('friends.actionFailed'); errEl.style.display = 'block';
+    return false;
   }finally{
     btn.disabled = false;
   }
+}
+
+/* ---------- username gate ----------
+   Right after signing in, an account without a username gets #usernameGate (index.html): it
+   covers the app until a username is chosen, which creates the public card so the sailor shows
+   up for everyone straight away. It only appears once the friends data has actually loaded and
+   confirmed there's no username — never while offline or while that check is still running. */
+function updateUsernameGate(){
+  const gate = document.getElementById('usernameGate');
+  if(!gate) return;
+  const need = !!state.user && friendsState.loaded && !friendsState.failed && !friendsState.me;
+  if(need && !gate.classList.contains('show')){
+    const input = document.getElementById('gateUsernameInput');
+    // Suggest the profile name if it already fits the rules; otherwise start empty.
+    const suggestion = normaliseUsername(state.profile && state.profile.name);
+    if(input && !input.value) input.value = isValidUsername(suggestion) ? suggestion : '';
+    document.getElementById('gateUsernameError').style.display = 'none';
+    gate.classList.add('show');
+  } else if(!need && gate.classList.contains('show')){
+    gate.classList.remove('show');
+    const input = document.getElementById('gateUsernameInput');
+    if(input) input.value = '';
+  }
+}
+async function saveGateUsername(){
+  const ok = await saveUsernameFrom('gateUsernameInput', 'gateUsernameError', 'gateUsernameSave');
+  if(ok) updateUsernameGate();
 }
 function startChangeUsername(){ friendUsernameEditing = true; renderFriendsScreen(); }
 function cancelChangeUsername(){ friendUsernameEditing = false; renderFriendsScreen(); }
@@ -480,7 +542,7 @@ function renderFriendsScreen(){
     else meBox.innerHTML = `<div class="form-card">
       <div class="fr-card-title">${t('friends.chooseTitle')}</div>
       <p class="fr-hint" style="margin:4px 0 12px;text-align:left;">${t('friends.chooseHint')}</p>
-      <input type="text" id="friendUsernameInput" maxlength="21" autocapitalize="none" autocomplete="off" spellcheck="false"
+      <input type="text" id="friendUsernameInput" maxlength="20" autocapitalize="words" autocomplete="off" spellcheck="false"
         placeholder="${t('friends.usernamePh')}" value="${me ? escapeHtml(me.username) : ''}">
       <div class="fr-error" id="friendUsernameError" style="display:none;"></div>
       <button class="btn btn-primary" id="friendUsernameSave" style="margin-top:12px;" onclick="saveUsername()">${t('friends.save')}</button>

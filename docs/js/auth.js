@@ -232,15 +232,17 @@ function applySession(session){
   ensureRealtimeSync();
   if(typeof onFriendsSessionChanged === 'function') onFriendsSessionChanged(); // friends.js
   if(session) hideWelcomeGate(); // signed in (from the gate or otherwise) — nothing left to ask
+  else if(_welcomeGateArmed) showWelcomeGateIfSignedOut(); // signed out after start-up → back to the gate
 }
 
 /* ---------- welcome gate ----------
-   When the app opens and nobody is signed in, #welcomeGate asks them to sign in or create an account
-   first. It is shown once per app start (boot() calls showWelcomeGateIfSignedOut after the session
-   check) and goes away when they sign in, or tap "Continue without an account" — a TEMPORARY
-   escape hatch for evaluating the app (remove that button when accounts become mandatory). The
-   choice isn't remembered, so the gate returns on the next launch until someone is signed in. */
+   An account is required to use the app. Whenever nobody is signed in, #welcomeGate covers the app
+   and asks them to sign in or create an account; there is no way past it without one. boot() shows
+   it after the start-up session check; after that (_welcomeGateArmed) signing out brings it back
+   straight away. It goes away as soon as a session exists. */
+let _welcomeGateArmed = false;
 function showWelcomeGateIfSignedOut(){
+  _welcomeGateArmed = true;
   if(!state.user) document.getElementById('welcomeGate').classList.add('show');
 }
 function hideWelcomeGate(){
@@ -249,7 +251,6 @@ function hideWelcomeGate(){
 }
 function welcomeSignIn(){ openAuthSheet('signin'); }
 function welcomeSignUp(){ openAuthSheet('signup'); }
-function dismissWelcomeGate(){ hideWelcomeGate(); }
 
 /* ---------- live sync across devices (Supabase Realtime) ----------
    Without this, profile/boats/crew only ever re-pull from the cloud at
