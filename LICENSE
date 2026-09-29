@@ -1,0 +1,13 @@
+Copyright (c) 2026 Pete Jackson. All rights reserved.
+
+Sail la Vie, including its source code, design, graphics, text, and the
+Sail la Vie name and logo, is the property of Pete Jackson.
+
+No part of this software may be copied, modified, distributed, published,
+sublicensed or sold without prior written permission from the copyright
+holder.
+
+Third-party components included in or used by this software (such as
+Leaflet, Capacitor, the Supabase client, jsPDF and html2canvas) remain under
+their own licences. Map data (c) OpenStreetMap contributors. Weather data by
+Open-Meteo.com.

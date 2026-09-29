@@ -666,6 +666,52 @@
     border-radius:22px; font-size:13.5px; font-weight:600; box-shadow:var(--shadow); z-index:200; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; }
   .toast.show{ opacity:1; transform:translate(-50%,-6px); }
   .section-title{ font-family:var(--font-display); font-weight:700; font-size:15px; margin:22px 0 12px; color:var(--ink); }
+  /* ---- Help & About, About, Contact us, info pages (js/about.js) ---- */
+  .about-list{ padding:0; overflow:hidden; }
+  .about-row{ width:100%; min-height:62px; display:flex; align-items:center; gap:14px; padding:10px 16px;
+    background:transparent; border:none; border-top:1px solid var(--border); font:inherit; color:var(--ink); text-align:start; cursor:pointer; }
+  .about-row:first-child{ border-top:none; }
+  .about-row:active{ background:rgba(23,117,143,.06); }
+  .about-row .ab-icon{ width:38px; height:38px; flex-shrink:0; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+  .about-row .ab-icon svg{ width:20px; height:20px; }
+  .about-row .ab-icon.teal{ background:var(--pastel-blue); color:var(--teal); }
+  .about-row .ab-icon.mint{ background:var(--pastel-mint); color:var(--teal); }
+  .about-row .ab-icon.coral{ background:var(--pastel-rose); color:var(--coral-deep); }
+  .about-row .ab-icon.cream{ background:var(--pastel-cream); color:var(--navy); }
+  .about-row .ab-icon.plain{ width:24px; height:24px; background:none; color:var(--ink-muted); }
+  .about-row .ab-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .about-row .ab-title{ font-size:15px; font-weight:600; }
+  .about-row .ab-sub{ font-size:12.5px; color:var(--ink-muted); }
+  .about-row .ab-chev{ width:18px; height:18px; flex-shrink:0; color:var(--ink-faint); }
+  .about-row .soon-tag{ margin-inline-start:0; }
+  .about-hero{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:26px 20px 22px; text-align:center; }
+  .about-hero img{ width:92px; height:92px; border-radius:50%; object-fit:cover; box-shadow:var(--shadow); }
+  .about-hero .app-title{ font-size:30px; color:var(--ink); margin-top:8px; }
+  .about-hero .ab-tagline{ font-size:14px; color:var(--ink-muted); }
+  .about-hero .ab-version{ margin-top:8px; padding:5px 12px; border-radius:999px; background:var(--pastel-blue); color:var(--navy);
+    font-size:12.5px; font-weight:600; font-variant-numeric:tabular-nums; }
+  html[data-theme="dark"] .about-hero .ab-version{ color:var(--ink); }
+  .about-foot{ text-align:center; font-size:12px; color:var(--ink); margin-top:22px; line-height:1.6; }
+  .contact-intro{ font-size:13.5px; margin:-6px 0 18px; }
+  .contact-attach{ width:100%; min-height:48px; display:flex; align-items:center; gap:10px; padding:0 14px; margin-bottom:14px;
+    border-radius:var(--radius-sm); border:1.5px dashed var(--ink-faint); background:transparent; font:inherit; font-size:14px; color:var(--ink-muted); cursor:pointer; }
+  .contact-attach svg{ width:19px; height:19px; flex-shrink:0; }
+  .contact-shot{ display:none; align-items:center; gap:12px; margin-bottom:14px; }
+  .contact-shot.show{ display:flex; }
+  .contact-shot img{ width:64px; height:64px; border-radius:10px; object-fit:cover; border:1px solid var(--border); }
+  .contact-device{ display:flex; align-items:flex-start; gap:12px; padding:14px; margin-bottom:18px; }
+  .contact-device input{ width:22px; height:22px; margin:1px 0 0; flex-shrink:0; accent-color:var(--teal); }
+  .contact-device label{ display:flex; flex-direction:column; gap:3px; cursor:pointer; }
+  .contact-device .cd-title{ font-size:14px; font-weight:600; color:var(--ink); }
+  .contact-device .cd-sub{ font-size:12px; color:var(--ink-muted); }
+  .contact-alt{ text-align:center; font-size:12.5px; color:var(--ink-muted); margin-top:14px; }
+  .info-body{ padding:18px; font-size:14px; line-height:1.6; color:var(--ink); }
+  .info-body p{ color:var(--ink); margin:0 0 12px; }
+  .info-body h3{ font-size:15px; margin:16px 0 6px; }
+  .info-body h3:first-child{ margin-top:0; }
+  .info-body ul{ margin:0 0 12px; padding-inline-start:20px; }
+  .info-body li{ margin-bottom:6px; }
+  .info-body .muted{ color:var(--ink-muted); font-size:12.5px; }
   /* ---- Weather on the water (sail detail — js/sail-weather.js) ---- */
   .wx-title{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
   .wx-tag{ font-family:var(--font-body); font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:99px; background:var(--pastel-mint,#E7F7F2); color:var(--teal,var(--navy-soft)); }
@@ -1623,6 +1669,26 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <input type="file" id="restoreFileInput" accept="application/json" style="display:none;" onchange="restoreFromFile(event)">
     </div>
 
+    <div class="section-title">Help &amp; About</div>
+    <div class="card about-list">
+      <button class="about-row" onclick="openUserManual()">
+        <span class="ab-icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg></span>
+        <span class="ab-text"><span class="ab-title">User manual</span></span>
+        <span class="manual-soon"></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="about-row" onclick="openContact('feedback')">
+        <span class="ab-icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <span class="ab-text"><span class="ab-title">Contact us</span></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="about-row" onclick="nav('about')">
+        <span class="ab-icon mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/></svg></span>
+        <span class="ab-text"><span class="ab-title">About Sail la Vie</span><span class="ab-sub app-version-text"></span></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
     <div class="section-title" style="color:var(--coral);" data-i18n="settings.dangerZone">Danger Zone</div>
     <div class="card" style="padding:16px;border:1px solid var(--coral);">
       <p style="font-size:12.5px;margin-bottom:12px;" data-i18n="settings.resetHint">Permanently erases every trip, boat, crew member, noticeboard plan, and profile detail on this device. This can't be undone — back up first if you want to keep anything.</p>
@@ -1633,6 +1699,142 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     </div>
 
     <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:18px;" id="appVersionLine"></div>
+  </section>
+
+  <!-- ============ ABOUT (js/about.js) ============ -->
+  <section class="screen" id="screen-about">
+    <div class="backrow">
+      <div class="iconbtn back-icon" onclick="nav('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2>About</h2>
+    </div>
+
+    <div class="card about-hero">
+      <img src="images/Logo.png" alt="Sail la Vie logo">
+      <div class="app-title">Sail la Vie</div>
+      <div class="ab-tagline">Your sailing logbook</div>
+      <div class="ab-version app-version-text"></div>
+    </div>
+
+    <div class="section-title">Help</div>
+    <div class="card about-list">
+      <button class="about-row" onclick="openUserManual()">
+        <span class="ab-icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg></span>
+        <span class="ab-text"><span class="ab-title">User manual</span><span class="ab-sub">Tracking, logging, sharing and more</span></span>
+        <span class="manual-soon"></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="about-row" onclick="showInfoPage('whatsnew')">
+        <span class="ab-icon mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></svg></span>
+        <span class="ab-text"><span class="ab-title">What's new</span><span class="ab-sub">Changes in recent versions</span></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <div class="section-title">Contact us</div>
+    <div class="card about-list">
+      <button class="about-row" onclick="openContact('feedback')">
+        <span class="ab-icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <span class="ab-text"><span class="ab-title">Send feedback</span><span class="ab-sub">Tell us what you like or what to improve</span></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="about-row" onclick="openContact('problem')">
+        <span class="ab-icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/></svg></span>
+        <span class="ab-text"><span class="ab-title">Report a problem</span><span class="ab-sub">Something not working? Let us know</span></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="about-row" onclick="openContact('idea')">
+        <span class="ab-icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg></span>
+        <span class="ab-text"><span class="ab-title">Suggest a feature</span><span class="ab-sub">Ideas for future versions</span></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="about-row" id="aboutEmailRow" onclick="emailSupport()" style="display:none;">
+        <span class="ab-icon cream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
+        <span class="ab-text"><span class="ab-title">Email us</span><span class="ab-sub support-email-text"></span></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <div class="section-title">Legal</div>
+    <div class="card about-list">
+      <button class="about-row" onclick="showInfoPage('licence')">
+        <span class="ab-icon plain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></span>
+        <span class="ab-text"><span class="ab-title">Licence &amp; copyright</span></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="about-row" onclick="openLegalLink('privacy')">
+        <span class="ab-icon plain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></span>
+        <span class="ab-text"><span class="ab-title">Privacy policy</span></span>
+        <span class="privacy-soon"></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="about-row" onclick="openLegalLink('terms')">
+        <span class="ab-icon plain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg></span>
+        <span class="ab-text"><span class="ab-title">Terms of use</span></span>
+        <span class="terms-soon"></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="about-row" onclick="showInfoPage('credits')">
+        <span class="ab-icon plain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/></svg></span>
+        <span class="ab-text"><span class="ab-title">Credits &amp; open-source licences</span><span class="ab-sub">Map data © OpenStreetMap contributors</span></span>
+        <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <div class="about-foot" id="aboutCopyright"></div>
+  </section>
+
+  <!-- ============ CONTACT US (js/about.js) ============ -->
+  <section class="screen" id="screen-contact">
+    <div class="backrow">
+      <div class="iconbtn back-icon" onclick="nav('about')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2>Contact us</h2>
+    </div>
+    <p class="contact-intro">We read every message. Replies go to the email on your account.</p>
+
+    <div class="field">
+      <label>Topic</label>
+      <div class="chiprow" id="contactTopicChips">
+        <div class="chip" data-topic="feedback" onclick="setContactTopic('feedback')">Feedback</div>
+        <div class="chip" data-topic="problem" onclick="setContactTopic('problem')">Problem</div>
+        <div class="chip" data-topic="idea" onclick="setContactTopic('idea')">Idea</div>
+        <div class="chip" data-topic="other" onclick="setContactTopic('other')">Other</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="contactMessage">Your message</label>
+      <textarea id="contactMessage" rows="6" maxlength="5000"></textarea>
+    </div>
+
+    <button class="contact-attach" id="contactAttachBtn" onclick="document.getElementById('contactShotInput').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></svg>
+      Attach a screenshot (optional)
+    </button>
+    <input type="file" id="contactShotInput" accept="image/*" style="display:none;" onchange="onContactShotPicked(event)">
+    <div class="contact-shot" id="contactShot">
+      <img id="contactShotImg" alt="Attached screenshot">
+      <div class="link-plain" style="color:var(--coral);" onclick="removeContactShot()">Remove</div>
+    </div>
+
+    <div class="card contact-device">
+      <input type="checkbox" id="contactIncludeDevice" checked>
+      <label for="contactIncludeDevice">
+        <span class="cd-title">Include app version and device</span>
+        <span class="cd-sub" id="contactDeviceLine"></span>
+      </label>
+    </div>
+
+    <button class="btn btn-primary" id="contactSendBtn" onclick="sendContactMessage()">Send message</button>
+    <div class="contact-alt" id="contactEmailAlt" style="display:none;">Prefer email? <span class="link-plain support-email-text" onclick="emailSupport()"></span></div>
+  </section>
+
+  <!-- ============ INFO PAGE: What's new / Licence / Credits (js/about.js) ============ -->
+  <section class="screen" id="screen-info">
+    <div class="backrow">
+      <div class="iconbtn back-icon" onclick="nav('about')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <h2 id="infoTitle"></h2>
+    </div>
+    <div class="card info-body" id="infoBody"></div>
   </section>
 
   <!-- ============ NOTICEBOARD ============ -->
@@ -2058,5 +2260,6 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 <script src="js/certificate.js"></script>
 <script src="js/trip-pdf.js"></script>
 <script src="js/units.js"></script>
+<script src="js/about.js"></script>
 </body>
 </html>

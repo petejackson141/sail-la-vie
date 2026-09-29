@@ -39,7 +39,7 @@
   sees it. Supabase (and any other live API traffic) is now explicitly
   excluded from caching entirely, further down.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v23';
+const CACHE_NAME = 'sail-la-vie-shell-v24';
 
 const APP_SHELL = [
   './',
@@ -66,7 +66,8 @@ const APP_SHELL = [
   './js/pdf-export.js',
   './js/certificate.js',
   './js/trip-pdf.js',
-  './js/units.js'
+  './js/units.js',
+  './js/about.js'
 ];
 
 self.addEventListener('install', (event) => {
