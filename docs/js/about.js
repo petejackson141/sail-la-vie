@@ -11,15 +11,18 @@
    ============================================================ */
 const COPYRIGHT_HOLDER = 'Pete Jackson';
 const COPYRIGHT_YEAR   = 2026;
-const SUPPORT_EMAIL    = '';   // e.g. 'hello@saillavie.app'
-const USER_MANUAL_URL  = '';   // e.g. a page on the GitHub Pages site
-const PRIVACY_URL      = '';   // needed before Google Play / App Store release
-const TERMS_URL        = '';
+const SUPPORT_EMAIL    = 'sailapp141@gmail.com';
+// Always the live copy on GitHub Pages. To update the guide, replace
+// docs/Sail-la-Vie-User-Guide.pdf with the new file (same name) and push.
+const USER_MANUAL_URL  = 'https://petejackson141.github.io/sail-la-vie/Sail-la-Vie-User-Guide.pdf';
+const PRIVACY_URL      = 'https://petejackson141.github.io/sail-la-vie/privacy.html';
+const TERMS_URL        = 'https://petejackson141.github.io/sail-la-vie/terms.html';
 
 // Newest first. Add a line here with each release worth telling people about.
 const WHATS_NEW = [
   { version: '29.09.2026', items: [
     'New About page with the user manual, contact form and legal information (Settings → Help & About).',
+    'Privacy policy and terms of use added.',
     'Send feedback, report a problem or suggest a feature straight from the app.'
   ]},
   { version: '27.09.2026', items: [
