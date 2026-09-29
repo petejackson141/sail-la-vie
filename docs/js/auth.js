@@ -1342,3 +1342,130 @@ async function resolveNoticeboardSyncOnSignInImpl(){
   }
   return { ok:true };
 }
+
+/* ============================================================
+   DELETE ACCOUNT  (Settings → Account → "Delete account…")
+   Permanently removes the signed-in person's account and all their cloud data:
+     1. (if "Keep a copy on this phone") copies every cloud photo back into the
+        sails saved on this device, so nothing breaks once the cloud copies go.
+     2. stops live sync, so nothing gets pushed back up mid-way.
+     3. deletes their photos from Storage (trip-photos/<user id>/…).
+        (Storage files can't be deleted from SQL, so this happens here.)
+     4. calls the delete_my_account() database function
+        (delete-account-supabase.sql), which deletes their rows in every table
+        and then the account itself, all in one go.
+     5. signs out on this device and, if chosen, erases this device too.
+   Nothing is deleted online until steps 1–3 have succeeded.
+   ============================================================ */
+let _deletingAccount = false;
+
+function openDeleteAccountSheet(){
+  if(!state.user){ showToast('You’re not signed in'); return; }
+  document.getElementById('deleteConfirmInput').value = '';
+  const keep = document.querySelector('input[name="delLocal"][value="keep"]');
+  if(keep) keep.checked = true;
+  onDeleteConfirmInput();
+  openSheet('sheetDeleteAccount');
+}
+function onDeleteConfirmInput(){
+  const ok = document.getElementById('deleteConfirmInput').value.trim().toUpperCase() === 'DELETE';
+  const btn = document.getElementById('deleteAccountBtn');
+  btn.disabled = !ok || _deletingAccount;
+  btn.style.opacity = btn.disabled ? '.5' : '';
+}
+function _setDeleteBusy(busy, label){
+  _deletingAccount = busy;
+  const btn = document.getElementById('deleteAccountBtn');
+  btn.textContent = label || 'Delete my account';
+  onDeleteConfirmInput();
+}
+
+// Every file under this person's own folder in the photo bucket.
+async function _listMyStoredPhotos(){
+  const sb = getSupabaseClient();
+  const root = state.user.id;
+  const paths = [];
+  const { data: top, error } = await sb.storage.from(PHOTO_BUCKET).list(root, { limit: 1000 });
+  if(error) throw error;
+  for(const item of (top || [])){
+    if(item.id){ paths.push(`${root}/${item.name}`); continue; } // a file right in the root folder
+    const folder = `${root}/${item.name}`;                      // a sail's folder
+    let offset = 0;
+    for(;;){
+      const { data, error: e2 } = await sb.storage.from(PHOTO_BUCKET).list(folder, { limit: 1000, offset });
+      if(e2) throw e2;
+      (data || []).filter(f => f.id).forEach(f => paths.push(`${folder}/${f.name}`));
+      if(!data || data.length < 1000) break;
+      offset += 1000;
+    }
+  }
+  return paths;
+}
+
+// Copies cloud photos into the sails saved on this device. Throws if any can't be fetched.
+async function _keepPhotosOnThisDevice(){
+  for(const entry of state.tripIndex){
+    const trip = await storeGet('trip:'+entry.id);
+    if(!trip) continue;
+    const refs = [...(trip.photos || []), trip.coverPhoto, trip.mapImage].filter(isPhotoRef);
+    if(!refs.length) continue;
+    const full = await inlineTripImages(trip);
+    const stillRefs = [...(full.photos || []), full.coverPhoto, full.mapImage].filter(isPhotoRef);
+    if(stillRefs.length) throw new Error('photo download failed');
+    await storeSet('trip:'+entry.id, full);
+    entry.coverPhoto = full.coverPhoto;
+  }
+  await storeSet(KEYS.INDEX, state.tripIndex);
+}
+
+async function deleteMyAccount(){
+  if(_deletingAccount || !state.user) return;
+  if(document.getElementById('deleteConfirmInput').value.trim().toUpperCase() !== 'DELETE') return;
+  if(navigator.onLine === false){ showToast("You're offline. Connect to the internet to delete your account"); return; }
+  const eraseDevice = (document.querySelector('input[name="delLocal"]:checked') || {}).value === 'erase';
+  const sb = getSupabaseClient();
+
+  try{
+    if(!eraseDevice){
+      _setDeleteBusy(true, 'Saving photos to this phone…');
+      await _keepPhotosOnThisDevice();
+    }
+
+    _setDeleteBusy(true, 'Deleting…');
+    teardownRealtimeSync();
+    try{ sb.removeAllChannels(); }catch(e){}
+
+    const paths = await _listMyStoredPhotos();
+    for(let i = 0; i < paths.length; i += 100){
+      const { error } = await sb.storage.from(PHOTO_BUCKET).remove(paths.slice(i, i + 100));
+      if(error) throw error;
+    }
+
+    const { error } = await sb.rpc('delete_my_account');
+    if(error) throw error;
+  }catch(e){
+    console.error('delete account failed', e);
+    _setDeleteBusy(false);
+    ensureRealtimeSync(); // nothing was deleted from the account itself — carry on as before
+    const msg = /photo download failed/.test(e && e.message || '')
+      ? "Couldn't copy your photos to this phone. Check your connection and try again."
+      : "Couldn't delete your account. Please try again, or email sailapp141@gmail.com.";
+    showToast(msg);
+    return;
+  }
+
+  // The account is gone. Sign out on this device (the session no longer exists online).
+  try{ await sb.auth.signOut({ scope: 'local' }); }catch(e){}
+  applySession(null);
+  _setDeleteBusy(false);
+
+  if(eraseDevice){
+    try{ indexedDB.deleteDatabase('sail-la-vie-photos'); }catch(e){}
+    await resetAllData();
+    showToast('Your account and all your data have been deleted');
+  } else {
+    closeSheets();
+    nav('home'); renderHomeStats();
+    showToast('Your account has been deleted. Your sails are still on this phone');
+  }
+}

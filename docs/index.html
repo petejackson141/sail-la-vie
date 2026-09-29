@@ -712,6 +712,10 @@
   .info-body ul{ margin:0 0 12px; padding-inline-start:20px; }
   .info-body li{ margin-bottom:6px; }
   .info-body .muted{ color:var(--ink-muted); font-size:12.5px; }
+  .field label.del-choice{ display:flex; align-items:flex-start; gap:10px; padding:12px 14px; margin-bottom:8px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:var(--surface-ivory); font-size:14px; color:var(--ink); text-transform:none; letter-spacing:0; font-weight:400; cursor:pointer; }
+  .del-choice input{ width:20px; height:20px; margin:1px 0 0; flex-shrink:0; accent-color:var(--coral-deep); }
+  .del-choice .del-sub{ font-size:12.5px; color:var(--ink-muted); }
   /* ---- Weather on the water (sail detail — js/sail-weather.js) ---- */
   .wx-title{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
   .wx-tag{ font-family:var(--font-body); font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:99px; background:var(--pastel-mint,#E7F7F2); color:var(--teal,var(--navy-soft)); }
@@ -1625,6 +1629,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
         <p style="font-weight:600;font-size:14.5px;margin-bottom:14px;" id="accountEmailLine"></p>
         <button class="btn btn-outline" id="syncProfileBtn" style="margin-bottom:10px;" onclick="manualSyncProfile()">Sync Now</button>
         <button class="btn btn-outline" onclick="signOutUser()">Sign Out</button>
+        <div class="link-plain" style="color:var(--coral);text-align:center;margin-top:14px;" onclick="openDeleteAccountSheet()">Delete account…</div>
       </div>
     </div>
 
@@ -2185,6 +2190,26 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
     <button class="btn btn-danger" onclick="resetAllData()" data-i18n="sheet.eraseEverything">Yes, erase everything</button>
     <div style="height:10px;"></div>
     <button class="btn btn-ghost" onclick="closeSheets()" data-i18n="action.cancel">Cancel</button>
+  </div>
+
+  <!-- Delete account (js/auth.js → deleteMyAccount). Needs delete-account-supabase.sql run once in Supabase. -->
+  <div class="sheet" id="sheetDeleteAccount" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3>Delete your account</h3>
+    <p style="margin-bottom:12px;">This permanently deletes your Sail la Vie account and everything stored with it online: your sails, photos, boats, crew, Noticeboard plans, profile, friends and any messages you’ve sent us. Friends will no longer see anything you shared. <b>This can’t be undone.</b></p>
+    <div class="field" style="margin-bottom:12px;">
+      <label>Your data on this phone</label>
+      <label class="del-choice"><input type="radio" name="delLocal" value="keep" checked> <span><b>Keep a copy on this phone</b><br><span class="del-sub">Your sails and photos stay here, just not backed up any more.</span></span></label>
+      <label class="del-choice"><input type="radio" name="delLocal" value="erase"> <span><b>Erase this phone too</b><br><span class="del-sub">Removes everything from this device as well.</span></span></label>
+    </div>
+    <p style="font-size:12.5px;margin-bottom:14px;">Want a copy first? <span class="link-plain" onclick="backupToFile()">Backup to File</span></p>
+    <div class="field">
+      <label for="deleteConfirmInput">Type DELETE to confirm</label>
+      <input type="text" id="deleteConfirmInput" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="onDeleteConfirmInput()">
+    </div>
+    <button class="btn btn-danger" id="deleteAccountBtn" onclick="deleteMyAccount()" disabled style="opacity:.5;">Delete my account</button>
+    <div style="height:10px;"></div>
+    <button class="btn btn-ghost" onclick="closeSheets()">Cancel</button>
   </div>
 
 </div>

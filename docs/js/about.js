@@ -23,6 +23,7 @@ const WHATS_NEW = [
   { version: '29.09.2026', items: [
     'New About page with the user manual, contact form and legal information (Settings → Help & About).',
     'Privacy policy and terms of use added.',
+    'Delete your account from Settings → Account.',
     'Send feedback, report a problem or suggest a feature straight from the app.'
   ]},
   { version: '27.09.2026', items: [
