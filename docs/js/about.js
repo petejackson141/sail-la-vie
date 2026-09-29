@@ -17,6 +17,10 @@ const SUPPORT_EMAIL    = 'sailapp141@gmail.com';
 const USER_MANUAL_URL  = 'https://petejackson141.github.io/sail-la-vie/Sail-la-Vie-User-Guide.pdf';
 const PRIVACY_URL      = 'https://petejackson141.github.io/sail-la-vie/privacy.html';
 const TERMS_URL        = 'https://petejackson141.github.io/sail-la-vie/terms.html';
+// Always the newest Android app. Publish each new build as a GitHub Release
+// with the APK attached and named exactly sail-la-vie.apk; this link then
+// points at it automatically. (Don't put the APK in docs/: cap sync would pack it into the app.)
+const ANDROID_APK_URL  = 'https://github.com/petejackson141/sail-la-vie/releases/latest/download/sail-la-vie.apk';
 
 // Newest first. Add a line here with each release worth telling people about.
 const WHATS_NEW = [
@@ -24,7 +28,8 @@ const WHATS_NEW = [
     'New About page with the user manual, contact form and legal information (Settings → Help & About).',
     'Privacy policy and terms of use added.',
     'Delete your account from Settings → Account.',
-    'Send feedback, report a problem or suggest a feature straight from the app.'
+    'Send feedback, report a problem or suggest a feature straight from the app.',
+    'Download the latest Android version from Settings → Help & About → About.'
   ]},
   { version: '27.09.2026', items: [
     'Friends: find other sailors, send friend requests and see the sails they share with you.',
@@ -53,6 +58,10 @@ function initAboutPage(){
   document.querySelectorAll('.manual-soon').forEach(el => { el.innerHTML = USER_MANUAL_URL ? '' : _soonTag(); });
   document.querySelectorAll('.privacy-soon').forEach(el => { el.innerHTML = PRIVACY_URL ? '' : _soonTag(); });
   document.querySelectorAll('.terms-soon').forEach(el => { el.innerHTML = TERMS_URL ? '' : _soonTag(); });
+  document.querySelectorAll('.android-soon').forEach(el => { el.innerHTML = ANDROID_APK_URL ? '' : _soonTag(); });
+  // iPhone/iPad users can't install an APK, so hide the row for them.
+  const androidRow = document.getElementById('aboutAndroidRow');
+  if(androidRow && /iPhone|iPad|iPod/.test(navigator.userAgent || '')) androidRow.style.display = 'none';
   const emailRow = document.getElementById('aboutEmailRow');
   if(emailRow) emailRow.style.display = SUPPORT_EMAIL ? '' : 'none';
   const emailAlt = document.getElementById('contactEmailAlt');
@@ -65,6 +74,11 @@ function initAboutPage(){
 function openUserManual(){
   if(!USER_MANUAL_URL){ showToast('The user manual is coming soon'); return; }
   openExternalUrl(USER_MANUAL_URL);
+}
+function downloadAndroidApp(){
+  if(!ANDROID_APK_URL){ showToast('The Android download is coming soon'); return; }
+  showToast('Downloading. When it finishes, open the file and tap Install');
+  openExternalUrl(ANDROID_APK_URL);
 }
 function openLegalLink(kind){
   const url = kind === 'privacy' ? PRIVACY_URL : TERMS_URL;
