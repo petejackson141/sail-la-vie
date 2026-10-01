@@ -423,7 +423,7 @@ function rerenderFriendSearch(){
   const box = document.getElementById('friendSearchResults');
   if(!box || !_friendSearchResults) return;
   if(!_friendSearchResults.length){ box.innerHTML = `<div class="fr-hint">${t('friends.noResults')}</div>`; return; }
-  box.innerHTML = _friendSearchResults.map(p=>friendRowHtml(p, friendActionHtml(p.user_id), `openFriendPage('${p.user_id}')`)).join('');
+  box.innerHTML = _friendSearchResults.map(p=>friendRowHtml(p, friendActionHtml(p.user_id), `openFriendPage('${safeId(p.user_id)}')`)).join('');
 }
 // The status/button for one person: Friends ✓ / Requested / Accept / Add.
 function friendActionHtml(userId){
@@ -463,7 +463,7 @@ function allSailorsListHtml(){
     return `<div class="fr-hint">${allSailors.failed ? t('friends.loadFailed') : t('friends.loading')}</div>`;
   }
   if(!allSailors.list.length) return `<div class="fr-hint" style="padding:14px 4px;">${t('friends.onAppEmpty')}</div>`;
-  return allSailors.list.map(p=>friendRowHtml(p, friendActionHtml(p.user_id), `openFriendPage('${p.user_id}')`)).join('');
+  return allSailors.list.map(p=>friendRowHtml(p, friendActionHtml(p.user_id), `openFriendPage('${safeId(p.user_id)}')`)).join('');
 }
 
 // Profile screen row: sideways-scrolling photo cards (same look as the old Crew row),
@@ -482,13 +482,13 @@ function renderProfileSailors(){
   const loaded = friendsState.loaded;
   const meCard = friendsState.me
     ? `<div class="pf-crew-card pf-sailor-card me">
-        <img src="${state.profile.avatar || friendsState.me.avatar_url || placeholderAvatar()}" alt="">
+        <img src="${safeSrc(state.profile.avatar || friendsState.me.avatar_url || placeholderAvatar())}" alt="">
         <div class="nm">${escapeHtml((state.profile.name||'').trim() || personName(friendsState.me))}</div>
         <div class="sb">@${escapeHtml(friendsState.me.username)}</div>
         <div class="pf-sailor-act"><span class="fr-status">${t('friends.you')}</span></div>
       </div>` : '';
-  const cards = allSailors.list.map(p=>`<div class="pf-crew-card pf-sailor-card" onclick="openFriendPage('${p.user_id}','profile')">
-      <img src="${p.avatar_url || placeholderAvatar()}" alt="">
+  const cards = allSailors.list.map(p=>`<div class="pf-crew-card pf-sailor-card" onclick="openFriendPage('${safeId(p.user_id)}','profile')">
+      <img src="${safeSrc(p.avatar_url || placeholderAvatar())}" alt="">
       <div class="nm">${escapeHtml(personName(p))}</div>
       <div class="sb">${p.username ? '@'+escapeHtml(p.username) : ''}</div>
       ${loaded && friendsState.me ? `<div class="pf-sailor-act">${friendActionHtml(p.user_id)}</div>` : ''}
@@ -506,7 +506,7 @@ function renderProfileSailors(){
 /* ---------- rendering ---------- */
 function friendRowHtml(p, actionHtml, onclick){
   return `<div class="row-card fr-row"${onclick ? ` onclick="${onclick}"` : ''}>
-    <img class="row-photo round" src="${(p && p.avatar_url) || placeholderAvatar()}" alt="">
+    <img class="row-photo round" src="${safeSrc((p && p.avatar_url) || placeholderAvatar())}" alt="">
     <div class="row-info"><div class="name">${escapeHtml(personName(p))}</div>
       <div class="sub">${p && p.username ? '@'+escapeHtml(p.username) : ''}</div></div>
     ${actionHtml ? `<div class="fr-actions">${actionHtml}</div>` : ''}
@@ -740,8 +740,8 @@ function renderFriendPage(){
     let action;
     if(!friendsState.me) action = `<button class="btn btn-primary" onclick="nav('friends')">${t('friends.chooseTitle')}</button>`;
     else if(row && row.requester_id===state.user.id) action = `<div class="fr-hint">${t('friends.requestPending', {name: escapeHtml(name)})}</div>`;
-    else if(row) action = `<button class="btn btn-primary" onclick="acceptFriendRequest('${row.id}')">${t('friends.acceptRequest')}</button>`;
-    else action = `<button class="btn btn-primary" onclick="sendFriendRequest('${openFriendId}')">${t('friends.addFriend')}</button>`;
+    else if(row) action = `<button class="btn btn-primary" onclick="acceptFriendRequest('${safeId(row.id)}')">${t('friends.acceptRequest')}</button>`;
+    else action = `<button class="btn btn-primary" onclick="sendFriendRequest('${safeId(openFriendId)}')">${t('friends.addFriend')}</button>`;
     sails = `<div class="fr-hint" style="padding:14px 4px;">${t('friends.notFriendsYet', {name: escapeHtml(name)})}</div>${action}`;
   }
   else if(_friendSails.userId===openFriendId && !_friendSails.list && !_friendSails.failed && !_friendSails.requested){
@@ -757,8 +757,8 @@ function renderFriendPage(){
     const d = new Date(s.date);
     const meta = [isNaN(d) ? '' : d.toLocaleDateString(currentLocale(), {day:'numeric', month:'short', year:'numeric'}),
       s.place ? '📍 '+escapeHtml(s.place) : '', fmtDistance(Number(s.distanceNm)||0)].filter(Boolean).join(' · ');
-    return `<div class="row-card" onclick="openFriendTrip('${s.id}')">
-      ${s.coverPhoto ? `<img class="row-photo" src="${s.coverPhoto}" alt="">` : `<div class="row-photo fr-noimg">⛵</div>`}
+    return `<div class="row-card" onclick="openFriendTrip('${safeId(s.id)}')">
+      ${s.coverPhoto ? `<img class="row-photo" src="${safeSrc(s.coverPhoto)}" alt="">` : `<div class="row-photo fr-noimg">⛵</div>`}
       <div class="row-info"><div class="name">${escapeHtml(s.title || t('detail.tripFallback'))}</div><div class="sub">${meta}</div></div>
     </div>`;
   }).join('');
@@ -780,10 +780,10 @@ function renderFriendPage(){
        <div class="profile-stats">${friendStatsHtml(_friendSails.list)}</div>` : '';
   body.innerHTML = `
     <div class="pf-cover">
-      ${fp && fp.cover ? `<img src="${fp.cover}" alt="" style="cursor:zoom-in;" onclick="viewFriendPhoto('cover')">` : ''}
+      ${fp && fp.cover ? `<img src="${safeSrc(fp.cover)}" alt="" style="cursor:zoom-in;" onclick="viewFriendPhoto('cover')">` : ''}
     </div>
     <div class="pf-idrow">
-      <div class="pf-avatar"><img class="pf-avatar-img" src="${avatar}" alt="" onclick="viewFriendPhoto('avatar')"></div>
+      <div class="pf-avatar"><img class="pf-avatar-img" src="${safeSrc(avatar)}" alt="" onclick="viewFriendPhoto('avatar')"></div>
     </div>
     <div class="form-card pf-bio-card" style="margin-top:12px;">
       <div class="pf-name">${escapeHtml(fullName)}</div>
@@ -797,7 +797,7 @@ function renderFriendPage(){
     ${plans}
     <div class="section-divider pf"><span>${t('friends.sharedSails')}</span></div>
     ${sails}
-    ${isFriend ? `<div class="link-plain" style="color:var(--coral);text-align:center;margin-top:22px;" onclick="removeFriendPrompt('${openFriendId}')">${t('friends.remove')}</div>` : ''}`;
+    ${isFriend ? `<div class="link-plain" style="color:var(--coral);text-align:center;margin-top:22px;" onclick="removeFriendPrompt('${safeId(openFriendId)}')">${t('friends.remove')}</div>` : ''}`;
 }
 async function openFriendTrip(tripId){
   try{

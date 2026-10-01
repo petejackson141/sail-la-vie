@@ -14,14 +14,14 @@ function renderLastSail(){
   const dateStr = new Date(last.date).toLocaleDateString(currentLocale(), {day:'numeric', month:'short', year:'numeric'});
   const meta = [dateStr, last.place ? escapeHtml(last.place) : ''].filter(Boolean).join(' · ');
   const stats = [fmtDistance(last.distanceNm||0), last.elapsedSeconds ? fmtDuration(last.elapsedSeconds) : ''].filter(Boolean).join(' · ');
-  wrap.innerHTML = `<div class="nt-last-sail" onclick="openTripDetail('${last.id}','home')">
+  wrap.innerHTML = `<div class="nt-last-sail" onclick="openTripDetail('${safeId(last.id)}','home')">
     <span class="nt-ls-pin" aria-hidden="true">📍</span>
     <div class="nt-ls-text">
       <div class="nt-ls-label">${t('home.lastSail')}</div>
       <div class="nt-ls-title">${escapeHtml(last.title || t('detail.tripFallback'))}</div>
       <div class="nt-ls-meta">${[stats, meta].filter(Boolean).join(' · ')}</div>
     </div>
-    ${last.coverPhoto ? `<img class="nt-ls-thumb" src="${last.coverPhoto}" alt="">` : ''}
+    ${last.coverPhoto ? `<img class="nt-ls-thumb" src="${safeSrc(last.coverPhoto)}" alt="">` : ''}
     <svg class="nt-ls-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
   </div>`;
 }
@@ -261,7 +261,7 @@ function renderAddedCrewChips(){
   if(!added.length){ row.innerHTML = `<p style="font-size:12.5px;">No crew added yet — tap "+ Add Crew" below.</p>`; return; }
   row.innerHTML = added.map(c=>`
     <div class="crew-chip active">
-      <img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span>
+      <img src="${safeSrc(c.photo||placeholderAvatar())}"><span>${escapeHtml(c.name)}</span>
       <div class="rm" onclick="removeAddedCrew('${c.id}')">✕</div>
     </div>`).join('');
 }
@@ -285,13 +285,13 @@ function renderCrewPickList(){
   // and there's no way to edit or delete it from here.
   const selfRow = `
     <div class="crew-pick-row${crewPickTempIds.includes(SKIPPER_SELF_ID)?' selected':''}" data-id="${SKIPPER_SELF_ID}" onclick="toggleCrewPick('${SKIPPER_SELF_ID}')">
-      <img src="${state.profile.avatar||placeholderAvatar()}">
+      <img src="${safeSrc(state.profile.avatar||placeholderAvatar())}">
       <div class="name">${escapeHtml(state.profile.name||t('default.sailorName'))} ${t('active.youSuffix')}</div>
       <div class="crew-pick-check"></div>
     </div>`;
   const crewRows = [...state.crew].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`
     <div class="crew-pick-row${crewPickTempIds.includes(c.id)?' selected':''}" data-id="${c.id}" onclick="toggleCrewPick('${c.id}')">
-      <img src="${c.photo||placeholderAvatar()}">
+      <img src="${safeSrc(c.photo||placeholderAvatar())}">
       <div class="name">${escapeHtml(c.name)}</div>
       <div class="crew-pick-check"></div>
     </div>`).join('');
@@ -322,7 +322,7 @@ function renderSkipperChip(){
   if(!skipper){ row.innerHTML = `<p style="font-size:12.5px;">No skipper set — tap "Choose Skipper" below.</p>`; return; }
   row.innerHTML = `
     <div class="crew-chip active">
-      <img src="${skipper.photo||placeholderAvatar()}"><span>${escapeHtml(skipper.name)}</span>
+      <img src="${safeSrc(skipper.photo||placeholderAvatar())}"><span>${escapeHtml(skipper.name)}</span>
       <div class="rm" onclick="clearSkipper()">✕</div>
     </div>`;
 }
@@ -338,13 +338,13 @@ function renderSkipperPickList(){
   const el = document.getElementById('skipperPickList');
   const selfRow = `
     <div class="crew-pick-row${currentTrip.skipperId===SKIPPER_SELF_ID?' selected':''}" data-id="${SKIPPER_SELF_ID}" onclick="selectSkipper('${SKIPPER_SELF_ID}')">
-      <img src="${state.profile.avatar||placeholderAvatar()}">
+      <img src="${safeSrc(state.profile.avatar||placeholderAvatar())}">
       <div class="name">${escapeHtml(state.profile.name||t('default.sailorName'))} ${t('active.youSuffix')}</div>
       <div class="crew-pick-check"></div>
     </div>`;
   const crewRows = [...state.crew].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`
     <div class="crew-pick-row${currentTrip.skipperId===c.id?' selected':''}" data-id="${c.id}" onclick="selectSkipper('${c.id}')">
-      <img src="${c.photo||placeholderAvatar()}">
+      <img src="${safeSrc(c.photo||placeholderAvatar())}">
       <div class="name">${escapeHtml(c.name)}</div>
       <div class="crew-pick-check"></div>
     </div>`).join('');
@@ -1079,7 +1079,7 @@ function renderActivePhotoStrip(){
   strip.querySelectorAll('.photo-thumb').forEach(n=>n.remove());
   currentTrip.photos.forEach((p,i)=>{
     const div = document.createElement('div'); div.className='photo-thumb';
-    div.innerHTML = `<img src="${p}" onclick="setActiveCover(${i})">
+    div.innerHTML = `<img src="${safeSrc(p)}" onclick="setActiveCover(${i})">
       ${currentTrip.coverPhoto===p?`<div class="cover-badge">${t('active.coverBadge')}</div>`:''}
       <div class="rm" onclick="removeActivePhoto(${i})">✕</div>`;
     strip.insertBefore(div, strip.firstChild);
@@ -1178,7 +1178,7 @@ function openCoverPickSheet(mode){
   const strip = document.getElementById('coverPickStrip');
   strip.innerHTML = currentTrip.photos.map((p,i)=>`
     <div class="photo-thumb pickable${i===currentTrip._pickedCoverIndex?' selected':''}" data-i="${i}" onclick="pickCoverThumb(${i})">
-      <img src="${p}">
+      <img src="${safeSrc(p)}">
     </div>`).join('');
   document.getElementById('skipCoverPickBtn').style.display = coverPickMode==='onSave' ? 'block' : 'none';
   openSheet('sheetCoverPick');

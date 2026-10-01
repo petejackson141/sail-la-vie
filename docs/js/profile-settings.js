@@ -118,12 +118,12 @@ function sailPostHtml(tr, avatar, who){
   if(tr.distanceNm) chips.push('📏 ' + fmtDistance(tr.distanceNm));
   if(tr.elapsedSeconds) chips.push('⏱ ' + fmtDuration(tr.elapsedSeconds));
   if(tr.avgSpeed) chips.push('💨 ' + fmtSpeed(tr.avgSpeed));
-  return `<div class="post-card" onclick="openTripDetail('${tr.id}','profile')">
-    <div class="post-head"><img src="${avatar}" alt=""><div class="post-who"><div class="post-name">${who}</div><div class="post-when">${dateStr}</div></div><span class="post-badge sail">⛵ ${t('profile.postSail')}</span></div>
+  return `<div class="post-card" onclick="openTripDetail('${safeId(tr.id)}','profile')">
+    <div class="post-head"><img src="${safeSrc(avatar)}" alt=""><div class="post-who"><div class="post-name">${who}</div><div class="post-when">${dateStr}</div></div><span class="post-badge sail">⛵ ${t('profile.postSail')}</span></div>
     <div class="post-title">${escapeHtml(tr.title || t('detail.tripFallback'))}</div>
     ${meta ? `<div class="post-meta">${meta}</div>` : ''}
     ${tr.notes ? `<div class="post-text">${escapeHtml(tr.notes)}</div>` : ''}
-    ${tr.coverPhoto ? `<img class="post-photo" src="${tr.coverPhoto}" alt="">` : ''}
+    ${tr.coverPhoto ? `<img class="post-photo" src="${safeSrc(tr.coverPhoto)}" alt="">` : ''}
     ${chips.length ? `<div class="post-chips">${chips.map(c=>`<span class="post-chip">${c}</span>`).join('')}</div>` : ''}
   </div>`;
 }
@@ -134,7 +134,7 @@ function planPostHtml(e, avatar, who){
   const meta = [e.time ? '🕐 ' + e.time : '', e.place ? '📍 ' + escapeHtml(e.place) : '', boat ? '⛵ ' + escapeHtml(boat.name) : '',
     (state.user && e.visibility === 'friends') ? t('plan.sharedTag') : ''].filter(Boolean).join(' · ');  // 👥 Shared = friends can see it
   return `<div class="post-card plan" onclick="openNoticeboardSheet('${e.id}')">
-    <div class="post-head"><img src="${avatar}" alt=""><div class="post-who"><div class="post-name">${who}</div><div class="post-when">${dateStr} · ${noticeboardWhenLabel(noticeboardDaysFromToday(e.date))}</div></div><span class="post-badge plan">📌 ${t('profile.postPlan')}</span></div>
+    <div class="post-head"><img src="${safeSrc(avatar)}" alt=""><div class="post-who"><div class="post-name">${who}</div><div class="post-when">${dateStr} · ${noticeboardWhenLabel(noticeboardDaysFromToday(e.date))}</div></div><span class="post-badge plan">📌 ${t('profile.postPlan')}</span></div>
     <div class="post-title">${escapeHtml(e.title)}</div>
     ${meta ? `<div class="post-meta">${meta}</div>` : ''}
     ${e.notes ? `<div class="post-text">${escapeHtml(e.notes)}</div>` : ''}
@@ -420,7 +420,7 @@ function renderResume(){
   document.getElementById('resTime').textContent = fmtDuration(secs);
   document.getElementById('resAvg').innerHTML = fmtSpeed(avg).replace(' ', '<span class="stat-unit"> ')+'</span>';
   const el = document.getElementById('resumeList');
-  el.innerHTML = trips.length ? trips.map(trip=>`<div class="trip-card" style="margin-top:12px;" onclick="openTripDetail('${trip.id}')">
+  el.innerHTML = trips.length ? trips.map(trip=>`<div class="trip-card" style="margin-top:12px;" onclick="openTripDetail('${safeId(trip.id)}')">
       <div class="trip-body">
         <div class="trip-title">${escapeHtml(trip.title)}</div>
         <div class="trip-meta"><span>📅 ${new Date(trip.date).toLocaleDateString(currentLocale())}</span><span>📏 ${fmtDistance(trip.distanceNm||0)}</span><span>⏱ ${fmtDuration(trip.elapsedSeconds)}</span></div>

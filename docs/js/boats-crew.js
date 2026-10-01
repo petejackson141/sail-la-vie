@@ -59,7 +59,7 @@ function renderBoatPhotoStrip(){
     // previously these two actions were combined on a single tap, which
     // meant there was no way to just look at a photo without also changing
     // the default.
-    div.innerHTML = `<img src="${p}" onclick="openBoatPhotoLightbox(${i})">
+    div.innerHTML = `<img src="${safeSrc(p)}" onclick="openBoatPhotoLightbox(${i})">
       <div class="setdef${isDefault ? ' is-default' : ''}" onclick="event.stopPropagation();setBoatDefaultPhoto(${i})" title="${t('action.setAsDefault')}">
         <svg viewBox="0 0 24 24" fill="${isDefault ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9L12 17.8 5.8 21.1 7 14.2 2 9.3l6.9-1z"/></svg>
       </div>
@@ -135,7 +135,7 @@ function renderBoats(){
     const trips = state.tripIndex.filter(trip=>trip.boatId===b.id).length;
     const sailsLabel = trips===1 ? t('boats.sailsSingular',{count:trips}) : t('boats.sailsPlural',{count:trips});
     return `<div class="${cardClass}" onclick='openBoatSheet(${JSON.stringify(b).replace(/'/g,"&apos;")})'>
-      <img class="row-photo" src="${b.photo||placeholderAvatar()}">
+      <img class="row-photo" src="${safeSrc(b.photo||placeholderAvatar())}">
       <div class="row-info"><div class="name">${escapeHtml(b.name)}</div><div class="sub">${escapeHtml(b.type||'')}${b.type?' · ':''}${sailsLabel}</div></div>
     </div>`;
   }).join('');
@@ -233,7 +233,7 @@ function renderCrew(){
     const contactBits = [c.phone, c.email].filter(Boolean).join(' · ');
     return `
     <div class="${cardClass}" onclick='openCrewSheet(${JSON.stringify(c).replace(/'/g,"&apos;")})'>
-      <img class="row-photo round" src="${c.photo||placeholderAvatar()}">
+      <img class="row-photo round" src="${safeSrc(c.photo||placeholderAvatar())}">
       <div class="row-info"><div class="name">${escapeHtml(c.name)}</div><div class="sub">${escapeHtml(contactBits || c.note || '')}</div></div>
     </div>`;
   }).join('');

@@ -32,9 +32,9 @@ function renderHistory(){
     const dateStr = d.toLocaleDateString(currentLocale(),{month:'short',day:'numeric',year:'numeric'});
     const timeStr = d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'});
     const dur = fmtDuration(trip.elapsedSeconds);
-    return `<div class="trip-card" onclick="openTripDetail('${trip.id}')">
+    return `<div class="trip-card" onclick="openTripDetail('${safeId(trip.id)}')">
       ${trip.coverPhoto
-        ? `<div class="trip-cover-wrap"><img class="trip-cover" src="${trip.coverPhoto}">
+        ? `<div class="trip-cover-wrap"><img class="trip-cover" src="${safeSrc(trip.coverPhoto)}">
             <div class="trip-cover-overlay">
               <div class="trip-cover-date">${dateStr} · ${timeStr}</div>
               ${trip.place ? `<div class="trip-cover-place">📍 ${escapeHtml(trip.place)}</div>` : ''}
@@ -89,7 +89,7 @@ async function renderGallery(){
     return `<div class="gallery-date-group">
       <div class="gallery-date-heading">${dateStr}${trip.title?`<span class="gallery-date-sub"> · ${escapeHtml(trip.title)}</span>`:''}</div>
       <div class="gallery-photo-grid">${trip.photos.map((p,pi)=>
-        `<div class="gallery-photo-cell" onclick="openGalleryPhotoLightbox('${trip.id}',${pi})"><img src="${p}" loading="lazy"></div>`
+        `<div class="gallery-photo-cell" onclick="openGalleryPhotoLightbox('${safeId(trip.id)}',${pi})"><img src="${safeSrc(p)}" loading="lazy"></div>`
       ).join('')}</div>
     </div>`;
   }).join('');
@@ -142,7 +142,7 @@ async function openTripDetail(id, from, friendView){
     ${topLine}
     ${trip.coverPhoto
       ? `<div class="trip-cover-wrap" style="border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);cursor:pointer;" onclick="openTripCoverLightbox()">
-          <img class="trip-cover" src="${trip.coverPhoto}" style="height:200px;">
+          <img class="trip-cover" src="${safeSrc(trip.coverPhoto)}" style="height:200px;">
           <div class="trip-cover-overlay">
             <div class="trip-cover-date">${d.toLocaleDateString(currentLocale(),{weekday:'long',month:'long',day:'numeric',year:'numeric'})} · ${d.toLocaleTimeString(currentLocale(),{hour:'numeric',minute:'2-digit'})}</div>
             ${trip.place || boat ? `<div class="trip-cover-place">${trip.place?'📍 '+escapeHtml(trip.place):''}${trip.place&&boat?' · ':''}${boat?escapeHtml(boat.name):''}</div>` : ''}
@@ -162,11 +162,11 @@ async function openTripDetail(id, from, friendView){
     <div class="section-title">${wxHasTrack(trip) ? t('wx.departureTitle') : t('detail.weather')}</div>
     <div class="card" style="padding:16px;">
       <div class="trip-meta">
-        <span>${trip.weather?.sky?`${skyIcon(trip.weather.sky)} ${skyLabel(trip.weather.sky)}`:''}</span>
-        <span>💨 ${compassLabel(trip.weather?.windDir)||'—'} ${trip.weather?.windSpeed!=null?fmtSpeed(trip.weather.windSpeed):''}</span>
-        <span>${trip.weather?.gusts?`${t('detail.gustsShort')} ${fmtSpeed(trip.weather.gusts)}`:''}</span>
-        <span>🌊 ${seaStateLabel(trip.weather?.seaState)||'—'}${trip.weather?.waveHeight?` (${trip.weather.waveHeight}m)`:''}${trip.weather?.waveDir?` ${t('detail.fromDir')} ${compassLabel(trip.weather.waveDir)}`:''}</span>
-        <span>🌡 ${trip.weather?.temp?trip.weather.temp+'°C':'—'}</span>
+        <span>${trip.weather?.sky?`${skyIcon(trip.weather.sky)} ${escapeHtml(skyLabel(trip.weather.sky))}`:''}</span>
+        <span>💨 ${escapeHtml(compassLabel(trip.weather?.windDir))||'—'} ${trip.weather?.windSpeed!=null?fmtSpeed(Number(trip.weather.windSpeed)||0):''}</span>
+        <span>${trip.weather?.gusts?`${t('detail.gustsShort')} ${fmtSpeed(Number(trip.weather.gusts)||0)}`:''}</span>
+        <span>🌊 ${escapeHtml(seaStateLabel(trip.weather?.seaState))||'—'}${trip.weather?.waveHeight?` (${Number(trip.weather.waveHeight)||0}m)`:''}${trip.weather?.waveDir?` ${t('detail.fromDir')} ${escapeHtml(compassLabel(trip.weather.waveDir))}`:''}</span>
+        <span>🌡 ${trip.weather?.temp?(Number(trip.weather.temp)||0)+'°C':'—'}</span>
       </div>
     </div>
 
@@ -175,15 +175,15 @@ async function openTripDetail(id, from, friendView){
     ${trip.notes ? `<div class="section-title">${t('active.notes')}</div><div class="card" style="padding:16px;"><p style="color:var(--ink);">${escapeHtml(trip.notes)}</p></div>` : ''}
 
     ${tripSkipper ? `<div class="section-title">${t('active.skipper')}</div><div class="crew-chip-row">
-      <div class="crew-chip active"><img src="${tripSkipper.photo||placeholderAvatar()}"><span>${escapeHtml(tripSkipper.name)}</span></div></div>` : ''}
+      <div class="crew-chip active"><img src="${safeSrc(tripSkipper.photo||placeholderAvatar())}"><span>${escapeHtml(tripSkipper.name)}</span></div></div>` : ''}
 
     ${tripCrew.length ? `<div class="section-title">${t('active.crewAboard')}</div><div class="crew-chip-row">${tripCrew.map(c=>`
-      <div class="crew-chip active"><img src="${c.photo||placeholderAvatar()}"><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
+      <div class="crew-chip active"><img src="${safeSrc(c.photo||placeholderAvatar())}"><span>${escapeHtml(c.name)}</span></div>`).join('')}</div>` : ''}
 
-    ${trip.photos && trip.photos.length ? `<div class="section-title">${t('active.photos')}</div><div class="photo-strip">${trip.photos.map((p,i)=>`<div class="photo-thumb" onclick="openTripPhotoLightbox(${i})"><img src="${p}"></div>`).join('')}</div>` : ''}
+    ${trip.photos && trip.photos.length ? `<div class="section-title">${t('active.photos')}</div><div class="photo-strip">${trip.photos.map((p,i)=>`<div class="photo-thumb" onclick="openTripPhotoLightbox(${i})"><img src="${safeSrc(p)}"></div>`).join('')}</div>` : ''}
 
     ${friendView ? '' : `<div style="height:8px;"></div>
-    <button class="btn btn-outline" onclick="shareTrip('${trip.id}')">
+    <button class="btn btn-outline" onclick="shareTrip('${safeId(trip.id)}')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
       ${t('detail.shareCrewSocial')}
     </button>
@@ -266,7 +266,7 @@ async function renderTripDetailMap(trip){
     area.innerHTML = `
       <div class="stat-label" style="text-align:center;margin-top:16px;">${t('detail.map')}</div>
       <div style="position:relative;cursor:pointer;" onclick="openLightbox([window._detailTrip.mapImage],0)">
-        <img src="${trip.mapImage}" style="width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);display:block;">
+        <img src="${safeSrc(trip.mapImage)}" style="width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);display:block;">
       </div>`;
     // No stats bar drawn over an uploaded map picture: it's the sailor's own
     // screenshot or chart photo, which may already have stats of its own on it

@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '29.09.2026.1910';
+const APP_VERSION = '30.09.2026.1955';
 
 /* ============================================================
    CONFIRM DIALOG (shared across all screens)
@@ -243,6 +243,26 @@ function refreshAvatars(){
   document.getElementById('homeAvatar').src = a;
   document.getElementById('profileAvatarImg').src = a;
 }
+/* ---------- SECURITY: safe picture addresses and ids inside built HTML ----------
+   Much of the app builds screens as HTML text (innerHTML). Since the Friends
+   feature, some of that text comes from OTHER people's data in the cloud (their
+   photos, sail ids, weather values). Someone could type code into those fields
+   and it would run on their friends' phones. These two helpers stop that:
+     safeSrc(s) - only lets real picture addresses through (photos stored in the
+                  app, cloud photo references, https links, the app's own images),
+                  everything else becomes an empty picture.
+     safeId(s)  - keeps only the characters our ids ever use, so an id can never
+                  break out of an onclick="...('id')" handler.
+   Use them for EVERY picture address and id put into built HTML. */
+function safeSrc(s){
+  if(typeof s !== 'string') return '';
+  const ok = /^data:image\/[a-z0-9.+-]+[;,]/i.test(s)
+    || s.startsWith('sbimg:') || s.startsWith('blob:')
+    || /^https:\/\//i.test(s) || /^(\.\/)?images\//.test(s);
+  return ok ? escapeHtml(s) : '';
+}
+function safeId(s){ return String(s == null ? '' : s).replace(/[^A-Za-z0-9_.:-]/g, ''); }
+
 function placeholderAvatar(){
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#16324F"/><circle cx="40" cy="32" r="14" fill="#BFE0EA"/><path d="M14 70c0-16 12-26 26-26s26 10 26 26" fill="#BFE0EA"/></svg>`);
 }
