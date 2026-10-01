@@ -1,5 +1,28 @@
 apply plugin: 'com.android.application'
 
+/* ---------- Sail la Vie: version number, taken automatically from the app ----------
+   Android needs two version values, and Google Play refuses an update unless
+   versionCode goes UP every time. Instead of editing them by hand, both are read
+   from APP_VERSION in docs/js/state-core.js (the version Claude bumps every round,
+   format DD.MM.YYYY.HHMM):
+     versionName = APP_VERSION exactly, e.g. "30.09.2026.1955"
+                   (what Android's App info screen shows)
+     versionCode = minutes since 1 Jan 2025, e.g. 30.09.2026 19:55 -> 917755
+                   (always bigger for a newer version - room for ~4000 years)
+   If the file can't be read for any reason, the build stops with a clear message
+   rather than quietly shipping version 1. */
+def readSailLaVieVersion = {
+    def f = rootProject.file('../docs/js/state-core.js')
+    if (!f.exists()) throw new GradleException("Can't find ${f} to read APP_VERSION")
+    def m = (f.getText('UTF-8') =~ /const APP_VERSION = '(\d{2})\.(\d{2})\.(\d{4})\.(\d{2})(\d{2})'/)
+    if (!m.find()) throw new GradleException("APP_VERSION in state-core.js is not in DD.MM.YYYY.HHMM format")
+    def (dd, mo, yyyy, hh, mi) = (1..5).collect { m.group(it) as int }
+    def minutes = java.time.LocalDateTime.of(yyyy, mo, dd, hh, mi).toEpochSecond(java.time.ZoneOffset.UTC).intdiv(60)
+    def base    = java.time.LocalDateTime.of(2025, 1, 1, 0, 0).toEpochSecond(java.time.ZoneOffset.UTC).intdiv(60)
+    return [code: (int) (minutes - base), name: m.group(0).replaceAll(/.*'(.*)'/, '$1')]
+}
+def sailLaVieVersion = readSailLaVieVersion()
+
 android {
     namespace = "com.saillavie.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +30,8 @@ android {
         applicationId "com.saillavie.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode sailLaVieVersion.code   // automatic - see the top of this file
+        versionName sailLaVieVersion.name
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

@@ -1,1 +1,9 @@
 node_modules/
+
+# Claude's working copies and backup zips - kept on this PC only, not on GitHub
+Claude outputs/
+
+# Android signing key + its passwords - must NEVER go on GitHub
+*.jks
+*.keystore
+keystore.properties
