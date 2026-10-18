@@ -23,6 +23,26 @@ def readSailLaVieVersion = {
 }
 def sailLaVieVersion = readSailLaVieVersion()
 
+/* ---------- Sail la Vie: release signing key ----------
+   Every APK must be "signed" with a key. Android Studio's Run button uses an
+   automatic debug key. Release builds (for testers and, later, Google Play)
+   use OUR key, and every future update must be signed with that SAME key,
+   or phones refuse to install it as an update.
+   The key file and its password are NEVER put in this project or on GitHub.
+   They live in android/keystore.properties (ignored by Git), which says where
+   the key is and what its password is:
+       storeFile=C:/Users/Pete/<your key folder>/saillavie-release.jks
+       storePassword=...
+       keyAlias=saillavie
+       keyPassword=...
+   If that file is missing, debug builds (Run) still work as normal; only
+   release builds come out unsigned. */
+def keystorePropsFile = rootProject.file('keystore.properties')
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+}
+
 android {
     namespace = "com.saillavie.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -39,8 +59,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystorePropsFile.exists()) {
+                storeFile     file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias      keystoreProps['keyAlias']
+                keyPassword   keystoreProps['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            if (keystorePropsFile.exists()) {
+                signingConfig signingConfigs.release   // see "release signing key" at the top
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
