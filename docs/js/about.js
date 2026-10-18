@@ -24,6 +24,10 @@ const ANDROID_APK_URL  = 'https://github.com/petejackson141/sail-la-vie/releases
 
 // Newest first. Add a line here with each release worth telling people about.
 const WHATS_NEW = [
+  { version: '01.10.2026', items: [
+    'The black box that flashed when opening the app is gone.',
+    'Security and privacy improvements behind the scenes.'
+  ]},
   { version: '29.09.2026', items: [
     'New About page with the user manual, contact form and legal information (Settings → Help & About).',
     'Privacy policy and terms of use added.',

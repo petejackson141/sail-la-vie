@@ -648,11 +648,12 @@ function getBgGeo(){
 let bgGeoReady = false; // true once .ready() has been called this app session — only needs doing once
 
 // ---- Native tracker choice ----
-// 'sail'           = our own free recorder (android/app/src/main/java/com/saillavie/app/tracking/)
-// 'transistorsoft' = the paid plugin, kept only as a fallback until SailTracker
-//                    has passed real-world testing. To switch back, change this
-//                    one line, run `npx cap sync`, and rebuild.
-// If 'sail' is chosen but the plugin isn't in the build, it falls back automatically.
+// 'sail' = our own free recorder (android/app/src/main/java/com/saillavie/app/tracking/)
+// The paid Transistorsoft plugin was REMOVED on 01.10.2026 after SailTracker passed
+// real-world testing (its unlicensed licence check caused the black box on start-up).
+// Its old code paths below (getBgGeo / startNativeBackgroundGps) are now inactive:
+// getBgGeo() always returns nothing, so if SailTracker were ever missing the app
+// falls back to plain browser GPS (works while the screen is on).
 const NATIVE_TRACKER = 'sail';
 function getSailTracker(){
   return (isNativeApp() && window.Capacitor.Plugins && window.Capacitor.Plugins.SailTracker) || null;
