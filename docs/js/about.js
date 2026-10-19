@@ -14,6 +14,9 @@ const COPYRIGHT_YEAR   = 2026;
 const SUPPORT_EMAIL    = 'sailapp141@gmail.com';
 // Always the live copy on GitHub Pages. To update the guide, replace
 // docs/Sail-la-Vie-User-Guide.pdf with the new file (same name) and push.
+// The button adds ?v=<app version> so phones fetch a fresh copy after each
+// release instead of showing one they saved earlier (GitHub Pages lets them
+// keep it for 10 minutes).
 const USER_MANUAL_URL  = 'https://petejackson141.github.io/sail-la-vie/Sail-la-Vie-User-Guide.pdf';
 const PRIVACY_URL      = 'https://petejackson141.github.io/sail-la-vie/privacy.html';
 const TERMS_URL        = 'https://petejackson141.github.io/sail-la-vie/terms.html';
@@ -79,7 +82,7 @@ function initAboutPage(){
 /* ---------- Help links ---------- */
 function openUserManual(){
   if(!USER_MANUAL_URL){ showToast('The user manual is coming soon'); return; }
-  openExternalUrl(USER_MANUAL_URL);
+  openExternalUrl(USER_MANUAL_URL + '?v=' + encodeURIComponent(APP_VERSION));
 }
 function downloadAndroidApp(){
   if(!ANDROID_APK_URL){ showToast('The Android download is coming soon'); return; }
