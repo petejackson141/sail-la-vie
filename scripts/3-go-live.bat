@@ -1,5 +1,5 @@
 @echo off
-title Sail la Vie - go live (copy dev into main)
+title Sail la Vie - go live (send dev to main)
 cd /d C:\Users\Pete\sail-la-vie
 for /f %%b in ('git branch --show-current') do set BR=%%b
 if /i not "%BR%"=="dev" (
@@ -22,21 +22,22 @@ if errorlevel 2 (
   pause
   exit /b
 )
-git checkout main || goto fail
-git merge --ff-only dev || goto back
-git push || goto back
-git checkout dev || goto fail
+rem Send dev straight to main on GitHub. You stay on dev the whole time,
+rem so this script never disappears while it runs. GitHub refuses the push
+rem if main has anything dev doesn't, so nothing on main can be lost.
+git push origin dev:main || goto fail
+rem Bring your laptop's own copy of main up to date too.
+git fetch . dev:main
 echo.
 echo ==============================================
 echo  LIVE: version %VER%. iPhone testers get it in 1-2 minutes.
-echo  You are back on:
+echo  You are still on:
 git branch --show-current
 echo ==============================================
 pause
 exit /b
-:back
-git checkout dev
 :fail
 echo.
-echo Something went wrong. Copy ALL the text above and send it to Claude.
+echo Something went wrong. Nothing went live.
+echo Copy ALL the text above and send it to Claude.
 pause
