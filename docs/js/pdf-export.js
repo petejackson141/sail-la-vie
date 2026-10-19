@@ -1,38 +1,9 @@
 // ===== pdf-export.js =====
-// PDF theme templates and HTML builders for trip PDFs, PDF generation/sharing, photo lightbox viewer
-// Extracted from the original single-file app.js, lines 3611-4514, in original order.
+// Despite the name, the trip PDF itself (templates, pages, preview, export) is in
+// js/trip-pdf.js. This file holds the small drawing helpers trip-pdf.js shares,
+// the file share/download helper and the photo lightbox viewer.
 
-function hexToRgbTuple(hex){
-  const h = (hex||'#ffffff').replace('#','');
-  const n = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
-  return [(n>>16)&255, (n>>8)&255, n&255];
-}
-// Templates, page layout, preview and export for the trip PDF now live in
-// js/trip-pdf.js. This file keeps the shared drawing helpers below, the
-// file share/download helper and the photo lightbox.
 
-/* ---------- Nautical Magazine theme ----------
-   Ported 1:1 (grid numbers included) from the reportlab poster mockup:
-   a 612x918 "page", navy/gold/cream palette, compass-rose motif, magazine
-   masthead layout. See .pdf-theme-nautical rules in <style>. */
-function navCompassSvg(size, ringColor, needleColor, labelColor){
-  const r = size/2, lc = labelColor || ringColor;
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;">
-    <circle cx="${r}" cy="${r}" r="${r-1.5}" fill="none" stroke="${ringColor}" stroke-width="1.4"/>
-    <circle cx="${r}" cy="${r}" r="${(r-1.5)*0.78}" fill="none" stroke="${ringColor}" stroke-width="1.1"/>
-    <text x="${r}" y="${r-r*0.58}" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="${r*0.30}" fill="${lc}">N</text>
-    <text x="${r}" y="${r+r*0.72}" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="${r*0.26}" fill="${lc}">S</text>
-    <text x="${r+r*0.64}" y="${r+r*0.10}" text-anchor="start" font-family="Georgia,serif" font-weight="700" font-size="${r*0.24}" fill="${lc}">E</text>
-    <text x="${r-r*0.64}" y="${r+r*0.10}" text-anchor="end" font-family="Georgia,serif" font-weight="700" font-size="${r*0.24}" fill="${lc}">W</text>
-    <g fill="${needleColor}">
-      <path d="M ${r} ${r} L ${r-r*0.13} ${r-r*0.13} L ${r} ${r-r*0.62} L ${r+r*0.13} ${r-r*0.13} Z"/>
-      <path d="M ${r} ${r} L ${r+r*0.13} ${r-r*0.13} L ${r+r*0.62} ${r} L ${r+r*0.13} ${r+r*0.13} Z"/>
-      <path d="M ${r} ${r} L ${r+r*0.13} ${r+r*0.13} L ${r} ${r+r*0.62} L ${r-r*0.13} ${r+r*0.13} Z"/>
-      <path d="M ${r} ${r} L ${r-r*0.13} ${r+r*0.13} L ${r-r*0.62} ${r} L ${r-r*0.13} ${r-r*0.13} Z"/>
-      <circle cx="${r}" cy="${r}" r="${r*0.09}"/>
-    </g>
-  </svg>`;
-}
 const PDF_ICON_SVG = {
   wind: `<svg viewBox="0 0 20 20" width="12" height="12"><path d="M2 7h10a3 3 0 1 0-2.5-4.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M2 12h13a2.6 2.6 0 1 1-2.2 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
   wave: `<svg viewBox="0 0 20 20" width="12" height="12"><path d="M1 10c2-3 4-3 6 0s4 3 6 0 4-3 6 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,

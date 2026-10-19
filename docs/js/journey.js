@@ -631,29 +631,18 @@ const GPS_ACCURACY_LIMIT_M = 60;
 const GPS_STALE_MS = 45000;
 
 // True when running inside the Capacitor native app (Android/iOS), false in
-// the browser/PWA. Everything below branches on this so the web version keeps
-// using the plain browser geolocation API unchanged, while the native app
-// uses the @transistorsoft/capacitor-background-geolocation plugin — the piece that actually
-// survives the screen locking or the app being backgrounded, which
-// navigator.geolocation.watchPosition() cannot do on its own.
+// the browser/PWA. The web version uses the plain browser geolocation API;
+// the native app uses our own SailTracker recorder, which keeps recording
+// with the screen locked (navigator.geolocation.watchPosition() cannot).
 function isNativeApp(){
   return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 }
-// Loaded from vendor-background-geolocation.js (a plain-script bundle of
-// @transistorsoft/capacitor-background-geolocation, built with esbuild since
-// this app has no bundler of its own — see that file's header comment).
-function getBgGeo(){
-  return window.TSBackgroundGeolocationModule && window.TSBackgroundGeolocationModule.default;
-}
-let bgGeoReady = false; // true once .ready() has been called this app session — only needs doing once
 
-// ---- Native tracker choice ----
-// 'sail' = our own free recorder (android/app/src/main/java/com/saillavie/app/tracking/)
-// The paid Transistorsoft plugin was REMOVED on 01.10.2026 after SailTracker passed
-// real-world testing (its unlicensed licence check caused the black box on start-up).
-// Its old code paths below (getBgGeo / startNativeBackgroundGps) are now inactive:
-// getBgGeo() always returns nothing, so if SailTracker were ever missing the app
-// falls back to plain browser GPS (works while the screen is on).
+// ---- Native tracker ----
+// 'sail' = our own free recorder (android/app/src/main/java/com/saillavie/app/tracking/).
+// The paid Transistorsoft plugin was removed on 01.10.2026 and its leftover code
+// on 19.10.2026. If SailTracker were ever missing, the app falls back to plain
+// browser GPS (works while the screen is on).
 const NATIVE_TRACKER = 'sail';
 function getSailTracker(){
   return (isNativeApp() && window.Capacitor.Plugins && window.Capacitor.Plugins.SailTracker) || null;
@@ -740,15 +729,11 @@ function startGPS(){
   bestRejectedFix = null;
   pendingJumpCandidate = null;
   pendingMaxSpeedCandidate = null;
-  const bgGeo = getBgGeo();
   if(useSailTracker()){
     nativeGpsActive = true;
     startSailTracker();
-  } else if(isNativeApp() && bgGeo){
-    nativeGpsActive = true;
-    startNativeBackgroundGps(bgGeo);
   } else {
-    // Web/PWA, or native without the plugin loaded for some reason —
+    // Web/PWA, or native without SailTracker for some reason —
     // foreground-only tracking. Reliable while the app is open and the
     // screen is on; does not survive the screen locking.
     watchId = navigator.geolocation.watchPosition(onFix, onGpsError, {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
@@ -760,38 +745,6 @@ function startGPS(){
   if(!nativeGpsActive) showRecordingNotification();
 }
 
-async function startNativeBackgroundGps(bgGeo){
-  try{
-    // onLocation only needs wiring up once per app session — safe to call
-    // again on a restart (e.g. from the watchdog), it just replaces the
-    // previous listener rather than stacking duplicates.
-    bgGeo.onLocation(
-      (location) => onFix({ coords: location.coords, timestamp: location.timestamp }), // pass the fix's real GPS time through — see onFix()'s comment on why this matters for batched background fixes
-      () => onGpsError()
-    );
-    if(!bgGeoReady){
-      await bgGeo.ready({
-        reset: true,
-        geolocation: {
-          desiredAccuracy: -1, // High — see DesiredAccuracy.High in the plugin's types; hardcoded since we can't import the enum without a bundler
-          distanceFilter: 0,
-          locationAuthorizationRequest: 'Always',
-          stopOnStationary: false // sailing includes genuinely stationary stretches (anchored, drifting) — don't treat those as "trip over"
-        },
-        app: {
-          stopOnTerminate: false,
-          startOnBoot: true,
-          notification: { title: t('notification.recordingTitle'), text: t('notification.recordingBody') }
-        }
-      });
-      bgGeoReady = true;
-    }
-    await bgGeo.start();
-  }catch(e){
-    nativeGpsActive = false;
-    onGpsError();
-  }
-}
 // Mirrors the persistent "Trip Recording" system notification other tracking
 // apps (SeePeople, etc.) show — makes it obvious at a glance, even with the
 // phone locked or another app open, that a journey is currently being
@@ -978,11 +931,9 @@ function checkGpsFreshness(){
     bestRejectedFix = null;
   }
   if(nativeGpsActive){
-    // Tear down and restart the native watcher the same way we do for the
-    // browser one below — cheap to attempt, and covers the case where the
-    // watcher has quietly stalled rather than the boat genuinely having no
-    // signal. ready() only needs calling once per session (bgGeoReady stays
-    // true), so this restart is just stop() then start() again.
+    // Restart the native recorder the same way we do for the browser one
+    // below — cheap to attempt, and covers the case where it has quietly
+    // stalled rather than the boat genuinely having no signal.
     if(useSailTracker()){
       // Collect anything waiting first, then ask the recorder to re-request GPS.
       // If the service has died altogether, start it again from scratch.
@@ -991,9 +942,7 @@ function checkGpsFreshness(){
         .then(r => { if(!r || !r.running){ nativeGpsActive = false; startGPS(); } })
         .catch(() => {});
     } else {
-      const bgGeo = getBgGeo();
-      if(bgGeo) bgGeo.stop().finally(() => { nativeGpsActive = false; startGPS(); });
-      else { nativeGpsActive = false; startGPS(); }
+      nativeGpsActive = false; startGPS();
     }
   } else if('geolocation' in navigator){
     navigator.geolocation.clearWatch(watchId);
@@ -1004,12 +953,7 @@ function stopGPS(){
   if(watchId!==null && 'geolocation' in navigator){ navigator.geolocation.clearWatch(watchId); watchId=null; }
   if(nativeGpsActive){
     nativeGpsActive = false;
-    if(useSailTracker()){
-      getSailTracker().stop().catch(()=>{});
-    } else {
-      const bgGeo = getBgGeo();
-      if(bgGeo) bgGeo.stop().catch(()=>{});
-    }
+    if(useSailTracker()) getSailTracker().stop().catch(()=>{});
   }
   if(timerId){ clearInterval(timerId); timerId=null; }
   if(gpsWatchdogInterval){ clearInterval(gpsWatchdogInterval); gpsWatchdogInterval=null; }

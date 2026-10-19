@@ -276,15 +276,11 @@ async function renderTripDetailMap(trip){
 }
 let detailLeafletMap = null, detailMapLocked = true;
 
-/* ---------- map base-layer styles: Standard / Nautical / Satellite / Colorful ----------
-   All free, no-API-key tile sources so this stays consistent with the rest of the
-   app (no backend, no credentials to manage). "Nautical" is OSM's standard base
-   layer with the OpenSeaMap seamarks overlay on top (buoys, lights, depth areas —
-   genuinely useful on the water, not just a different color scheme). "Colorful" is
-   Esri's World Street Map — picked after a side-by-side comparison against several
-   other free options. Picked style is remembered in localStorage and applied to
-   both the live map and any trip's detail map; Colorful is the default for anyone
-   who hasn't picked yet. */
+/* ---------- map base-layer styles: Minimal / Nautical / Colorful ----------
+   All three use CARTO tiles with our free CARTO key (see the note below the list).
+   "Nautical" adds the OpenSeaMap sea marks on top (buoys, lights, depth areas).
+   The picked style is remembered in localStorage and applied to both the live map
+   and any trip's detail map; Minimal is the default for anyone who hasn't picked. */
 const MAP_STYLES = {
   minimal: { labelKey:'mapStyle.minimal', base:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_2ovi_1_4398d296b38a11f0c00df3b6',
     attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20 },
