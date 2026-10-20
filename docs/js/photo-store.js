@@ -289,6 +289,58 @@ async function inlineProfileImages(p){
   return out;
 }
 
+/* ---------- crew and boat photos (added 20.10.2026) ----------
+   Same idea as the profile photos: moved into storage just before a boat or
+   crew member is sent to the cloud. Each boat or crew member gets its own
+   folder, <your-user-id>/boats/<boat-id>/ or <your-user-id>/crew/<crew-id>/,
+   so its old photos can be tidied away. Only you can see these (your Fleet and
+   Crew are private), which the existing storage rules already ensure. */
+function itemHasInlineImages(item){
+  return !!item && (isInlineImage(item.photo) || (item.photos || []).some(isInlineImage));
+}
+// kind = 'boats' or 'crew'. Uploads the item's photos and swaps them for
+// references. Returns true if anything changed. Throws if an upload fails
+// (the item is left exactly as it was).
+async function offloadItemPhotos(kind, item){
+  if(!state.user || _photoStorageUnavailable || !itemHasInlineImages(item)) return false;
+  const folder = `${kind}/${item.id}`;
+  const conv = async (s)=> isInlineImage(s) ? uploadInlineImage(s, folder) : s;
+  const photos = Array.isArray(item.photos) ? [] : null;
+  if(photos) for(const p of item.photos) photos.push(await conv(p));
+  const photo = item.photo ? await conv(item.photo) : item.photo; // same image -> same reference (see _uploadedInline)
+  const list = kind === 'boats' ? state.boats : state.crew;
+  for(const target of [item, (list || []).find(x => x.id === item.id)]){
+    if(!target) continue;
+    if(photos) target.photos = photos;
+    target.photo = photo;
+  }
+  await storeSet(kind === 'boats' ? KEYS.BOATS : KEYS.CREW, list);
+  return true;
+}
+// Removes photos in an item's folder that it no longer uses.
+async function cleanupOldItemPhotos(kind, item){
+  if(!state.user || !item) return;
+  const folder = `${state.user.id}/${kind}/${item.id}`;
+  const keep = new Set([item.photo, ...(item.photos || [])].filter(isPhotoRef).map(photoRefPath));
+  try{
+    const { data, error } = await getSupabaseClient().storage.from(PHOTO_BUCKET).list(folder, { limit: 100 });
+    if(error || !data) return;
+    const old = data.filter(f => f.id && !keep.has(folder + '/' + f.name)).map(f => PHOTO_REF_PREFIX + folder + '/' + f.name);
+    if(old.length) await deleteStoredPhotos(old);
+  }catch(e){ console.warn('old photo cleanup failed', e); }
+}
+// A copy of a boat or crew member with real image data instead of references.
+async function inlineItemImages(item){
+  if(!item) return item;
+  const out = { ...item };
+  if(item.photo) out.photo = (await photoToDataUrl(item.photo)) || item.photo;
+  if(Array.isArray(item.photos)){
+    out.photos = [];
+    for(const p of item.photos) out.photos.push((await photoToDataUrl(p)) || p);
+  }
+  return out;
+}
+
 /* ---------- deleting ---------- */
 // Removes photos from the cloud (only your own) and from this device.
 async function deleteStoredPhotos(refs){

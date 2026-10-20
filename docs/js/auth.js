@@ -660,11 +660,17 @@ function pushBoatToCloud(boat){
 }
 async function pushBoatToCloudImpl(boat){
   if(!state.user) return { ok:false };
+  // Photos go to photo storage first (photo-store.js); if that fails the boat
+  // is still pushed with its photos inside, and retried on the next sync.
+  let movedPhotos = false;
+  try{ movedPhotos = await offloadItemPhotos('boats', boat); }
+  catch(e){ console.warn('boat photo upload failed — pushing with photos inside for now', e); }
   try{
     const { error } = await getSupabaseClient()
       .from('boats')
       .upsert({ id: boat.id, user_id: state.user.id, data: boat, updated_at: boat.updatedAt || new Date().toISOString() });
     if(error) throw error;
+    cleanupOldItemPhotos('boats', boat); // tidy away removed/replaced photos, in the background
     return { ok:true };
   }catch(e){
     console.error('boat cloud push failed', e);
@@ -690,6 +696,7 @@ async function deleteBoatFromCloudImpl(boatId){
       .from('boats')
       .upsert({ id: boatId, user_id: state.user.id, data: {}, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() });
     if(error) throw error;
+    deleteTripPhotoFolder('boats/' + boatId); // its photos go too (works for any folder of yours)
     return { ok:true };
   }catch(e){
     console.error('boat cloud delete failed', e);
@@ -809,6 +816,9 @@ async function resolveBoatsSyncOnSignInImpl(){
   state.boats = merged;
   await storeSet(KEYS.BOATS, state.boats);
   renderBoats();
+  // Boats whose photos are still stored inside them: push once more so the
+  // photos move into photo storage (one-off, on the first sync after 20.10.2026).
+  for(const b of merged) if(itemHasInlineImages(b) && !toPushUp.includes(b)) toPushUp.push(b);
 
   for(const boat of toPushUp){
     debugLog(`[sync] pushing up boat ${boat.id} with updatedAt=${boat.updatedAt}...`);
@@ -1049,11 +1059,14 @@ function pushCrewToCloud(crewMember){
 }
 async function pushCrewToCloudImpl(crewMember){
   if(!state.user) return { ok:false };
+  try{ await offloadItemPhotos('crew', crewMember); }
+  catch(e){ console.warn('crew photo upload failed — pushing with the photo inside for now', e); }
   try{
     const { error } = await getSupabaseClient()
       .from('crew')
       .upsert({ id: crewMember.id, user_id: state.user.id, data: crewMember, updated_at: crewMember.updatedAt || new Date().toISOString() });
     if(error) throw error;
+    cleanupOldItemPhotos('crew', crewMember);
     return { ok:true };
   }catch(e){
     console.error('crew cloud push failed', e);
@@ -1074,6 +1087,7 @@ async function deleteCrewFromCloudImpl(crewId){
       .from('crew')
       .upsert({ id: crewId, user_id: state.user.id, data: {}, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() });
     if(error) throw error;
+    deleteTripPhotoFolder('crew/' + crewId);
     return { ok:true };
   }catch(e){
     console.error('crew cloud delete failed', e);
@@ -1156,6 +1170,7 @@ async function resolveCrewSyncOnSignInImpl(){
   state.crew = merged;
   await storeSet(KEYS.CREW, state.crew);
   renderCrew();
+  for(const c of merged) if(itemHasInlineImages(c) && !toPushUp.includes(c)) toPushUp.push(c);
 
   for(const crewMember of toPushUp){
     const result = await pushCrewToCloudImpl(crewMember);
@@ -1418,20 +1433,21 @@ async function _listMyStoredPhotos(){
   const sb = getSupabaseClient();
   const root = state.user.id;
   const paths = [];
-  const { data: top, error } = await sb.storage.from(PHOTO_BUCKET).list(root, { limit: 1000 });
-  if(error) throw error;
-  for(const item of (top || [])){
-    if(item.id){ paths.push(`${root}/${item.name}`); continue; } // a file right in the root folder
-    const folder = `${root}/${item.name}`;                      // a sail's folder
+  // Walks every folder: <id>/<sail>/, <id>/profile/, <id>/boats/<boat>/, <id>/crew/<member>/
+  const walk = async (folder)=>{
     let offset = 0;
     for(;;){
-      const { data, error: e2 } = await sb.storage.from(PHOTO_BUCKET).list(folder, { limit: 1000, offset });
-      if(e2) throw e2;
-      (data || []).filter(f => f.id).forEach(f => paths.push(`${folder}/${f.name}`));
+      const { data, error } = await sb.storage.from(PHOTO_BUCKET).list(folder, { limit: 1000, offset });
+      if(error) throw error;
+      for(const item of (data || [])){
+        if(item.id) paths.push(`${folder}/${item.name}`); // a file
+        else await walk(`${folder}/${item.name}`);        // a folder
+      }
       if(!data || data.length < 1000) break;
       offset += 1000;
     }
-  }
+  };
+  await walk(root);
   return paths;
 }
 
@@ -1449,6 +1465,18 @@ async function _keepPhotosOnThisDevice(){
     entry.coverPhoto = full.coverPhoto;
   }
   await storeSet(KEYS.INDEX, state.tripIndex);
+  // Boat and crew photos.
+  for(const kind of ['boats', 'crew']){
+    const list = kind === 'boats' ? state.boats : state.crew;
+    for(let i = 0; i < (list || []).length; i++){
+      const item = list[i];
+      if(![item.photo, ...(item.photos || [])].some(isPhotoRef)) continue;
+      const full = await inlineItemImages(item);
+      if([full.photo, ...(full.photos || [])].some(isPhotoRef)) throw new Error('photo download failed');
+      list[i] = full;
+    }
+    await storeSet(kind === 'boats' ? KEYS.BOATS : KEYS.CREW, list);
+  }
   // Profile and cover photos too.
   if([state.profile.avatar, state.profile.cover].some(isPhotoRef)){
     const p = await inlineProfileImages(state.profile);

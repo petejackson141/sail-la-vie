@@ -103,7 +103,19 @@ function tripPdfData(trip){
    ============================================================ */
 
 // Photo as a background-image div: cropped to its box with no distortion.
+// Crew, skipper and boat pictures can be photo-storage references; the page is
+// drawn from CSS backgrounds, so they're swapped for real image data first
+// (tpPrepareImages). Sail photos are inlined separately (inlineTripImages).
+const _tpImgData = new Map();
+async function tpPrepareImages(trip){
+  const boat = state.boats.find(b=>b.id===trip.boatId);
+  const ids = [trip.skipperId, ...(trip.crewIds||[])].filter(Boolean);
+  const refs = [boat && boat.photo, ...ids.map(id => (crewMemberById(id)||{}).photo)].filter(isPhotoRef);
+  for(const r of refs) if(!_tpImgData.has(r)){ const d = await photoToDataUrl(r); if(d) _tpImgData.set(r, d); }
+  return inlineTripImages(trip);
+}
 function tpImg(src, cls, extraStyle){
+  if(isPhotoRef(src)) src = _tpImgData.get(src) || placeholderAvatar();
   return `<div class="${cls}" style="background-image:url('${src}');${extraStyle||''}"></div>`;
 }
 
@@ -481,7 +493,7 @@ async function renderTripPdfPreview(){
   inner.style.width = TP_W+'px';
   inner.style.transformOrigin = currentLang==='he' ? 'top right' : 'top left';
   if(document.fonts && document.fonts.ready) await document.fonts.ready;
-  const pdfTrip = await inlineTripImages(trip); // stored photos -> real image data for the page layout
+  const pdfTrip = await tpPrepareImages(trip); // stored photos -> real image data for the page layout
   if(token !== _tpPreviewToken) return;
   const pages = layoutTripPdfPages(currentPdfTheme, tripPdfData(pdfTrip), inner);
   const s = (wrap.clientWidth || 360) / TP_W;
@@ -504,7 +516,7 @@ async function generateAndShareTripPdf(){
   document.body.appendChild(host);
   try{
     if(document.fonts && document.fonts.ready) await document.fonts.ready;
-    const pages = layoutTripPdfPages(currentPdfTheme, tripPdfData(await inlineTripImages(trip)), host);
+    const pages = layoutTripPdfPages(currentPdfTheme, tripPdfData(await tpPrepareImages(trip)), host);
     await waitForImagesToLoad(host);
     await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
     const { jsPDF } = window.jspdf;
