@@ -20,6 +20,7 @@ They're kept as a record of what was changed and why.
 | `fix-profiles-privacy.sql` | Stopped anyone reading everyone's full profile (phone, email…) |
 | `harden-functions.sql` | Tightened `are_friends` and the sign-up function |
 | `fix-advisor-warnings.sql` | Cleared the Security Advisor warnings, added indexes |
+| `profile-photos.sql` | Lets friends see profile and cover photos in photo storage (20 October 2026) |
 
 ## Expected Security Advisor warnings (all fine)
 

@@ -250,7 +250,8 @@ function smallAvatarFrom(src){
 let _publicAvatarCache = { src:null, small:null };
 async function currentSmallAvatar(){
   const src = state.profile.avatar || null;
-  if(_publicAvatarCache.src !== src){ _publicAvatarCache = { src, small: await smallAvatarFrom(src) }; }
+  // The profile photo may be a photo-storage reference now: fetch the real image first.
+  if(_publicAvatarCache.src !== src){ _publicAvatarCache = { src, small: await smallAvatarFrom(isPhotoRef(src) ? await photoToDataUrl(src) : src) }; }
   return _publicAvatarCache.small;
 }
 // Pushes the local name + photo to the public card (only once a username exists).

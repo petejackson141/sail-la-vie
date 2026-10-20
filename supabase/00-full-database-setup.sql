@@ -153,8 +153,8 @@ as $$
      );
 $$;
 
--- May the signed-in user see this photo? Yes if it's theirs, or it belongs to
--- a sail a friend shared with them. Photo paths look like <owner-id>/<sail-id>/<photo>.jpg
+-- May the signed-in user see this photo? Yes if it's theirs, if it belongs to
+-- a sail a friend shared with them, or if it's a friend's profile/cover photo. Photo paths look like <owner-id>/<sail-id>/<photo>.jpg
 create or replace function private.can_view_trip_photo(object_name text)
 returns boolean language sql stable security definer set search_path = 'public'
 as $$
@@ -173,6 +173,18 @@ as $$
         and t.id::text      = (storage.foldername(object_name))[2]
         and t.visibility    = 'friends'
         and t.deleted_at is null
+    )
+    -- a friend's profile or cover photo (folder <friend-id>/profile/), added 20.10.2026
+    or (
+      (storage.foldername(object_name))[2] = 'profile'
+      and exists (
+        select 1 from public.friendships f
+        where f.status = 'accepted'
+          and (
+               (f.requester_id::text = auth.uid()::text and f.addressee_id::text = (storage.foldername(object_name))[1])
+            or (f.addressee_id::text = auth.uid()::text and f.requester_id::text = (storage.foldername(object_name))[1])
+          )
+      )
     );
 $$;
 
@@ -356,6 +368,7 @@ create policy "Users can send their own feedback" on public.feedback
 -- 4. PHOTO STORAGE
 --    Private bucket, max 5 MB per photo, pictures only.
 --    Each photo lives in <owner-id>/<sail-id>/<photo>.jpg
+--    Profile and cover photos live in <owner-id>/profile/<photo>.jpg
 -- ---------------------------------------------------------------------
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

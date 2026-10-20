@@ -164,7 +164,8 @@ async function backupToFile(){
   }
   const payload = {
     app:'Sail la Vie', version:1, exportedAt:new Date().toISOString(),
-    profile: state.profile, boats: state.boats, crew: state.crew, noticeboard: state.noticeboard,
+    profile: typeof inlineProfileImages === 'function' ? await inlineProfileImages(state.profile) : state.profile,
+    boats: state.boats, crew: state.crew, noticeboard: state.noticeboard,
     tripIndex: state.tripIndex, trips
   };
   const json = JSON.stringify(payload, null, 2);

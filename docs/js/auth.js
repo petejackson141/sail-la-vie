@@ -586,7 +586,16 @@ async function resolveProfileSyncOnSignInImpl(){
     // Identical on both sides — nothing to load, so do nothing and say nothing.
     // (This is the normal case on every app launch; it used to re-apply the same
     // profile and flash "Profile loaded from your account." each time.)
-    if(sameAsLocal) return;
+    if(sameAsLocal){
+      // Same on both sides, but the photos are still stored inside the profile:
+      // move them into photo storage now (once), instead of waiting for an edit.
+      if(typeof profileHasInlineImages === 'function' && profileHasInlineImages(state.profile)) await syncLocalProfileToCloudImpl();
+      return;
+    }
+    // The only difference is that another device already moved the profile/cover
+    // photo into photo storage (this device still holds the old in-profile copy):
+    // take the cloud version quietly, no question needed.
+    if(onlyPhotosMovedToStorage(state.profile, cloudProfile)){ await applyCloudProfile(cloudProfile, { quiet:true }); return; }
     if(!localHasData){
       await applyCloudProfile(cloudProfile);
       return;
@@ -605,13 +614,29 @@ async function resolveProfileSyncOnSignInImpl(){
 // Applies a profile fetched from the cloud onto this device — saves it to
 // local storage and refreshes the screens that show profile info, the same
 // way restoreFromFile() does in storage.js for a manual backup restore.
-async function applyCloudProfile(cloudProfile){
+async function applyCloudProfile(cloudProfile, opts){
   state.profile = cloudProfile;
   await storeSet(KEYS.PROFILE, state.profile);
   await applyThemePreference();
   document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
   refreshAvatars();
-  showToast('Profile loaded from your account.');
+  if(typeof refreshProfileIfVisible === 'function') refreshProfileIfVisible();
+  if(!(opts && opts.quiet)) showToast('Profile loaded from your account.');
+}
+// True when local and cloud profiles match except that, for the profile and/or
+// cover photo, this device holds the image itself and the cloud holds a
+// photo-storage reference to it.
+function onlyPhotosMovedToStorage(local, cloud){
+  if(!local || !cloud) return false;
+  let moved = false;
+  for(const k of ['avatar', 'cover']){
+    if(local[k] === cloud[k]) continue;
+    if(isInlineImage(local[k]) && isPhotoRef(cloud[k])){ moved = true; continue; }
+    return false;
+  }
+  if(!moved) return false;
+  const strip = p => { const c = { ...p }; delete c.avatar; delete c.cover; return c; };
+  return stableStringify(strip(local)) === stableStringify(strip(cloud));
 }
 
 /* ---------- boats ↔ cloud ----------
@@ -1157,10 +1182,17 @@ function syncLocalProfileToCloud(){
 async function syncLocalProfileToCloudImpl(){
   if(!state.user) return { ok:false };
   try{
+    // Move profile/cover photos into photo storage first (photo-store.js), so the
+    // profile record only carries short references. If that fails (offline, or
+    // profile-photos.sql not run yet) the profile still syncs the old way.
+    let movedPhotos = false;
+    try{ movedPhotos = await offloadProfilePhotos(); }
+    catch(e){ console.warn('profile photo upload failed — syncing the profile with the photos inside it', e); }
     const { error } = await getSupabaseClient()
       .from('profiles')
       .upsert({ id: state.user.id, display_name: state.profile.name || null, profile_data: state.profile });
     if(error){ console.error('profile cloud sync failed', error); return { ok:false, message: error.message }; }
+    if(movedPhotos) cleanupOldProfilePhotos(); // tidy away replaced photos, in the background
     return { ok:true };
   }catch(e){
     console.error('profile cloud sync failed', e);
@@ -1417,6 +1449,13 @@ async function _keepPhotosOnThisDevice(){
     entry.coverPhoto = full.coverPhoto;
   }
   await storeSet(KEYS.INDEX, state.tripIndex);
+  // Profile and cover photos too.
+  if([state.profile.avatar, state.profile.cover].some(isPhotoRef)){
+    const p = await inlineProfileImages(state.profile);
+    if([p.avatar, p.cover].some(isPhotoRef)) throw new Error('photo download failed');
+    state.profile = p;
+    await storeSet(KEYS.PROFILE, state.profile);
+  }
 }
 
 async function deleteMyAccount(){

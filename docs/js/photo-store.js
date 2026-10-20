@@ -247,6 +247,48 @@ async function offloadTripPhotos(trip){
   return true;
 }
 
+/* ---------- profile and cover photos (added 20.10.2026) ----------
+   Your round profile photo and your cover photo used to be stored as image text
+   inside your profile record. Now they go into the same storage as sail photos,
+   in <your-user-id>/profile/<photo>.jpg, and the profile keeps a short reference.
+   Friends can see them (see profile-photos.sql); nobody else can.
+   This runs just before your profile is sent to the cloud, so existing photos
+   move across by themselves the next time the profile syncs. */
+function profileHasInlineImages(p){ return !!p && (isInlineImage(p.avatar) || isInlineImage(p.cover)); }
+async function offloadProfilePhotos(){
+  if(!state.user || _photoStorageUnavailable || !profileHasInlineImages(state.profile)) return false;
+  const p = state.profile;
+  const avatar = isInlineImage(p.avatar) ? await uploadInlineImage(p.avatar, 'profile') : p.avatar;
+  const cover  = isInlineImage(p.cover)  ? await uploadInlineImage(p.cover,  'profile') : p.cover;
+  // Only swap once both uploads worked, so a failure leaves the profile exactly as it was.
+  state.profile.avatar = avatar;
+  state.profile.cover = cover;
+  await storeSet(KEYS.PROFILE, state.profile);
+  return true;
+}
+// Removes old profile/cover photos you've replaced. Only ever touches your own
+// "profile" folder, and keeps whatever your profile points at now.
+async function cleanupOldProfilePhotos(){
+  if(!state.user) return;
+  const folder = `${state.user.id}/profile`;
+  const keep = new Set([state.profile.avatar, state.profile.cover].filter(isPhotoRef).map(photoRefPath));
+  try{
+    const { data, error } = await getSupabaseClient().storage.from(PHOTO_BUCKET).list(folder, { limit: 100 });
+    if(error || !data) return;
+    const old = data.filter(f => f.id && !keep.has(folder + '/' + f.name)).map(f => PHOTO_REF_PREFIX + folder + '/' + f.name);
+    if(old.length) await deleteStoredPhotos(old);
+  }catch(e){ console.warn('old profile photo cleanup failed', e); }
+}
+// A copy of the profile with its photo references swapped for real image data
+// (backup file, or keeping photos when the account is deleted).
+async function inlineProfileImages(p){
+  if(!p) return p;
+  const out = { ...p };
+  if(p.avatar) out.avatar = (await photoToDataUrl(p.avatar)) || p.avatar;
+  if(p.cover)  out.cover  = (await photoToDataUrl(p.cover))  || p.cover;
+  return out;
+}
+
 /* ---------- deleting ---------- */
 // Removes photos from the cloud (only your own) and from this device.
 async function deleteStoredPhotos(refs){
