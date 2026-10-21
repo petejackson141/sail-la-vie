@@ -594,7 +594,7 @@ function renderProfileFriends(){
   if(!friendsState.loaded && !friendsState.loading && !friendsState.failed) loadFriendsData();
   const ids = friendsState.loaded ? friendRows().map(friendOtherId) : [];
   const pending = friendsState.loaded ? incomingRequests().length : 0;
-  const faces = ids.slice(0,4).map(id=>`<img src="${(friendsState.people[id]||{}).avatar_url || placeholderAvatar()}" alt="">`).join('');
+  const faces = ids.slice(0,4).map(id=>`<img src="${safeSrc((friendsState.people[id]||{}).avatar_url || placeholderAvatar())}" alt="">`).join('');
   const countText = !friendsState.loaded ? (friendsState.failed ? t('friends.title') : t('friends.loading')) : ids.length===1 ? t('friends.countOne') : ids.length ? t('friends.count', {n: ids.length}) : t('friends.title');
   el.innerHTML = `<div class="row-card fr-summary" onclick="nav('friends')">
     ${faces ? `<div class="fr-faces">${faces}</div>` : ''}

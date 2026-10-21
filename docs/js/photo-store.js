@@ -16,11 +16,11 @@
 //     app keeps treating photos as plain strings, as it always has.
 //   • Existing sails with photos stored the old way are moved across
 //     automatically on the next sync (see resolveTripsSyncOnSignInImpl in auth.js).
-//   • Signed out ("Continue without an account"): photos simply stay on the
-//     device the old way until you sign in.
+//   • Profile, cover, boat and crew photos work the same way (see further down).
 //
-// Needs photo-storage-supabase.sql to have been run once in Supabase. Until it
-// is, uploads fail quietly and sails keep syncing the old way — nothing breaks.
+// The "trip-photos" bucket and its rules are in supabase/00-full-database-setup.sql.
+// If storage is ever unavailable, uploads fail quietly and sails keep syncing
+// the old way — nothing breaks.
 
 const PHOTO_BUCKET = 'trip-photos';
 const PHOTO_REF_PREFIX = 'sbimg:';

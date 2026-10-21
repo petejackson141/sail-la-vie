@@ -27,6 +27,12 @@ const ANDROID_APK_URL  = 'https://github.com/petejackson141/sail-la-vie/releases
 
 // Newest first. Add a line here with each release worth telling people about.
 const WHATS_NEW = [
+  { version: '21.10.2026', items: [
+    'Your profile, cover, boat and crew photos are now backed up to the cloud and stay in sync across your devices.',
+    'The Nautical map style has a clearer, more colourful background under the sea marks.',
+    'Location only needs “While using the app” now. Recording still carries on with the screen off.',
+    'The user guide is updated, and a small security fix.'
+  ]},
   { version: '01.10.2026', items: [
     'The black box that flashed when opening the app is gone.',
     'Security and privacy improvements behind the scenes.'
