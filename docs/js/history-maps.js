@@ -293,7 +293,8 @@ function endpointDot(color){
 
    The three style IDs and their labels are unchanged (so no translations needed):
      voyager  ("Colorful") → Mapbox Standard — the detailed, Google/Waze-like look. Default.
-     minimal  ("Minimal")  → Mapbox Light — clean grey, very little clutter.
+     dark     ("Dark")     → the same Mapbox Standard map in its night lighting — easy on
+                             the eyes after sunset. (Replaced "Minimal"/Mapbox Light, 23.10.2026.)
      nautical ("Nautical") → Mapbox Outdoors + OpenSeaMap sea marks (buoys, lights) on top.
 
    MAPBOX_TOKEN is a PUBLIC token (starts with pk.) — it's designed to sit in app
@@ -304,7 +305,7 @@ function endpointDot(color){
 const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2FpbGFwcDE0MSIsImEiOiJjbXZrczUxb28wZW9nMndzOXo2eW5vZjhzIn0.dTms--Rqu3jbnotppYIDaQ';
 const MAP_STYLES = {
   voyager:  { labelKey:'mapStyle.voyager',  url:'mapbox://styles/mapbox/standard' },
-  minimal:  { labelKey:'mapStyle.minimal',  url:'mapbox://styles/mapbox/light-v11' },
+  dark:     { labelKey:'mapStyle.dark',     url:'mapbox://styles/mapbox/standard', lightPreset:'night' },
   nautical: { labelKey:'mapStyle.nautical', url:'mapbox://styles/mapbox/outdoors-v12',
     seamarks:'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png' },
 };
@@ -314,6 +315,12 @@ const TRACK_COLOR = '#16324F';
 let currentMapStyle = localStorage.getItem('mapStyleV2') || 'voyager';
 if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'voyager';
 
+// Extra options for a style: Standard's day/night lighting is a setting on the style,
+// not a separate style, so Dark passes it in here.
+function styleOptions(id){
+  const st = MAP_STYLES[id];
+  return st.lightPreset ? { config:{ basemap:{ lightPreset: st.lightPreset } } } : {};
+}
 // True when the Mapbox library loaded and this phone can draw it (needs WebGL).
 function mapboxReady(){
   if(typeof mapboxgl === 'undefined') return false;
@@ -326,6 +333,7 @@ function createMapboxMap(containerId, opts){
   return new mapboxgl.Map(Object.assign({
     container: containerId,
     style: MAP_STYLES[currentMapStyle].url,
+    config: styleOptions(currentMapStyle).config,
     center: [0,0], zoom: 2,
     attributionControl: true,
     pitchWithRotate: false,   // keep it a flat, north-up chart — no accidental 3D tilt
@@ -339,6 +347,11 @@ function createMapboxMap(containerId, opts){
 // `coords` is a function returning the current [[lng,lat], ...] list.
 function addOurLayers(map, coords){
   const style = MAP_STYLES[currentMapStyle];
+  // Make sure Standard's lighting matches the chosen style (night for Dark, day otherwise).
+  if(style.url.endsWith('/standard')){
+    try { map.setConfigProperty('basemap','lightPreset', style.lightPreset || 'day'); } catch(e){}
+  }
+  const dark = !!style.lightPreset;
   if(style.seamarks && !map.getSource('seamarks')){
     map.addSource('seamarks', { type:'raster', tiles:[style.seamarks], tileSize:256, maxzoom:18,
       attribution:'Sea marks © <a href="https://www.openseamap.org" target="_blank">OpenSeaMap</a>' });
@@ -349,10 +362,11 @@ function addOurLayers(map, coords){
     // A soft white "halo" under the line keeps it readable on any background.
     map.addLayer({ id:'track-halo', type:'line', source:'track',
       layout:{ 'line-join':'round', 'line-cap':'round' },
-      paint:{ 'line-color':'#ffffff', 'line-width':7, 'line-opacity':0.85 } });
+      paint:{ 'line-color': dark ? '#0b1a2a' : '#ffffff', 'line-width':7, 'line-opacity':0.85 } });
     map.addLayer({ id:'track-line', type:'line', source:'track',
       layout:{ 'line-join':'round', 'line-cap':'round' },
-      paint:{ 'line-color':TRACK_COLOR, 'line-width':4 } });
+      // Navy disappears on a night map, so Dark uses a bright gold line instead.
+      paint:{ 'line-color': dark ? '#F2C14E' : TRACK_COLOR, 'line-width':4 } });
   }
 }
 function trackGeoJson(coords){
@@ -388,8 +402,9 @@ function selectMapStyle(which, id){
   try { localStorage.setItem('mapStyleV2', id); } catch(e){}
   // diff:false forces a clean reload, which guarantees 'style.load' fires and our
   // track gets re-added (a "diff" update can quietly drop our layers without firing it).
-  if(liveMap) liveMap.setStyle(MAP_STYLES[id].url, {diff:false});
-  if(detailMap) detailMap.setStyle(MAP_STYLES[id].url, {diff:false});
+  const opts = Object.assign({diff:false}, styleOptions(id));
+  if(liveMap) liveMap.setStyle(MAP_STYLES[id].url, opts);
+  if(detailMap) detailMap.setStyle(MAP_STYLES[id].url, opts);
   document.querySelectorAll('.map-style-menu').forEach(m=>m.classList.remove('open'));
   const liveLabel = document.getElementById('liveMapStyleLabel'); if(liveLabel) liveLabel.textContent = t(MAP_STYLES[id].labelKey);
   const detailLabel = document.getElementById('detailMapStyleLabel'); if(detailLabel) detailLabel.textContent = t(MAP_STYLES[id].labelKey);

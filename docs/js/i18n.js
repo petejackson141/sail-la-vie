@@ -527,6 +527,7 @@ const TRANSLATIONS = {
   'mapStyle.nautical': 'Nautical',
   'mapStyle.satellite': 'Satellite',
   'mapStyle.voyager': 'Colorful',
+  'mapStyle.dark': 'Dark',
   'notification.recordingTitle': 'Trip Recording',
   'notification.recordingBody': 'Sail la Vie is tracking your journey in the background.',
   'notification.recordingBodyBoat': 'Tracking your journey on {boat} in the background.',
