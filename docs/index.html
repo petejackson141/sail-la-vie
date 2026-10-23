@@ -623,8 +623,13 @@
     box-shadow:var(--shadow); cursor:pointer; }
   .map-recenter-btn svg{ width:20px; height:20px; }
   .map-recenter-btn.show{ display:flex; }
-  /* Boat marker on the live map — no box/border, just the boat image. */
-  .yacht-marker-icon{ background:transparent; border:none; width:68px; height:68px; }
+  /* Boat marker on the maps — no box/border, just the boat image (size set in JS). */
+  .yacht-marker-icon{ background:transparent; border:none; }
+  /* "Replay" pill on a saved trip's map — appears once the replay has finished. */
+  .map-replay-btn{ position:absolute; bottom:10px; left:50%; transform:translateX(-50%); z-index:1100; display:flex; align-items:center; gap:5px;
+    background:rgba(20,43,68,.82); color:#fff; border:none; border-radius:999px; padding:7px 13px 7px 10px; font-size:11px; font-weight:600;
+    cursor:pointer; box-shadow:var(--shadow); font-family:inherit; }
+  .map-replay-btn svg{ width:12px; height:12px; flex:0 0 auto; }
   /* Mapbox's logo + attribution sit bottom-left/right; keep them clear of our pills. */
   #liveTrackLeaflet .mapboxgl-ctrl-bottom-right{ margin-right:56px; }
   #detailLeaflet .mapboxgl-ctrl-bottom-left, #detailLeaflet .mapboxgl-ctrl-bottom-right{ margin-bottom:44px; }
