@@ -355,18 +355,20 @@ function addOurLayers(map, coords){
   if(style.seamarks && !map.getSource('seamarks')){
     map.addSource('seamarks', { type:'raster', tiles:[style.seamarks], tileSize:256, maxzoom:18,
       attribution:'Sea marks © <a href="https://www.openseamap.org" target="_blank">OpenSeaMap</a>' });
-    map.addLayer({ id:'seamarks', type:'raster', source:'seamarks' });
+    map.addLayer({ id:'seamarks', type:'raster', source:'seamarks', paint:{ 'raster-emissive-strength':1 } });
   }
   if(!map.getSource('track')){
     map.addSource('track', { type:'geojson', data:trackGeoJson(coords()) });
     // A soft white "halo" under the line keeps it readable on any background.
     map.addLayer({ id:'track-halo', type:'line', source:'track',
       layout:{ 'line-join':'round', 'line-cap':'round' },
-      paint:{ 'line-color': dark ? '#0b1a2a' : '#ffffff', 'line-width':7, 'line-opacity':0.85 } });
+      paint:{ 'line-color': dark ? '#0b1a2a' : '#ffffff', 'line-width':7, 'line-opacity':0.85, 'line-emissive-strength':1 } });
     map.addLayer({ id:'track-line', type:'line', source:'track',
       layout:{ 'line-join':'round', 'line-cap':'round' },
       // Navy disappears on a night map, so Dark uses a bright gold line instead.
-      paint:{ 'line-color': dark ? '#F2C14E' : TRACK_COLOR, 'line-width':4 } });
+      // line-emissive-strength:1 = the line "glows", so Standard's night lighting doesn't
+      // dim it (without this, the gold came out almost black on the Dark map).
+      paint:{ 'line-color': dark ? '#F2C14E' : TRACK_COLOR, 'line-width':4, 'line-emissive-strength':1 } });
   }
 }
 function trackGeoJson(coords){
