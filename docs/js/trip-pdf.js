@@ -11,7 +11,8 @@
 //   • All photos are included, none repeated, all cropped to the same 3:2
 //     shape (CSS background-size:cover — html2canvas doesn't support object-fit,
 //     which is what used to give inconsistent photo proportions).
-//   • The route map is a purpose-built chart SVG with literal colours (the old
+//   • The route map is a real Mapbox map picture (see tpPrepareMapImage), with the
+//     drawn chart below as the offline fallback. That chart is a purpose-built SVG with literal colours (the old
 //     porthole SVG used CSS variables, which html2canvas can't resolve inside
 //     an SVG image — one cause of the black boxes), with a lat/long grid,
 //     start/finish markers, north arrow and scale bar. A trip without a GPS
@@ -108,6 +109,7 @@ function tripPdfData(trip){
 // (tpPrepareImages). Sail photos are inlined separately (inlineTripImages).
 const _tpImgData = new Map();
 async function tpPrepareImages(trip){
+  await tpPrepareMapImage(trip); // real Mapbox map picture for the route section (if online)
   const boat = state.boats.find(b=>b.id===trip.boatId);
   const ids = [trip.skipperId, ...(trip.crewIds||[])].filter(Boolean);
   const refs = [boat && boat.photo, ...ids.map(id => (crewMemberById(id)||{}).photo)].filter(isPhotoRef);
@@ -119,7 +121,71 @@ function tpImg(src, cls, extraStyle){
   return `<div class="${cls}" style="background-image:url('${src}');${extraStyle||''}"></div>`;
 }
 
+/* ---------- real map picture for the route section (Mapbox Static Images) ----------
+   Since 23.10.2026 the PDF's route map is a real Mapbox map, matching the app: one
+   picture is requested from Mapbox with the track already drawn on it, turned into
+   image data (so html2canvas can put it in the PDF), and remembered per trip.
+   If it can't be fetched (offline, Mapbox down) the drawn chart below is used instead.
+   The PDF always uses the DAYTIME look, even if the app is on Dark — a dark map on a
+   light printed page looks odd. Nautical uses Outdoors (sea marks can't be added to a
+   still picture). */
+const TP_MAP_W = 714, TP_MAP_H = 270; // the biggest route box any template uses
+const _tpMapImg = new Map(); // "tripId|style" -> image data
+function tpStaticStyle(){
+  return (typeof currentMapStyle!=='undefined' && currentMapStyle==='nautical') ? 'outdoors-v12' : 'standard';
+}
+// Google/Mapbox "encoded polyline" — squeezes the track into a short piece of text
+// so it fits in the picture's web address.
+function tpEncodePolyline(coords){
+  let out = '', pLat = 0, pLng = 0;
+  const enc = (v)=>{ v = v<0 ? ~(v<<1) : (v<<1); let s=''; while(v>=0x20){ s += String.fromCharCode((0x20|(v&0x1f))+63); v >>= 5; } return s + String.fromCharCode(v+63); };
+  for(const [lat,lng] of coords){
+    const a = Math.round(lat*1e5), b = Math.round(lng*1e5);
+    out += enc(a-pLat) + enc(b-pLng); pLat = a; pLng = b;
+  }
+  return out;
+}
+function tpStaticMapUrl(path, style, pal){
+  // Web addresses have a length limit, so long tracks are thinned to ~350 points
+  // (start and finish always kept) — invisible at this picture size.
+  const step = Math.max(1, Math.ceil(path.length/350));
+  const pts = path.filter((p,i)=> i%step===0 || i===path.length-1).map(p=>[p.lat,p.lng]);
+  const line = encodeURIComponent(tpEncodePolyline(pts));
+  const hex = (c)=>String(c||'#16324F').replace('#','');
+  const s = path[0], e = path[path.length-1];
+  const roundTrip = haversineNm(s, e) < 0.05;
+  const pins = roundTrip ? [`pin-s+${hex(pal.start||'#2E8B57')}(${s.lng.toFixed(5)},${s.lat.toFixed(5)})`]
+                         : [`pin-s+${hex(pal.start||'#2E8B57')}(${s.lng.toFixed(5)},${s.lat.toFixed(5)})`,
+                            `pin-s+${hex(pal.end||'#DE4457')}(${e.lng.toFixed(5)},${e.lat.toFixed(5)})`];
+  const overlay = [`path-7+ffffff-0.9(${line})`, `path-3+${hex(pal.track)}(${line})`, ...pins].join(',');
+  return `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${overlay}/auto/${TP_MAP_W}x${TP_MAP_H}@2x`
+       + `?padding=45,40&access_token=${MAPBOX_TOKEN}`;
+}
+async function tpFetchDataUrl(url, ms){
+  const ctl = new AbortController(); const timer = setTimeout(()=>ctl.abort(), ms||9000);
+  try{
+    const res = await fetch(url, {signal: ctl.signal});
+    if(!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise(r=>{ const fr = new FileReader(); fr.onload = ()=>r(fr.result); fr.onerror = ()=>r(null); fr.readAsDataURL(blob); });
+  } catch(e){ return null; } finally { clearTimeout(timer); }
+}
+async function tpPrepareMapImage(trip){
+  if(!trip || !trip.path || trip.path.length<2 || typeof MAPBOX_TOKEN==='undefined') return;
+  const style = tpStaticStyle(), key = trip.id+'|'+style;
+  if(_tpMapImg.has(key)) return;
+  const pal = {track:TP.navy, start:'#2E8B57', end:TP.coral};
+  let img = await tpFetchDataUrl(tpStaticMapUrl(trip.path, style, pal));
+  if(!img && style==='standard') img = await tpFetchDataUrl(tpStaticMapUrl(trip.path, 'streets-v12', pal)); // backup look
+  if(img) _tpMapImg.set(key, img);
+  else console.warn('[pdf] Mapbox map picture unavailable — using the drawn chart');
+}
+function tpMapImageFor(trip){
+  return trip ? _tpMapImg.get(trip.id+'|'+tpStaticStyle()) : null;
+}
+
 // Chart-style route map with explicit colours (no CSS variables — see header).
+// Used when the real map picture above couldn't be fetched.
 function tpMapSvg(path, w, h, pal){
   pal = Object.assign({water:TP.water, grid:'#9FC3D1', label:'#5C7A8F', track:TP.navy, halo:'#FFFFFF', start:'#2E8B57', end:TP.coral, frame:TP.navy}, pal||{});
   const lats = path.map(p=>p.lat), lngs = path.map(p=>p.lng);
@@ -182,7 +248,11 @@ function tpMapSvg(path, w, h, pal){
 
 // The route box: GPS chart → uploaded map image → nothing (section skipped).
 function tpRouteInner(D, w, h, pal){
-  if(D.hasTrack) return tpMapSvg(D.trip.path, w, h, pal);
+  if(D.hasTrack){
+    const real = tpMapImageFor(D.trip);
+    if(real) return tpImg(real, 'tp-mapimg', `width:${w}px;height:${h}px;`);
+    return tpMapSvg(D.trip.path, w, h, pal);
+  }
   if(D.trip.mapImage) return tpImg(D.trip.mapImage, 'tp-mapimg', `width:${w}px;height:${h}px;`);
   return '';
 }
