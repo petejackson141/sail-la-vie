@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '21.10.2026.0920';
+const APP_VERSION = '23.10.2026.0945';
 
 /* ============================================================
    CONFIRM DIALOG (shared across all screens)
@@ -294,11 +294,11 @@ function nav(name, fromPopState){
   if(name==='friends'){ renderFriendsScreen(); if(typeof refreshFriendsNow==='function') refreshFriendsNow(); } // fresh lists each visit
   if(name==='profile' && typeof refreshFriendsNow==='function') refreshFriendsNow(); // friends card + sailors row
   if(name==='friend') renderFriendPage();
-  if(name==='active' && liveLeafletMap){
-    // Leaflet sizes itself incorrectly if it was updated while its container was
+  if(name==='active' && liveMap){
+    // The map sizes itself incorrectly if it was updated while its container was
     // hidden behind another screen (backgrounded journey) — fix it up now that
     // it's visible again.
-    setTimeout(()=>{ liveLeafletMap.invalidateSize(); if(currentTrip && currentTrip.path.length) updateLiveLeafletTrack(currentTrip.path); }, 50);
+    setTimeout(()=>{ liveMap.resize(); if(currentTrip && currentTrip.path.length) updateLiveMapTrack(currentTrip.path); }, 50);
   }
   updateRecordingBanner(name);
 }

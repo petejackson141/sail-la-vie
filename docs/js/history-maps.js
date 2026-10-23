@@ -1,5 +1,5 @@
 // ===== history-maps.js =====
-// History list + filters, trip detail view, Leaflet maps (live tracking + trip detail), map styles, sharing a trip
+// History list + filters, trip detail view, Mapbox maps (live tracking + trip detail), map styles, sharing a trip
 // Extracted from the original single-file app.js, lines 2540-3122, in original order.
 
 let historyFilter = 'all';   // 'all' | 'recent' | 'photos' — set by the filter chips above the list
@@ -204,7 +204,8 @@ async function openTripDetail(id, from, friendView){
 async function renderTripDetailMap(trip){
   const area = document.getElementById('detailMapArea');
   if(!area) return; // navigated away before this finished loading
-  detailLeafletMap = null; detailMapLocked = true; // fresh state per trip — rebuilt below if this trip has a GPS track
+  if(detailMap){ try{ detailMap.remove(); }catch(e){} } // free the old map's memory before building a new one
+  detailMap = null; detailMapLocked = true; // fresh state per trip — rebuilt below if this trip has a GPS track
 
   if(trip.path && trip.path.length>1){
     area.innerHTML = `
@@ -233,7 +234,7 @@ async function renderTripDetailMap(trip){
     // Bail if the person already navigated to a different trip/screen while this was checking
     if(!document.getElementById('detailLeaflet') || window._detailTrip!==trip) return;
 
-    if(online && typeof L!=='undefined'){
+    if(online && mapboxReady()){
       document.getElementById('detailLeaflet').style.display='block';
       document.getElementById('detailPorthole').style.display='none';
       document.getElementById('detailMapStatsOverlay').style.display='flex';
@@ -241,21 +242,21 @@ async function renderTripDetailMap(trip){
       // nothing here to edit), so a touch that lands on the map should keep
       // scrolling the page, not pan the map out from under it. The lock pill
       // (bottom-right) lets someone explicitly opt in to pan/zoom it.
-      const map = L.map('detailLeaflet', {
-        attributionControl:true,
-        dragging:false, touchZoom:false, scrollWheelZoom:false,
-        doubleClickZoom:false, boxZoom:false, keyboard:false, tap:false
+      const coords = trip.path.map(p=>[p.lng,p.lat]); // Mapbox wants [lng,lat] — the opposite order to Leaflet
+      const bounds = coords.reduce((b,c)=>b.extend(c), new mapboxgl.LngLatBounds(coords[0], coords[0]));
+      const map = createMapboxMap('detailLeaflet', {
+        bounds, fitBoundsOptions:{ padding:{top:80, bottom:50, left:30, right:30}, maxZoom:15 },
+        interactive:true
       });
-      detailStyleLayers = applyMapStyle(map, currentMapStyle);
+      DETAIL_MAP_HANDLERS.forEach(h=>{ if(map[h]) map[h].disable(); });
+      map.on('style.load', ()=>addOurLayers(map, ()=>coords));
+      map.on('error', (e)=>console.warn('[map] detail map error', e && e.error));
+      new mapboxgl.Marker({element: endpointDot('#2E8B57')}).setLngLat(coords[0]).addTo(map);
+      new mapboxgl.Marker({element: endpointDot('#D65A4A')}).setLngLat(coords[coords.length-1]).addTo(map);
       const styleToggle = document.getElementById('detailMapStyleToggle');
       if(styleToggle){ styleToggle.style.display = 'flex'; renderMapStyleMenu('detail'); }
-      const latlngs = trip.path.map(p=>[p.lat,p.lng]);
-      const poly = L.polyline(latlngs, {color:'#16324F', weight:3}).addTo(map);
-      L.circleMarker(latlngs[0], {radius:6, color:'#fff', weight:2, fillColor:'#2E8B57', fillOpacity:1}).addTo(map);
-      L.circleMarker(latlngs[latlngs.length-1], {radius:6, color:'#fff', weight:2, fillColor:'#D65A4A', fillOpacity:1}).addTo(map);
-      map.fitBounds(poly.getBounds(), {padding:[24,24]});
-      setTimeout(()=>map.invalidateSize(), 50);
-      detailLeafletMap = map;
+      setTimeout(()=>map.resize(), 50);
+      detailMap = map;
       detailMapLocked = true;
       const toggle = document.getElementById('detailMapLockToggle');
       if(toggle) toggle.style.display = 'flex';
@@ -274,59 +275,92 @@ async function renderTripDetailMap(trip){
     // shown in the box just above anyway.
   }
 }
-let detailLeafletMap = null, detailMapLocked = true;
-
-/* ---------- map base-layer styles: Minimal / Nautical / Colorful ----------
-   All three use CARTO tiles with our free CARTO key (see the note below the list).
-   "Nautical" adds the OpenSeaMap sea marks on top (buoys, lights, depth areas).
-   The picked style is remembered in localStorage and applied to both the live map
-   and any trip's detail map; Minimal is the default for anyone who hasn't picked. */
-const MAP_STYLES = {
-  minimal: { labelKey:'mapStyle.minimal', base:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_2ovi_1_4398d296b38a11f0c00df3b6',
-    attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20 },
-  // Nautical = CARTO Voyager background + OpenSeaMap sea marks on top (changed
-  // 19.10.2026 from OpenStreetMap's own tile servers, which are volunteer-run and
-  // not meant for apps with real traffic). maxZoom stays 18: sea marks stop there.
-  nautical: { labelKey:'mapStyle.nautical', base:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=cb1_2ovi_1_4398d296b38a11f0c00df3b6',
-    overlay:'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
-    attribution:'© OpenStreetMap contributors © CARTO, seamarks © OpenSeaMap', maxZoom:18 },
-  voyager: { labelKey:'mapStyle.voyager', base:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=cb1_2ovi_1_4398d296b38a11f0c00df3b6',
-    attribution:'© OpenStreetMap contributors © CARTO', maxZoom:20 },
-};
-// CARTO started requiring a free API key on their raster basemap endpoint
-// (basemaps.cartocdn.com) in late Aug 2026 — unauthenticated requests now come
-// back watermarked "API KEY REQUIRED" instead of failing outright. The key
-// below is free (5M tile requests/month, plenty for personal use) — get your
-// own at https://carto.com/basemaps/apikey if this one ever needs rotating.
-// Nautical now uses the same key (CARTO Voyager background under the sea marks).
-// "Minimal" (CARTO Positron) is the default — light grey background, thin
-// roads, muted labels, no clutter. "Colorful" is real CARTO Voyager (soft
-// pastel colors, colored parks/water, clean labels). "Nautical" is CARTO
-// Voyager with the OpenSeaMap seamarks overlay on top (buoys,
-// lights, depth areas). Standard and Satellite were removed on request —
-// Satellite relied on Esri's free tile endpoint, which is now key-gated and
-// was rendering "API Key Required" tiles instead of imagery.
-let currentMapStyle = localStorage.getItem('mapStyle') || 'minimal';
-if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'minimal';
-let liveStyleLayers = null, detailStyleLayers = null; // {base, overlay?} L.tileLayer instances currently attached to each map
-
-// Removes whatever base/overlay tile layers are on `map` and adds fresh ones for
-// styleId, returning the new layer refs so the caller can track them (needed so
-// swapping styles again later removes the RIGHT layers, not just "whatever's on it").
-function applyMapStyle(map, styleId){
-  if(!map) return null;
-  const style = MAP_STYLES[styleId] || MAP_STYLES.minimal;
-  const layers = {};
-  layers.base = L.tileLayer(style.base, {maxZoom: style.maxZoom, maxNativeZoom: style.maxNativeZoom, attribution: style.attribution}).addTo(map);
-  if(style.overlay) layers.overlay = L.tileLayer(style.overlay, {maxZoom: style.maxZoom}).addTo(map);
-  const tilePane = map.getPane('tilePane');
-  if(tilePane) tilePane.style.filter = style.filter || '';
-  return layers;
+let detailMap = null, detailMapLocked = true;
+// The touch/mouse handlers we switch off while the history map is "locked".
+const DETAIL_MAP_HANDLERS = ['dragPan','scrollZoom','boxZoom','keyboard','doubleClickZoom','touchZoomRotate'];
+// Small round start (green) / finish (red) dot, drawn as a plain HTML element.
+function endpointDot(color){
+  const el = document.createElement('div');
+  el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45);`;
+  return el;
 }
-function removeMapStyleLayers(map, layers){
-  if(!map || !layers) return;
-  if(layers.base) map.removeLayer(layers.base);
-  if(layers.overlay) map.removeLayer(layers.overlay);
+
+/* ---------- map styles (Mapbox) ----------
+   Since 23.10.2026 every real map in the app is drawn by Mapbox GL JS instead of
+   Leaflet + CARTO image tiles. Mapbox draws "vector" maps: the coastline, roads
+   and labels arrive as shapes and are drawn by the phone itself, which is why the
+   map stays sharp at every zoom and zooms/pans smoothly instead of in steps.
+
+   The three style IDs and their labels are unchanged (so no translations needed):
+     voyager  ("Colorful") → Mapbox Standard — the detailed, Google/Waze-like look. Default.
+     minimal  ("Minimal")  → Mapbox Light — clean grey, very little clutter.
+     nautical ("Nautical") → Mapbox Outdoors + OpenSeaMap sea marks (buoys, lights) on top.
+
+   MAPBOX_TOKEN is a PUBLIC token (starts with pk.) — it's designed to sit in app
+   code like this, so it's fine in the GitHub repo. Before real release, add URL
+   restrictions to it in your Mapbox account so nobody else can use it.
+   Free tier: 50,000 map loads/month; one "load" = one map being created, no matter
+   how much you zoom or pan it afterwards. */
+const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2FpbGFwcDE0MSIsImEiOiJjbXZrczUxb28wZW9nMndzOXo2eW5vZjhzIn0.dTms--Rqu3jbnotppYIDaQ';
+const MAP_STYLES = {
+  voyager:  { labelKey:'mapStyle.voyager',  url:'mapbox://styles/mapbox/standard' },
+  minimal:  { labelKey:'mapStyle.minimal',  url:'mapbox://styles/mapbox/light-v11' },
+  nautical: { labelKey:'mapStyle.nautical', url:'mapbox://styles/mapbox/outdoors-v12',
+    seamarks:'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png' },
+};
+const TRACK_COLOR = '#16324F';
+// New storage key, so everyone (including you) lands on the new Standard look once,
+// instead of staying on whatever they'd picked for the old CARTO maps.
+let currentMapStyle = localStorage.getItem('mapStyleV2') || 'voyager';
+if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'voyager';
+
+// True when the Mapbox library loaded and this phone can draw it (needs WebGL).
+function mapboxReady(){
+  if(typeof mapboxgl === 'undefined') return false;
+  try { return typeof mapboxgl.supported !== 'function' || mapboxgl.supported(); } catch(e){ return false; }
+}
+// Creates a Mapbox map in the element with id `containerId`. `opts` are passed
+// straight through (e.g. interactive handlers off for the history map).
+function createMapboxMap(containerId, opts){
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+  return new mapboxgl.Map(Object.assign({
+    container: containerId,
+    style: MAP_STYLES[currentMapStyle].url,
+    center: [0,0], zoom: 2,
+    attributionControl: true,
+    pitchWithRotate: false,   // keep it a flat, north-up chart — no accidental 3D tilt
+    dragRotate: false,
+    cooperativeGestures: false
+  }, opts||{}));
+}
+// Everything WE draw on a map (the track line, the sea-marks overlay) lives inside
+// the map's style — so it gets wiped whenever the style is swapped. This puts it
+// all back; it's called on every 'style.load' (first load AND every style switch).
+// `coords` is a function returning the current [[lng,lat], ...] list.
+function addOurLayers(map, coords){
+  const style = MAP_STYLES[currentMapStyle];
+  if(style.seamarks && !map.getSource('seamarks')){
+    map.addSource('seamarks', { type:'raster', tiles:[style.seamarks], tileSize:256, maxzoom:18,
+      attribution:'Sea marks © <a href="https://www.openseamap.org" target="_blank">OpenSeaMap</a>' });
+    map.addLayer({ id:'seamarks', type:'raster', source:'seamarks' });
+  }
+  if(!map.getSource('track')){
+    map.addSource('track', { type:'geojson', data:trackGeoJson(coords()) });
+    // A soft white "halo" under the line keeps it readable on any background.
+    map.addLayer({ id:'track-halo', type:'line', source:'track',
+      layout:{ 'line-join':'round', 'line-cap':'round' },
+      paint:{ 'line-color':'#ffffff', 'line-width':7, 'line-opacity':0.85 } });
+    map.addLayer({ id:'track-line', type:'line', source:'track',
+      layout:{ 'line-join':'round', 'line-cap':'round' },
+      paint:{ 'line-color':TRACK_COLOR, 'line-width':4 } });
+  }
+}
+function trackGeoJson(coords){
+  return { type:'Feature', properties:{}, geometry:{ type:'LineString', coordinates: coords } };
+}
+function setTrackCoords(map, coords){
+  const src = map && map.getSource && map.getSource('track');
+  if(src) src.setData(trackGeoJson(coords));
 }
 function renderMapStyleMenu(which){
   const menu = document.getElementById(which==='live' ? 'liveMapStyleMenu' : 'detailMapStyleMenu');
@@ -346,13 +380,16 @@ function toggleMapStyleMenu(which){
 }
 // Applies the chosen style everywhere at once (both maps, if currently built) and
 // remembers it for next time, since it's a single global preference rather than a
-// per-map setting.
+// per-map setting. setStyle() wipes our track layer — the 'style.load' handler
+// set up when each map was created puts it straight back.
 function selectMapStyle(which, id){
   if(!MAP_STYLES[id]) return;
   currentMapStyle = id;
-  localStorage.setItem('mapStyle', id);
-  if(liveLeafletMap){ removeMapStyleLayers(liveLeafletMap, liveStyleLayers); liveStyleLayers = applyMapStyle(liveLeafletMap, id); }
-  if(detailLeafletMap){ removeMapStyleLayers(detailLeafletMap, detailStyleLayers); detailStyleLayers = applyMapStyle(detailLeafletMap, id); }
+  try { localStorage.setItem('mapStyleV2', id); } catch(e){}
+  // diff:false forces a clean reload, which guarantees 'style.load' fires and our
+  // track gets re-added (a "diff" update can quietly drop our layers without firing it).
+  if(liveMap) liveMap.setStyle(MAP_STYLES[id].url, {diff:false});
+  if(detailMap) detailMap.setStyle(MAP_STYLES[id].url, {diff:false});
   document.querySelectorAll('.map-style-menu').forEach(m=>m.classList.remove('open'));
   const liveLabel = document.getElementById('liveMapStyleLabel'); if(liveLabel) liveLabel.textContent = t(MAP_STYLES[id].labelKey);
   const detailLabel = document.getElementById('detailMapStyleLabel'); if(detailLabel) detailLabel.textContent = t(MAP_STYLES[id].labelKey);
@@ -368,12 +405,11 @@ document.addEventListener('click', (e)=>{
 // ignores touches) and "unlocked" (map handles its own pan/zoom) — see the
 // dragging:false etc. set when the map is first created above.
 function toggleDetailMapLock(){
-  if(!detailLeafletMap) return;
+  if(!detailMap) return;
   detailMapLocked = !detailMapLocked;
-  const handlers = ['dragging','touchZoom','scrollWheelZoom','doubleClickZoom','boxZoom','keyboard'];
-  handlers.forEach(h=>{
-    if(!detailLeafletMap[h]) return;
-    detailMapLocked ? detailLeafletMap[h].disable() : detailLeafletMap[h].enable();
+  DETAIL_MAP_HANDLERS.forEach(h=>{
+    if(!detailMap[h]) return;
+    detailMapLocked ? detailMap[h].disable() : detailMap[h].enable();
   });
   const toggle = document.getElementById('detailMapLockToggle');
   const icon = document.getElementById('detailMapLockIcon');
@@ -406,11 +442,11 @@ function niceScaleValue(maxVal){
    connection, falls back to the offline porthole (below) when there isn't.
    Rechecked periodically during a journey so it can switch either direction
    mid-sail as signal comes and goes — no manual toggle needed. ---- */
-let liveLeafletMap=null, liveLeafletPolyline=null, liveLeafletMarker=null;
+let liveMap=null, liveMapMarker=null;
+let liveMapCoords = []; // [[lng,lat], ...] currently drawn on the live map
 let liveMapIsOnline = false;
 let liveConnCheckInterval = null;
 let liveMapFollowing = true;   // true = auto-recenter/zoom on every fix (default); false once the sailor pans/zooms it themselves
-let liveMapProgrammaticMove = false; // guards our own setView calls so they don't get mistaken for a user drag/zoom below
 let liveLastLatLng = null;     // last known boat position, so the re-center button has somewhere to jump back to
 
 // Live-tracking marker: the sailor's own uploaded sailboat glyph, shown as a
@@ -419,15 +455,12 @@ let liveLastLatLng = null;     // last known boat position, so the re-center but
 // this glyph is a side-profile icon, so it stays upright rather than spinning
 // through 360° and looking upside-down/backwards at some headings.
 const YACHT_ICON_DATA_URL = 'data:image/png;base64,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';
-function yachtDivIcon(){
-  return L.divIcon({
-    className: 'yacht-marker-icon',
-    html: `<div style="width:100%;height:100%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55));">
-      <img src="${YACHT_ICON_DATA_URL}" width="68" height="68" style="display:block;">
-    </div>`,
-    iconSize: [68,68],
-    iconAnchor: [34,34]
-  });
+// The boat marker is a plain HTML element that Mapbox keeps pinned to a position.
+function yachtMarkerEl(){
+  const el = document.createElement('div');
+  el.className = 'yacht-marker-icon';
+  el.innerHTML = `<img src="${YACHT_ICON_DATA_URL}" width="68" height="68" style="display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55));">`;
+  return el;
 }
 // Great-circle initial bearing from a to b, in compass degrees (0=N, 90=E).
 function bearingDeg(a,b){
@@ -444,7 +477,7 @@ function bearingDeg(a,b){
 // with no real internet).
 function checkTilesAvailable(){
   return new Promise((resolve)=>{
-    if(typeof L === 'undefined'){ resolve(false); return; } // Leaflet failed to load — offline on first-ever run, or the CDN is blocked
+    if(!mapboxReady()){ resolve(false); return; } // Mapbox failed to load (offline on first-ever run, CDN blocked) or the phone can't draw it
     const img = new Image();
     let done = false;
     const finish = (ok)=>{ if(done) return; done=true; resolve(ok); };
@@ -454,53 +487,52 @@ function checkTilesAvailable(){
     img.src = 'https://tile.openstreetmap.org/1/1/1.png?_='+Date.now();
   });
 }
-function initLiveLeafletMap(){
-  if(liveLeafletMap || typeof L==='undefined') return;
-  liveLeafletMap = L.map('liveTrackLeaflet', {attributionControl:true});
-  liveStyleLayers = applyMapStyle(liveLeafletMap, currentMapStyle);
-  liveLeafletPolyline = L.polyline([], {color:'#16324F', weight:3}).addTo(liveLeafletMap);
-  liveLeafletMarker = L.marker([0,0], {icon: yachtDivIcon()}).addTo(liveLeafletMap);
-  liveLeafletMap.setView([0,0], 13);
+function initLiveMap(){
+  if(liveMap || !mapboxReady()) return;
+  liveMap = createMapboxMap('liveTrackLeaflet', { zoom: 13 });
+  liveMap.on('style.load', ()=>addOurLayers(liveMap, ()=>liveMapCoords));
+  liveMap.on('error', (e)=>console.warn('[map] live map error', e && e.error));
+  liveMapMarker = new mapboxgl.Marker({element: yachtMarkerEl()}).setLngLat([0,0]).addTo(liveMap);
   liveMapFollowing = true;
   const recenterBtn = document.getElementById('liveMapRecenterBtn');
   if(recenterBtn) recenterBtn.classList.remove('show');
-  // 'dragstart'/'zoomstart' fire for BOTH a real touch/mouse gesture and our own
-  // setView() calls below — liveMapProgrammaticMove distinguishes the two, so only
-  // an actual pan/pinch from the sailor breaks auto-follow.
-  liveLeafletMap.on('dragstart zoomstart', ()=>{
-    if(liveMapProgrammaticMove) return;
-    liveMapFollowing = false;
-    if(recenterBtn) recenterBtn.classList.add('show');
-  });
+  // Mapbox fires these for our own easeTo() calls too — but only a real finger/mouse
+  // gesture carries an `originalEvent`, so that's how we tell the sailor's pan or
+  // pinch apart from our auto-follow. Only theirs pauses auto-follow.
+  liveMap.on('dragstart', (e)=>{ if(e.originalEvent) pauseLiveFollow(); });
+  liveMap.on('zoomstart', (e)=>{ if(e.originalEvent) pauseLiveFollow(); });
   const toggle = document.getElementById('liveMapStyleToggle');
   if(toggle){ toggle.style.display = 'flex'; renderMapStyleMenu('live'); }
+}
+function pauseLiveFollow(){
+  liveMapFollowing = false;
+  const recenterBtn = document.getElementById('liveMapRecenterBtn');
+  if(recenterBtn) recenterBtn.classList.add('show');
 }
 // Jumps back to the boat's last known position and turns auto-follow back on —
 // the recenter button's tap handler.
 function recenterLiveMap(){
-  if(!liveLeafletMap) return;
+  if(!liveMap) return;
   liveMapFollowing = true;
   const recenterBtn = document.getElementById('liveMapRecenterBtn');
   if(recenterBtn) recenterBtn.classList.remove('show');
-  if(liveLastLatLng){
-    liveMapProgrammaticMove = true;
-    liveLeafletMap.setView(liveLastLatLng, Math.max(liveLeafletMap.getZoom(), 14));
-    liveMapProgrammaticMove = false;
-  }
+  if(liveLastLatLng) liveMap.easeTo({ center: liveLastLatLng, zoom: Math.max(liveMap.getZoom(), 14), duration: 800 });
 }
-function updateLiveLeafletTrack(path){
-  if(!liveLeafletMap || !path.length) return;
-  const latlngs = path.map(p=>[p.lat,p.lng]);
-  liveLeafletPolyline.setLatLngs(latlngs);
-  const last = latlngs[latlngs.length-1];
-  liveLeafletMarker.setLatLng(last);
+function updateLiveMapTrack(path){
+  if(!liveMap || !path.length) return;
+  liveMapCoords = path.map(p=>[p.lng,p.lat]); // Mapbox wants [lng,lat]
+  setTrackCoords(liveMap, liveMapCoords);
+  const last = liveMapCoords[liveMapCoords.length-1];
+  liveMapMarker.setLngLat(last);
+  const firstFix = !liveLastLatLng;
   liveLastLatLng = last;
   // Only auto-recenter/zoom while following — if the sailor's panned or zoomed the
   // map themselves, leave it exactly where they put it until they tap "re-center".
+  // First fix jumps straight there; after that it glides smoothly to each new position.
   if(liveMapFollowing){
-    liveMapProgrammaticMove = true;
-    liveLeafletMap.setView(last, Math.max(liveLeafletMap.getZoom(), 14));
-    liveMapProgrammaticMove = false;
+    const zoom = Math.max(liveMap.getZoom(), 14);
+    if(firstFix) liveMap.jumpTo({ center: last, zoom });
+    else liveMap.easeTo({ center: last, zoom, duration: 1000 });
   }
 }
 // Switches the visible UI between the real map and the offline porthole —
@@ -517,9 +549,9 @@ function setLiveMapMode(online){
     text.textContent = t('map.liveMap');
     leafletEl.style.display='block';
     porthole.style.display='none';
-    initLiveLeafletMap();
-    setTimeout(()=>{ if(liveLeafletMap) liveLeafletMap.invalidateSize(); }, 50); // Leaflet needs this after its container becomes visible
-    if(currentTrip && currentTrip.path.length) updateLiveLeafletTrack(currentTrip.path);
+    initLiveMap();
+    setTimeout(()=>{ if(liveMap) liveMap.resize(); }, 50); // the map needs to re-measure itself after its container becomes visible
+    if(currentTrip && currentTrip.path.length) updateLiveMapTrack(currentTrip.path);
   } else {
     badge.className = 'map-mode-badge offline';
     text.textContent = t('map.offlineTrack');
@@ -532,9 +564,9 @@ async function refreshLiveMapMode(){
   setLiveMapMode(online);
 }
 function startLiveConnCheck(){
-  // Fresh map instance per journey — Leaflet doesn't like being silently reused
-  // across an unrelated new map() call on the same container.
-  if(liveLeafletMap){ liveLeafletMap.remove(); liveLeafletMap=null; }
+  // Fresh map instance per journey, so the previous sail's line/position never carry over.
+  if(liveMap){ liveMap.remove(); liveMap=null; }
+  liveMapCoords = []; liveLastLatLng = null;
   refreshLiveMapMode();
   if(liveConnCheckInterval) clearInterval(liveConnCheckInterval);
   liveConnCheckInterval = setInterval(refreshLiveMapMode, 20000);
@@ -621,7 +653,7 @@ function portholeCoordsCaption(path){
   return `${fmt(last.lat,'N','S')}, ${fmt(last.lng,'E','W')}`;
 }
 // Called on the active journey screen after every GPS fix. Updates whichever
-// map is currently visible — the real Leaflet map if online, the offline
+// map is currently visible — the real Mapbox map if online, the offline
 // porthole SVG if not (see setLiveMapMode/liveMapIsOnline above).
 function renderLiveTrack(){
   const el = document.getElementById('liveTrackPorthole');
@@ -630,8 +662,8 @@ function renderLiveTrack(){
   const coordsEl = document.getElementById('liveTrackCoords');
   if(coordsEl) coordsEl.textContent = portholeCoordsCaption(path);
 
-  if(liveMapIsOnline && liveLeafletMap){
-    if(path && path.length) updateLiveLeafletTrack(path);
+  if(liveMapIsOnline && liveMap){
+    if(path && path.length) updateLiveMapTrack(path);
     return; // real map is showing; the offline porthole underneath doesn't need updating
   }
 

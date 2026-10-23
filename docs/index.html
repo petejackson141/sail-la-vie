@@ -76,11 +76,11 @@
      text show in a fallback font until these arrive. -->
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Libre+Baskerville:wght@400;700&family=Alex+Brush&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Libre+Baskerville:wght@400;700&family=Alex+Brush&display=swap" rel="stylesheet"></noscript>
-<!-- Leaflet: only used for the live/real map when there's a connection (see
-     buildPortholeSvg's notes) — the browser caches this after first load, so
-     it doesn't cost anything offline beyond the very first time the app runs. -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" media="print" onload="this.media='all'"> <!-- non-blocking; maps are never on screen at startup -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" defer></script>
+<!-- Mapbox GL JS: draws the live map and the saved-trip maps when there's a
+     connection (falls back to the offline porthole drawing when there isn't).
+     Version-pinned, so the service worker caches it after the first load. -->
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.32.0/mapbox-gl.css" media="print" onload="this.media='all'"> <!-- non-blocking; maps are never on screen at startup -->
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.32.0/mapbox-gl.js" defer></script>
 <!-- jsPDF + html2canvas: only used to generate the shareable PDF export — lets
      us render the same styled HTML used for the in-app preview into a real
      PDF file client-side, so it can go through the native share sheet
@@ -574,9 +574,9 @@
   .porthole{ width:100%; aspect-ratio:1/1; max-width:280px; margin:6px auto; border-radius:50%; border:10px solid var(--navy);
     box-shadow:var(--shadow); overflow:hidden; position:relative; background:var(--water); }
   .porthole svg{ width:100%; height:100%; }
-  /* Real Leaflet map, shown instead of the porthole when there's a connection —
-     a rounded rectangle rather than a circle so Leaflet's zoom/attribution
-     controls have normal corners to sit in. */
+  /* Real Mapbox map, shown instead of the porthole when there's a connection —
+     a rounded rectangle rather than a circle so the map's logo/attribution
+     have normal corners to sit in. */
   .live-map{ width:100%; height:min(58vh, 520px); min-height:320px; border-radius:var(--radius-lg); border:1px solid var(--border);
     box-shadow:var(--shadow); overflow:hidden; margin:6px 0; background:var(--bg-sunk); }
   .map-mode-badge{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; text-transform:uppercase;
@@ -623,8 +623,11 @@
     box-shadow:var(--shadow); cursor:pointer; }
   .map-recenter-btn svg{ width:20px; height:20px; }
   .map-recenter-btn.show{ display:flex; }
-  /* Leaflet divIcons default to a white box + border — strip that so only our SVG shows. */
-  .yacht-marker-icon{ background:transparent; border:none; }
+  /* Boat marker on the live map — no box/border, just the boat image. */
+  .yacht-marker-icon{ background:transparent; border:none; width:68px; height:68px; }
+  /* Mapbox's logo + attribution sit bottom-left/right; keep them clear of our pills. */
+  #liveTrackLeaflet .mapboxgl-ctrl-bottom-right{ margin-right:56px; }
+  #detailLeaflet .mapboxgl-ctrl-bottom-left, #detailLeaflet .mapboxgl-ctrl-bottom-right{ margin-bottom:44px; }
 
   /* ---------- list rows (boats/crew) ---------- */
   .row-card{ display:flex; align-items:center; gap:14px; background:var(--surface-ivory); border:1px solid var(--border);

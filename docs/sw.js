@@ -39,7 +39,7 @@
   sees it. Supabase (and any other live API traffic) is now explicitly
   excluded from caching entirely, further down.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v25';
+const CACHE_NAME = 'sail-la-vie-shell-v26';
 
 const APP_SHELL = [
   './',
@@ -107,7 +107,12 @@ self.addEventListener('fetch', (event) => {
   const isSupabase = url.hostname.endsWith('.supabase.co');
   // GitHub's API answers the in-app "Update available" check (js/about.js) —
   // a cached answer would hide new releases forever, so it's never cached.
-  const isLiveApi = isSupabase || url.hostname.endsWith('open-meteo.com') || url.hostname === 'api.github.com';
+  // Mapbox map data (styles, map tiles, fonts, icons) is fetched fresh by the map
+  // itself — caching it here would bloat the phone's storage and Mapbox's terms
+  // don't allow it. Only the version-pinned Mapbox library files (/mapbox-gl-js/)
+  // fall through to the normal cache-first rule for third-party libraries.
+  const isMapboxData = url.hostname.endsWith('mapbox.com') && !url.pathname.startsWith('/mapbox-gl-js/');
+  const isLiveApi = isSupabase || isMapboxData || url.hostname.endsWith('open-meteo.com') || url.hostname === 'api.github.com';
   if (isLiveApi) {
     event.respondWith(fetch(req));
     return;
