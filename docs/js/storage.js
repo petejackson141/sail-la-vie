@@ -239,7 +239,7 @@ async function restoreFromFile(ev){
     syncNoticeboardReminders();
     state.tripIndex = data.tripIndex||[];
 
-    currentLang = 'en'; // language picker hidden for now — es/pt/he dictionaries kept intact for later
+    currentLang = savedLanguage(); // English or Hebrew, from the restored profile
     applyStaticTranslations();
     await applyThemePreference();
     document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');

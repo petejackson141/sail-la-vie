@@ -35,6 +35,11 @@ Object.assign(TRANSLATIONS.en, {
   'photos.limitReached': 'This sail already has {max} photos — the most one sail can hold.',
   'photos.limitPartial': 'Added {n} — a sail can hold up to {max} photos.',
 });
+Object.assign(TRANSLATIONS.he, {
+  'photos.counter': '{n} / {max}',
+  'photos.limitReached': 'בהפלגה הזו כבר יש {max} תמונות — המקסימום להפלגה אחת.',
+  'photos.limitPartial': 'נוספו {n} — אפשר לשמור עד {max} תמונות להפלגה.',
+});
 
 function isPhotoRef(s){ return typeof s === 'string' && s.startsWith(PHOTO_REF_PREFIX); }
 function isInlineImage(s){ return typeof s === 'string' && s.startsWith('data:image/'); }

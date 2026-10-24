@@ -27,6 +27,9 @@ const ANDROID_APK_URL  = 'https://github.com/petejackson141/sail-la-vie/releases
 
 // Newest first. Add a line here with each release worth telling people about.
 const WHATS_NEW = [
+  { version: '24.10.2026', items: [
+    'Hebrew is back: choose עברית in Settings → Language. The whole app switches to right-to-left.'
+  ]},
   { version: '21.10.2026', items: [
     'Your profile, cover, boat and crew photos are now backed up to the cloud and stay in sync across your devices.',
     'The Nautical map style has a clearer, more colourful background under the sea marks.',
@@ -60,7 +63,7 @@ const WHATS_NEW = [
 
 /* ---------- small helpers ---------- */
 function _esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function _soonTag(){ return '<span class="soon-tag">Coming soon</span>'; }
+function _soonTag(){ return '<span class="soon-tag">' + _esc(t('about.soon')) + '</span>'; }
 function openExternalUrl(url){
   // In the Capacitor app, a _blank link opens in the phone's browser; on the web, a new tab.
   try{ window.open(url, '_blank', 'noopener'); }catch(e){ location.href = url; }
@@ -68,7 +71,7 @@ function openExternalUrl(url){
 
 /* ---------- static bits filled in once at startup ---------- */
 function initAboutPage(){
-  document.querySelectorAll('.app-version-text').forEach(el => { el.textContent = 'Version ' + APP_VERSION; });
+  document.querySelectorAll('.app-version-text').forEach(el => { el.textContent = t('about.version', {version: APP_VERSION}); });
   document.querySelectorAll('.support-email-text').forEach(el => { el.textContent = SUPPORT_EMAIL; });
   document.querySelectorAll('.manual-soon').forEach(el => { el.innerHTML = USER_MANUAL_URL ? '' : _soonTag(); });
   document.querySelectorAll('.privacy-soon').forEach(el => { el.innerHTML = PRIVACY_URL ? '' : _soonTag(); });
@@ -82,17 +85,17 @@ function initAboutPage(){
   const emailAlt = document.getElementById('contactEmailAlt');
   if(emailAlt) emailAlt.style.display = SUPPORT_EMAIL ? '' : 'none';
   const copy = document.getElementById('aboutCopyright');
-  if(copy) copy.innerHTML = `© ${COPYRIGHT_YEAR} ${_esc(COPYRIGHT_HOLDER)}. All rights reserved.<br>Sail la Vie, its name and logo belong to ${_esc(COPYRIGHT_HOLDER)}.`;
+  if(copy) copy.innerHTML = _esc(t('about.copyright', {year: COPYRIGHT_YEAR, holder: COPYRIGHT_HOLDER})) + '<br>' + _esc(t('about.copyrightOwns', {holder: COPYRIGHT_HOLDER}));
 }
 
 /* ---------- Help links ---------- */
 function openUserManual(){
-  if(!USER_MANUAL_URL){ showToast('The user manual is coming soon'); return; }
+  if(!USER_MANUAL_URL){ showToast(t('about.manualSoon')); return; }
   openExternalUrl(USER_MANUAL_URL + '?v=' + encodeURIComponent(APP_VERSION));
 }
 function downloadAndroidApp(){
-  if(!ANDROID_APK_URL){ showToast('The Android download is coming soon'); return; }
-  showToast('Downloading. When it finishes, open the file and tap Install');
+  if(!ANDROID_APK_URL){ showToast(t('about.androidSoon')); return; }
+  showToast(t('about.downloading'));
   openExternalUrl(ANDROID_APK_URL);
 }
 /* ---------- "Update available" check (Android app only) ----------
@@ -122,9 +125,9 @@ function _markAboutUpdate(newVersion){
   const row = document.getElementById('aboutAndroidRow');
   if(!row) return;
   const sub = row.querySelector('.ab-sub');
-  if(sub){ sub.textContent = 'Update available: version ' + newVersion; sub.style.color = 'var(--coral-deep)'; sub.style.fontWeight = '600'; }
+  if(sub){ sub.textContent = t('about.updateAvailableSub', {version: newVersion}); sub.style.color = 'var(--coral-deep)'; sub.style.fontWeight = '600'; }
   const title = row.querySelector('.ab-title');
-  if(title) title.textContent = 'Download the update';
+  if(title) title.textContent = t('about.downloadUpdate');
 }
 
 async function checkForAppUpdate(){
@@ -155,8 +158,8 @@ async function checkForAppUpdate(){
     }catch(e){}
 
     const ok = await showConfirm(
-      'Version ' + newVersion + ' of Sail la Vie is ready. Download it, open the file and tap Install. Your sails and settings stay as they are.',
-      { title: 'Update available', okLabel: 'Download', cancelLabel: 'Later', icon: 'cloud' }
+      t('about.updateBody', {version: newVersion}),
+      { title: t('about.updateTitle'), okLabel: t('about.download'), cancelLabel: t('about.later'), icon: 'cloud' }
     ).catch(() => false);
     if(ok){ downloadAndroidApp(); }
     else{
@@ -169,7 +172,7 @@ async function checkForAppUpdate(){
 
 function openLegalLink(kind){
   const url = kind === 'privacy' ? PRIVACY_URL : TERMS_URL;
-  if(!url){ showToast((kind === 'privacy' ? 'The privacy policy' : 'The terms of use') + ' will be added before public release'); return; }
+  if(!url){ showToast(kind === 'privacy' ? t('about.privacyLater') : t('about.termsLater')); return; }
   openExternalUrl(url);
 }
 function emailSupport(extraBody){
@@ -185,10 +188,10 @@ function showInfoPage(kind){
   const bodyEl = document.getElementById('infoBody');
   let title = '', html = '';
   if(kind === 'whatsnew'){
-    title = "What's new";
+    title = t('about.whatsNew');
     html = WHATS_NEW.map(r => `<h3>${_esc(r.version)}</h3><ul>${r.items.map(i => `<li>${_esc(i)}</li>`).join('')}</ul>`).join('');
   } else if(kind === 'licence'){
-    title = 'Licence & copyright';
+    title = t('about.licence');
     html = `
       <h3>Copyright</h3>
       <p>© ${COPYRIGHT_YEAR} ${_esc(COPYRIGHT_HOLDER)}. All rights reserved.</p>
@@ -201,7 +204,7 @@ function showInfoPage(kind){
       <p>Your sails, photos, notes and profile remain yours.</p>
       <p class="muted">The app uses third-party open-source components, which keep their own licences. See Credits &amp; open-source licences.</p>`;
   } else if(kind === 'credits'){
-    title = 'Credits';
+    title = t('about.creditsTitle');
     html = `
       <h3>Maps</h3>
       <ul>
@@ -228,11 +231,11 @@ function showInfoPage(kind){
 }
 
 /* ---------- Contact us ---------- */
-const CONTACT_PLACEHOLDERS = {
-  feedback: 'What do you like, and what could be better?',
-  problem:  'What happened, and what were you doing at the time?',
-  idea:     'Describe the feature you would like to see.',
-  other:    'Write your message here.'
+const CONTACT_PLACEHOLDERS = {   // translation keys — looked up with t() when shown
+  feedback: 'contact.phFeedback',
+  problem:  'contact.phProblem',
+  idea:     'contact.phIdea',
+  other:    'contact.phOther'
 };
 let contactState = { topic: 'feedback', screenshot: null, sending: false };
 
@@ -254,13 +257,13 @@ function deviceSummary(){
 
 function openContact(topic){
   setContactTopic(topic || 'feedback');
-  document.getElementById('contactDeviceLine').textContent = 'Version ' + APP_VERSION + ' · ' + deviceSummary() + '. Helps us find problems faster.';
+  document.getElementById('contactDeviceLine').textContent = t('contact.deviceLine', {version: APP_VERSION, device: deviceSummary()});
   nav('contact');
 }
 function setContactTopic(topic){
   contactState.topic = topic;
   document.querySelectorAll('#contactTopicChips .chip').forEach(c => c.classList.toggle('active', c.dataset.topic === topic));
-  document.getElementById('contactMessage').placeholder = CONTACT_PLACEHOLDERS[topic] || '';
+  document.getElementById('contactMessage').placeholder = CONTACT_PLACEHOLDERS[topic] ? t(CONTACT_PLACEHOLDERS[topic]) : '';
 }
 async function onContactShotPicked(event){
   const file = event.target.files && event.target.files[0];
@@ -272,7 +275,7 @@ async function onContactShotPicked(event){
     document.getElementById('contactShot').classList.add('show');
     document.getElementById('contactAttachBtn').style.display = 'none';
   }catch(e){
-    showToast("Couldn't read that image");
+    showToast(t('contact.cantRead'));
   }
 }
 function removeContactShot(){
@@ -291,20 +294,20 @@ function resetContactForm(){
 async function sendContactMessage(){
   if(contactState.sending) return;
   const message = document.getElementById('contactMessage').value.trim();
-  if(!message){ showToast('Please write a message first'); return; }
+  if(!message){ showToast(t('contact.writeFirst')); return; }
   const includeDevice = document.getElementById('contactIncludeDevice').checked;
 
   // Not signed in: fall back to email if there is one, otherwise ask them to sign in.
   if(!state.user){
     if(SUPPORT_EMAIL){ emailSupport(message); return; }
-    showToast('Please sign in to send a message');
+    showToast(t('contact.signInFirst'));
     return;
   }
-  if(navigator.onLine === false){ showToast("You're offline. Try again when you have a connection"); return; }
+  if(navigator.onLine === false){ showToast(t('contact.offline')); return; }
 
   const btn = document.getElementById('contactSendBtn');
   contactState.sending = true;
-  btn.disabled = true; btn.textContent = 'Sending…';
+  btn.disabled = true; btn.textContent = t('contact.sending');
   try{
     const row = {
       user_id: state.user.id,
@@ -318,14 +321,14 @@ async function sendContactMessage(){
     const { error } = await getSupabaseClient().from('feedback').insert(row);
     if(error) throw error;
     resetContactForm();
-    showToast('Thanks! Your message has been sent');
+    showToast(t('contact.sent'));
     nav('about');
   }catch(e){
     console.warn('feedback send failed', e);
-    showToast("Couldn't send your message. Please try again");
+    showToast(t('contact.failed'));
   }finally{
     contactState.sending = false;
-    btn.disabled = false; btn.textContent = 'Send message';
+    btn.disabled = false; btn.textContent = t('contact.send');
   }
 }
 

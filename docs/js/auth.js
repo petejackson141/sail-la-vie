@@ -138,7 +138,7 @@ async function handleAuthDeepLink(url, {runSync} = {runSync:true}){
     const errMsg = params.get('error_description') || params.get('error');
     if(errMsg){
       // e.g. an expired or already-used link
-      showToast(errMsg.replace(/\+/g,' ') + ' — try signing in.');
+      showToast(t('auth.trySignIn', {msg: errMsg.replace(/\+/g,' ')}));
       return false;
     }
     const client = getSupabaseClient();
@@ -164,11 +164,11 @@ async function handleAuthDeepLink(url, {runSync} = {runSync:true}){
       await resolveTripsSyncOnSignIn();
       await resolveNoticeboardSyncOnSignIn();
     }
-    showToast('Email confirmed — you\'re signed in.');
+    showToast(t('auth.confirmedSignedIn'));
     return true;
   } catch(e){
     console.error('auth deep link failed', e);
-    showToast('Email confirmed. Please sign in.');
+    showToast(t('auth.confirmedPleaseSignIn'));
     return false;
   }
 }
@@ -433,13 +433,13 @@ function togglePasswordVisibility(){
   const showing = input.type === 'text';
   input.type = showing ? 'password' : 'text';
   btn.classList.toggle('is-active', !showing);
-  btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+  btn.setAttribute('aria-label', showing ? t('auth.showPassword') : t('auth.hidePassword'));
 }
 function resetPasswordVisibility(){
   document.getElementById('authPassword').type = 'password';
   const btn = document.getElementById('authPasswordToggle');
   btn.classList.remove('is-active');
-  btn.setAttribute('aria-label', 'Show password');
+  btn.setAttribute('aria-label', t('auth.showPassword'));
 }
 
 function toggleAuthMode(){
@@ -450,14 +450,10 @@ function toggleAuthMode(){
 
 function updateAuthSheetLabels(){
   const isSignUp = authMode === 'signup';
-  document.getElementById('authSheetTitle').textContent = isSignUp ? 'Create Account' : 'Sign In';
-  document.getElementById('authSheetHint').textContent = isSignUp
-    ? 'Create an account to sync your journeys across devices.'
-    : 'Sign in to sync your journeys across devices.';
-  document.getElementById('authSubmitBtn').textContent = isSignUp ? 'Create Account' : 'Sign In';
-  document.getElementById('authToggleModeBtn').textContent = isSignUp
-    ? 'Already have an account? Sign in'
-    : "Don't have an account? Sign up";
+  document.getElementById('authSheetTitle').textContent = isSignUp ? t('auth.createAccount') : t('auth.signIn');
+  document.getElementById('authSheetHint').textContent = isSignUp ? t('auth.hintSignUp') : t('auth.hintSignIn');
+  document.getElementById('authSubmitBtn').textContent = isSignUp ? t('auth.createAccount') : t('auth.signIn');
+  document.getElementById('authToggleModeBtn').textContent = isSignUp ? t('auth.toSignIn') : t('auth.toSignUp');
 }
 
 function showAuthError(msg){
@@ -475,18 +471,18 @@ async function submitAuthForm(){
   hideAuthError();
 
   if(!email || !password){
-    showAuthError('Enter both an email and a password.');
+    showAuthError(t('auth.needBoth'));
     return;
   }
   if(password.length < 6){
-    showAuthError('Password must be at least 6 characters.');
+    showAuthError(t('auth.pwShort'));
     return;
   }
 
   const btn = document.getElementById('authSubmitBtn');
   const originalLabel = btn.textContent;
   btn.disabled = true;
-  btn.textContent = 'Please wait…';
+  btn.textContent = t('auth.wait');
 
   try{
     if(authMode === 'signup'){
@@ -506,12 +502,12 @@ async function submitAuthForm(){
         await resolveCrewSyncOnSignIn();
         await resolveTripsSyncOnSignIn();
         await resolveNoticeboardSyncOnSignIn();
-        showToast('Account created.');
+        showToast(t('auth.created'));
       } else {
         // Normal case: Supabase emails a confirmation link and there's no
         // session yet — nothing to sync to until that link is clicked and
         // they sign in for the first time (handled in the signin branch below).
-        showToast('Check your email to confirm your account.');
+        showToast(t('auth.checkEmail'));
       }
     } else {
       const { error } = await getSupabaseClient().auth.signInWithPassword({ email, password });
@@ -522,10 +518,10 @@ async function submitAuthForm(){
       await resolveCrewSyncOnSignIn();
       await resolveTripsSyncOnSignIn();
       await resolveNoticeboardSyncOnSignIn();
-      showToast('Signed in.');
+      showToast(t('auth.signedIn'));
     }
   } catch(e){
-    showAuthError(e.message || 'Something went wrong. Try again.');
+    showAuthError(e.message || t('auth.genericError'));
   } finally {
     btn.disabled = false;
     btn.textContent = originalLabel;
@@ -535,7 +531,7 @@ async function submitAuthForm(){
 async function signOutUser(){
   if(!(await confirmDialog('signOut', {icon:'logout'}))) return;
   await getSupabaseClient().auth.signOut();
-  showToast('Signed out.');
+  showToast(t('acct.signedOut'));
 }
 
 /* ---------- profile ↔ cloud resolution on sign-in ----------
@@ -621,7 +617,7 @@ async function applyCloudProfile(cloudProfile, opts){
   document.getElementById('homeName').textContent = state.profile.name || t('default.sailorName');
   refreshAvatars();
   if(typeof refreshProfileIfVisible === 'function') refreshProfileIfVisible();
-  if(!(opts && opts.quiet)) showToast('Profile loaded from your account.');
+  if(!(opts && opts.quiet)) showToast(t('acct.profileLoaded'));
 }
 // True when local and cloud profiles match except that, for the profile and/or
 // cover photo, this device holds the image itself and the cloud holds a
@@ -1238,33 +1234,33 @@ async function manualSyncProfile(){
   const btn = document.getElementById('syncProfileBtn');
   const originalLabel = btn.textContent;
   btn.disabled = true;
-  btn.textContent = 'Syncing…';
+  btn.textContent = t('acct.syncing');
   try{
     await resolveProfileSyncOnSignIn();
     const boatsResult = await resolveBoatsSyncOnSignIn();
     if(!boatsResult.ok){
-      showToast('Sync failed: ' + boatsResult.message);
+      showToast(t('acct.syncFailed', {msg: boatsResult.message}));
       return;
     }
     const crewResult = await resolveCrewSyncOnSignIn();
     if(!crewResult.ok){
-      showToast('Sync failed: ' + crewResult.message);
+      showToast(t('acct.syncFailed', {msg: crewResult.message}));
       return;
     }
     const tripsResult = await resolveTripsSyncOnSignIn();
     if(!tripsResult.ok){
-      showToast('Sync failed: ' + tripsResult.message);
+      showToast(t('acct.syncFailed', {msg: tripsResult.message}));
       return;
     }
     const noticeboardResult = await resolveNoticeboardSyncOnSignIn();
     if(noticeboardResult.ok){
-      showToast('Synced to cloud.');
+      showToast(t('acct.synced'));
     } else {
-      showToast('Sync failed: ' + noticeboardResult.message);
+      showToast(t('acct.syncFailed', {msg: noticeboardResult.message}));
     }
   }catch(e){
     console.error('manual sync failed', e);
-    showToast("Sync failed — check you're online.");
+    showToast(t('acct.syncFailedOffline'));
   }finally{
     btn.disabled = false;
     btn.textContent = originalLabel;
@@ -1408,7 +1404,7 @@ async function resolveNoticeboardSyncOnSignInImpl(){
 let _deletingAccount = false;
 
 function openDeleteAccountSheet(){
-  if(!state.user){ showToast('You’re not signed in'); return; }
+  if(!state.user){ showToast(t('del.notSignedIn')); return; }
   document.getElementById('deleteConfirmInput').value = '';
   const keep = document.querySelector('input[name="delLocal"][value="keep"]');
   if(keep) keep.checked = true;
@@ -1424,7 +1420,7 @@ function onDeleteConfirmInput(){
 function _setDeleteBusy(busy, label){
   _deletingAccount = busy;
   const btn = document.getElementById('deleteAccountBtn');
-  btn.textContent = label || 'Delete my account';
+  btn.textContent = label || t('del.button');
   onDeleteConfirmInput();
 }
 
@@ -1489,17 +1485,17 @@ async function _keepPhotosOnThisDevice(){
 async function deleteMyAccount(){
   if(_deletingAccount || !state.user) return;
   if(document.getElementById('deleteConfirmInput').value.trim().toUpperCase() !== 'DELETE') return;
-  if(navigator.onLine === false){ showToast("You're offline. Connect to the internet to delete your account"); return; }
+  if(navigator.onLine === false){ showToast(t('del.offline')); return; }
   const eraseDevice = (document.querySelector('input[name="delLocal"]:checked') || {}).value === 'erase';
   const sb = getSupabaseClient();
 
   try{
     if(!eraseDevice){
-      _setDeleteBusy(true, 'Saving photos to this phone…');
+      _setDeleteBusy(true, t('del.savingPhotos'));
       await _keepPhotosOnThisDevice();
     }
 
-    _setDeleteBusy(true, 'Deleting…');
+    _setDeleteBusy(true, t('del.deleting'));
     teardownRealtimeSync();
     try{ sb.removeAllChannels(); }catch(e){}
 
@@ -1516,8 +1512,8 @@ async function deleteMyAccount(){
     _setDeleteBusy(false);
     ensureRealtimeSync(); // nothing was deleted from the account itself — carry on as before
     const msg = /photo download failed/.test(e && e.message || '')
-      ? "Couldn't copy your photos to this phone. Check your connection and try again."
-      : "Couldn't delete your account. Please try again, or email sailapp141@gmail.com.";
+      ? t('del.photoFail')
+      : t('del.fail');
     showToast(msg);
     return;
   }
@@ -1530,10 +1526,10 @@ async function deleteMyAccount(){
   if(eraseDevice){
     try{ indexedDB.deleteDatabase('sail-la-vie-photos'); }catch(e){}
     await resetAllData();
-    showToast('Your account and all your data have been deleted');
+    showToast(t('del.doneAll'));
   } else {
     closeSheets();
     nav('home'); renderHomeStats();
-    showToast('Your account has been deleted. Your sails are still on this phone');
+    showToast(t('del.doneKept'));
   }
 }

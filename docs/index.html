@@ -1126,6 +1126,11 @@ html[dir="rtl"] .crew-chip{ padding:6px 6px 6px 12px; }
 html[dir="rtl"] .crew-chip .rm{ margin-left:0; margin-right:2px; }
 html[dir="rtl"] .btn-danger svg[style*="margin-right"],
 html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !important; margin-left:6px; }
+/* Sign-in sheet: email/lock icons move to the right, show-password eye to the left */
+html[dir="rtl"] .input-icon-field svg.field-icon{ left:auto; right:14px; }
+html[dir="rtl"] .input-icon-field input{ padding-left:14px !important; padding-right:42px !important; }
+html[dir="rtl"] .input-icon-field input#authPassword{ padding-left:42px !important; }
+html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
 
   /* ---------- friends (js/friends.js) ---------- */
   .navitem{ position:relative; }
@@ -1633,18 +1638,18 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <h2 data-i18n="settings.title">Settings</h2>
     </div>
 
-    <div class="section-title">Account</div>
+    <div class="section-title" data-i18n="acct.title">Account</div>
     <div class="card" style="padding:16px;">
       <div id="accountSignedOut">
-        <p style="font-size:12.5px;margin-bottom:12px;">Create an account to back up your journeys to the cloud and sync across devices. This doesn't affect anything already saved on this device.</p>
-        <button class="btn btn-primary" onclick="openAuthSheet('signin')">Sign In / Create Account</button>
+        <p style="font-size:12.5px;margin-bottom:12px;" data-i18n="acct.signedOutHint">Create an account to back up your journeys to the cloud and sync across devices. This doesn't affect anything already saved on this device.</p>
+        <button class="btn btn-primary" onclick="openAuthSheet('signin')" data-i18n="acct.signInCreate">Sign In / Create Account</button>
       </div>
       <div id="accountSignedIn" style="display:none;">
-        <p style="font-size:12.5px;margin-bottom:4px;">Signed in as</p>
+        <p style="font-size:12.5px;margin-bottom:4px;" data-i18n="acct.signedInAs">Signed in as</p>
         <p style="font-weight:600;font-size:14.5px;margin-bottom:14px;" id="accountEmailLine"></p>
-        <button class="btn btn-outline" id="syncProfileBtn" style="margin-bottom:10px;" onclick="manualSyncProfile()">Sync Now</button>
-        <button class="btn btn-outline" onclick="signOutUser()">Sign Out</button>
-        <div class="link-plain" style="color:var(--coral);text-align:center;margin-top:14px;" onclick="openDeleteAccountSheet()">Delete account…</div>
+        <button class="btn btn-outline" id="syncProfileBtn" style="margin-bottom:10px;" onclick="manualSyncProfile()" data-i18n="acct.syncNow">Sync Now</button>
+        <button class="btn btn-outline" onclick="signOutUser()" data-i18n="acct.signOut">Sign Out</button>
+        <div class="link-plain" style="color:var(--coral);text-align:center;margin-top:14px;" onclick="openDeleteAccountSheet()" data-i18n="acct.deleteLink">Delete account…</div>
       </div>
     </div>
 
@@ -1666,17 +1671,16 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <div class="switch" onclick="toggleDefaultUnitSystem()"><div class="knob" id="unitsKnob">⚓</div></div>
     </div>
 
-    <!-- Language picker hidden for now (Spanish/Portuguese/Hebrew put on hold) — the
-         TRANSLATIONS dictionaries for es/pt/he are still intact further down in this
-         file, untouched, so re-enabling this is just uncommenting the block below.
+    <!-- Language picker: English + Hebrew (re-enabled 24.10.2026). Spanish and Portuguese
+         dictionaries are still in i18n.js but ~75 phrases behind, so their chips stay hidden
+         until they're brought up to date. -->
     <div class="section-title" data-i18n="settings.language">Language</div>
     <div class="chiprow" id="languageChips">
       <div class="chip" data-lang="en" onclick="setLanguage('en')">English</div>
-      <div class="chip" data-lang="es" onclick="setLanguage('es')">Español</div>
-      <div class="chip" data-lang="pt" onclick="setLanguage('pt')">Português</div>
       <div class="chip" data-lang="he" onclick="setLanguage('he')">עברית</div>
+      <!-- <div class="chip" data-lang="es" onclick="setLanguage('es')">Español</div> -->
+      <!-- <div class="chip" data-lang="pt" onclick="setLanguage('pt')">Português</div> -->
     </div>
-    -->
 
     <div class="divider"></div>
     <div class="link-plain" onclick="clearProfilePrompt()" style="color:var(--coral);" data-i18n="settings.clearProfile">Clear profile…</div>
@@ -1689,22 +1693,22 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <input type="file" id="restoreFileInput" accept="application/json" style="display:none;" onchange="restoreFromFile(event)">
     </div>
 
-    <div class="section-title">Help &amp; About</div>
+    <div class="section-title" data-i18n="about.helpAbout">Help &amp; About</div>
     <div class="card about-list">
       <button class="about-row" onclick="openUserManual()">
         <span class="ab-icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg></span>
-        <span class="ab-text"><span class="ab-title">User manual</span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.manual">User manual</span></span>
         <span class="manual-soon"></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <button class="about-row" onclick="openContact('feedback')">
         <span class="ab-icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-        <span class="ab-text"><span class="ab-title">Contact us</span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.contact">Contact us</span></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <button class="about-row" onclick="nav('about')">
         <span class="ab-icon mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/></svg></span>
-        <span class="ab-text"><span class="ab-title">About Sail la Vie</span><span class="ab-sub app-version-text"></span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.aboutApp">About Sail la Vie</span><span class="ab-sub app-version-text"></span></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
     </div>
@@ -1725,83 +1729,83 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <section class="screen" id="screen-about">
     <div class="backrow">
       <div class="iconbtn back-icon" onclick="nav('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
-      <h2>About</h2>
+      <h2 data-i18n="about.title">About</h2>
     </div>
 
     <div class="card about-hero">
       <img src="images/Logo.png" alt="Sail la Vie logo">
       <div class="app-title">Sail la Vie</div>
-      <div class="ab-tagline">Your sailing logbook</div>
+      <div class="ab-tagline" data-i18n="about.tagline">Your sailing logbook</div>
       <div class="ab-version app-version-text"></div>
     </div>
 
-    <div class="section-title">Help</div>
+    <div class="section-title" data-i18n="about.help">Help</div>
     <div class="card about-list">
       <button class="about-row" onclick="openUserManual()">
         <span class="ab-icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg></span>
-        <span class="ab-text"><span class="ab-title">User manual</span><span class="ab-sub">Tracking, logging, sharing and more</span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.manual">User manual</span><span class="ab-sub" data-i18n="about.manualSub">Tracking, logging, sharing and more</span></span>
         <span class="manual-soon"></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <button class="about-row" onclick="showInfoPage('whatsnew')">
         <span class="ab-icon mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></svg></span>
-        <span class="ab-text"><span class="ab-title">What's new</span><span class="ab-sub">Changes in recent versions</span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.whatsNew">What's new</span><span class="ab-sub" data-i18n="about.whatsNewSub">Changes in recent versions</span></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <button class="about-row" id="aboutAndroidRow" onclick="downloadAndroidApp()">
         <span class="ab-icon cream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></span>
-        <span class="ab-text"><span class="ab-title">Download for Android</span><span class="ab-sub">Get the latest version · installs over the old one</span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.android">Download for Android</span><span class="ab-sub" data-i18n="about.androidSub">Get the latest version · installs over the old one</span></span>
         <span class="android-soon"></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
     </div>
 
-    <div class="section-title">Contact us</div>
+    <div class="section-title" data-i18n="about.contact">Contact us</div>
     <div class="card about-list">
       <button class="about-row" onclick="openContact('feedback')">
         <span class="ab-icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-        <span class="ab-text"><span class="ab-title">Send feedback</span><span class="ab-sub">Tell us what you like or what to improve</span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.feedback">Send feedback</span><span class="ab-sub" data-i18n="about.feedbackSub">Tell us what you like or what to improve</span></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <button class="about-row" onclick="openContact('problem')">
         <span class="ab-icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/></svg></span>
-        <span class="ab-text"><span class="ab-title">Report a problem</span><span class="ab-sub">Something not working? Let us know</span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.problem">Report a problem</span><span class="ab-sub" data-i18n="about.problemSub">Something not working? Let us know</span></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <button class="about-row" onclick="openContact('idea')">
         <span class="ab-icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg></span>
-        <span class="ab-text"><span class="ab-title">Suggest a feature</span><span class="ab-sub">Ideas for future versions</span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.idea">Suggest a feature</span><span class="ab-sub" data-i18n="about.ideaSub">Ideas for future versions</span></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <button class="about-row" id="aboutEmailRow" onclick="emailSupport()" style="display:none;">
         <span class="ab-icon cream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
-        <span class="ab-text"><span class="ab-title">Email us</span><span class="ab-sub support-email-text"></span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.emailUs">Email us</span><span class="ab-sub support-email-text"></span></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
     </div>
 
-    <div class="section-title">Legal</div>
+    <div class="section-title" data-i18n="about.legal">Legal</div>
     <div class="card about-list">
       <button class="about-row" onclick="showInfoPage('licence')">
         <span class="ab-icon plain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></span>
-        <span class="ab-text"><span class="ab-title">Licence &amp; copyright</span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.licence">Licence &amp; copyright</span></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <button class="about-row" onclick="openLegalLink('privacy')">
         <span class="ab-icon plain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></span>
-        <span class="ab-text"><span class="ab-title">Privacy policy</span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.privacy">Privacy policy</span></span>
         <span class="privacy-soon"></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <button class="about-row" onclick="openLegalLink('terms')">
         <span class="ab-icon plain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg></span>
-        <span class="ab-text"><span class="ab-title">Terms of use</span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.terms">Terms of use</span></span>
         <span class="terms-soon"></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <button class="about-row" onclick="showInfoPage('credits')">
         <span class="ab-icon plain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/></svg></span>
-        <span class="ab-text"><span class="ab-title">Credits &amp; open-source licences</span><span class="ab-sub">Map data © OpenStreetMap contributors</span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.credits">Credits &amp; open-source licences</span><span class="ab-sub" data-i18n="about.creditsSub">Map data © OpenStreetMap contributors</span></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
     </div>
@@ -1813,45 +1817,45 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <section class="screen" id="screen-contact">
     <div class="backrow">
       <div class="iconbtn back-icon" onclick="nav('about')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
-      <h2>Contact us</h2>
+      <h2 data-i18n="about.contact">Contact us</h2>
     </div>
-    <p class="contact-intro">We read every message. Replies go to the email on your account.</p>
+    <p class="contact-intro" data-i18n="contact.intro">We read every message. Replies go to the email on your account.</p>
 
     <div class="field">
-      <label>Topic</label>
+      <label data-i18n="contact.topic">Topic</label>
       <div class="chiprow" id="contactTopicChips">
-        <div class="chip" data-topic="feedback" onclick="setContactTopic('feedback')">Feedback</div>
-        <div class="chip" data-topic="problem" onclick="setContactTopic('problem')">Problem</div>
-        <div class="chip" data-topic="idea" onclick="setContactTopic('idea')">Idea</div>
-        <div class="chip" data-topic="other" onclick="setContactTopic('other')">Other</div>
+        <div class="chip" data-topic="feedback" onclick="setContactTopic('feedback')" data-i18n="contact.tFeedback">Feedback</div>
+        <div class="chip" data-topic="problem" onclick="setContactTopic('problem')" data-i18n="contact.tProblem">Problem</div>
+        <div class="chip" data-topic="idea" onclick="setContactTopic('idea')" data-i18n="contact.tIdea">Idea</div>
+        <div class="chip" data-topic="other" onclick="setContactTopic('other')" data-i18n="contact.tOther">Other</div>
       </div>
     </div>
 
     <div class="field">
-      <label for="contactMessage">Your message</label>
+      <label for="contactMessage" data-i18n="contact.message">Your message</label>
       <textarea id="contactMessage" rows="6" maxlength="5000"></textarea>
     </div>
 
     <button class="contact-attach" id="contactAttachBtn" onclick="document.getElementById('contactShotInput').click()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></svg>
-      Attach a screenshot (optional)
+      <span data-i18n="contact.attach">Attach a screenshot (optional)</span>
     </button>
     <input type="file" id="contactShotInput" accept="image/*" style="display:none;" onchange="onContactShotPicked(event)">
     <div class="contact-shot" id="contactShot">
       <img id="contactShotImg" alt="Attached screenshot">
-      <div class="link-plain" style="color:var(--coral);" onclick="removeContactShot()">Remove</div>
+      <div class="link-plain" style="color:var(--coral);" onclick="removeContactShot()" data-i18n="contact.remove">Remove</div>
     </div>
 
     <div class="card contact-device">
       <input type="checkbox" id="contactIncludeDevice" checked>
       <label for="contactIncludeDevice">
-        <span class="cd-title">Include app version and device</span>
+        <span class="cd-title" data-i18n="contact.includeDevice">Include app version and device</span>
         <span class="cd-sub" id="contactDeviceLine"></span>
       </label>
     </div>
 
-    <button class="btn btn-primary" id="contactSendBtn" onclick="sendContactMessage()">Send message</button>
-    <div class="contact-alt" id="contactEmailAlt" style="display:none;">Prefer email? <span class="link-plain support-email-text" onclick="emailSupport()"></span></div>
+    <button class="btn btn-primary" id="contactSendBtn" onclick="sendContactMessage()" data-i18n="contact.send">Send message</button>
+    <div class="contact-alt" id="contactEmailAlt" style="display:none;"><span data-i18n="contact.preferEmail">Prefer email?</span> <span class="link-plain support-email-text" onclick="emailSupport()"></span></div>
   </section>
 
   <!-- ============ INFO PAGE: What's new / Licence / Credits (js/about.js) ============ -->
@@ -1917,7 +1921,7 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
 <div class="bottombar-wrap">
   <div class="recording-banner" id="recordingBanner" onclick="nav('active')">
     <div class="dot"></div>
-    <div class="rec-text" id="recordingBannerText">Recording journey</div>
+    <div class="rec-text" id="recordingBannerText" data-i18n="banner.recording">Recording journey</div>
     <div class="rec-time" id="recordingBannerTime">00:00:00</div>
   </div>
   <nav class="bottomnav" id="bottomNav">
@@ -2186,14 +2190,14 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
       <p id="authSheetHint">Sign in to sync your journeys across devices.</p>
     </div>
     <div class="field input-icon-field">
-      <label>Email</label>
+      <label data-i18n="auth.email">Email</label>
       <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
       <input type="email" id="authEmail" placeholder="you@email.com" autocomplete="email">
     </div>
     <div class="field input-icon-field">
-      <label>Password</label>
+      <label data-i18n="auth.password">Password</label>
       <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-      <input type="password" id="authPassword" placeholder="At least 6 characters" autocomplete="current-password">
+      <input type="password" id="authPassword" placeholder="At least 6 characters" data-i18n-ph="auth.passwordPh" autocomplete="current-password">
       <button type="button" class="password-toggle-btn" id="authPasswordToggle" onclick="togglePasswordVisibility()" aria-label="Show password">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
@@ -2216,21 +2220,21 @@ html[dir="rtl"] .lightbox-btn svg[style*="margin-right"]{ margin-right:0 !import
   <!-- Delete account (js/auth.js → deleteMyAccount). Needs delete-account-supabase.sql run once in Supabase. -->
   <div class="sheet" id="sheetDeleteAccount" style="display:none;">
     <div class="sheet-handle"></div>
-    <h3>Delete your account</h3>
-    <p style="margin-bottom:12px;">This permanently deletes your Sail la Vie account and everything stored with it online: your sails, photos, boats, crew, Noticeboard plans, profile, friends and any messages you’ve sent us. Friends will no longer see anything you shared. <b>This can’t be undone.</b></p>
+    <h3 data-i18n="del.title">Delete your account</h3>
+    <p style="margin-bottom:12px;"><span data-i18n="del.body">This permanently deletes your Sail la Vie account and everything stored with it online: your sails, photos, boats, crew, Noticeboard plans, profile, friends and any messages you’ve sent us. Friends will no longer see anything you shared.</span> <b data-i18n="del.cantUndo">This can’t be undone.</b></p>
     <div class="field" style="margin-bottom:12px;">
-      <label>Your data on this phone</label>
-      <label class="del-choice"><input type="radio" name="delLocal" value="keep" checked> <span><b>Keep a copy on this phone</b><br><span class="del-sub">Your sails and photos stay here, just not backed up any more.</span></span></label>
-      <label class="del-choice"><input type="radio" name="delLocal" value="erase"> <span><b>Erase this phone too</b><br><span class="del-sub">Removes everything from this device as well.</span></span></label>
+      <label data-i18n="del.localLabel">Your data on this phone</label>
+      <label class="del-choice"><input type="radio" name="delLocal" value="keep" checked> <span><b data-i18n="del.keep">Keep a copy on this phone</b><br><span class="del-sub" data-i18n="del.keepSub">Your sails and photos stay here, just not backed up any more.</span></span></label>
+      <label class="del-choice"><input type="radio" name="delLocal" value="erase"> <span><b data-i18n="del.erase">Erase this phone too</b><br><span class="del-sub" data-i18n="del.eraseSub">Removes everything from this device as well.</span></span></label>
     </div>
-    <p style="font-size:12.5px;margin-bottom:14px;">Want a copy first? <span class="link-plain" onclick="backupToFile()">Backup to File</span></p>
+    <p style="font-size:12.5px;margin-bottom:14px;"><span data-i18n="del.copyFirst">Want a copy first?</span> <span class="link-plain" onclick="backupToFile()" data-i18n="profile.backupToFile">Backup to File</span></p>
     <div class="field">
-      <label for="deleteConfirmInput">Type DELETE to confirm</label>
+      <label for="deleteConfirmInput" data-i18n="del.typeDelete">Type DELETE to confirm</label>
       <input type="text" id="deleteConfirmInput" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="onDeleteConfirmInput()">
     </div>
-    <button class="btn btn-danger" id="deleteAccountBtn" onclick="deleteMyAccount()" disabled style="opacity:.5;">Delete my account</button>
+    <button class="btn btn-danger" id="deleteAccountBtn" onclick="deleteMyAccount()" disabled style="opacity:.5;" data-i18n="del.button">Delete my account</button>
     <div style="height:10px;"></div>
-    <button class="btn btn-ghost" onclick="closeSheets()">Cancel</button>
+    <button class="btn btn-ghost" onclick="closeSheets()" data-i18n="action.cancel">Cancel</button>
   </div>
 
 </div>

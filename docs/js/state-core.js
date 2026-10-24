@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '23.10.2026.1045';
+const APP_VERSION = '24.10.2026.1840';
 
 /* ============================================================
    CONFIRM DIALOG (shared across all screens)
@@ -206,7 +206,7 @@ async function boot(){
   // doesn't delay the app opening — renderAccountUI() updates Settings
   // whenever it resolves, even after the rest of boot() finishes.
   const authReady = initAuth().catch(e => console.error('initAuth failed', e));
-  currentLang = 'en'; // language picker hidden for now — es/pt/he dictionaries kept intact for later
+  currentLang = savedLanguage(); // English or Hebrew (the language chosen in Settings)
   applyStaticTranslations();
 
   await applyThemePreference();
