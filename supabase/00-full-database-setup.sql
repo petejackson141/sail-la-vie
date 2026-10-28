@@ -152,6 +152,13 @@ create index if not exists friendships_addressee_id_idx  on public.friendships (
 --    RULE: every NEW table from now on needs its own grant line here.
 -- ---------------------------------------------------------------------
 
+-- first clear anything Supabase's own defaults handed out (seen on the new
+-- Frankfurt project 28.10.2026: REFERENCES, TRIGGER, TRUNCATE), then give
+-- back exactly what the app needs
+revoke all on public.profiles, public.public_profiles, public.boats, public.crew,
+              public.trips, public.noticeboard, public.friendships, public.feedback
+  from anon, authenticated;
+
 grant select, insert, update         on public.profiles        to authenticated;
 grant select, insert, update         on public.public_profiles to authenticated;
 grant select, insert, update, delete on public.boats           to authenticated;
