@@ -154,21 +154,93 @@ function clearPersistentStorageError(){
 /* ---------- backup / restore: exports everything to a downloadable .json,
    and can restore from one. This is the only way data moves between devices
    or off the phone, since storage above is device-local only. ---------- */
+// ---- backup progress helpers (added 28.10.2026) ----
+// The first backup on a device downloads every cloud photo so it can go inside
+// the file. That can take minutes, and the button used to show nothing while
+// it worked, so it looked broken. These keep a message on screen the whole time.
+let _backupRunning = false;
+// Shows a message in the toast bar and keeps it there (no auto-hide) until
+// the next message or the final showToast().
+function backupProgress(msg){
+  const el = document.getElementById('toast');
+  if(!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(window._toastTimer);
+}
+// Gives up on a slow step after `ms` milliseconds and returns null instead of
+// waiting forever (one stuck photo used to freeze the whole backup).
+function withTimeout(promise, ms){
+  return Promise.race([promise, new Promise(resolve => setTimeout(()=>resolve(null), ms))]);
+}
+const BACKUP_PHOTO_TIMEOUT_MS = 30000;
+
 async function backupToFile(){
-  const trips = [];
-  for(const t of state.tripIndex){
-    const full = await storeGet('trip:'+t.id);
-    // Photos kept in cloud storage are written into the backup file as real
-    // images, so a backup still holds every photo (where they can be fetched).
-    if(full) trips.push(typeof inlineTripImages === 'function' ? await inlineTripImages(full) : full);
+  if(_backupRunning) return; // a second tap while it's working does nothing
+  _backupRunning = true;
+  try{
+    await _backupToFileInner();
+  }catch(e){
+    console.error('backup failed', e);
+    showToast('Backup failed: ' + (e && e.message || String(e)));
+  }finally{
+    _backupRunning = false;
   }
+}
+
+async function _backupToFileInner(){
+  backupProgress(t('toast.backupPreparing'));
+  const canInline = typeof photoToDataUrl === 'function' && typeof isPhotoRef === 'function';
+
+  // 1. Load every sail and count the cloud photos, so we can show "photo 12 of 85".
+  const fullTrips = [];
+  for(const entry of state.tripIndex){
+    const full = await storeGet('trip:'+entry.id);
+    if(full) fullTrips.push(full);
+  }
+  const photoFields = (tr)=> [...(tr.photos||[]), tr.coverPhoto, tr.mapImage];
+  const total = canInline ? fullTrips.reduce((n, tr)=> n + photoFields(tr).filter(isPhotoRef).length, 0) : 0;
+  let done = 0, failed = 0;
+
+  // 2. Swap each cloud photo for the real image. If one fails or takes too
+  //    long, keep its cloud reference instead and carry on.
+  const inlineOne = async (src)=>{
+    if(!canInline || !isPhotoRef(src)) return src;
+    const data = await withTimeout(photoToDataUrl(src).catch(()=>null), BACKUP_PHOTO_TIMEOUT_MS);
+    done++;
+    if(!data) failed++;
+    backupProgress(t('toast.backupPhotos', {done, total}));
+    return data || src;
+  };
+  const trips = [];
+  for(const tr of fullTrips){
+    const out = { ...tr };
+    if(Array.isArray(tr.photos)){
+      out.photos = [];
+      for(const ph of tr.photos) out.photos.push(await inlineOne(ph));
+    }
+    if(tr.coverPhoto) out.coverPhoto = await inlineOne(tr.coverPhoto);
+    if(tr.mapImage) out.mapImage = await inlineOne(tr.mapImage);
+    trips.push(out);
+  }
+
+  // 3. Profile, boat and crew photos (only a few), each with the same time limit.
+  backupProgress(t('toast.backupPreparing'));
+  const safe = async (fn, value)=> (typeof fn === 'function' ? (await withTimeout(fn(value).catch(()=>null), BACKUP_PHOTO_TIMEOUT_MS)) : null) || value;
+  const profile = await safe(typeof inlineProfileImages === 'function' ? inlineProfileImages : null, state.profile);
+  const boats = [];
+  for(const b of (state.boats||[])) boats.push(await safe(typeof inlineItemImages === 'function' ? inlineItemImages : null, b));
+  const crew = [];
+  for(const c of (state.crew||[])) crew.push(await safe(typeof inlineItemImages === 'function' ? inlineItemImages : null, c));
+
   const payload = {
     app:'Sail la Vie', version:1, exportedAt:new Date().toISOString(),
-    profile: typeof inlineProfileImages === 'function' ? await inlineProfileImages(state.profile) : state.profile,
-    boats: typeof inlineItemImages === 'function' ? await Promise.all((state.boats||[]).map(inlineItemImages)) : state.boats,
-    crew:  typeof inlineItemImages === 'function' ? await Promise.all((state.crew||[]).map(inlineItemImages))  : state.crew, noticeboard: state.noticeboard,
+    profile, boats, crew, noticeboard: state.noticeboard,
     tripIndex: state.tripIndex, trips
   };
+  // Final message: plain "done", or a warning if some photos couldn't be included.
+  const doneMsg = failed ? t('toast.backupPartial', {n: failed}) : t('toast.backupDownloaded');
+  backupProgress(t('toast.backupSaving'));
   const json = JSON.stringify(payload, null, 2);
   const filename = `sail-la-vie-backup-${new Date().toISOString().slice(0,10)}.json`;
 
@@ -198,8 +270,10 @@ async function backupToFile(){
       if(window.Capacitor.Plugins.Share){
         await window.Capacitor.Plugins.Share.share({ title: 'Sail la Vie backup', url: written.uri });
       }
-      showToast(t('toast.backupDownloaded'));
+      showToast(doneMsg);
     }catch(e){
+      // Closing the share menu without picking anywhere isn't a failure.
+      if(/cancel/i.test(e && e.message || '')){ showToast(t('toast.backupCancelled')); return; }
       console.error('native backup failed', e);
       showToast('Backup failed: ' + (e.message || String(e)));
     }
@@ -212,7 +286,7 @@ async function backupToFile(){
   a.href = url; a.download = filename;
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
-  showToast(t('toast.backupDownloaded'));
+  showToast(doneMsg);
 }
 async function restoreFromFile(ev){
   const f = ev.target.files[0];
