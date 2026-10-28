@@ -8,6 +8,12 @@ sign-up trigger, photo storage and live updates.
   in the new project's SQL Editor, then follow the "by hand" steps at the top of it.
 - **Every time the database changes**, update this file too, so it always
   matches the real database.
+- **Every new table needs a GRANT line** (section 1b of the master file) as well
+  as RLS + policies. Since Supabase's change on 30 October 2026, a table without
+  a grant gives the app "permission denied".
+
+Last checked against the live Tokyo database: **28 October 2026** — all tables,
+columns, policies, functions, the sign-up trigger, realtime and the photo bucket matched.
 
 ## The other files here
 

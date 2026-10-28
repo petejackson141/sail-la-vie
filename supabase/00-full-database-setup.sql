@@ -3,10 +3,17 @@
 -- =====================================================================
 -- What this is:
 --   Everything the Sail la Vie database needs, in one file, in the right
---   order: tables, security rules, helper functions, the sign-up trigger,
---   photo storage and live updates. It matches the live database as it was
---   on 1 October 2026 (after fix-profiles-privacy.sql, harden-functions.sql
---   and fix-advisor-warnings.sql were run).
+--   order: tables, table access (grants), security rules, helper functions,
+--   the sign-up trigger, photo storage and live updates. It matches the live
+--   database as it was on 1 October 2026 (after fix-profiles-privacy.sql,
+--   harden-functions.sql and fix-advisor-warnings.sql were run), plus
+--   profile-photos.sql (20.10.2026). Checked against the live Tokyo database
+--   on 28.10.2026: everything matched.
+--
+--   28.10.2026: added section 1b (GRANTS). Since Supabase's change of
+--   30 October 2026 (discussion #45329) a NEW project gives the app no access
+--   to new tables until they are granted. Without section 1b the app would
+--   get "permission denied" everywhere in the Frankfurt project.
 --
 -- When to use it:
 --   * Moving to a new Supabase project (e.g. Tokyo -> Frankfurt): create the
@@ -129,6 +136,34 @@ create index if not exists crew_user_id_idx              on public.crew (user_id
 create index if not exists noticeboard_user_id_idx       on public.noticeboard (user_id);
 create index if not exists friendships_requester_id_idx  on public.friendships (requester_id);
 create index if not exists friendships_addressee_id_idx  on public.friendships (addressee_id);
+
+
+-- ---------------------------------------------------------------------
+-- 1b. TABLE ACCESS (GRANTS)  - added 28.10.2026
+--    Two locks on every table:
+--      * GRANT = may the app touch this table at all?
+--      * RLS policies (section 3) = which ROWS may this person touch?
+--    Both must say yes. Each grant below gives only the actions the
+--    policies in section 3 allow - nothing more.
+--    "authenticated" = signed-in app users. Signed-out visitors ("anon")
+--    get nothing. "service_role" = the secret key (never in the app),
+--    used for admin jobs like copying data across.
+--    All ids are uuid or text, so no sequence grants are needed.
+--    RULE: every NEW table from now on needs its own grant line here.
+-- ---------------------------------------------------------------------
+
+grant select, insert, update         on public.profiles        to authenticated;
+grant select, insert, update         on public.public_profiles to authenticated;
+grant select, insert, update, delete on public.boats           to authenticated;
+grant select, insert, update, delete on public.crew            to authenticated;
+grant select, insert, update, delete on public.trips           to authenticated;
+grant select, insert, update, delete on public.noticeboard     to authenticated;
+grant select, insert, delete         on public.friendships     to authenticated;  -- accepting goes through accept_friend_request()
+grant insert                         on public.feedback        to authenticated;  -- send only, never read back
+
+grant all on public.profiles, public.public_profiles, public.boats, public.crew,
+             public.trips, public.noticeboard, public.friendships, public.feedback
+  to service_role;
 
 
 -- ---------------------------------------------------------------------
@@ -416,9 +451,16 @@ end $$;
 
 -- ---------------------------------------------------------------------
 -- 6. CHECK
---    Should list 8 tables, all with rls_enabled = true.
+--    Should list 8 tables, all with rls_enabled = true, and app_access
+--    showing the actions from section 1b (feedback = INSERT only).
 -- ---------------------------------------------------------------------
-select relname as table_name, relrowsecurity as rls_enabled
-from pg_class
-where relnamespace = 'public'::regnamespace and relkind = 'r'
-order by relname;
+select c.relname as table_name,
+       c.relrowsecurity as rls_enabled,
+       (select string_agg(g.privilege_type, ', ' order by g.privilege_type)
+          from information_schema.role_table_grants g
+         where g.table_schema = 'public'
+           and g.table_name = c.relname
+           and g.grantee = 'authenticated') as app_access
+from pg_class c
+where c.relnamespace = 'public'::regnamespace and c.relkind = 'r'
+order by c.relname;
