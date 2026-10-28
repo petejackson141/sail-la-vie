@@ -2281,7 +2281,11 @@ Object.assign(TRANSLATIONS.he, {
 let currentLang = 'en';
 // Languages that can be picked in Settings. es/pt dictionaries exist but are out of
 // date, so anyone with one of those saved falls back to English until they're finished.
-const ENABLED_LANGS = ['en', 'he'];
+// Hebrew hidden again 28.10.2026 until the Hebrew testers finish checking the text.
+// To bring it back: put 'he' back in this list AND remove style="display:none"
+// from the Language section in index.html. Anyone who chose Hebrew keeps that
+// choice saved in their profile, so they get Hebrew again automatically.
+const ENABLED_LANGS = ['en'];
 function savedLanguage(){
   const lang = state && state.profile && state.profile.language;
   return ENABLED_LANGS.includes(lang) ? lang : 'en';

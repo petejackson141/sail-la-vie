@@ -1671,11 +1671,12 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
       <div class="switch" onclick="toggleDefaultUnitSystem()"><div class="knob" id="unitsKnob">⚓</div></div>
     </div>
 
-    <!-- Language picker: English + Hebrew (re-enabled 24.10.2026). Spanish and Portuguese
-         dictionaries are still in i18n.js but ~75 phrases behind, so their chips stay hidden
-         until they're brought up to date. -->
-    <div class="section-title" data-i18n="settings.language">Language</div>
-    <div class="chiprow" id="languageChips">
+    <!-- Language picker: hidden 28.10.2026 (Hebrew off again until the Hebrew testers have
+         checked it, which leaves only English). To show it again, remove the two
+         style="display:none" below and add 'he' back to ENABLED_LANGS in i18n.js.
+         Spanish and Portuguese dictionaries are still in i18n.js but ~75 phrases behind. -->
+    <div class="section-title" data-i18n="settings.language" style="display:none">Language</div>
+    <div class="chiprow" id="languageChips" style="display:none">
       <div class="chip" data-lang="en" onclick="setLanguage('en')">English</div>
       <div class="chip" data-lang="he" onclick="setLanguage('he')">עברית</div>
       <!-- <div class="chip" data-lang="es" onclick="setLanguage('es')">Español</div> -->
