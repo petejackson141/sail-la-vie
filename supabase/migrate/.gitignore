@@ -1,0 +1,4 @@
+# never commit the passwords and keys, or the downloaded packages
+secrets.env
+node_modules/
+migrate-log.txt

@@ -16,8 +16,10 @@
 // "publishable" key is safe to ship in frontend code — Supabase enforces
 // actual security through Row Level Security policies on the database, not
 // by keeping this key secret. Never put the "secret" key here.
-const SUPABASE_URL = 'https://opejqowgcjltanvgxmxn.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_GGREMl8C6rbCIkn0k7GVog_yCLJLtz9';
+// Frankfurt project (sail-la-vie-eu), live since 29.10.2026. The old Tokyo
+// project (opejqowgcjltanvgxmxn) is read-only and kept for ~2 weeks as a fallback.
+const SUPABASE_URL = 'https://lccwbkarqjohunofsghd.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_g2YNG7qvPRB837MaQnadZQ_rdtiSyyM';
 
 let _supabaseClient = null;
 // Built lazily on first use rather than at file-load time — harmless either

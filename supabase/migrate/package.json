@@ -1,0 +1,9 @@
+{
+  "name": "sail-la-vie-migrate",
+  "private": true,
+  "description": "One-off copy of the Sail la Vie database from Tokyo to Frankfurt (Part 2, 29.10.2026)",
+  "dependencies": {
+    "pg": "8.13.1",
+    "@supabase/supabase-js": "2.45.4"
+  }
+}
