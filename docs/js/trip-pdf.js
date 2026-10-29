@@ -314,11 +314,17 @@ function tpRouteInner(D, w, h, pal){
     if(real) return tpImg(real, 'tp-mapimg', `width:${w}px;height:${h}px;`);
     return tpMapSvg(D.trip.path, w, h, pal);
   }
-  // An uploaded map picture (e.g. a screenshot) is always shown WHOLE: the box
-  // follows the picture's shape, and if the page needs a shorter box the picture
-  // is shrunk to fit inside it rather than cropped.
-  if(D.trip.mapImage) return tpImg(D.trip.mapImage, 'tp-mapimg tp-mapimg-whole', `width:${w}px;height:${h}px;`);
+  // An uploaded map picture (e.g. a screenshot) is always shown WHOLE, and the
+  // box is exactly the picture's shape: a tall phone screenshot gets a narrow box
+  // (no empty bands beside it — see tpMapBoxWidth).
+  if(D.trip.mapImage) return tpImg(D.trip.mapImage, 'tp-mapimg tp-mapimg-whole', `width:${tpMapBoxWidth(D, w, h)}px;height:${h}px;`);
   return '';
+}
+// Width of the route box: the full width for GPS maps; for an uploaded picture,
+// only as wide as the picture is at this height (never wider than the page allows).
+function tpMapBoxWidth(D, w, h){
+  if(D.hasTrack || !D.trip.mapImage) return w;
+  return Math.min(w, Math.round(h * tpAspectOf(D.trip.mapImage, 1.6)));
 }
 
 // The route card as a flow block, in a few map heights (tallest first, see
@@ -326,7 +332,15 @@ function tpRouteInner(D, w, h, pal){
 // page, a shorter one is tried before it moves to the next page.
 function tpRouteBlock(D, cls, headingFn, themeId, pal){
   const theme = PDF_THEMES[themeId], w = theme.routeW;
-  const cards = tpRouteHeights(D.trip, w, theme.routeMaxH).map(hh=>{ const inner = tpRouteInner(D, w, hh, pal); return inner ? `<div class="${cls}">${headingFn(t('pdf.theRoute'))}<div class="tp-map">${inner}</div></div>` : ''; });
+  const cards = tpRouteHeights(D.trip, w, theme.routeMaxH).map(hh=>{
+    const inner = tpRouteInner(D, w, hh, pal);
+    if(!inner) return '';
+    // If the map is narrower than the page (an uploaded picture), the card's
+    // border is brought in to hug it, and the card is centred on the page.
+    const boxW = tpMapBoxWidth(D, w, hh);
+    const fit = boxW < w ? ` style="width:${Math.max(boxW + (theme.routeCardPad||0), 220)}px;align-self:center;"` : '';
+    return `<div class="${cls}"${fit}>${headingFn(t('pdf.theRoute'))}<div class="tp-map" style="width:${boxW}px;margin:0 auto;">${inner}</div></div>`;
+  });
   if(!cards[0]) return null;
   return { float:true, html:cards[0], variants:cards.slice(1) };
 }
@@ -541,9 +555,9 @@ function tpBlocksMemory(D){
 }
 
 const PDF_THEMES = {
-  nautical: { label:'pdf.themeNautical',        swatch:'#16324F', cls:'tp-nautical', pageBg:TP.ivory, blocks:tpBlocksNautical, contours:true, routeW:676, routeMaxH:380 },
-  yacht:    { label:'pdf.themeMinimalistYacht', swatch:'#C9A24B', cls:'tp-yacht',    pageBg:'#FDFCF9', blocks:tpBlocksYacht,    contours:false, routeW:714, routeMaxH:360 },
-  memory:   { label:'pdf.themeMemoryPage',      swatch:'#DE4457', cls:'tp-memory',   pageBg:'#FCF7EF', blocks:tpBlocksMemory,   contours:true, routeW:676, routeMaxH:360 }
+  nautical: { label:'pdf.themeNautical',        swatch:'#16324F', cls:'tp-nautical', pageBg:TP.ivory, blocks:tpBlocksNautical, contours:true, routeW:676, routeMaxH:380, routeCardPad:38 },
+  yacht:    { label:'pdf.themeMinimalistYacht', swatch:'#C9A24B', cls:'tp-yacht',    pageBg:'#FDFCF9', blocks:tpBlocksYacht,    contours:false, routeW:714, routeMaxH:360, routeCardPad:0 },
+  memory:   { label:'pdf.themeMemoryPage',      swatch:'#DE4457', cls:'tp-memory',   pageBg:'#FCF7EF', blocks:tpBlocksMemory,   contours:true, routeW:676, routeMaxH:360, routeCardPad:38 }
 };
 let currentPdfTheme = (()=>{ try{ return localStorage.getItem('pdfTheme'); }catch(e){ return null; } })() || 'nautical';
 if(!PDF_THEMES[currentPdfTheme]) currentPdfTheme = 'nautical';
