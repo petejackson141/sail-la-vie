@@ -115,6 +115,133 @@ function tripPdfData(trip){
 }
 
 /* ============================================================
+   THE STORY OF THE DAY (29.10.2026)
+   "The Day" is no longer just the notes: the app writes a short story of the
+   sail from everything it knows — date and time, boat, place, skipper, crew,
+   weather and the numbers — in the voice of the chosen theme, and weaves the
+   skipper's own notes into it (shown in italics, word for word, never changed).
+     Nautical  — a ship's-log / sailing-magazine voice
+     Yacht     — short, understated, club-like
+     Memory    — warm, "we", like a scrapbook
+   Wording is picked from a few variations using the sail's id, so two sails in
+   the same theme don't read the same, but the same sail always reads the same.
+   English only for now; in other languages the notes are shown as before.
+   Returns { paras:[{text, quote}], len }.
+   ============================================================ */
+function tpPick(D, salt, options){
+  let h = 0x811c9dc5; const s = String(D.trip.id||D.trip.date||'') + salt;
+  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return options[(h>>>0) % options.length];
+}
+function tpList(names){
+  if(names.length<=1) return names.join('');
+  return names.slice(0,-1).join(', ') + ' and ' + names[names.length-1];
+}
+const TP_NUM_WORDS = ['no','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+function tpWindWords(kts){ // Beaufort-style description
+  if(kts < 1)  return {noun:'calm', adj:'no wind to speak of'};
+  if(kts < 4)  return {noun:'light air', adj:'barely a breath'};
+  if(kts < 7)  return {noun:'light breeze', adj:'light'};
+  if(kts < 11) return {noun:'gentle breeze', adj:'gentle'};
+  if(kts < 17) return {noun:'moderate breeze', adj:'moderate'};
+  if(kts < 22) return {noun:'fresh breeze', adj:'fresh'};
+  if(kts < 28) return {noun:'strong breeze', adj:'strong'};
+  return {noun:'near gale', adj:'very strong'};
+}
+const TP_DIR_WORDS = {N:'northerly', NE:'north-easterly', E:'easterly', SE:'south-easterly', S:'southerly', SW:'south-westerly', W:'westerly', NW:'north-westerly'};
+const TP_SKY_WORDS = {'Clear / Sunny':'clear skies', 'Partly Cloudy':'broken cloud', 'Cloudy':'grey skies', 'Fog':'fog', 'Rain':'rain', 'Thunderstorm':'thunder about', 'Snow':'snow'};
+
+function tpStory(D, themeId){
+  const notes = D.notes.map(text=>({text, quote:true}));
+  if(currentLang && currentLang!=='en') return { paras: D.notes.map(text=>({text, quote:false})), len: D.notesLen };
+
+  const tr = D.trip, w = tr.weather || {};
+  const skipper = tr.skipperId ? (skipperById(tr.skipperId)||{}).name : '';
+  const crew = (tr.crewIds||[]).map(id=>(crewMemberById(id)||{}).name).filter(n=>n && n!==skipper);
+  const boat = D.boat ? D.boat.name : '';
+  const place = D.place;
+  const hour = new Date(tr.date).getHours();
+  const part = hour<5 ? 'night' : hour<12 ? 'morning' : hour<17 ? 'afternoon' : hour<21 ? 'evening' : 'night';
+  const kts = Number(w.windSpeed)||0, gust = Number(w.gusts)||0;
+  const hasWind = w.windSpeed!=null && w.windSpeed!=='' ;
+  const wind = tpWindWords(kts), dir = TP_DIR_WORDS[w.windDir] || '';
+  const gusty = gust && gust >= kts + 5;
+  const sea = w.seaState ? String(w.seaState).toLowerCase() : '';
+  const temp = w.temp ? Number(w.temp) : null;
+  const sky = TP_SKY_WORDS[w.sky] || '';
+  const dist = fmtDistance(tr.distanceNm||0), time = fmtDuration(tr.elapsedSeconds), avg = fmtSpeed(tr.avgSpeed||0);
+  const maxS = tripMaxSpeed(tr);
+  const n = crew.length + (skipper?1:0), nWord = TP_NUM_WORDS[n] || String(n);
+  const hasNumbers = (tr.distanceNm||0) > 0 && (tr.elapsedSeconds||0) > 0;
+  const out = [];
+  const add = (text)=>{ if(text) out.push({text, quote:false}); };
+  const cap = s => s ? s.charAt(0).toUpperCase()+s.slice(1) : s;
+
+  if(themeId==='yacht'){
+    // Short, understated sentences.
+    add([
+      `${D.weekday} ${part}${place?`, ${place}`:''}.`,
+      boat ? `${boat}${skipper?`, skippered by ${skipper}`:''}${crew.length?`, with ${tpList(crew)} aboard`:''}.` : (skipper ? `Skipper ${skipper}${crew.length?`; crew ${tpList(crew)}`:''}.` : (crew.length ? `Aboard: ${tpList(crew)}.` : '')),
+      hasWind ? `Wind ${w.windDir ? w.windDir+' ' : ''}${fmtSpeed(kts)}${gusty?`, gusting ${fmtSpeed(gust)}`:''}${sea?`; sea ${sea}`:''}${temp!=null?`; ${temp}°C`:''}.` : (sea ? `Sea ${sea}.` : ''),
+      hasNumbers ? `${dist} in ${time}, averaging ${avg}${maxS!=null?`, ${fmtSpeed(maxS)} at best`:''}.` : ''
+    ].filter(Boolean).join(' '));
+    out.push(...notes);
+    return { paras: out, len: out.reduce((a,p)=>a+p.text.length, 0) };
+  }
+
+  if(themeId==='memory'){
+    // Warm, "we", scrapbook voice.
+    const who = crew.length ? tpList(crew) : '';
+    const opener = tpPick(D, 'mo', [
+      `What a ${D.weekday} ${part} it was.`,
+      `Some days on the water stay with you, and this ${D.weekday} ${part} was one of them.`,
+      `There's no better way to spend a ${D.weekday} ${part}.`
+    ]);
+    const aboard = boat
+      ? (who ? `${who} joined ${skipper?skipper+' ':'us '}aboard ${boat}${place?` off ${place}`:''}` : `${skipper?skipper+' took':'We took'} ${boat} out${place?` from ${place}`:''}`)
+      : (who ? `${who} came sailing${skipper?` with ${skipper}`:''}${place?` off ${place}`:''}` : (place ? `We set out from ${place}` : ''));
+    const weather = hasWind
+      ? `${kts<4 ? 'with hardly a breath of wind' : `with a ${wind.adj} ${dir?dir+' ':''}breeze${gusty?' and the odd gust to keep us on our toes':''}`}${sea?`, a ${sea} sea`:''}${temp!=null?`${temp>=24?' and warm':temp<=14?' and a chill in the':' and'} ${temp>=24?'sunshine':temp<=14?'air':'pleasant air'} at ${temp}°C`:''}`
+      : (sea ? `on a ${sea} sea` : '');
+    add([opener, aboard ? `${aboard}${weather?', '+weather:''}.` : (weather ? `We sailed ${weather}.` : '')].filter(Boolean).join(' '));
+    out.push(...notes);
+    if(hasNumbers) add(tpPick(D, 'mc', [
+      `Together we sailed ${dist} in ${time} — memories made, one mile at a time.`,
+      `${dist} and ${time} on the water, and every minute of it worth it.`,
+      `By the time we were back, we'd covered ${dist} in ${time}. A day to remember.`
+    ]));
+    return { paras: out, len: out.reduce((a,p)=>a+p.text.length, 0) };
+  }
+
+  // Nautical: ship's-log / sailing-magazine voice.
+  const departed = boat
+    ? tpPick(D, 'nd', [`${boat} slipped her lines`, `${boat} put to sea`, `${boat} cleared the harbour`])
+    : tpPick(D, 'nd', ['The crew put to sea', 'Lines were cast off', 'The boat cleared the harbour']);
+  const helm = skipper ? ` with ${skipper} in command` : '';
+  const crewTxt = crew.length ? `${skipper?' and':' with'} ${crew.length===1 ? crew[0]+' crewing' : `a crew of ${TP_NUM_WORDS[crew.length]||crew.length} — ${tpList(crew)}`}` : '';
+  add(`${D.weekday} ${part}, ${D.dateLong}. ${departed}${place?` off ${place}`:''} at ${D.time}${helm}${crewTxt}.`);
+  if(hasWind || sea || sky){
+    const from = {N:'north', NE:'north-east', E:'east', SE:'south-east', S:'south', SW:'south-west', W:'west', NW:'north-west'}[w.windDir];
+    const windTxt = !hasWind ? '' : kts<1 ? 'a flat calm'
+      : `a ${wind.noun}${from?` from the ${from}`:''} at ${fmtSpeed(kts)}${gusty?`, gusting ${fmtSpeed(gust)}`:''}`;
+    const seaTxt = sea ? `a ${sea} sea${w.waveHeight?` with ${w.waveHeight} m waves`:''}` : '';
+    const verdict = !hasWind ? '' : kts<4 ? ' Patience was the order of the day.' : kts<11 ? ' Easy, pleasant sailing.' : kts<17 ? ' A good sailing breeze.' : ' A lively day — a firm hand on the helm.';
+    add(cap([windTxt, seaTxt, sky, temp!=null?`${temp}°C`:''].filter(Boolean).join(', ')) + '.' + verdict);
+  }
+  if(notes.length){ add(skipper ? `From ${skipper.split(' ')[0]}'s log:` : 'From the log:'); out.push(...notes); }
+  if(hasNumbers){
+    const best = maxS!=null ? `, with a best of ${fmtSpeed(maxS)}` : '';
+    add(tpPick(D, 'nn', [
+      `The log closed at ${dist} in ${time}, averaging ${avg}${best}.`,
+      `All told, ${dist} covered in ${time} at an average of ${avg}${best}.`,
+      `By the time the lines were made fast she had logged ${dist} in ${time}, averaging ${avg}${best}.`
+    ]));
+  }
+  return { paras: out, len: out.reduce((a,p)=>a+p.text.length, 0) };
+}
+function tpParaHtml(p){ return `<p${p.quote?' class="tp-quote"':''}>${escapeHtml(p.text)}</p>`; }
+
+/* ============================================================
    SHARED PIECES
    ============================================================ */
 
@@ -433,8 +560,8 @@ function tpRunningHeader(D){
    ============================================================ */
 
 // Notes as a (splittable) card. `cls` = card class for the template.
-function tpNotesBlock(D, cls, headingFn){
-  return { items: D.notes.map(p=>`<p>${escapeHtml(p)}</p>`),
+function tpNotesBlock(S, cls, headingFn){
+  return { items: S.paras.map(tpParaHtml),
            wrap:(inner, cont)=>`<div class="${cls} tp-notes-card">${headingFn(t('pdf.theDay') + (cont?` · ${t('pdf.continued')}`:''))}<div class="tp-notes">${inner}</div></div>` };
 }
 function tpPhotosBlock(D, cls, headingFn, cellCls, W, pad){
@@ -468,11 +595,12 @@ function tpBlocksNautical(D){
   // Conditions + The Day side by side when the notes are short; otherwise the
   // notes get their own full-width card that can continue onto the next page.
   const condCard = D.cond.length ? `<div class="n-card n-cond">${H(t('pdf.conditions'))}${tpCondRows(D)}</div>` : '';
-  const shortNotes = D.notes.length && D.notesLen <= 650;
+  const S = tpStory(D, 'nautical');
+  const shortNotes = S.paras.length && S.len <= 750;
   if(condCard || shortNotes){
-    B.push({ html:`<div class="tp-row">${condCard}${shortNotes ? `<div class="n-card n-day">${H(t('pdf.theDay'))}<div class="tp-notes">${D.notes.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div></div>` : ''}</div>` });
+    B.push({ html:`<div class="tp-row">${condCard}${shortNotes ? `<div class="n-card n-day">${H(t('pdf.theDay'))}<div class="tp-notes">${S.paras.map(tpParaHtml).join('')}</div></div>` : ''}</div>` });
   }
-  if(D.notes.length && !shortNotes) B.push(tpNotesBlock(D, 'n-card', H));
+  if(S.paras.length && !shortNotes) B.push(tpNotesBlock(S, 'n-card', H));
   const route = tpRouteBlock(D, 'n-card', H, 'nautical');
   if(route) B.push(route);
   if(D.crew.length) B.push({ float:true, html:`<div class="n-card">${H(t('nav.crew'))}<div class="tp-crew-grid">${tpCrewItems(D,'tp-crew-item')}</div></div>` });
@@ -499,16 +627,17 @@ function tpBlocksYacht(D){
     </div>
   </div>` });
   // Cover photo + the story beside it (short notes). Long notes get a full card.
-  const shortNotes = D.notes.length && D.notesLen <= 700;
+  const S = tpStory(D, 'yacht');
+  const shortNotes = S.paras.length && S.len <= 750;
   if(D.trip.coverPhoto || shortNotes){
     B.push({ html:`<div class="y-hero${D.trip.coverPhoto && shortNotes ? '' : ' y-hero-single'}">
       ${D.trip.coverPhoto ? tpImg(D.trip.coverPhoto,'y-hero-img') : ''}
-      ${shortNotes ? `<div class="y-story">${D.notes.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div>` : ''}
+      ${shortNotes ? `<div class="y-story">${S.paras.map(tpParaHtml).join('')}</div>` : ''}
     </div>` });
   }
   B.push({ html:`<div class="y-numbers">${H(t('pdf.theNumbers'))}<div class="y-stats">${D.stats.map(s=>
     `<div class="y-stat"><b>${s.value}${s.unit?`<small>${s.unit}</small>`:''}</b><span>${s.label}</span></div>`).join('')}</div></div>` });
-  if(D.notes.length && !shortNotes) B.push(tpNotesBlock(D, 'y-card', H));
+  if(S.paras.length && !shortNotes) B.push(tpNotesBlock(S, 'y-card', H));
   const cond = D.cond.length ? `<div class="y-card">${H(t('pdf.conditions'))}${tpCondRows(D)}</div>` : '';
   const crew = D.crew.length ? `<div class="y-card">${H(t('nav.crew'))}<div class="tp-crew-list">${tpCrewItems(D,'tp-crew-item')}</div></div>` : '';
   if(cond || crew) B.push({ float:true, html:`<div class="tp-row">${cond}${crew}</div>` });
@@ -541,11 +670,12 @@ function tpBlocksMemory(D){
     ${D.boat ? `<div class="m-boat">${tpImg(D.boat.photo||placeholderAvatar(),'tp-avatar')}<div><span>${t('pdf.vessel')}</span><b>${escapeHtml(D.boat.name)}</b></div></div>` : ''}
     <div class="m-stats">${D.stats.map((s,i)=>`<div class="m-stat" style="background:${tiles[i]}"><b>${s.value}${s.unit?`<small>${s.unit}</small>`:''}</b><span>${s.label}</span></div>`).join('')}</div>
   </div>` });
-  const shortNotes = D.notes.length && D.notesLen <= 650;
+  const S = tpStory(D, 'memory');
+  const shortNotes = S.paras.length && S.len <= 750;
   const cond = D.cond.length ? `<div class="m-card">${H(t('pdf.conditions'))}${tpCondRows(D)}</div>` : '';
-  const day = shortNotes ? `<div class="m-card m-day">${H(t('pdf.theDay'))}<div class="tp-notes">${D.notes.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div></div>` : '';
+  const day = shortNotes ? `<div class="m-card m-day">${H(t('pdf.theDay'))}<div class="tp-notes">${S.paras.map(tpParaHtml).join('')}</div></div>` : '';
   if(cond || day) B.push({ html:`<div class="tp-row">${cond}${day}</div>` });
-  if(D.notes.length && !shortNotes) B.push(tpNotesBlock(D, 'm-card', H));
+  if(S.paras.length && !shortNotes) B.push(tpNotesBlock(S, 'm-card', H));
   const route = tpRouteBlock(D, 'm-card', H, 'memory', {water:'#E2F0F2', grid:'#A9CFD6'});
   if(route) B.push(route);
   if(D.crew.length) B.push({ float:true, html:`<div class="m-card">${H(t('nav.crew'))}<div class="tp-crew-grid">${tpCrewItems(D,'tp-crew-item')}</div></div>` });
