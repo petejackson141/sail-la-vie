@@ -28,18 +28,26 @@ function pdfAnchorSvgSized(size, color, lw){
     <path d="M16 12a6 6 0 0 1-5 6" fill="none" stroke="${color}" stroke-width="${lw}"/>
   </svg>`;
 }
-// Splits a title "Just The Two Of Us" into a first-word / rest-of-title pair,
-// same convention as the Minimalist Yacht Club reportlab mockup.
+// Splits a title over two lines for the Minimalist Yacht Club header, choosing
+// the break that makes the two lines most even ("LOS NAVEGANTES / SAIL AGAIN",
+// not "LOS / NAVEGANTES SAIL AGAIN"). Short titles stay on one line.
 function yachtSplitTitle(title){
-  const words = (title||'').trim().split(/\s+/).filter(Boolean);
-  if(words.length<=1) return {line1: words.join(' ').toUpperCase(), line2:''};
-  return {line1: words[0].toUpperCase(), line2: words.slice(1).join(' ').toUpperCase()};
+  const words = (title||'').trim().toUpperCase().split(/\s+/).filter(Boolean);
+  if(words.length<=1 || words.join(' ').length<=12) return {line1: words.join(' '), line2:''};
+  let best = 1, bestLen = Infinity;
+  for(let i=1;i<words.length;i++){
+    const len = Math.max(words.slice(0,i).join(' ').length, words.slice(i).join(' ').length);
+    if(len < bestLen){ bestLen = len; best = i; }
+  }
+  return {line1: words.slice(0,best).join(' '), line2: words.slice(best).join(' ')};
 }
 // Splits a title into a script "lead" (first two words) + bold "main"
-// (remaining words), same convention as the Memory Page reportlab mockup.
+// (the rest), as in the Memory Page mockup. Only for titles of 4+ words, so
+// the bold part always has at least two words — "Liat's first / TIME" read
+// oddly, so a 3-word title is now shown whole in the bold style.
 function memorySplitTitle(title){
   const words = (title||'').trim().split(/\s+/).filter(Boolean);
-  if(words.length<=2) return {lead:'', main: words.join(' ').toUpperCase()};
+  if(words.length<=3) return {lead:'', main: words.join(' ').toUpperCase()};
   return {lead: words.slice(0,2).join(' '), main: words.slice(2).join(' ').toUpperCase()};
 }
 // Repeating gold wave motif for the Memory Page hero's bottom edge — a single

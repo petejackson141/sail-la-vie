@@ -476,7 +476,7 @@ function editTrip(){
   const distNm = trip.distanceNm || 0;
   document.getElementById('pastDistance').value = (activeUnitSystem==='metric' ? distNm*NM_TO_KM : distNm).toFixed(1);
   document.getElementById('pastAvgSpeed').value = fmtSpeed(trip.avgSpeed||0, activeUnitSystem).split(' ')[0];
-  document.getElementById('pastMaxSpeed').value = fmtSpeed(trip.maxSpeed||0, activeUnitSystem).split(' ')[0];
+  document.getElementById('pastMaxSpeed').value = tripMaxSpeed(trip)!=null ? fmtSpeed(tripMaxSpeed(trip), activeUnitSystem).split(' ')[0] : '';
   if(trip.mapImage){
     document.getElementById('mapImagePreview').src = trip.mapImage;
     document.getElementById('mapImagePreviewWrap').style.display = 'block';
@@ -548,7 +548,7 @@ async function resumeActiveTripIfAny(){
     const distNm = currentTrip.distanceNm || 0;
     document.getElementById('pastDistance').value = (activeUnitSystem==='metric' ? distNm*NM_TO_KM : distNm).toFixed(1);
     document.getElementById('pastAvgSpeed').value = fmtSpeed(currentTrip.avgSpeed||0, activeUnitSystem).split(' ')[0];
-    document.getElementById('pastMaxSpeed').value = fmtSpeed(currentTrip.maxSpeed||0, activeUnitSystem).split(' ')[0];
+    document.getElementById('pastMaxSpeed').value = tripMaxSpeed(currentTrip)!=null ? fmtSpeed(tripMaxSpeed(currentTrip), activeUnitSystem).split(' ')[0] : '';
   }
   showToast(t('toast.tripResumed'));
   return true;
@@ -1072,7 +1072,9 @@ async function endJourney(){
     const avgInput = parseFloat(document.getElementById('pastAvgSpeed').value);
     const maxInput = parseFloat(document.getElementById('pastMaxSpeed').value);
     currentTrip.avgSpeed = !isNaN(avgInput) ? (activeUnitSystem==='metric' ? avgInput/KT_TO_KMH : avgInput) : autoAvg;
-    currentTrip.maxSpeed = !isNaN(maxInput) ? (activeUnitSystem==='metric' ? maxInput/KT_TO_KMH : maxInput) : currentTrip.avgSpeed;
+    // Max speed is only saved if it was typed in — copying the average here made
+    // the PDF and the sail page show "max = average" (fixed 29.10.2026).
+    currentTrip.maxSpeed = !isNaN(maxInput) && maxInput>0 ? (activeUnitSystem==='metric' ? maxInput/KT_TO_KMH : maxInput) : null;
     currentTrip.date = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
   } else {
     stopGPS();

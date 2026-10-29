@@ -8,10 +8,12 @@
 //     and, from page 2 on, a running header. Nothing is ever sliced mid-section:
 //     the layout engine below moves whole sections to the next page instead.
 //   • Every section sits in its own container (card).
-//   • All photos are included, none repeated, all cropped to the same 3:2
-//     shape (CSS background-size:cover — html2canvas doesn't support object-fit,
-//     which is what used to give inconsistent photo proportions).
-//   • The route map is a real Mapbox map picture (see tpPrepareMapImage), with the
+//   • All photos are included, none repeated, each at its own shape in
+//     "justified" rows (see tpJustifiedRows) — no more heads cut off.
+//   • Flexible fitting: the route box follows the shape of the track (or of the
+//     uploaded map picture), and a nearly empty last page is avoided by retrying
+//     with slightly smaller photos (see layoutTripPdfPages).
+//   • The route map is a real Mapbox map picture (see tpPrepareMapImages), with the
 //     drawn chart below as the offline fallback. That chart is a purpose-built SVG with literal colours (the old
 //     porthole SVG used CSS variables, which html2canvas can't resolve inside
 //     an SVG image — one cause of the black boxes), with a lat/long grid,
@@ -48,6 +50,17 @@ function tpNoteChunks(notes){
   return out;
 }
 
+// A sail's max speed, or null if there isn't a real one. Manually logged sails
+// used to copy the average into max when the field was left empty (fixed
+// 29.10.2026), so on those older logs "max = average" means "not recorded".
+function tripMaxSpeed(trip){
+  const max = Number(trip && trip.maxSpeed);
+  if(!max || !isFinite(max)) return null;
+  const tracked = !!(trip.path && trip.path.length>1);
+  if(!tracked && Math.abs(max - (Number(trip.avgSpeed)||0)) < 0.005) return null;
+  return max;
+}
+
 function tpLocale(){ return currentLang==='he' ? 'he-IL' : currentLang==='en' ? 'en-GB' : currentLocale(); }
 
 // Log reference number printed in every footer, e.g. "SLV-L-2026-7K3Q".
@@ -77,11 +90,13 @@ function tripPdfData(trip){
   if(w.waveHeight) cond.push({icon:'wave', label:t('pdf.condWaves'), value:`${escapeHtml(String(w.waveHeight))} m`});
   if(w.temp) cond.push({icon:'thermo', label:t('pdf.condTemp'), value:`${escapeHtml(String(w.temp))}°C`});
   const num = (s)=> s.split(' ')[0];
+  const maxSpd = tripMaxSpeed(trip);
   const stats = [
     {value:num(fmtDistance(trip.distanceNm||0)), unit:distUnitLabel(), label:t('stat.distance'), icon:'pin'},
     {value:fmtDuration(trip.elapsedSeconds), unit:'', label:t('detail.elapsed'), icon:'clock'},
     {value:num(fmtSpeed(trip.avgSpeed||0)), unit:speedUnitLabel(), label:t('stat.avgSpeed'), icon:'gauge'},
-    {value:num(fmtSpeed(trip.maxSpeed||0)), unit:speedUnitLabel(), label:t('stat.maxSpeed'), icon:'gauge'},
+    // Max speed only when it was really measured or typed in (see tripMaxSpeed)
+    ...(maxSpd!=null ? [{value:num(fmtSpeed(maxSpd)), unit:speedUnitLabel(), label:t('stat.maxSpeed'), icon:'gauge'}] : []),
   ];
   const hasTrack = !!(trip.path && trip.path.length>1);
   return {
@@ -108,13 +123,31 @@ function tripPdfData(trip){
 // drawn from CSS backgrounds, so they're swapped for real image data first
 // (tpPrepareImages). Sail photos are inlined separately (inlineTripImages).
 const _tpImgData = new Map();
-async function tpPrepareImages(trip){
-  await tpPrepareMapImage(trip); // real Mapbox map picture for the route section (if online)
+// Every picture's real shape (width ÷ height), so photos and uploaded maps are
+// laid out at their own proportions instead of being cropped to one fixed box.
+const _tpAspect = new Map();
+function tpMeasure(src){
+  if(!src || _tpAspect.has(src)) return Promise.resolve();
+  return new Promise(res=>{
+    const im = new Image();
+    im.onload = ()=>{ if(im.naturalWidth && im.naturalHeight) _tpAspect.set(src, im.naturalWidth/im.naturalHeight); res(); };
+    im.onerror = ()=> res();
+    im.src = src;
+  });
+}
+function tpAspectOf(src, fallback){ return _tpAspect.get(src) || fallback || 1.5; }
+
+async function tpPrepareImages(trip, themeId){
   const boat = state.boats.find(b=>b.id===trip.boatId);
   const ids = [trip.skipperId, ...(trip.crewIds||[])].filter(Boolean);
   const refs = [boat && boat.photo, ...ids.map(id => (crewMemberById(id)||{}).photo)].filter(isPhotoRef);
   for(const r of refs) if(!_tpImgData.has(r)){ const d = await photoToDataUrl(r); if(d) _tpImgData.set(r, d); }
-  return inlineTripImages(trip);
+  const out = await inlineTripImages(trip);
+  await Promise.all([...(out.photos||[]), out.mapImage].filter(Boolean).map(tpMeasure));
+  // Real Mapbox map pictures, fetched at exactly the sizes this theme's route box can take
+  const theme = PDF_THEMES[themeId] || PDF_THEMES.nautical;
+  await tpPrepareMapImages(trip, theme.routeW, theme.routeMaxH);
+  return out;
 }
 function tpImg(src, cls, extraStyle){
   if(isPhotoRef(src)) src = _tpImgData.get(src) || placeholderAvatar();
@@ -129,8 +162,11 @@ function tpImg(src, cls, extraStyle){
    The PDF always uses the DAYTIME look, even if the app is on Dark — a dark map on a
    light printed page looks odd. Nautical uses Outdoors (sea marks can't be added to a
    still picture). */
-const TP_MAP_W = 714, TP_MAP_H = 270; // the biggest route box any template uses
-const _tpMapImg = new Map(); // "tripId|style" -> image data
+// Since 29.10.2026 the picture is requested at EXACTLY the size of the box it
+// goes in (each theme has its own width, and the height follows the shape of the
+// track). Before, one 714x270 picture was squeezed into every box, so the ends of
+// the track and the Mapbox logo were cut off.
+const _tpMapImg = new Map(); // "tripId|style|w|h" -> image data
 function tpStaticStyle(){
   return (typeof currentMapStyle!=='undefined' && currentMapStyle==='nautical') ? 'outdoors-v12' : 'standard';
 }
@@ -145,7 +181,7 @@ function tpEncodePolyline(coords){
   }
   return out;
 }
-function tpStaticMapUrl(path, style, pal){
+function tpStaticMapUrl(path, style, pal, w, h){
   // Web addresses have a length limit, so long tracks are thinned to ~350 points
   // (start and finish always kept) — invisible at this picture size.
   const step = Math.max(1, Math.ceil(path.length/350));
@@ -158,8 +194,43 @@ function tpStaticMapUrl(path, style, pal){
                          : [`pin-s+${hex(pal.start||'#2E8B57')}(${s.lng.toFixed(5)},${s.lat.toFixed(5)})`,
                             `pin-s+${hex(pal.end||'#DE4457')}(${e.lng.toFixed(5)},${e.lat.toFixed(5)})`];
   const overlay = [`path-7+ffffff-0.9(${line})`, `path-3+${hex(pal.track)}(${line})`, ...pins].join(',');
-  return `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${overlay}/auto/${TP_MAP_W}x${TP_MAP_H}@2x`
-       + `?padding=45,40&access_token=${MAPBOX_TOKEN}`;
+  return `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${overlay}/auto/${w}x${h}@2x`
+       + `?padding=44,40&access_token=${MAPBOX_TOKEN}`;
+}
+// The route box heights to try (tallest first) for a box `w` wide: the first
+// one follows the track's shape — a long north-south sail gets a taller box, a
+// short hop along the coast a flatter one — capped at `maxH`. The shorter ones
+// are only used if the page has less room left.
+function tpTrackAspect(path){ // height ÷ width of the track on a map
+  const lats = path.map(p=>p.lat), lngs = path.map(p=>p.lng);
+  const midLat = (Math.min(...lats)+Math.max(...lats))/2;
+  const latSpan = (Math.max(...lats)-Math.min(...lats)) || 0.002;
+  const lngSpan = ((Math.max(...lngs)-Math.min(...lngs)) * Math.max(Math.cos(midLat*Math.PI/180),0.01)) || 0.002;
+  return latSpan/lngSpan;
+}
+function tpRouteHeights(trip, w, maxH){
+  maxH = maxH || 380;
+  let ideal;
+  if(trip.path && trip.path.length>1){
+    ideal = (w-80)*tpTrackAspect(trip.path) + 86;              // track + the padding around it
+  } else if(trip.mapImage){
+    ideal = w / tpAspectOf(trip.mapImage, 1.6);                 // uploaded picture at its own shape
+  } else return [];
+  ideal = Math.round(Math.min(maxH, Math.max(220, ideal)) / 10) * 10;
+  return [ideal, ideal-60, ideal-120].filter((h,i)=> i===0 || h>=200);
+}
+async function tpPrepareMapImages(trip, w, maxH){
+  if(!trip || !trip.path || trip.path.length<2 || typeof MAPBOX_TOKEN==='undefined') return;
+  const style = tpStaticStyle();
+  const pal = {track:TP.navy, start:'#2E8B57', end:TP.coral};
+  for(const h of tpRouteHeights(trip, w, maxH)){
+    const key = [trip.id, style, w, h].join('|');
+    if(_tpMapImg.has(key)) continue;
+    let img = await tpFetchDataUrl(tpStaticMapUrl(trip.path, style, pal, w, h));
+    if(!img && style==='standard') img = await tpFetchDataUrl(tpStaticMapUrl(trip.path, 'streets-v12', pal, w, h)); // backup look
+    if(img) _tpMapImg.set(key, img);
+    else { console.warn('[pdf] Mapbox map picture unavailable — using the drawn chart'); return; }
+  }
 }
 async function tpFetchDataUrl(url, ms){
   const ctl = new AbortController(); const timer = setTimeout(()=>ctl.abort(), ms||9000);
@@ -170,18 +241,8 @@ async function tpFetchDataUrl(url, ms){
     return await new Promise(r=>{ const fr = new FileReader(); fr.onload = ()=>r(fr.result); fr.onerror = ()=>r(null); fr.readAsDataURL(blob); });
   } catch(e){ return null; } finally { clearTimeout(timer); }
 }
-async function tpPrepareMapImage(trip){
-  if(!trip || !trip.path || trip.path.length<2 || typeof MAPBOX_TOKEN==='undefined') return;
-  const style = tpStaticStyle(), key = trip.id+'|'+style;
-  if(_tpMapImg.has(key)) return;
-  const pal = {track:TP.navy, start:'#2E8B57', end:TP.coral};
-  let img = await tpFetchDataUrl(tpStaticMapUrl(trip.path, style, pal));
-  if(!img && style==='standard') img = await tpFetchDataUrl(tpStaticMapUrl(trip.path, 'streets-v12', pal)); // backup look
-  if(img) _tpMapImg.set(key, img);
-  else console.warn('[pdf] Mapbox map picture unavailable — using the drawn chart');
-}
-function tpMapImageFor(trip){
-  return trip ? _tpMapImg.get(trip.id+'|'+tpStaticStyle()) : null;
+function tpMapImageFor(trip, w, h){
+  return trip ? _tpMapImg.get([trip.id, tpStaticStyle(), w, h].join('|')) : null;
 }
 
 // Chart-style route map with explicit colours (no CSS variables — see header).
@@ -249,33 +310,78 @@ function tpMapSvg(path, w, h, pal){
 // The route box: GPS chart → uploaded map image → nothing (section skipped).
 function tpRouteInner(D, w, h, pal){
   if(D.hasTrack){
-    const real = tpMapImageFor(D.trip);
+    const real = tpMapImageFor(D.trip, w, h);
     if(real) return tpImg(real, 'tp-mapimg', `width:${w}px;height:${h}px;`);
     return tpMapSvg(D.trip.path, w, h, pal);
   }
-  if(D.trip.mapImage) return tpImg(D.trip.mapImage, 'tp-mapimg', `width:${w}px;height:${h}px;`);
+  // An uploaded map picture (e.g. a screenshot) is always shown WHOLE: the box
+  // follows the picture's shape, and if the page needs a shorter box the picture
+  // is shrunk to fit inside it rather than cropped.
+  if(D.trip.mapImage) return tpImg(D.trip.mapImage, 'tp-mapimg tp-mapimg-whole', `width:${w}px;height:${h}px;`);
   return '';
 }
 
-// The route card as a flow block. It comes in a few map heights (tallest
-// first): if the full-size card doesn't fit in the space left on a page, a
-// shorter map (down to 160px) is tried before it moves to the next page.
-function tpRouteBlock(D, cls, headingFn, w, h, pal){
-  const heights = [h, h-25, h-50, h-75, h-100].filter(x=>x>=160);
-  const cards = heights.map(hh=>{ const inner = tpRouteInner(D, w, hh, pal); return inner ? `<div class="${cls}">${headingFn(t('pdf.theRoute'))}<div class="tp-map">${inner}</div></div>` : ''; });
+// The route card as a flow block, in a few map heights (tallest first, see
+// tpRouteHeights): if the full-size card doesn't fit in the space left on a
+// page, a shorter one is tried before it moves to the next page.
+function tpRouteBlock(D, cls, headingFn, themeId, pal){
+  const theme = PDF_THEMES[themeId], w = theme.routeW;
+  const cards = tpRouteHeights(D.trip, w, theme.routeMaxH).map(hh=>{ const inner = tpRouteInner(D, w, hh, pal); return inner ? `<div class="${cls}">${headingFn(t('pdf.theRoute'))}<div class="tp-map">${inner}</div></div>` : ''; });
   if(!cards[0]) return null;
   return { float:true, html:cards[0], variants:cards.slice(1) };
 }
 
-// Rows of 3 photos (each row is one flow item, so the photo grid can break
-// across pages between rows — never through a photo).
-function tpPhotoRows(photos, cellCls, cols){
-  cols = cols || 3;
-  const rows = [];
-  for(let i=0;i<photos.length;i+=cols){
-    rows.push(`<div class="tp-photo-row">${photos.slice(i,i+cols).map(p=>`<div class="${cellCls}">${tpImg(p,'tp-photo')}</div>`).join('')}</div>`);
+/* ---------- photos: "justified" rows ----------
+   Since 29.10.2026 every photo keeps its own shape: portrait photos stay
+   portrait, landscapes stay landscape, nothing gets its top or bottom cut off.
+   Photos are put in rows; each row is scaled so it exactly fills the width,
+   with all photos in the row the same height (like Google Photos). Each row is
+   one flow item, so the grid can break across pages between rows — never
+   through a photo. Only extreme shapes (very tall or very wide panoramas) are
+   trimmed a little so one photo can't take over a whole row.
+     photos — image data list      W — width of the photo area in px
+     targetH — the row height we aim for    pad — extra px around each photo (Polaroid frames) */
+function tpJustifiedRows(photos, W, targetH, pad){
+  const gap = 10; pad = pad || 0;
+  const aspect = p => Math.min(2.2, Math.max(0.55, tpAspectOf(p)));
+  const heightFor = row => (W - gap*(row.length-1) - pad*row.length) / row.reduce((s,p)=>s+aspect(p),0);
+  const rows = []; let cur = [];
+  for(const p of photos){
+    cur.push(p);
+    if(heightFor(cur) <= targetH){ rows.push({photos:cur, h:heightFor(cur)}); cur = []; }
+  }
+  if(cur.length){
+    const prev = rows[rows.length-1];
+    // A single photo left over borrows one from the row above, so the grid
+    // doesn't end with one photo on its own
+    if(cur.length===1 && prev && prev.photos.length>=3){
+      cur.unshift(prev.photos.pop()); prev.h = heightFor(prev.photos);
+    }
+    const h = heightFor(cur);
+    if(h > targetH*1.2 && prev && heightFor(prev.photos.concat(cur)) >= targetH*0.62){
+      prev.photos = prev.photos.concat(cur); prev.h = heightFor(prev.photos); // fold a short last row into the one before
+    } else {
+      rows.push({photos:cur, h:Math.min(h, targetH*1.2), last:true});      // last row: not stretched past the target
+    }
   }
   return rows;
+}
+function tpPhotoRows(D, cellCls, W, pad){
+  const n = D.photos.length;
+  const base = n<=2 ? 270 : n<=5 ? 215 : n<=10 ? 185 : 165; // fewer photos → bigger photos
+  const targetH = base * (D.photoScale||1);
+  return tpJustifiedRows(D.photos, W, targetH, pad).map(r=>{
+    const h = Math.floor(r.h);
+    let used = 0;
+    const cells = r.photos.map((p,i)=>{
+      // widths in whole px; the last photo of a full row takes the rounding left-over
+      let w = Math.floor(h*Math.min(2.2, Math.max(0.55, tpAspectOf(p))) + pad);
+      if(!r.last && i===r.photos.length-1) w = W - used - 10*(r.photos.length-1);
+      used += w;
+      return `<div class="${cellCls}" style="width:${w}px;flex:0 0 auto;">${tpImg(p,'tp-photo',`padding-top:0;height:${h}px;`)}</div>`;
+    }).join('');
+    return `<div class="tp-photo-row" style="justify-content:center;">${cells}</div>`;
+  });
 }
 
 function tpCrewItems(D, cls){
@@ -317,8 +423,8 @@ function tpNotesBlock(D, cls, headingFn){
   return { items: D.notes.map(p=>`<p>${escapeHtml(p)}</p>`),
            wrap:(inner, cont)=>`<div class="${cls} tp-notes-card">${headingFn(t('pdf.theDay') + (cont?` · ${t('pdf.continued')}`:''))}<div class="tp-notes">${inner}</div></div>` };
 }
-function tpPhotosBlock(D, cls, headingFn, cellCls){
-  return { items: tpPhotoRows(D.photos, cellCls||'tp-photo-cell'),
+function tpPhotosBlock(D, cls, headingFn, cellCls, W, pad){
+  return { items: tpPhotoRows(D, cellCls||'tp-photo-cell', W, pad),
            wrap:(inner, cont)=>`<div class="${cls}">${headingFn(t('active.photos') + (cont?` · ${t('pdf.continued')}`:''))}<div class="tp-photos">${inner}</div></div>` };
 }
 
@@ -353,10 +459,10 @@ function tpBlocksNautical(D){
     B.push({ html:`<div class="tp-row">${condCard}${shortNotes ? `<div class="n-card n-day">${H(t('pdf.theDay'))}<div class="tp-notes">${D.notes.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div></div>` : ''}</div>` });
   }
   if(D.notes.length && !shortNotes) B.push(tpNotesBlock(D, 'n-card', H));
-  const route = tpRouteBlock(D, 'n-card', H, 678, 270);
+  const route = tpRouteBlock(D, 'n-card', H, 'nautical');
   if(route) B.push(route);
   if(D.crew.length) B.push({ float:true, html:`<div class="n-card">${H(t('nav.crew'))}<div class="tp-crew-grid">${tpCrewItems(D,'tp-crew-item')}</div></div>` });
-  if(D.photos.length) B.push(tpPhotosBlock(D, 'n-card', H));
+  if(D.photos.length) B.push(tpPhotosBlock(D, 'n-card', H, 'tp-photo-cell', 676, 0));
   return B;
 }
 
@@ -369,7 +475,7 @@ function tpBlocksYacht(D){
     <img class="y-logo" src="images/Logo.png" alt="">
     <div class="y-titles">
       <div class="y-kicker">SAIL LA VIE · ${t('pdf.logEntry')}</div>
-      <h1>${escapeHtml(line1)}${line2?`<br>${escapeHtml(line2)}`:''}</h1>
+      <h1${Math.max(line1.length, line2.length) > 15 ? ' style="font-size:26px"' : ''}>${escapeHtml(line1)}${line2?`<br>${escapeHtml(line2)}`:''}</h1>
       <div class="y-rule"><span></span>${pdfAnchorSvgSized(14, TP.gold, 1.3)}</div>
     </div>
     <div class="y-meta">
@@ -392,9 +498,9 @@ function tpBlocksYacht(D){
   const cond = D.cond.length ? `<div class="y-card">${H(t('pdf.conditions'))}${tpCondRows(D)}</div>` : '';
   const crew = D.crew.length ? `<div class="y-card">${H(t('nav.crew'))}<div class="tp-crew-list">${tpCrewItems(D,'tp-crew-item')}</div></div>` : '';
   if(cond || crew) B.push({ float:true, html:`<div class="tp-row">${cond}${crew}</div>` });
-  const route = tpRouteBlock(D, 'y-card', H, 714, 260);
+  const route = tpRouteBlock(D, 'y-card', H, 'yacht');
   if(route) B.push(route);
-  if(D.photos.length) B.push(tpPhotosBlock(D, 'y-card', H));
+  if(D.photos.length) B.push(tpPhotosBlock(D, 'y-card', H, 'tp-photo-cell', 714, 0));
   return B;
 }
 
@@ -426,18 +532,18 @@ function tpBlocksMemory(D){
   const day = shortNotes ? `<div class="m-card m-day">${H(t('pdf.theDay'))}<div class="tp-notes">${D.notes.map(p=>`<p>${escapeHtml(p)}</p>`).join('')}</div></div>` : '';
   if(cond || day) B.push({ html:`<div class="tp-row">${cond}${day}</div>` });
   if(D.notes.length && !shortNotes) B.push(tpNotesBlock(D, 'm-card', H));
-  const route = tpRouteBlock(D, 'm-card', H, 678, 250, {water:'#E2F0F2', grid:'#A9CFD6'});
+  const route = tpRouteBlock(D, 'm-card', H, 'memory', {water:'#E2F0F2', grid:'#A9CFD6'});
   if(route) B.push(route);
   if(D.crew.length) B.push({ float:true, html:`<div class="m-card">${H(t('nav.crew'))}<div class="tp-crew-grid">${tpCrewItems(D,'tp-crew-item')}</div></div>` });
-  if(D.photos.length) B.push(tpPhotosBlock(D, 'm-card', H, 'tp-photo-cell m-polaroid'));
+  if(D.photos.length) B.push(tpPhotosBlock(D, 'm-card', H, 'tp-photo-cell m-polaroid', 676, 12));
   B.push({ html:`<div class="m-tagline"><span></span>${t('pdf.gratefulJourney')} <i>${PDF_ICON_SVG.heart}</i><span></span></div>` });
   return B;
 }
 
 const PDF_THEMES = {
-  nautical: { label:'pdf.themeNautical',        swatch:'#16324F', cls:'tp-nautical', pageBg:TP.ivory, blocks:tpBlocksNautical, contours:true },
-  yacht:    { label:'pdf.themeMinimalistYacht', swatch:'#C9A24B', cls:'tp-yacht',    pageBg:'#FDFCF9', blocks:tpBlocksYacht,    contours:false },
-  memory:   { label:'pdf.themeMemoryPage',      swatch:'#DE4457', cls:'tp-memory',   pageBg:'#FCF7EF', blocks:tpBlocksMemory,   contours:true }
+  nautical: { label:'pdf.themeNautical',        swatch:'#16324F', cls:'tp-nautical', pageBg:TP.ivory, blocks:tpBlocksNautical, contours:true, routeW:676, routeMaxH:380 },
+  yacht:    { label:'pdf.themeMinimalistYacht', swatch:'#C9A24B', cls:'tp-yacht',    pageBg:'#FDFCF9', blocks:tpBlocksYacht,    contours:false, routeW:714, routeMaxH:360 },
+  memory:   { label:'pdf.themeMemoryPage',      swatch:'#DE4457', cls:'tp-memory',   pageBg:'#FCF7EF', blocks:tpBlocksMemory,   contours:true, routeW:676, routeMaxH:360 }
 };
 let currentPdfTheme = (()=>{ try{ return localStorage.getItem('pdfTheme'); }catch(e){ return null; } })() || 'nautical';
 if(!PDF_THEMES[currentPdfTheme]) currentPdfTheme = 'nautical';
@@ -451,7 +557,37 @@ function tpEl(html){ const d=document.createElement('div'); d.innerHTML=html.tri
 // Lays the template's blocks out into as many A4 pages as needed, inside
 // `host` (which must be in the live DOM so things can be measured). Returns
 // the page elements.
+// Flexible fitting (29.10.2026): the same theme can look different from one sail
+// to the next. The pages are laid out once at the normal photo size; if that
+// leaves a nearly empty last page (e.g. one lonely row of photos), the layout is
+// tried again with slightly smaller photos, and the version with fewer pages is
+// kept. If no page can be saved, the photos are made bigger instead so the last
+// page is filled.
 function layoutTripPdfPages(themeId, D, host){
+  const first = tpLayoutOnce(themeId, Object.assign({}, D, {photoScale:1}), host);
+  if(first.length < 2 || !D.photos.length || tpPageFill(first[first.length-1]) > 0.4) return first;
+  for(const scale of [0.86, 0.74]){
+    const pages = tpLayoutOnce(themeId, Object.assign({}, D, {photoScale:scale}), host);
+    if(pages.length < first.length) return pages;
+  }
+  // Can't save the page: use the space instead — bigger photos on that last page
+  for(const scale of [1.8, 1.5, 1.25]){
+    const pages = tpLayoutOnce(themeId, Object.assign({}, D, {photoScale:scale}), host);
+    if(pages.length === first.length) return pages;
+  }
+  return tpLayoutOnce(themeId, Object.assign({}, D, {photoScale:1}), host);
+}
+// How much of a page's content area is used (0–1), not counting the running header.
+function tpPageFill(page){
+  const content = page.querySelector('.tp-content');
+  const kids = Array.from(content.children).filter(el=>!el.classList.contains('tp-runhead'));
+  if(!kids.length) return 0;
+  const last = kids[kids.length-1], head = content.querySelector('.tp-runhead');
+  const top = head ? head.offsetTop + head.offsetHeight : 0;
+  return (last.offsetTop + last.offsetHeight - top) / Math.max(1, content.clientHeight - top);
+}
+
+function tpLayoutOnce(themeId, D, host){
   const theme = PDF_THEMES[themeId];
   host.innerHTML = '';
   const pages = [];
@@ -563,7 +699,7 @@ async function renderTripPdfPreview(){
   inner.style.width = TP_W+'px';
   inner.style.transformOrigin = currentLang==='he' ? 'top right' : 'top left';
   if(document.fonts && document.fonts.ready) await document.fonts.ready;
-  const pdfTrip = await tpPrepareImages(trip); // stored photos -> real image data for the page layout
+  const pdfTrip = await tpPrepareImages(trip, currentPdfTheme); // stored photos -> real image data for the page layout
   if(token !== _tpPreviewToken) return;
   const pages = layoutTripPdfPages(currentPdfTheme, tripPdfData(pdfTrip), inner);
   const s = (wrap.clientWidth || 360) / TP_W;
@@ -586,7 +722,7 @@ async function generateAndShareTripPdf(){
   document.body.appendChild(host);
   try{
     if(document.fonts && document.fonts.ready) await document.fonts.ready;
-    const pages = layoutTripPdfPages(currentPdfTheme, tripPdfData(await tpPrepareImages(trip)), host);
+    const pages = layoutTripPdfPages(currentPdfTheme, tripPdfData(await tpPrepareImages(trip, currentPdfTheme)), host);
     await waitForImagesToLoad(host);
     await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
     const { jsPDF } = window.jspdf;

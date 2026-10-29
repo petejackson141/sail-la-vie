@@ -154,7 +154,7 @@ async function openTripDetail(id, from, friendView){
       <div class="cell"><div class="stat-label">${t('detail.elapsed')}</div><div class="stat-value">${fmtDuration(trip.elapsedSeconds)}</div></div>
       <div class="cell"><div class="stat-label">${t('stat.distance')}</div><div class="stat-value">${statWithUnit(fmtDistance(trip.distanceNm||0))}</div></div>
       <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('stat.avgSpeed')}</div><div class="stat-value">${statWithUnit(fmtSpeed(trip.avgSpeed||0))}</div></div>
-      <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('stat.maxSpeed')}</div><div class="stat-value">${statWithUnit(fmtSpeed(trip.maxSpeed||0))}</div></div>
+      <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('stat.maxSpeed')}</div><div class="stat-value">${tripMaxSpeed(trip)!=null ? statWithUnit(fmtSpeed(tripMaxSpeed(trip))) : '—'}</div></div>
     </div>
 
     <div id="detailMapArea"></div>
