@@ -816,6 +816,10 @@
 
   /* ---------- "when" tap targets ---------- */
   .when-row{ display:grid; grid-template-columns:1.6fr 1fr; gap:10px; }
+  .gps-locked{ opacity:.5; pointer-events:none; } /* GPS lock (journey.js) */
+  .gps-lock-note{ margin:0 0 12px; padding:10px 12px; border-radius:12px; background:rgba(23,117,143,.1); color:#16324F; font-size:12.5px; line-height:1.45; }
+  .gps-badge{ display:inline-block; margin-top:10px; padding:5px 10px; border-radius:20px; background:rgba(23,117,143,.12); color:#17758F; font-size:12px; font-weight:600; }
+  .gps-badge.manual{ background:rgba(92,122,143,.12); color:#5C7A8F; }
   .when-pill{ display:flex; align-items:center; gap:8px; width:100%; min-width:0; text-align:start; cursor:pointer;
     background:var(--field-bg); border:1.5px solid var(--field-border); border-radius:var(--radius-md); padding:11px 10px;
     font-family:var(--font-body); color:var(--ink); transition:transform .12s ease, border-color .12s ease; }
@@ -1290,6 +1294,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
     </div>
 
     <div id="pastStatsBlock" style="display:none;">
+      <div id="gpsLockNote" class="gps-lock-note" style="display:none;" data-i18n="active.gpsLocked">🔒 Recorded by GPS. Date, time, duration, distance and speeds are locked. You can still change everything else.</div>
 
       <!-- WHEN: two big tap targets that open the themed date/time sheet (#sheetDateTime).
            #pastDate is still the single source of truth (the save code reads it), it is

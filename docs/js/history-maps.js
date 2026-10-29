@@ -157,6 +157,8 @@ async function openTripDetail(id, from, friendView){
       <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('stat.maxSpeed')}</div><div class="stat-value">${tripMaxSpeed(trip)!=null ? statWithUnit(fmtSpeed(tripMaxSpeed(trip))) : '—'}</div></div>
     </div>
 
+    ${tripGpsVerified(trip) ? `<div class="gps-badge">🔒 ${t('detail.gpsVerified')}</div>` : `<div class="gps-badge manual">✍️ ${t('detail.loggedByHand')}</div>`}
+
     <div id="detailMapArea"></div>
 
     <div class="section-title">${wxHasTrack(trip) ? t('wx.departureTitle') : t('detail.weather')}</div>

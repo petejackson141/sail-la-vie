@@ -422,6 +422,29 @@ async function beginJourney(){
   // an instant crash right after tapping Cast Off and losing the journey entirely.
   await saveActiveTripCheckpoint();
 }
+/* ---- GPS lock (29.10.2026) ----
+   A sail recorded by the app's GPS tracking has its numbers locked: date and
+   start time, duration, distance and speeds can't be changed when editing (the
+   title, place, boat, crew, weather, notes and photos still can). This is what
+   lets the strict "GPS Sea Time" certificate trust them. The locked values are
+   kept in trip.gpsLock; if a recording ended with a typed-in distance (the GPS
+   track was missing), gpsLock.overridden is set and the sail no longer counts
+   as GPS-verified. */
+function tripIsGpsRecorded(trip){ return !!trip && (trip.gpsRecorded===true || (!!trip.path && trip.path.length>1)); }
+function tripGpsVerified(trip){ return tripIsGpsRecorded(trip) && !(trip.gpsLock && trip.gpsLock.overridden); }
+function gpsLockFrom(trip, overridden){
+  return { distanceNm: trip.distanceNm, elapsedSeconds: trip.elapsedSeconds, avgSpeed: trip.avgSpeed, maxSpeed: trip.maxSpeed,
+           date: trip.date, points: (trip.path||[]).length, lockedAt: new Date().toISOString(), overridden: !!overridden };
+}
+// Greys out (and blocks) the date/time, duration, distance and speed fields on the edit screen.
+function setGpsFieldsLocked(locked){
+  ['pastHours','pastMinutes','pastDistance','pastAvgSpeed','pastMaxSpeed'].forEach(id=>{
+    const el = document.getElementById(id); if(!el) return;
+    el.readOnly = locked; el.classList.toggle('gps-locked', locked);
+  });
+  document.querySelectorAll('#pastStatsBlock .when-pill').forEach(b=>{ b.disabled = locked; b.classList.toggle('gps-locked', locked); });
+  const note = document.getElementById('gpsLockNote'); if(note) note.style.display = locked ? 'block' : 'none';
+}
 // MODE 3: editing an existing trip. Deep-clones it into currentTrip (so
 // discarding never touches the saved copy) and pre-fills every field, reusing
 // the same "past sail" UI as manual entry. finalizeSaveTrip() checks
@@ -435,8 +458,10 @@ function editTrip(){
     return;
   }
   currentTrip = JSON.parse(JSON.stringify(trip)); // deep clone so cancel never touches the saved version
-  currentTrip.isManual = true;
+  currentTrip.isManual = true;   // editing reuses the manual-entry screen…
   currentTrip.isEditing = true;
+  currentTrip._gpsLocked = tripIsGpsRecorded(trip); // …but a GPS sail keeps its numbers (see GPS lock above)
+  if(currentTrip._gpsLocked && !currentTrip.gpsLock) currentTrip.gpsLock = gpsLockFrom(trip, false); // older sails: lock what they have now
   activeUnitSystem = appUnitSystem();
   populateBoatSelects();
   nav('active');
@@ -481,6 +506,7 @@ function editTrip(){
     document.getElementById('mapImagePreview').src = trip.mapImage;
     document.getElementById('mapImagePreviewWrap').style.display = 'block';
   }
+  setGpsFieldsLocked(!!currentTrip._gpsLocked);
 
   renderSkipperChip();
   renderAddedCrewChips();
@@ -524,6 +550,7 @@ async function resumeActiveTripIfAny(){
     document.getElementById('mapImagePreview').src = currentTrip.mapImage;
     document.getElementById('mapImagePreviewWrap').style.display = 'block';
   }
+  setGpsFieldsLocked(!!currentTrip._gpsLocked);
   renderSkipperChip();
   renderAddedCrewChips();
   renderActivePhotoStrip();
@@ -592,6 +619,7 @@ async function beginManualJourney(){
   document.getElementById('pastDistance').value = '';
   document.getElementById('pastAvgSpeed').value = '';
   document.getElementById('pastMaxSpeed').value = '';
+  setGpsFieldsLocked(false);
 }
 /* ---- live GPS: runs every second (timer) / on every position fix (GPS watch) ---- */
 function tickTimer(){
@@ -1057,7 +1085,12 @@ async function endJourney(){
   const which = currentTrip.isEditing ? 'saveChanges' : currentTrip.isManual ? 'savePastSail' : 'endJourney';
   if(!(await confirmDialog(which, {icon: currentTrip.isEditing || currentTrip.isManual ? 'check' : 'flag'}))) return;
 
-  if(currentTrip.isManual){
+  if(currentTrip.isManual && currentTrip._gpsLocked && currentTrip.gpsLock){
+    // Editing a GPS sail: the numbers always come from the lock, never the form
+    const L = currentTrip.gpsLock;
+    currentTrip.distanceNm = L.distanceNm; currentTrip.elapsedSeconds = L.elapsedSeconds;
+    currentTrip.avgSpeed = L.avgSpeed; currentTrip.maxSpeed = L.maxSpeed; currentTrip.date = L.date;
+  } else if(currentTrip.isManual){
     const hrs = parseFloat(document.getElementById('pastHours').value)||0;
     const mins = parseFloat(document.getElementById('pastMinutes').value)||0;
     const distInput = parseFloat(document.getElementById('pastDistance').value)||0;
@@ -1081,6 +1114,7 @@ async function endJourney(){
     const manualInput = parseFloat(document.getElementById('manualDistance').value);
     if(!isNaN(manualInput) && (!currentTrip.path.length || currentTrip.distanceNm===0)){
       currentTrip.distanceNm = activeUnitSystem==='metric' ? manualInput/NM_TO_KM : manualInput; // canonical NM
+      currentTrip._distOverridden = true; // typed in, not measured — not GPS-verified
       const h = currentTrip.elapsedSeconds/3600;
       currentTrip.avgSpeed = h>0 ? currentTrip.distanceNm/h : 0;
     }
@@ -1183,6 +1217,16 @@ async function finalizeSaveTrip(){
   // (see sail-weather.js) — marked waiting now, filled in once online.
   const needsWeatherReport = !currentTrip.isEditing && !currentTrip.isManual && wxHasTrack(currentTrip) && !currentTrip.weatherReport;
   if(needsWeatherReport) currentTrip.weatherReport = {status:'pending'};
+  // GPS lock: a newly finished recording is locked now; an edited GPS sail goes
+  // back to being a recorded sail (editing used to leave it marked "manual").
+  if(!currentTrip.isEditing && !currentTrip.isManual){
+    currentTrip.gpsRecorded = !!(currentTrip.path && currentTrip.path.length>1);
+    if(currentTrip.gpsRecorded) currentTrip.gpsLock = gpsLockFrom(currentTrip, !!currentTrip._distOverridden);
+  } else if(currentTrip.isEditing && currentTrip._gpsLocked){
+    currentTrip.isManual = false;
+    currentTrip.gpsRecorded = true;
+  }
+  delete currentTrip._gpsLocked; delete currentTrip._distOverridden;
   const savedBoat = currentTrip.boatId ? state.boats.find(b=>b.id===currentTrip.boatId) : null;
   currentTrip.boatName = savedBoat ? savedBoat.name : null; // shown to friends, who don't have your Fleet
   currentTrip.updatedAt = new Date().toISOString();

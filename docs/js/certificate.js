@@ -196,7 +196,8 @@ async function collectCertificateData(trips){
     .map(id=>(state.boats.find(b=>b.id===id)||{}).name).filter(Boolean))];
   let manual = 0;
   for(const tr of trips){
-    try{ const full = await storeGet('trip:'+tr.id); if(full && full.isManual) manual++; }catch(e){}
+    // "tracked" = GPS-verified (see tripGpsVerified in journey.js); everything else counts as logged by hand
+    try{ const full = await storeGet('trip:'+tr.id); if(full && !tripGpsVerified(full)) manual++; }catch(e){}
   }
   return {
     count: trips.length, nm, secs, longestNm, boatNames,
