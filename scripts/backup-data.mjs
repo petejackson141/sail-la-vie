@@ -17,7 +17,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const SUPABASE_URL = 'https://opejqowgcjltanvgxmxn.supabase.co';
+const SUPABASE_URL = 'https://lccwbkarqjohunofsghd.supabase.co';   // Frankfurt (sail-la-vie-eu), live since 29.10.2026
 const KEY_FILE     = 'C:\\Users\\Pete\\SailLaVie-keys\\supabase-secret-key.txt';
 const BACKUP_ROOT  = 'C:\\Users\\Pete\\SailLaVie-backups';
 const TABLES       = ['profiles', 'public_profiles', 'boats', 'crew', 'trips', 'noticeboard', 'friendships', 'feedback'];

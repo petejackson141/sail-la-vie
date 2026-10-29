@@ -29,7 +29,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
 
-const LIVE_URL    = 'https://opejqowgcjltanvgxmxn.supabase.co';   // the current live (Tokyo) project
+const LIVE_URL    = 'https://lccwbkarqjohunofsghd.supabase.co';   // the current live project: Frankfurt (sail-la-vie-eu) since 29.10.2026
 const KEY_FILE    = 'C:\\Users\\Pete\\SailLaVie-keys\\restore-target-secret-key.txt';
 const BACKUP_ROOT = process.env.SLV_BACKUP_ROOT || 'C:\\Users\\Pete\\SailLaVie-backups';
 // Order matters: accounts first, then tables that point at them.
