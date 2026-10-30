@@ -9,10 +9,8 @@
 //   2. reelDrawFrame(ctx, time) draws ONE frame for any moment 0–20 s. Every
 //      frame is worked out from the time alone, so the preview and the
 //      recording are always identical.
-//   3. reelRecord() plays it on a <canvas> and records the canvas with the
-//      browser's MediaRecorder: MP4 where the phone supports it (Instagram's
-//      favourite), otherwise WebM. Recording runs in real time, so it takes
-//      ~20 seconds. Then the phone's share sheet opens with the video.
+//   3. reelRecord() turns the frames into an MP4 (see "Two ways of making the
+//      video" further down), then the phone's share sheet opens with it.
 //
 
 // No music on purpose: Instagram/Facebook let people add licensed music there.
@@ -469,26 +467,102 @@ function reelMimeType(){
   return ['video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
     .find(m=>MediaRecorder.isTypeSupported(m)) || null;
 }
+// Two ways of making the video:
+//   1. ENCODER (preferred, since 30.10.2026): every frame is drawn and handed to
+//      the phone's video encoder (WebCodecs), and mp4-muxer
+//      (js/vendor-mp4-muxer.js) writes a standard MP4 with the full length in
+//      its header. It doesn't need to play in real time, so it's usually faster
+//      than 20 s.
+//   2. RECORDER (fallback for phones without WebCodecs): plays the reel and
+//      records the screen with MediaRecorder. Its MP4s are "fragmented", and
+//      Instagram only took the first ~3 seconds of those — the reason for 1.
+const REEL_CODECS = ['avc1.640032', 'avc1.4d0032', 'avc1.42e032', 'avc1.640028', 'avc1.4d0028', 'avc1.42e028'];
+let _reelEncoderCodec; // undefined = not checked yet, null = none works
+async function reelEncoderCodec(){
+  if(_reelEncoderCodec !== undefined) return _reelEncoderCodec;
+  _reelEncoderCodec = null;
+  if(typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined' || typeof Mp4Muxer === 'undefined') return null;
+  for(const codec of REEL_CODECS){
+    try{
+      const res = await VideoEncoder.isConfigSupported({ codec, width: REEL_W, height: REEL_H, bitrate: 8000000, framerate: REEL_FPS });
+      if(res && res.supported){ _reelEncoderCodec = codec; break; }
+    }catch(e){}
+  }
+  return _reelEncoderCodec;
+}
 function reelCanRecord(){
   const c = document.getElementById('reelCanvas');
-  return !!(c && c.captureStream && reelMimeType());
+  return !!(c && ((typeof VideoEncoder !== 'undefined' && typeof Mp4Muxer !== 'undefined') || (c.captureStream && reelMimeType())));
 }
 
 async function reelRecord(){
   const r = _reel; if(!r || r.recording) return;
-  const mime = reelMimeType(); if(!mime){ showToast(t('reel.cantRecord')); return; }
   r.recording = true;
-  const canvas = r.canvas, ctx = canvas.getContext('2d');
   const status = document.getElementById('reelStatus');
   document.getElementById('reelMakeBtn').disabled = true;
   document.getElementById('reelShareBtn').style.display = 'none';
+  try{
+    const codec = await reelEncoderCodec();
+    if(codec) await reelEncodeMp4(r, codec, status);
+    else await reelRecordScreen(r, status);
+    status.textContent = r.ext === 'mp4' ? t('reel.done') : t('reel.doneWebm');
+    document.getElementById('reelShareBtn').style.display = '';
+  }catch(e){
+    console.error('reel making failed', e);
+    status.textContent = t('reel.failed');
+  }finally{
+    r.recording = false;
+    document.getElementById('reelMakeBtn').disabled = false;
+  }
+}
+
+// 1. Frame by frame through the video encoder into a proper MP4
+async function reelEncodeMp4(r, codec, status){
+  const ctx = r.canvas.getContext('2d');
+  const muxer = new Mp4Muxer.Muxer({
+    target: new Mp4Muxer.ArrayBufferTarget(),
+    video: { codec: 'avc', width: REEL_W, height: REEL_H, frameRate: REEL_FPS },
+    fastStart: 'in-memory'   // length and index at the START of the file — what Instagram wants
+  });
+  let failure = null;
+  const encoder = new VideoEncoder({
+    output: (chunk, meta)=> muxer.addVideoChunk(chunk, meta),
+    error: e=>{ failure = e; }
+  });
+  encoder.configure({ codec, width: REEL_W, height: REEL_H, bitrate: 8000000, framerate: REEL_FPS, avc: { format: 'avc' } });
+  const total = REEL_SECONDS * REEL_FPS, us = 1e6 / REEL_FPS;
+  for(let i = 0; i < total; i++){
+    if(failure) throw failure;
+    reelDrawFrame(ctx, i / REEL_FPS);
+    const frame = new VideoFrame(r.canvas, { timestamp: Math.round(i*us), duration: Math.round(us) });
+    encoder.encode(frame, { keyFrame: i % (REEL_FPS*2) === 0 });
+    frame.close();
+    // don't run ahead of the encoder, and let the screen update now and then
+    while(encoder.encodeQueueSize > 8) await new Promise(res=>setTimeout(res, 5));
+    if(i % 10 === 0){
+      status.textContent = t('reel.making', {p: Math.round(i/total*100)});
+      await new Promise(res=>setTimeout(res, 0));
+    }
+  }
+  await encoder.flush();
+  if(failure) throw failure;
+  encoder.close();
+  muxer.finalize();
+  r.blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
+  r.ext = 'mp4';
+}
+
+// 2. Fallback: play it and record the screen (real time)
+async function reelRecordScreen(r, status){
+  const mime = reelMimeType(); if(!mime) throw new Error('no recorder');
+  const canvas = r.canvas, ctx = canvas.getContext('2d');
   const stream = canvas.captureStream(REEL_FPS);
   const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8000000 });
   const chunks = [];
   rec.ondataavailable = e=>{ if(e.data && e.data.size) chunks.push(e.data); };
   const done = new Promise(res=>{ rec.onstop = res; });
   reelDrawFrame(ctx, 0);
-  rec.start(250);
+  rec.start();
   const t0 = performance.now();
   await new Promise(res=>{
     const tick = (now)=>{
@@ -500,15 +574,11 @@ async function reelRecord(){
     };
     requestAnimationFrame(tick);
   });
-  await new Promise(res=>setTimeout(res, 150)); // let the last frames reach the recorder
+  await new Promise(res=>setTimeout(res, 150));
   rec.stop(); stream.getTracks().forEach(tr=>tr.stop());
   await done;
   r.blob = new Blob(chunks, { type: mime.split(';')[0] });
   r.ext = mime.startsWith('video/mp4') ? 'mp4' : 'webm';
-  r.recording = false;
-  status.textContent = r.ext === 'mp4' ? t('reel.done') : t('reel.doneWebm');
-  document.getElementById('reelMakeBtn').disabled = false;
-  document.getElementById('reelShareBtn').style.display = '';
 }
 
 async function reelShare(){
