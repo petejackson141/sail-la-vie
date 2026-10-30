@@ -14,17 +14,10 @@
 //      favourite), otherwise WebM. Recording runs in real time, so it takes
 //      ~15 seconds. Then the phone's share sheet opens with the video.
 //
-// The film, scene by scene (the timeline adapts — no photos means the other
-// scenes get the time; no GPS track means the numbers fill the map's place):
-//   Opening — the cover photo slowly zooming in, logo, title, date, place
-//   The sail — the map with the track drawing itself and the boat sailing it,
-//              distance / time / speed counting up underneath
-//   Photos   — 3–5 photos, about a second each, with a gentle pan and zoom
-//   Ending   — the totals and "Logged with Sail la Vie"
+
 // No music on purpose: Instagram/Facebook let people add licensed music there.
 
 const REEL_W = 1080, REEL_H = 1920, REEL_SECONDS = 15, REEL_FPS = 30;
-const REEL_MAP = 940;            // the map picture is REEL_MAP x REEL_MAP px on the video
 // Instagram/Facebook draw their buttons and caption over the bottom ~400px and
 // the top ~200px of a reel, so everything important stays between those.
 const REEL_FADE = 0.45;          // seconds of cross-fade between scenes
@@ -84,28 +77,30 @@ function reelProject(lng, lat, zoom){
   const s = Math.sin(lat*Math.PI/180);
   return { x: (lng+180)/360*ws, y: (0.5 - Math.log((1+s)/(1-s))/(4*Math.PI))*ws };
 }
-// Picks the map's centre and zoom so the whole track fits the square with a margin.
-// We choose them ourselves (instead of Mapbox's "auto") so we know exactly where
-// every track point lands on the picture and can draw the line on top.
+// Picks the map's centre and zoom so the whole track fits the full-screen
+// background with a margin. We choose them ourselves (instead of Mapbox's
+// "auto") so we know exactly where every track point lands and can draw the
+// line on top. The picture is requested at half size and @2x (Mapbox's limit
+// is 1280px a side), which gives the full 1080 x 1920.
+const REEL_MAP_PAD = { x: 140, top: 380, bottom: 560 }; // keep the track clear of the title and the numbers
 function reelMapView(path){
-  const size = REEL_MAP/2;                 // the picture is requested at half size and @2x
-  const pad = 70;
+  const W = REEL_W/2, H = REEL_H/2;
   const p0 = path.map(p=>reelProject(p.lng, p.lat, 0));
   const minX=Math.min(...p0.map(p=>p.x)), maxX=Math.max(...p0.map(p=>p.x));
   const minY=Math.min(...p0.map(p=>p.y)), maxY=Math.max(...p0.map(p=>p.y));
-  const span = Math.max(maxX-minX, maxY-minY, 1e-6);
-  const zoom = Math.max(1, Math.min(16, Math.log2((size - 2*pad) / span)));
-  const cx = (minX+maxX)/2, cy = (minY+maxY)/2;   // centre at zoom 0, in pixels
-  const ws0 = 512;
-  const lng = cx/ws0*360 - 180;
-  const lat = Math.atan(Math.sinh(Math.PI*(1 - 2*cy/ws0))) * 180/Math.PI;
+  const availW = W - REEL_MAP_PAD.x, availH = H - (REEL_MAP_PAD.top + REEL_MAP_PAD.bottom)/2;
+  const zoom = Math.max(1, Math.min(16, Math.log2(Math.min(availW/Math.max(maxX-minX,1e-6), availH/Math.max(maxY-minY,1e-6)))));
+  // centre the track in the space between the title and the numbers
+  const shift = (REEL_MAP_PAD.bottom - REEL_MAP_PAD.top)/4 / (512*Math.pow(2, zoom)) * 512; // in zoom-0 pixels
+  const cx = (minX+maxX)/2, cy = (minY+maxY)/2 + shift;
+  const lng = cx/512*360 - 180;
+  const lat = Math.atan(Math.sinh(Math.PI*(1 - 2*cy/512))) * 180/Math.PI;
   return { lng, lat, zoom };
 }
-// Track point → pixel on the REEL_MAP x REEL_MAP map picture.
+// Track point → pixel on the full-screen (REEL_W x REEL_H) map picture.
 function reelToMapPx(p, view){
   const c = reelProject(view.lng, view.lat, view.zoom), q = reelProject(p.lng, p.lat, view.zoom);
-  const k = REEL_MAP / (REEL_MAP/2); // picture drawn at 2x
-  return { x: REEL_MAP/2 + (q.x - c.x)*k, y: REEL_MAP/2 + (q.y - c.y)*k };
+  return { x: REEL_W/2 + (q.x - c.x)*2, y: REEL_H/2 + (q.y - c.y)*2 };
 }
 async function reelFetchImage(url){
   try{
@@ -136,7 +131,7 @@ async function reelPrepare(trip){
     trackPx = path.map(p=>reelToMapPx(p, view));
     if(typeof MAPBOX_TOKEN !== 'undefined'){
       const style = (typeof tpStaticStyle === 'function') ? tpStaticStyle() : 'outdoors-v12';
-      const url = `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${view.lng.toFixed(6)},${view.lat.toFixed(6)},${view.zoom.toFixed(3)},0/${REEL_MAP/2}x${REEL_MAP/2}@2x?access_token=${MAPBOX_TOKEN}`;
+      const url = `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${view.lng.toFixed(6)},${view.lat.toFixed(6)},${view.zoom.toFixed(3)},0/${REEL_W/2}x${REEL_H/2}@2x?access_token=${MAPBOX_TOKEN}`;
       map = await reelFetchImage(url);
       if(!map && style === 'standard') map = await reelFetchImage(url.replace('/standard/', '/streets-v12/'));
     }
@@ -152,19 +147,20 @@ async function reelPrepare(trip){
    2. THE TIMELINE AND THE DRAWING
    ============================================================ */
 
-// Scenes with start/end times (seconds). Durations adapt to what the sail has.
+// Scenes with start/end times (seconds). Since 30.10.2026 (Pete's feedback:
+// too long on the map, photos flew by) there are three:
+//   Opening (cover photo + title) — 2.4 s
+//   The sail — the map as a faint full-screen background, the track drawing
+//              itself the WHOLE time, and the photos shown one by one on top as
+//              framed cards (whole photo, nothing cropped), ~2 s each or more
+//   Ending (totals + logo) — 2.4 s
 function reelTimeline(trip, a){
-  const nPh = a.photos.length;
-  const hasMap = !!(a.trackPx || a.mapImage);
-  let open = 2.6, sail = hasMap ? 6 : 4, photos = nPh ? Math.min(5, 1.1*nPh + 0.4) : 0;
-  let end = REEL_SECONDS - open - sail - photos;
-  if(end < 2.2){ photos -= (2.2 - end); end = 2.2; }
-  if(end > 3.2){ sail += end - 3.2; end = 3.2; }
-  const scenes = []; let t0 = 0;
-  const add = (kind, d)=>{ if(d > 0){ scenes.push({kind, start:t0, end:t0+d}); t0 += d; } };
-  add('open', open); add('sail', sail); add('photos', photos); add('end', REEL_SECONDS - t0 - 0);
-  scenes[scenes.length-1].end = REEL_SECONDS;
-  return scenes;
+  const open = 2.4, end = 2.4;
+  return [
+    { kind:'open', start:0, end:open },
+    { kind:'main', start:open, end:REEL_SECONDS - end },
+    { kind:'end',  start:REEL_SECONDS - end, end:REEL_SECONDS }
+  ];
 }
 
 const reelEase = x => x<0 ? 0 : x>1 ? 1 : (x<0.5 ? 2*x*x : 1 - Math.pow(-2*x+2, 2)/2);
@@ -182,8 +178,7 @@ function reelDrawFrame(ctx, time){
     ctx.save(); ctx.globalAlpha = fadeIn;
     const local = time - s.start, dur = s.end - s.start;
     if(s.kind === 'open') reelSceneOpen(ctx, r, local, dur);
-    if(s.kind === 'sail') reelSceneSail(ctx, r, local, dur);
-    if(s.kind === 'photos') reelScenePhotos(ctx, r, local, dur);
+    if(s.kind === 'main') reelSceneMain(ctx, r, local, dur);
     if(s.kind === 'end') reelSceneEnd(ctx, r, local, dur);
     ctx.restore();
   });
@@ -283,70 +278,83 @@ function reelStats(ctx, trip, k, y){
     if(i) { ctx.fillStyle = 'rgba(201,162,75,.55)'; ctx.fillRect(40 + colW*i, y - 60, 2, 120); }
   });
 }
-function reelSceneSail(ctx, r, tt, d){  // (tt, not t: t() is the translation function)
-  const trip = r.trip, a = r.assets;
+// The background for the main scene: the map (faint), the uploaded map picture
+// (faint), or plain navy — with the track drawn up to fraction k on top.
+function reelBackground(ctx, a, k, tt, d){
   ctx.fillStyle = RC.navy; ctx.fillRect(0, 0, REEL_W, REEL_H);
-  reelText(ctx, (trip.title||'').length > 30 ? trip.title.slice(0, 29)+'…' : (trip.title||''), REEL_W/2, 250, "700 58px 'Playfair Display', Georgia, serif", RC.white);
-  reelText(ctx, t('reel.theSail').toUpperCase(), REEL_W/2, 305, "700 28px 'Space Grotesk', sans-serif", RC.goldLight, 'center', 10);
-  const mx = (REEL_W - REEL_MAP)/2, my = 350;
-  const k = reelEase(reelClamp((tt - 0.3)/(d - 1.0))); // how far along the sail we are
+  const z = 1.05 - 0.05*reelClamp(tt/d); // very slow zoom out over the whole scene
   ctx.save();
-  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(mx, my, REEL_MAP, REEL_MAP, 28) : ctx.rect(mx, my, REEL_MAP, REEL_MAP); ctx.clip();
-  ctx.fillStyle = '#CFE3EC'; ctx.fillRect(mx, my, REEL_MAP, REEL_MAP);
-  if(a.map){
-    const z = 1.06 - 0.06*k; // slow zoom out while the track draws
-    ctx.drawImage(a.map, mx + (REEL_MAP - REEL_MAP*z)/2, my + (REEL_MAP - REEL_MAP*z)/2, REEL_MAP*z, REEL_MAP*z);
-    if(a.trackPx) reelTrack(ctx, a, k, mx, my, z);
-  } else if(a.trackPx){
-    reelTrack(ctx, a, k, mx, my, 1);
-  } else if(a.mapImage){
-    const im = a.mapImage, s = Math.min(REEL_MAP/im.width, REEL_MAP/im.height);
-    ctx.drawImage(im, mx + (REEL_MAP - im.width*s)/2, my + (REEL_MAP - im.height*s)/2, im.width*s, im.height*s);
-  } else {
-    ctx.fillStyle = RC.navyDeep; ctx.fillRect(mx, my, REEL_MAP, REEL_MAP);
-    if(a.logo){ ctx.globalAlpha *= 0.25; ctx.drawImage(a.logo, mx + REEL_MAP/2 - 220, my + REEL_MAP/2 - 220, 440, 440); }
-  }
+  ctx.translate(REEL_W/2, REEL_H/2); ctx.scale(z, z); ctx.translate(-REEL_W/2, -REEL_H/2);
+  if(a.map) ctx.drawImage(a.map, 0, 0, REEL_W, REEL_H);
+  else if(a.mapImage) reelDrawCover(ctx, a.mapImage, 0, 0, REEL_W, REEL_H, 1, 0, 0);
+  // faint: a navy veil over the map so the photos and the track stand out
+  if(a.map || a.mapImage){ ctx.fillStyle = 'rgba(14,35,56,0.55)'; ctx.fillRect(0, 0, REEL_W, REEL_H); }
+  if(a.trackPx) reelTrack(ctx, a, k);
   ctx.restore();
-  ctx.strokeStyle = RC.gold; ctx.lineWidth = 4;
-  if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(mx, my, REEL_MAP, REEL_MAP, 28); ctx.stroke(); } else ctx.strokeRect(mx, my, REEL_MAP, REEL_MAP);
-  reelStats(ctx, trip, k, my + REEL_MAP + 125);
 }
 // The track drawn up to fraction k of the sail (by time), with the boat at its tip
-function reelTrack(ctx, a, k, mx, my, z){
-  const P = a.trackPx, T = a.trackTimes, off = (1 - z)*REEL_MAP/2;
-  const X = p => mx + off + p.x*z, Y = p => my + off + p.y*z;
+function reelTrack(ctx, a, k){
+  const P = a.trackPx, T = a.trackTimes;
   let i = 0; while(i < T.length-2 && T[i+1] <= k) i++;
   const span = T[i+1] - T[i], f = span > 0 ? reelClamp((k - T[i])/span) : 1;
   const tip = { x: P[i].x + (P[i+1].x - P[i].x)*f, y: P[i].y + (P[i+1].y - P[i].y)*f };
   const line = (w, col)=>{
-    ctx.beginPath(); ctx.moveTo(X(P[0]), Y(P[0]));
-    for(let j=1;j<=i;j++) ctx.lineTo(X(P[j]), Y(P[j]));
-    ctx.lineTo(X(tip), Y(tip));
+    ctx.beginPath(); ctx.moveTo(P[0].x, P[0].y);
+    for(let j=1;j<=i;j++) ctx.lineTo(P[j].x, P[j].y);
+    ctx.lineTo(tip.x, tip.y);
     ctx.lineWidth = w; ctx.strokeStyle = col; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
   };
-  line(14, 'rgba(255,255,255,.9)');
-  line(7, RC.navy);
-  ctx.beginPath(); ctx.arc(X(P[0]), Y(P[0]), 13, 0, Math.PI*2); ctx.fillStyle = RC.start; ctx.fill();
+  line(16, 'rgba(14,35,56,.7)');
+  line(8, RC.gold);
+  ctx.beginPath(); ctx.arc(P[0].x, P[0].y, 14, 0, Math.PI*2); ctx.fillStyle = RC.start; ctx.fill();
   ctx.lineWidth = 4; ctx.strokeStyle = RC.white; ctx.stroke();
-  reelBoat(ctx, X(tip), Y(tip), 1.25);
+  reelBoat(ctx, tip.x, tip.y, 1.3);
 }
-
-function reelScenePhotos(ctx, r, t, d){
-  const ph = r.assets.photos; if(!ph.length) return;
-  const each = d / ph.length;
-  const i = Math.min(ph.length-1, Math.floor(t / each)), lt = t - i*each;
-  const draw = (j, alpha)=>{
-    if(j < 0 || j >= ph.length || alpha <= 0) return;
-    ctx.save(); ctx.globalAlpha *= alpha;
-    const p = reelClamp((t - j*each)/each);
-    // alternate the move: zoom in drifting left, then zoom out drifting right…
-    const zoomIn = j % 2 === 0;
-    reelDrawCover(ctx, ph[j], 0, 0, REEL_W, REEL_H, zoomIn ? 1.02 + 0.10*p : 1.12 - 0.10*p, (zoomIn ? -0.6 : 0.6)*(p - 0.5), 0);
-    ctx.restore();
-  };
-  draw(i, 1);
-  if(lt > each - 0.3 && i < ph.length-1) draw(i+1, (lt - (each - 0.3))/0.3); // quick cross-fade to the next photo
-  reelGradient(ctx, REEL_H - 420, REEL_H, 0, 0.5); // darker bottom so Instagram's caption stays readable
+// One photo as a framed card in the middle of the screen: the whole photo is
+// shown (never cropped), with a white border, gently growing while it's on.
+function reelPhotoCard(ctx, img, p, alpha){
+  if(!img || alpha <= 0) return;
+  const maxW = 760, maxH = 820, s0 = Math.min(maxW/img.width, maxH/img.height); // not too big, so the track shows around it
+  const sc = s0 * (0.96 + 0.06*p);
+  const w = img.width*sc, h = img.height*sc, cx = REEL_W/2, cy = 900;
+  const b = 16; // border
+  ctx.save(); ctx.globalAlpha *= alpha;
+  ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14;
+  ctx.fillStyle = RC.white;
+  if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(cx - w/2 - b, cy - h/2 - b, w + 2*b, h + 2*b, 18); ctx.fill(); }
+  else ctx.fillRect(cx - w/2 - b, cy - h/2 - b, w + 2*b, h + 2*b);
+  ctx.shadowColor = 'transparent';
+  ctx.save();
+  if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(cx - w/2, cy - h/2, w, h, 8); ctx.clip(); }
+  ctx.drawImage(img, cx - w/2, cy - h/2, w, h);
+  ctx.restore();
+  ctx.restore();
+}
+function reelSceneMain(ctx, r, tt, d){  // (tt, not t: t() is the translation function)
+  const trip = r.trip, a = r.assets;
+  const k = reelEase(reelClamp((tt - 0.2)/(d - 0.6))); // how far along the sail we are
+  reelBackground(ctx, a, k, tt, d);
+  // title at the top
+  reelGradient(ctx, 0, 380, 0.75, 0);
+  reelText(ctx, (trip.title||'').length > 30 ? trip.title.slice(0, 29)+'…' : (trip.title||''), REEL_W/2, 250, "700 58px 'Playfair Display', Georgia, serif", RC.white);
+  reelText(ctx, reelDate(trip).toUpperCase(), REEL_W/2, 305, "700 26px 'Space Grotesk', sans-serif", RC.goldLight, 'center', 6);
+  // photos one by one over the map, each fading in and out
+  const ph = a.photos;
+  if(ph.length){
+    const lead = 0.6;                                   // a moment of just the map first
+    const each = (d - lead) / ph.length, fade = 0.25;
+    const lt = tt - lead;
+    // each photo fades in at the start of its turn and out at the end — one at a time, no overlap
+    ph.forEach((img, j)=>{
+      const s0 = j*each, s1 = s0 + each;
+      if(lt < s0 || lt > s1) return;
+      const alpha = Math.min(reelClamp((lt - s0)/fade), reelClamp((s1 - lt)/fade));
+      reelPhotoCard(ctx, img, reelClamp((lt - s0)/each), alpha);
+    });
+  }
+  // the numbers along the bottom (above where Instagram puts its caption)
+  reelGradient(ctx, 1300, 1680, 0, 0.75);
+  reelStats(ctx, trip, k, 1530);
 }
 
 function reelSceneEnd(ctx, r, tt, d){
