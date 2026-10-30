@@ -125,6 +125,64 @@ function waveHeightToSeaState(m){
   if(m<4) return 'Rough';
   return 'Very Rough';
 }
+/* ---------- auto place name (30.10.2026) ----------
+   Fills the "Place" field from where the sail started, e.g. "Tel Aviv Marina".
+   Uses OpenStreetMap's free place lookup (Nominatim). Chosen over Mapbox's
+   lookup because Mapbox's free lookups may not be saved, and we save the place
+   with the sail; OpenStreetMap's may, with credit (shown on the About page).
+   Their rules: no more than one lookup a second and identify the app — we do
+   one lookup per sail, and send the app's contact email.
+   It never overwrites anything the sailor typed: it only fills an EMPTY field,
+   and only if it's still empty when the answer comes back.
+   Called on a live sail's first GPS fix, after a GPX import, and when editing
+   an older tracked sail that has no place yet. */
+const PLACE_LOOKUP_EMAIL = 'sailapp141@gmail.com';
+let placeLookupBusy = false;
+async function lookupPlaceName(lat, lng){
+  const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+    + `&zoom=17&addressdetails=1&accept-language=${encodeURIComponent(currentLang||'en')}&email=${encodeURIComponent(PLACE_LOOKUP_EMAIL)}`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), 8000);
+  try{
+    const res = await fetch(url, { signal: ctrl.signal });
+    if(!res.ok) return null;
+    return placeNameFromLookup(await res.json());
+  } catch(e){ return null; } // offline / slow signal at the dock — just leave the field empty
+  finally { clearTimeout(timer); }
+}
+// Turns the lookup's answer into a short name: the named spot (marina, club,
+// beach…) plus the town, e.g. "Herzliya Marina" or "Sdot Yam Beach, Caesarea".
+// If the spot's name already contains the town, the town isn't repeated.
+// No named spot nearby → just the town.
+function placeNameFromLookup(j){
+  if(!j || j.error) return null;
+  const a = j.address || {};
+  const town = a.city || a.town || a.village || a.suburb || a.municipality || a.county || '';
+  // Road and house names aren't useful as a sailing place.
+  const roadish = ['highway','building','place'].includes(j.category) || /^(road|house|residential|yes)$/.test(j.type||'');
+  const spot = (!roadish && j.name) ? j.name.trim() : '';
+  let name;
+  // "Tel Aviv-Yafo" → "tel aviv", so "Tel Aviv Marina" counts as already naming the town.
+  const townCore = town.split(/[-–,(]/)[0].trim().toLowerCase();
+  if(spot && town && !spot.toLowerCase().includes(townCore)) name = `${spot}, ${town}`;
+  else name = spot || town;
+  return name ? name.slice(0, 80) : null;
+}
+async function autoFillPlaceFrom(lat, lng){
+  const field = document.getElementById('tripPlace');
+  if(!field || field.value.trim() || placeLookupBusy || lat==null || lng==null) return;
+  placeLookupBusy = true;
+  try{
+    const name = await lookupPlaceName(lat, lng);
+    // Still empty and still the same sail? Then fill it in.
+    if(name && currentTrip && !field.value.trim()){
+      field.value = name;
+      currentTrip.place = name;
+      if(typeof saveActiveTripCheckpoint === 'function') saveActiveTripCheckpoint();
+    }
+  } finally { placeLookupBusy = false; }
+}
+
 function autoFillWeatherAtCastOff(){
   if(!('geolocation' in navigator)) return;
   navigator.geolocation.getCurrentPosition(
@@ -476,6 +534,9 @@ function editTrip(){
 
   document.getElementById('tripTitle').value = trip._customTitle ? trip.title : '';
   document.getElementById('tripPlace').value = trip.place || '';
+  // An older tracked sail with no place yet: suggest one from where it started
+  // (only saved if the sailor taps Save changes).
+  if(!trip.place && trip.path && trip.path.length) autoFillPlaceFrom(trip.path[0].lat, trip.path[0].lng);
   document.getElementById('activeBoatSelect').value = trip.boatId || '';
   document.getElementById('windDir').value = trip.weather?.windDir || 'N';
   // windSpeed may be a plain kts number (current format) or older saved text like "8.0 kts" — handle both
@@ -926,6 +987,7 @@ function commitFix(point, countStats){
     }
   }
   currentTrip.path.push(point);
+  if(currentTrip.path.length===1) autoFillPlaceFrom(point.lat, point.lng); // first fix of the sail: name where it started
   bestRejectedFix = null;
   gpsEl.textContent = t('gps.live'); gpsEl.style.color='var(--navy)';
   const elapsedH = currentTrip.elapsedSeconds/3600;

@@ -106,6 +106,7 @@ async function handleGpxFile(ev){
     document.getElementById('pastMaxSpeed').value = s.maxKt ? fmtSpeed(s.maxKt, sys).split(' ')[0] : '';
     if(name && !document.getElementById('tripTitle').value.trim()) document.getElementById('tripTitle').value = name;
     renderGpxImportStatus();
+    if(currentTrip.path.length) autoFillPlaceFrom(currentTrip.path[0].lat, currentTrip.path[0].lng); // name where the track starts (only if Place is empty)
     if(typeof saveActiveTripCheckpoint === 'function') saveActiveTripCheckpoint();
     showToast(s.secs ? t('gpx.imported') : t('gpx.importedNoTimes'));
   }catch(e){

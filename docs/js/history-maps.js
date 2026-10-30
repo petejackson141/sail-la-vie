@@ -254,14 +254,16 @@ async function renderTripDetailMap(trip){
       // (bottom-right) lets someone explicitly opt in to pan/zoom it.
       const coords = trip.path.map(p=>[p.lng,p.lat]); // Mapbox wants [lng,lat] — the opposite order to Leaflet
       const bounds = coords.reduce((b,c)=>b.extend(c), new mapboxgl.LngLatBounds(coords[0], coords[0]));
+      const startMs = replayClockMs(trip, null, 0);
       const map = createMapboxMap('detailLeaflet', {
         bounds, fitBoundsOptions:{ padding:{top:80, bottom:50, left:30, right:30}, maxZoom:15 },
-        interactive:true
+        interactive:true,
+        lightPreset: lightPresetFor(new Date(startMs), trip.path[0].lat, trip.path[0].lng)
       });
       DETAIL_MAP_HANDLERS.forEach(h=>{ if(map[h]) map[h].disable(); });
       // The replay (below) draws the line bit by bit, so the map is told to draw
       // whatever replay.drawn currently holds — starting with just the first point.
-      const replay = { map, coords, times: replayTimeline(trip.path), drawn: [coords[0]], raf: null };
+      const replay = { map, coords, trip, times: replayTimeline(trip.path), drawn: [coords[0]], raf: null };
       renderSpeedLegend('detailSpeedLegend', setTrackSpeeds(map, trip.path), appUnitSystem());
       map.on('style.load', ()=>addOurLayers(map, ()=>replay.drawn));
       map.on('error', (e)=>console.warn('[map] detail map error', e && e.error));
@@ -321,11 +323,27 @@ function replayTimeline(path){
   const total = steps[n-1];
   return total>0 ? steps.map(v=>v/total) : steps.map((_,i)=>i/(n-1));
 }
+// The real clock time (ms) when the boat was at GPS point `idx` — used by Auto
+// day/night so the map's lighting follows the time of the sail during the replay.
+// Points with timestamps use their own; older sails without them spread the
+// sail's start time + duration along the replay.
+function replayClockMs(trip, times, idx){
+  const p = trip.path[idx];
+  if(p && typeof p.t==='number') return p.t;
+  const start = new Date(trip.date).getTime();
+  const frac = times ? times[idx] : 0;
+  return start + frac*(trip.elapsedSeconds||0)*1000;
+}
+function replayLightAt(r, idx){
+  const p = r.trip.path[idx];
+  setMapAutoLight(r.map, lightPresetFor(new Date(replayClockMs(r.trip, r.times, idx)), p.lat, p.lng));
+}
 function startTrackReplay(){
   const r = detailReplay;
   if(!r || detailMap!==r.map) return;
   if(r.raf) cancelAnimationFrame(r.raf);
   r.endDot.remove();
+  replayLightAt(r, 0);
   const btn = document.getElementById('detailMapReplayBtn');
   if(btn) btn.style.display = 'none';
   let idx = 0; // segment we're currently on — only ever moves forward, so no searching needed
@@ -334,7 +352,9 @@ function startTrackReplay(){
     if(detailReplay!==r || detailMap!==r.map) return; // navigated away — stop quietly
     const f = Math.min((now - t0)/REPLAY_MS, 1);
     if(f>=1){ finishTrackReplay(r); return; }
+    const prevIdx = idx;
     while(idx < r.times.length-2 && r.times[idx+1] <= f) idx++;
+    if(idx!==prevIdx) replayLightAt(r, idx);
     const a = r.coords[idx], b = r.coords[idx+1];
     const span = r.times[idx+1] - r.times[idx];
     const k = span>0 ? (f - r.times[idx]) / span : 1;
@@ -354,6 +374,7 @@ function finishTrackReplay(r){
   r.raf = null;
   r.drawn = r.coords;
   setTrackCoords(r.map, r.drawn);
+  replayLightAt(r, r.coords.length-1); // finish on the lighting at the end of the sail
   r.endDot.addTo(r.map);
   r.boat.setLngLat(r.coords[r.coords.length-1]);
   const btn = document.getElementById('detailMapReplayBtn');
@@ -385,6 +406,10 @@ function endpointDot(color){
    how much you zoom or pan it afterwards. */
 const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2FpbGFwcDE0MSIsImEiOiJjbXZrczUxb28wZW9nMndzOXo2eW5vZjhzIn0.dTms--Rqu3jbnotppYIDaQ';
 const MAP_STYLES = {
+  // "Auto" (30.10.2026): the same Mapbox Standard map, but its lighting follows the
+  // sun where the boat is — day, dawn, dusk or night. Live: the time right now.
+  // Saved sails: the time of the sail, changing as the replay goes along.
+  auto:     { labelKey:'mapStyle.auto',     url:'mapbox://styles/mapbox/standard', auto:true },
   voyager:  { labelKey:'mapStyle.voyager',  url:'mapbox://styles/mapbox/standard' },
   dark:     { labelKey:'mapStyle.dark',     url:'mapbox://styles/mapbox/standard', lightPreset:'night' },
   nautical: { labelKey:'mapStyle.nautical', url:'mapbox://styles/mapbox/outdoors-v12',
@@ -393,14 +418,66 @@ const MAP_STYLES = {
 const TRACK_COLOR = '#16324F';
 // New storage key, so everyone (including you) lands on the new Standard look once,
 // instead of staying on whatever they'd picked for the old CARTO maps.
-let currentMapStyle = localStorage.getItem('mapStyleV2') || 'voyager';
-if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'voyager';
+// Anyone who hasn't picked a style yet gets Auto.
+let currentMapStyle = localStorage.getItem('mapStyleV2') || 'auto';
+if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'auto';
 
 // Extra options for a style: Standard's day/night lighting is a setting on the style,
 // not a separate style, so Dark passes it in here.
-function styleOptions(id){
+// For Auto, `autoPreset` is the lighting worked out from the sun (see lightPresetFor).
+function styleOptions(id, autoPreset){
   const st = MAP_STYLES[id];
-  return st.lightPreset ? { config:{ basemap:{ lightPreset: st.lightPreset } } } : {};
+  const preset = st.auto ? (autoPreset || 'day') : st.lightPreset;
+  return preset ? { config:{ basemap:{ lightPreset: preset } } } : {};
+}
+
+/* ---------- auto day/night ----------
+   Where the sun is in the sky (degrees above the horizon) at a time and place.
+   Standard astronomy formula, accurate to well under a degree, which is
+   plenty for choosing the map's lighting. No internet needed. */
+function sunAltitudeDeg(date, lat, lng){
+  const rad = Math.PI/180;
+  const d = date.getTime()/86400000 - 10957.5; // days since 1 Jan 2000, 12:00 UTC
+  const g = (357.529 + 0.98560028*d)*rad;     // the sun's mean anomaly
+  const q = 280.459 + 0.98564736*d;           // the sun's mean longitude
+  const L = (q + 1.915*Math.sin(g) + 0.020*Math.sin(2*g))*rad;
+  const e = (23.439 - 0.00000036*d)*rad;      // tilt of the Earth
+  const ra = Math.atan2(Math.cos(e)*Math.sin(L), Math.cos(L));
+  const dec = Math.asin(Math.sin(e)*Math.sin(L));
+  const gmstDeg = ((18.697374558 + 24.06570982441908*d) % 24) * 15;
+  const ha = (gmstDeg + lng)*rad - ra;        // how far the sun is from its highest point
+  return Math.asin(Math.sin(lat*rad)*Math.sin(dec) + Math.cos(lat*rad)*Math.cos(dec)*Math.cos(ha))/rad;
+}
+// Mapbox Standard's four lightings: sun well up = day; sun more than 6° below
+// the horizon (after civil twilight) = night; in between = dawn if the sun is
+// rising, dusk if it's setting.
+function lightPresetFor(date, lat, lng){
+  if(!(date instanceof Date) || isNaN(date) || lat==null || lng==null) return 'day';
+  const alt = sunAltitudeDeg(date, lat, lng);
+  if(alt > 6) return 'day';
+  if(alt < -6) return 'night';
+  const later = sunAltitudeDeg(new Date(date.getTime()+10*60000), lat, lng);
+  return later > alt ? 'dawn' : 'dusk';
+}
+// Line + halo colours for a lighting. Navy disappears on a night map, so night
+// uses a bright gold line with a dark halo. (The speed colours, when the sail has
+// them, paint over the line colour anyway.)
+function trackPaintFor(preset){
+  const night = preset==='night';
+  return { halo: night ? '#0b1a2a' : '#ffffff', line: night ? '#F2C14E' : TRACK_COLOR };
+}
+// Tells a map which lighting Auto should use. Only does any work when the
+// lighting actually changes (a few times a sail at most).
+function setMapAutoLight(map, preset){
+  if(!map) return;
+  map._autoPreset = preset;
+  if(!MAP_STYLES[currentMapStyle].auto || map._appliedPreset===preset) return;
+  if(!map.getLayer || !map.getLayer('track-line')) return; // style still loading — addOurLayers will apply it
+  try { map.setConfigProperty('basemap','lightPreset', preset); } catch(e){}
+  const c = trackPaintFor(preset);
+  map.setPaintProperty('track-halo','line-color', c.halo);
+  map.setPaintProperty('track-line','line-color', c.line);
+  map._appliedPreset = preset;
 }
 // True when the Mapbox library loaded and this phone can draw it (needs WebGL).
 function mapboxReady(){
@@ -409,18 +486,23 @@ function mapboxReady(){
 }
 // Creates a Mapbox map in the element with id `containerId`. `opts` are passed
 // straight through (e.g. interactive handlers off for the history map).
+// opts.lightPreset (optional) = the lighting Auto should start with.
 function createMapboxMap(containerId, opts){
   mapboxgl.accessToken = MAPBOX_TOKEN;
-  return new mapboxgl.Map(Object.assign({
+  opts = Object.assign({}, opts||{});
+  const preset = opts.lightPreset; delete opts.lightPreset;
+  const map = new mapboxgl.Map(Object.assign({
     container: containerId,
     style: MAP_STYLES[currentMapStyle].url,
-    config: styleOptions(currentMapStyle).config,
+    config: styleOptions(currentMapStyle, preset).config,
     center: [0,0], zoom: 2,
     attributionControl: true,
     pitchWithRotate: false,   // keep it a flat, north-up chart — no accidental 3D tilt
     dragRotate: false,
     cooperativeGestures: false
-  }, opts||{}));
+  }, opts));
+  map._autoPreset = preset || 'day';
+  return map;
 }
 // Everything WE draw on a map (the track line, the sea-marks overlay) lives inside
 // the map's style — so it gets wiped whenever the style is swapped. This puts it
@@ -429,10 +511,13 @@ function createMapboxMap(containerId, opts){
 function addOurLayers(map, coords){
   const style = MAP_STYLES[currentMapStyle];
   // Make sure Standard's lighting matches the chosen style (night for Dark, day otherwise).
+  // Auto uses the sun-based lighting worked out for this map; Dark is always night.
+  const preset = style.auto ? (map._autoPreset || 'day') : (style.lightPreset || 'day');
   if(style.url.endsWith('/standard')){
-    try { map.setConfigProperty('basemap','lightPreset', style.lightPreset || 'day'); } catch(e){}
+    try { map.setConfigProperty('basemap','lightPreset', preset); } catch(e){}
   }
-  const dark = !!style.lightPreset;
+  map._appliedPreset = preset;
+  const paint = trackPaintFor(style.url.endsWith('/standard') ? preset : 'day');
   if(style.seamarks && !map.getSource('seamarks')){
     map.addSource('seamarks', { type:'raster', tiles:[style.seamarks], tileSize:256, maxzoom:18,
       attribution:'Sea marks © <a href="https://www.openseamap.org" target="_blank">OpenSeaMap</a>' });
@@ -444,13 +529,13 @@ function addOurLayers(map, coords){
     // A soft white "halo" under the line keeps it readable on any background.
     map.addLayer({ id:'track-halo', type:'line', source:'track',
       layout:{ 'line-join':'round', 'line-cap':'round' },
-      paint:{ 'line-color': dark ? '#0b1a2a' : '#ffffff', 'line-width':7, 'line-opacity':0.85, 'line-emissive-strength':1 } });
+      paint:{ 'line-color': paint.halo, 'line-width':7, 'line-opacity':0.85, 'line-emissive-strength':1 } });
     map.addLayer({ id:'track-line', type:'line', source:'track',
       layout:{ 'line-join':'round', 'line-cap':'round' },
       // Navy disappears on a night map, so Dark uses a bright gold line instead.
       // line-emissive-strength:1 = the line "glows", so Standard's night lighting doesn't
       // dim it (without this, the gold came out almost black on the Dark map).
-      paint:{ 'line-color': dark ? '#F2C14E' : TRACK_COLOR, 'line-width':4, 'line-emissive-strength':1 } });
+      paint:{ 'line-color': paint.line, 'line-width':4, 'line-emissive-strength':1 } });
     // Re-apply the speed colours after a style switch (the switch wipes our layers).
     applySpeedGradient(map, coords());
   }
@@ -590,9 +675,11 @@ function selectMapStyle(which, id){
   try { localStorage.setItem('mapStyleV2', id); } catch(e){}
   // diff:false forces a clean reload, which guarantees 'style.load' fires and our
   // track gets re-added (a "diff" update can quietly drop our layers without firing it).
-  const opts = Object.assign({diff:false}, styleOptions(id));
-  if(liveMap) liveMap.setStyle(MAP_STYLES[id].url, opts);
-  if(detailMap) detailMap.setStyle(MAP_STYLES[id].url, opts);
+  [liveMap, detailMap].forEach(m=>{
+    if(!m) return;
+    m._appliedPreset = null;
+    m.setStyle(MAP_STYLES[id].url, Object.assign({diff:false}, styleOptions(id, m._autoPreset)));
+  });
   document.querySelectorAll('.map-style-menu').forEach(m=>m.classList.remove('open'));
   const liveLabel = document.getElementById('liveMapStyleLabel'); if(liveLabel) liveLabel.textContent = t(MAP_STYLES[id].labelKey);
   const detailLabel = document.getElementById('detailMapStyleLabel'); if(detailLabel) detailLabel.textContent = t(MAP_STYLES[id].labelKey);
@@ -694,7 +781,10 @@ function checkTilesAvailable(){
 }
 function initLiveMap(){
   if(liveMap || !mapboxReady()) return;
-  liveMap = createMapboxMap('liveTrackLeaflet', { zoom: 13 });
+  // Before the first GPS fix we don't know where the boat is, so use the last
+  // known position (from the app's own day/night theme) if there is one.
+  const c = (typeof cachedThemeCoords!=='undefined' && cachedThemeCoords) || null;
+  liveMap = createMapboxMap('liveTrackLeaflet', { zoom: 13, lightPreset: c ? lightPresetFor(new Date(), c.lat, c.lon) : 'day' });
   liveMap.on('style.load', ()=>addOurLayers(liveMap, ()=>liveMapCoords));
   liveMap.on('error', (e)=>console.warn('[map] live map error', e && e.error));
   liveMapMarker = new mapboxgl.Marker({element: yachtMarkerEl()}).setLngLat([0,0]).addTo(liveMap);
@@ -730,6 +820,7 @@ function updateLiveMapTrack(path){
   setTrackCoords(liveMap, liveMapCoords);
   const last = liveMapCoords[liveMapCoords.length-1];
   liveMapMarker.setLngLat(last);
+  setMapAutoLight(liveMap, lightPresetFor(new Date(), last[1], last[0])); // Auto: lighting for right now, where the boat is
   const firstFix = !liveLastLatLng;
   liveLastLatLng = last;
   // Only auto-recenter/zoom while following — if the sailor's panned or zoomed the

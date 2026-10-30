@@ -39,7 +39,7 @@
   sees it. Supabase (and any other live API traffic) is now explicitly
   excluded from caching entirely, further down.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v53';
+const CACHE_NAME = 'sail-la-vie-shell-v54';
 
 const APP_SHELL = [
   './',
@@ -117,7 +117,10 @@ self.addEventListener('fetch', (event) => {
   // don't allow it. Only the version-pinned Mapbox library files (/mapbox-gl-js/)
   // fall through to the normal cache-first rule for third-party libraries.
   const isMapboxData = url.hostname.endsWith('mapbox.com') && !url.pathname.startsWith('/mapbox-gl-js/');
-  const isLiveApi = isSupabase || isMapboxData || url.hostname.endsWith('open-meteo.com') || url.hostname === 'api.github.com';
+  // OpenStreetMap's place lookup (auto place names, js/journey.js) is a live answer
+  // for one position — caching it would hand every sail the first sail's place.
+  const isPlaceLookup = url.hostname === 'nominatim.openstreetmap.org';
+  const isLiveApi = isSupabase || isMapboxData || isPlaceLookup || url.hostname.endsWith('open-meteo.com') || url.hostname === 'api.github.com';
   if (isLiveApi) {
     event.respondWith(fetch(req));
     return;
