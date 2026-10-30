@@ -43,6 +43,7 @@ async function openReelMaker(){
   try{
     const assets = await reelPrepare(trip);
     _reel = { trip, assets, scenes: reelTimeline(trip, assets), canvas };
+    reelPickMode = 'photos';
     reelDrawFrame(canvas.getContext('2d'), 0.9); // a still from the opening as the preview
     renderReelPicker();
     status.textContent = reelCanRecord() ? t('reel.ready') : t('reel.cantRecord');
@@ -59,17 +60,40 @@ async function openReelMaker(){
    picked one again to take it out (the ones after it move up). Up to
    REEL_MAX_PHOTOS. The preview jumps to that photo so you can see it in place. */
 const REEL_DEFAULT_PHOTOS = 5, REEL_MAX_PHOTOS = 8;
+// Two modes (tabs above the grid): "Opening photo" — tap one photo to be the
+// big opening picture (marked with a star); "Photos in order" — as above.
+let reelPickMode = 'photos';
 function renderReelPicker(){
   const el = document.getElementById('reelPicker'); if(!el || !_reel) return;
   const a = _reel.assets;
   if(!a.pool.length){ el.innerHTML = ''; return; }
-  el.innerHTML = `<div class="reel-pick-head">${t('reel.pickHint', {max: REEL_MAX_PHOTOS})}
-      <span class="link-plain" onclick="reelPickClear()">${t('reel.pickClear')}</span></div>
+  const cover = reelPickMode === 'cover';
+  el.innerHTML = `<div class="reel-pick-tabs">
+      <div class="chip${cover ? ' active' : ''}" onclick="reelSetPickMode('cover')">${t('reel.tabCover')}</div>
+      <div class="chip${cover ? '' : ' active'}" onclick="reelSetPickMode('photos')">${t('reel.tabPhotos')}</div>
+    </div>
+    <div class="reel-pick-head">${cover ? t('reel.coverHint') : t('reel.pickHint', {max: REEL_MAX_PHOTOS})}
+      ${cover ? '' : `<span class="link-plain" onclick="reelPickClear()">${t('reel.pickClear')}</span>`}</div>
     <div class="reel-pick-grid">${a.pool.map((p, i)=>{
-      const n = a.picked.indexOf(i);
-      return `<div class="reel-pick${n>=0 ? ' on' : ''}" onclick="reelPickToggle(${i})">
-        <img src="${safeSrc(p.src)}" alt="">${n>=0 ? `<b>${n+1}</b>` : ''}</div>`;
+      const n = a.picked.indexOf(i), isCov = a.coverIndex === i;
+      const on = cover ? isCov : n >= 0;
+      const badge = cover ? (isCov ? '<b>★</b>' : '') : (n >= 0 ? `<b>${n+1}</b>` : '');
+      return `<div class="reel-pick${on ? ' on' : ''}" onclick="reelPickTap(${i})">
+        <img src="${safeSrc(p.src)}" alt="">${badge}</div>`;
     }).join('')}</div>`;
+}
+function reelSetPickMode(m){
+  reelPickMode = m; renderReelPicker();
+  if(_reel) reelDrawFrame(_reel.canvas.getContext('2d'), m === 'cover' ? 0.9 : _reel.scenes[1].start + 1.5);
+}
+function reelPickTap(i){
+  if(!_reel || _reel.recording) return;
+  if(reelPickMode !== 'cover'){ reelPickToggle(i); return; }
+  const a = _reel.assets;
+  a.coverIndex = i; a.cover = a.pool[i].img;
+  _reel.blob = null; document.getElementById('reelShareBtn').style.display = 'none';
+  renderReelPicker();
+  reelDrawFrame(_reel.canvas.getContext('2d'), 0.9); // show the new opening
 }
 function reelPickApply(showIndex){
   const a = _reel.assets;
@@ -174,6 +198,7 @@ async function reelPrepare(trip){
     if(img) pool.push({ src, img, isCover: r === trip.coverPhoto });
   }
   const picked = pool.map((p,i)=>i).filter(i=>!pool[i].isCover).slice(0, REEL_DEFAULT_PHOTOS);
+  const coverIndex = pool.findIndex(p=>p.isCover); // the opening photo (changeable in the picker)
   const photos = picked.map(i=>pool[i].img);
   const logo = await reelLoadImage('images/Logo.png');
 
@@ -192,10 +217,10 @@ async function reelPrepare(trip){
     }
     // Timeline along the track: by time stamps when there are any, else by distance
     const times = (typeof replayTimeline === 'function') ? replayTimeline(path) : path.map((_,i)=>i/(path.length-1));
-    return { cover, photos, pool, picked, logo, map, trackPx, trackTimes: times, mapImage: null };
+    return { cover, photos, pool, picked, coverIndex, logo, map, trackPx, trackTimes: times, mapImage: null };
   }
   const mapImage = trip.mapImage ? await reelImageFrom(trip.mapImage) : null;
-  return { cover, photos, pool, picked, logo, map: null, trackPx: null, trackTimes: null, mapImage };
+  return { cover, photos, pool, picked, coverIndex, logo, map: null, trackPx: null, trackTimes: null, mapImage };
 }
 
 /* ============================================================
