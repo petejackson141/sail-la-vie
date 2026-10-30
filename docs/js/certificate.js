@@ -5,7 +5,7 @@
 // strict GPS Sea Time Record and the general Sailing Record, each a cover page
 // plus a voyage log listing every sail on it.
 //
-// How it works (same pipeline as the trip PDF export in pdf-export.js):
+// How it works (same pipeline as the trip PDF export in trip-pdf.js):
 //   1. buildCertificateHtml(data) lays the certificate out as plain HTML at a
 //      fixed 1123 x 794 px — exactly A4 landscape at 96dpi (297 x 210 mm).
 //   2. A scaled-down copy of that same HTML is shown in the sheet as a preview.
