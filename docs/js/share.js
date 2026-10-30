@@ -33,7 +33,7 @@ function openShareSheet(){
     opt('📄', t('share.pdfTitle'), t('share.pdfSub'), 'sharePdfToCrew()') +
     opt('🧭', t('share.gpxTitle'), hasTrack ? t('share.gpxSub') : t('share.gpxNoTrack'), 'shareTripGpx()', !hasTrack) +
     opt('⛵', t('share.friendTitle'), state.user ? t('share.friendSub') : t('share.friendSignIn'), 'openSendToFriend()', !state.user) +
-    opt('🎬', t('share.reelTitle'), t('share.reelSoon'), '', true);
+    opt('🎬', t('share.reelTitle'), t('share.reelSub'), 'openReelMaker()');
   openSheet('sheetShare');
 }
 
