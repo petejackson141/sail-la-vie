@@ -940,6 +940,13 @@
 /* share sheet + incoming sails (share.js) */
 .reel-stage{ display:flex; justify-content:center; }
 .reel-stage canvas{ width:min(62vw, 300px); aspect-ratio:9/16; height:auto; border-radius:14px; box-shadow:0 8px 24px -10px rgba(14,35,56,.5); background:#0E2338; }
+.reel-pick-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:12.5px; margin:4px 0 8px; }
+.reel-pick-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:12px; }
+.reel-pick{ position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; border:3px solid transparent; cursor:pointer; }
+.reel-pick img{ width:100%; height:100%; object-fit:cover; display:block; opacity:.55; }
+.reel-pick.on{ border-color:var(--gold); }
+.reel-pick.on img{ opacity:1; }
+.reel-pick b{ position:absolute; top:4px; left:4px; min-width:24px; height:24px; border-radius:12px; background:var(--gold); color:#fff; font-size:13px; display:flex; align-items:center; justify-content:center; padding:0 6px; }
 .share-opt{ display:flex; align-items:center; gap:12px; padding:12px 14px; margin-bottom:8px; border:1px solid var(--border); border-radius:14px; background:rgba(255,255,255,.7); cursor:pointer; }
 .share-opt.disabled{ opacity:.5; cursor:default; }
 .share-opt-ico{ font-size:22px; width:30px; text-align:center; flex:0 0 30px; }
@@ -2235,6 +2242,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
     <h3 data-i18n="share.reelTitle">Short reel</h3>
     <div class="reel-stage"><canvas id="reelCanvas" width="1080" height="1920"></canvas></div>
     <p id="reelStatus" style="font-size:12.5px;margin:10px 0;text-align:center;"></p>
+    <div id="reelPicker"></div>
     <button class="btn btn-primary" id="reelMakeBtn" onclick="reelRecord()" data-i18n="reel.make">Make the reel</button>
     <button class="btn btn-outline" id="reelShareBtn" style="display:none;margin-top:10px;" onclick="reelShare()" data-i18n="reel.share">Share / save video</button>
   </div>

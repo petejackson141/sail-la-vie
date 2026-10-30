@@ -44,12 +44,59 @@ async function openReelMaker(){
     const assets = await reelPrepare(trip);
     _reel = { trip, assets, scenes: reelTimeline(trip, assets), canvas };
     reelDrawFrame(canvas.getContext('2d'), 0.9); // a still from the opening as the preview
+    renderReelPicker();
     status.textContent = reelCanRecord() ? t('reel.ready') : t('reel.cantRecord');
     document.getElementById('reelMakeBtn').disabled = !reelCanRecord();
   }catch(e){
     console.error('reel prepare failed', e);
     status.textContent = t('reel.failed');
   }
+}
+
+/* ---------- choosing the photos and their order (30.10.2026) ----------
+   All the sail's photos are shown as thumbnails under the preview. Tap them in
+   the order you want them in the reel; each picked photo shows its number. Tap a
+   picked one again to take it out (the ones after it move up). Up to
+   REEL_MAX_PHOTOS. The preview jumps to that photo so you can see it in place. */
+const REEL_DEFAULT_PHOTOS = 5, REEL_MAX_PHOTOS = 8;
+function renderReelPicker(){
+  const el = document.getElementById('reelPicker'); if(!el || !_reel) return;
+  const a = _reel.assets;
+  if(!a.pool.length){ el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="reel-pick-head">${t('reel.pickHint', {max: REEL_MAX_PHOTOS})}
+      <span class="link-plain" onclick="reelPickClear()">${t('reel.pickClear')}</span></div>
+    <div class="reel-pick-grid">${a.pool.map((p, i)=>{
+      const n = a.picked.indexOf(i);
+      return `<div class="reel-pick${n>=0 ? ' on' : ''}" onclick="reelPickToggle(${i})">
+        <img src="${safeSrc(p.src)}" alt="">${n>=0 ? `<b>${n+1}</b>` : ''}</div>`;
+    }).join('')}</div>`;
+}
+function reelPickApply(showIndex){
+  const a = _reel.assets;
+  a.photos = a.picked.map(i=>a.pool[i].img);
+  _reel.blob = null; document.getElementById('reelShareBtn').style.display = 'none'; // the old video no longer matches
+  renderReelPicker();
+  // preview: show the photo just picked in its place in the reel (or the opening)
+  const main = _reel.scenes.find(s=>s.kind==='main');
+  let time = 0.9;
+  if(showIndex != null && showIndex >= 0 && a.photos.length){
+    const lead = 0.6, each = (main.end - main.start - lead) / a.photos.length;
+    time = main.start + lead + each*showIndex + each*0.5;
+  }
+  reelDrawFrame(_reel.canvas.getContext('2d'), time);
+}
+function reelPickToggle(i){
+  if(!_reel || _reel.recording) return;
+  const a = _reel.assets, at = a.picked.indexOf(i);
+  if(at >= 0){ a.picked.splice(at, 1); reelPickApply(null); return; }
+  if(a.picked.length >= REEL_MAX_PHOTOS){ showToast(t('reel.pickMax', {max: REEL_MAX_PHOTOS})); return; }
+  a.picked.push(i);
+  reelPickApply(a.picked.length - 1);
+}
+function reelPickClear(){
+  if(!_reel || _reel.recording) return;
+  _reel.assets.picked = [];
+  reelPickApply(null);
 }
 
 /* ============================================================
@@ -118,8 +165,16 @@ async function reelPrepare(trip){
   const seen = new Set();
   const refs = [trip.coverPhoto, ...(trip.photos||[])].filter(p=>p && !seen.has(p) && seen.add(p));
   const cover = await reelImageFrom(refs[0]);
-  const photos = [];
-  for(const r of refs.slice(cover ? 1 : 0, (cover ? 1 : 0) + 5)){ const im = await reelImageFrom(r); if(im) photos.push(im); }
+  // Every photo of the sail goes in the "pool" the person picks from (see the
+  // photo picker below). Ready-picked to start with: the first few after the cover.
+  const pool = [];
+  for(const r of refs){
+    let src = null; try{ src = await photoToDataUrl(r); }catch(e){}
+    const img = await reelLoadImage(src);
+    if(img) pool.push({ src, img, isCover: r === trip.coverPhoto });
+  }
+  const picked = pool.map((p,i)=>i).filter(i=>!pool[i].isCover).slice(0, REEL_DEFAULT_PHOTOS);
+  const photos = picked.map(i=>pool[i].img);
   const logo = await reelLoadImage('images/Logo.png');
 
   let map = null, view = null, trackPx = null;
@@ -137,10 +192,10 @@ async function reelPrepare(trip){
     }
     // Timeline along the track: by time stamps when there are any, else by distance
     const times = (typeof replayTimeline === 'function') ? replayTimeline(path) : path.map((_,i)=>i/(path.length-1));
-    return { cover, photos, logo, map, trackPx, trackTimes: times, mapImage: null };
+    return { cover, photos, pool, picked, logo, map, trackPx, trackTimes: times, mapImage: null };
   }
   const mapImage = trip.mapImage ? await reelImageFrom(trip.mapImage) : null;
-  return { cover, photos, logo, map: null, trackPx: null, trackTimes: null, mapImage };
+  return { cover, photos, pool, picked, logo, map: null, trackPx: null, trackTimes: null, mapImage };
 }
 
 /* ============================================================
