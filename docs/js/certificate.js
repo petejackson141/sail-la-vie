@@ -1,7 +1,9 @@
 // ===== certificate.js =====
-// "Certificate of Sea Time" — a formal A4 LANDSCAPE PDF built from the
-// Sailing Resume screen's selected date range (All Time / This Year /
-// Last 30 Days / Custom).
+// Sea-time certificates — formal A4 LANDSCAPE PDFs built from the Sailing
+// Resume screen's selected date range (All Time / This Year / Last 30 Days /
+// Custom). Since 30.10.2026 there are two kinds (see CERT_KINDS below): the
+// strict GPS Sea Time Record and the general Sailing Record, each a cover page
+// plus a voyage log listing every sail on it.
 //
 // How it works (same pipeline as the trip PDF export in pdf-export.js):
 //   1. buildCertificateHtml(data) lays the certificate out as plain HTML at a
@@ -49,7 +51,7 @@ function certHash(str){
 function certNumber(d){
   const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid misreading
   const enc = n => { let s=''; for(let i=0;i<4;i++){ s += A[n % 32]; n = Math.floor(n/32); } return s; };
-  const base = [d.name, d.fromISO, d.toISO, d.count, d.nm.toFixed(2), d.secs].join('|');
+  const base = [d.kind||'', d.name, d.fromISO, d.toISO, d.count, d.nm.toFixed(2), d.secs].join('|');
   return `SLV-${new Date(d.issuedISO).getFullYear()}-${enc(certHash(base))}-${enc(certHash(base+'#sea'))}`;
 }
 // Dates on the certificate are written out in full ("26 September 2026") —
@@ -147,7 +149,7 @@ function certFrameSvg(w, h){
 // Gold rosette seal with the anchor and the record's year. Text is set with
 // Georgia (a system serif) because SVG text rasterized by html2canvas can't
 // use the page's web fonts.
-function certSealSvg(size, yearLabel){
+function certSealSvg(size, yearLabel, bottomText){
   const C = CERT_COLORS, r = size/2;
   let scallop = '';
   const N = 56;
@@ -170,7 +172,7 @@ function certSealSvg(size, yearLabel){
     <circle cx="${r}" cy="${r}" r="${r-33}" fill="none" stroke="${C.goldLight}" stroke-width="1"/>
     ${ticks}
     <text font-family="Georgia,'Times New Roman',serif" font-size="10.5" font-weight="700" letter-spacing="2.4" fill="${C.navyDeep}" text-anchor="middle"><textPath href="#certSealTop" startOffset="50%">SAIL LA VIE LOGBOOK</textPath></text>
-    <text font-family="Georgia,'Times New Roman',serif" font-size="10.5" font-weight="700" letter-spacing="2.4" fill="${C.navyDeep}" text-anchor="middle" dy="8"><textPath href="#certSealBot" startOffset="50%">SEA TIME RECORD</textPath></text>
+    <text font-family="Georgia,'Times New Roman',serif" font-size="10.5" font-weight="700" letter-spacing="2.4" fill="${C.navyDeep}" text-anchor="middle" dy="8"><textPath href="#certSealBot" startOffset="50%">${bottomText||'SEA TIME RECORD'}</textPath></text>
     <text x="${r-tr-2}" y="${r+3.5}" font-family="Georgia,serif" font-size="9" fill="${C.navyDeep}" text-anchor="middle">★</text>
     <text x="${r+tr+2}" y="${r+3.5}" font-family="Georgia,serif" font-size="9" fill="${C.navyDeep}" text-anchor="middle">★</text>
     <g transform="translate(${r-15} ${r-24}) scale(1.5)" fill="none" stroke="${C.gold}" stroke-width="1.5" stroke-linecap="round">
@@ -183,27 +185,56 @@ function certSealSvg(size, yearLabel){
 
 /* ---------- data ---------- */
 
+/* Two kinds of certificate (30.10.2026):
+     'gps'     — GPS Sea Time Record: ONLY sails recorded by the app's GPS tracking
+                 whose numbers are locked (tripGpsVerified in journey.js). This is
+                 the strict one, the record that can be trusted.
+     'general' — Sailing Record: every sail in the range, tracked or logged by
+                 hand, and it says clearly how many were self-reported.
+   Both get a cover page plus a "voyage log" listing every sail on it
+   (date, times, vessel, role, duration, distance, speed). */
+const CERT_KINDS = {
+  gps:     { title:'cert.gpsTitle',     label:'cert.kindGps',     hint:'cert.kindGpsHint',     swatch:'#17758F' },
+  general: { title:'cert.generalTitle', label:'cert.kindGeneral', hint:'cert.kindGeneralHint', swatch:'#C9A24B' }
+};
+let currentCertKind = 'gps';
+
+// The logbook owner's role on a sail: skipper, crew, or not recorded.
+function certRole(full){
+  if(full.skipperId===SKIPPER_SELF_ID) return 'skipper';
+  if((full.crewIds||[]).includes(SKIPPER_SELF_ID) || full.skipperId) return 'crew';
+  return '';
+}
+
 // Gathers every figure the certificate shows for the trips in the Resume's
-// current range. Loads the full trip records only to learn which sails were
-// GPS-tracked vs. manually logged (the lightweight tripIndex doesn't carry
-// isManual) — that split is printed in the footer for transparency.
-async function collectCertificateData(trips){
-  const sorted = trips.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
-  const nm = trips.reduce((s,tr)=>s+(tr.distanceNm||0),0);
-  const secs = trips.reduce((s,tr)=>s+(tr.elapsedSeconds||0),0);
-  const longestNm = trips.reduce((m,tr)=>Math.max(m, tr.distanceNm||0), 0);
-  const boatNames = [...new Set(trips.map(tr=>tr.boatId).filter(Boolean)
-    .map(id=>(state.boats.find(b=>b.id===id)||{}).name).filter(Boolean))];
-  let manual = 0;
+// current range. Loads each full trip record (the light tripIndex doesn't
+// carry the track, crew or GPS lock). For 'gps' only GPS-verified sails count.
+async function collectCertificateData(trips, kind){
+  const rows = [];
   for(const tr of trips){
-    // "tracked" = GPS-verified (see tripGpsVerified in journey.js); everything else counts as logged by hand
-    try{ const full = await storeGet('trip:'+tr.id); if(full && !tripGpsVerified(full)) manual++; }catch(e){}
+    let full = null;
+    try{ full = await storeGet('trip:'+tr.id); }catch(e){}
+    full = full || tr;
+    const gps = tripGpsVerified(full);
+    if(kind==='gps' && !gps) continue;
+    const start = new Date(full.date);
+    rows.push({
+      id: full.id, date: full.date, start, end: new Date(start.getTime() + (full.elapsedSeconds||0)*1000),
+      boat: (state.boats.find(b=>b.id===full.boatId)||{}).name || full.boatName || '',
+      role: certRole(full), secs: full.elapsedSeconds||0, nm: full.distanceNm||0, avg: full.avgSpeed||0, gps
+    });
   }
+  rows.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const sum = (arr, k)=> arr.reduce((s,r)=>s+(r[k]||0), 0);
+  const skip = rows.filter(r=>r.role==='skipper');
   return {
-    count: trips.length, nm, secs, longestNm, boatNames,
-    tracked: trips.length - manual, manual,
-    fromISO: sorted.length ? sorted[0].date : new Date().toISOString(),
-    toISO: sorted.length ? sorted[sorted.length-1].date : new Date().toISOString(),
+    kind, rows, count: rows.length, nm: sum(rows,'nm'), secs: sum(rows,'secs'),
+    longestNm: rows.reduce((m,r)=>Math.max(m, r.nm), 0),
+    boatNames: [...new Set(rows.map(r=>r.boat).filter(Boolean))],
+    skipperCount: skip.length, skipperSecs: sum(skip,'secs'), skipperNm: sum(skip,'nm'),
+    tracked: rows.filter(r=>r.gps).length, manual: rows.filter(r=>!r.gps).length,
+    fromISO: rows.length ? rows[0].date : new Date().toISOString(),
+    toISO: rows.length ? rows[rows.length-1].date : new Date().toISOString(),
     issuedISO: new Date().toISOString()
   };
 }
@@ -225,10 +256,18 @@ function certDurationParts(secs){
 function buildCertificateHtml(d){
   const C = CERT_COLORS;
   const rtl = currentLang==='he';
+  const gps = d.kind==='gps';
   const sameDay = new Date(d.fromISO).toDateString()===new Date(d.toISO).toDateString();
   const period = sameDay
-    ? t('cert.onDate', {date:`<b>${certDate(d.fromISO)}</b>`})
-    : t('cert.betweenDates', {from:`<b>${certDate(d.fromISO)}</b>`, to:`<b>${certDate(d.toISO)}</b>`});
+    ? t(gps ? 'cert.gpsOnDate' : 'cert.onDate', {date:`<b>${certDate(d.fromISO)}</b>`})
+    : t(gps ? 'cert.gpsBetweenDates' : 'cert.betweenDates', {from:`<b>${certDate(d.fromISO)}</b>`, to:`<b>${certDate(d.toISO)}</b>`});
+  // As skipper: the part of the sea time that sailing schools and authorities ask about
+  const skipLine = d.skipperCount
+    ? `<div class="cert-skipper">${t('cert.asSkipper', {n:d.skipperCount, time:fmtDuration(d.skipperSecs), dist:fmtDistance(d.skipperNm)})}</div>` : '';
+  // The general record says up front how much of it was typed in by hand
+  const selfLine = !gps && d.manual
+    ? `<div class="cert-selfreported">${t('cert.includesSelfReported', {n:d.manual})}</div>` : '';
+  const badge = `<div class="cert-kind-badge${gps?'':' general'}">${gps ? '🔒 ' + t('cert.badgeGps') : t('cert.badgeGeneral')}</div>`;
   const dist = certDistanceParts(d.nm), longest = certDistanceParts(d.longestNm), dur = certDurationParts(d.secs);
   // Vessels line: up to 4 names, then "+N" so a big fleet never wraps into the stats.
   const shownBoats = d.boatNames.slice(0,4).map(escapeHtml).join(' · ') + (d.boatNames.length>4 ? ` · +${d.boatNames.length-4}` : '');
@@ -239,7 +278,9 @@ function buildCertificateHtml(d){
   const stat = (value, unit, label) =>
     `<div class="cert-stat"><div class="cert-stat-v">${value}${unit?`<small>${unit}</small>`:''}</div><div class="cert-stat-l">${label}</div></div>`;
 
-  return `<div class="cert-a4" id="certA4" dir="${rtl?'rtl':'ltr'}" style="width:${CERT_W}px;height:${CERT_H}px;">
+  // Extra lines (skipper / self-reported) → slightly tighter spacing so the seal clears the footer
+  const compact = (skipLine?1:0) + (selfLine?1:0) + (d.boatNames.length?1:0) >= 2;
+  return `<div class="cert-a4${compact?' cert-compact':''}" id="certA4" dir="${rtl?'rtl':'ltr'}" style="width:${CERT_W}px;height:${CERT_H}px;">
     ${certContourSvg(CERT_W, CERT_H)}
     ${certFrameSvg(CERT_W, CERT_H)}
     <div class="cert-body">
@@ -247,6 +288,7 @@ function buildCertificateHtml(d){
         <img class="cert-logo" src="images/Logo.png" alt="">
         <div class="cert-brand">SAIL LA VIE</div>
         <div class="cert-brand-sub">${t('cert.brandSub')}</div>
+        ${badge}
       </div>
 
       <h1 class="cert-title${d.title.length>34?' cert-title-long':''}">${escapeHtml(d.title)}</h1>
@@ -256,6 +298,7 @@ function buildCertificateHtml(d){
       <div class="cert-name${d.name.length>26?' cert-name-long':''}">${escapeHtml(d.name)}</div>
       <div class="cert-period">${period}</div>
       ${boats}
+      ${skipLine}${selfLine}
 
       <div class="cert-stats">
         ${stat(d.count.toLocaleString(certLocale()), '', t('cert.voyages'))}
@@ -265,82 +308,144 @@ function buildCertificateHtml(d){
       </div>
 
       <div class="cert-seal-row">
-        <div class="cert-seal">${certSealSvg(150, yearLabel)}</div>
+        <div class="cert-seal">${certSealSvg(150, yearLabel, gps ? 'GPS SEA TIME' : 'SAILING RECORD')}</div>
       </div>
     </div>
 
     <div class="cert-foot">
       <div class="cert-foot-l"><span>${t('cert.certNo')}</span> <b dir="ltr">${d.number}</b></div>
-      <div class="cert-foot-c">${t('cert.compiledFrom', {tracked:d.tracked, manual:d.manual})}</div>
+      <div class="cert-foot-c">${gps ? t('cert.gpsFoot', {n:d.count}) : t('cert.compiledFrom', {tracked:d.tracked, manual:d.manual})}${d.rows.length ? ' ' + t('cert.seeLog') : ''}</div>
       <div class="cert-foot-r"><span>${t('cert.issued')}</span> <b>${certDate(d.issuedISO)}</b></div>
     </div>
   </div>`;
 }
 
+/* ---------- voyage log pages ---------- */
+
+// The pages after the cover: every sail on the certificate, one row each,
+// in the same frame. CERT_LOG_ROWS rows per page.
+const CERT_LOG_ROWS = 16;
+function buildCertLogPagesHtml(d){
+  const rtl = currentLang==='he', gps = d.kind==='gps';
+  const pages = [], total = Math.ceil(d.rows.length / CERT_LOG_ROWS);
+  const dFmt = dt => dt.toLocaleDateString(certLocale(), {day:'numeric', month:'short', year:'numeric'});
+  const tFmt = dt => dt.toLocaleTimeString(certLocale(), {hour:'2-digit', minute:'2-digit'});
+  const roleTxt = r => r==='skipper' ? t('active.skipper') : r==='crew' ? t('nav.crew') : '—';
+  for(let p=0; p<total; p++){
+    const rows = d.rows.slice(p*CERT_LOG_ROWS, (p+1)*CERT_LOG_ROWS).map((r,i)=>`<tr>
+      <td>${p*CERT_LOG_ROWS+i+1}</td><td>${dFmt(r.start)}</td><td dir="ltr">${tFmt(r.start)}–${tFmt(r.end)}</td>
+      <td class="l">${escapeHtml(r.boat)||'—'}</td><td>${roleTxt(r.role)}</td><td>${fmtDuration(r.secs)}</td>
+      <td>${fmtDistance(r.nm)}</td><td>${fmtSpeed(r.avg)}</td>
+      ${gps ? '' : `<td>${r.gps ? '🔒 GPS' : t('cert.byHand')}</td>`}</tr>`).join('');
+    pages.push(`<div class="cert-a4 cert-log" dir="${rtl?'rtl':'ltr'}" style="width:${CERT_W}px;height:${CERT_H}px;">
+      ${certContourSvg(CERT_W, CERT_H)}
+      ${certFrameSvg(CERT_W, CERT_H)}
+      <div class="cert-log-body">
+        <div class="cert-log-head">
+          <img src="images/Logo.png" alt="">
+          <div><div class="cert-log-title">${t('cert.voyageLog')}</div><div class="cert-log-sub">${escapeHtml(d.title)} · ${escapeHtml(d.name)}</div></div>
+        </div>
+        <table class="cert-log-table"><thead><tr>
+          <th>#</th><th>${t('cert.colDate')}</th><th>${t('cert.colTimes')}</th><th class="l">${t('cert.colVessel')}</th><th>${t('cert.colRole')}</th>
+          <th>${t('cert.colDuration')}</th><th>${t('cert.distance')}</th><th>${t('stat.avgSpeed')}</th>${gps ? '' : `<th>${t('cert.colSource')}</th>`}
+        </tr></thead><tbody>${rows}</tbody></table>
+      </div>
+      <div class="cert-foot">
+        <div class="cert-foot-l"><span>${t('cert.certNo')}</span> <b dir="ltr">${d.number}</b></div>
+        <div class="cert-foot-c">${gps ? t('cert.gpsLogNote') : t('cert.generalLogNote')}</div>
+        <div class="cert-foot-r"><span>${t('cert.page')}</span> <b>${p+2} / ${total+1}</b></div>
+      </div>
+    </div>`);
+  }
+  return pages;
+}
+function buildCertificatePages(d){ return [buildCertificateHtml(d), ...buildCertLogPagesHtml(d)]; }
+
 /* ---------- sheet / preview / export ---------- */
 
 let _certData = null;
+
+function renderCertKindPicker(){
+  const el = document.getElementById('certKindPicker'); if(!el) return;
+  el.innerHTML = Object.keys(CERT_KINDS).map(k=>`<div class="pdf-theme-opt${k===currentCertKind?' active':''}" onclick="selectCertKind('${k}')">
+    <span class="pdf-theme-swatch" style="background:${CERT_KINDS[k].swatch}"></span>${t(CERT_KINDS[k].label)}</div>`).join('');
+  const hint = document.getElementById('certKindHint'); if(hint) hint.textContent = t(CERT_KINDS[currentCertKind].hint);
+  document.getElementById('certTitle').placeholder = t(CERT_KINDS[currentCertKind].title);
+}
+function selectCertKind(k){
+  if(!CERT_KINDS[k]) return;
+  currentCertKind = k;
+  renderCertKindPicker();
+  document.getElementById('certificateOutput').innerHTML = '';
+  document.getElementById('certActions').style.display = 'none';
+  _certData = null;
+}
 
 function openCertificateSheet(){
   if(featureComingSoon('certificate')) return;
   if(!tripsInRange().length){ showToast(t('cert.noSails')); return; }
   document.getElementById('certName').value = state.profile.name || '';
   document.getElementById('certTitle').value = '';
-  document.getElementById('certTitle').placeholder = t('cert.defaultTitle');
+  currentCertKind = 'gps';
+  renderCertKindPicker();
   document.getElementById('certificateOutput').innerHTML = '';
   document.getElementById('certActions').style.display = 'none';
   openSheet('sheetCertificate');
 }
 
-// Builds the certificate and shows a true-proportion, scaled-down preview
-// (the same 1123x794 layout the PDF is captured from, just shrunk to fit).
+// Builds the certificate and shows true-proportion, scaled-down previews of
+// every page (the same 1123x794 layout the PDF is captured from, just shrunk).
 async function renderCertificate(){
   const trips = tripsInRange();
   if(!trips.length){ showToast(t('cert.noSails')); return; }
-  const d = await collectCertificateData(trips);
-  d.title = document.getElementById('certTitle').value.trim() || t('cert.defaultTitle');
+  const d = await collectCertificateData(trips, currentCertKind);
+  if(!d.count){ showToast(t('cert.noGpsSails')); return; }
+  d.title = document.getElementById('certTitle').value.trim() || t(CERT_KINDS[currentCertKind].title);
   d.name = document.getElementById('certName').value.trim() || state.profile.name || t('default.sailorName');
   d.number = certNumber(d);
   _certData = d;
 
   const out = document.getElementById('certificateOutput');
-  out.innerHTML = `<div class="cert-preview-wrap"><div class="cert-preview-scale">${buildCertificateHtml(d)}</div></div>`;
-  const wrap = out.querySelector('.cert-preview-wrap'), scaler = out.querySelector('.cert-preview-scale');
-  const fit = ()=>{ const s = wrap.clientWidth / CERT_W; scaler.style.transform = `scale(${s})`; wrap.style.height = (CERT_H*s)+'px'; };
+  out.innerHTML = buildCertificatePages(d).map(h=>`<div class="cert-preview-wrap"><div class="cert-preview-scale">${h}</div></div>`).join('');
+  const fit = ()=> out.querySelectorAll('.cert-preview-wrap').forEach(wrap=>{
+    const s = wrap.clientWidth / CERT_W; wrap.firstElementChild.style.transform = `scale(${s})`; wrap.style.height = (CERT_H*s)+'px';
+  });
   fit(); requestAnimationFrame(fit);
   document.getElementById('certActions').style.display = 'block';
 }
 
-// Rasterizes the certificate off-screen at full size and saves it as a
-// one-page A4 landscape PDF.
+// Rasterizes each page off-screen at full size and saves them as one
+// A4 landscape PDF (cover + voyage log pages).
 async function saveCertificatePdf(){
   if(!_certData) return;
   if(typeof window.jspdf==='undefined' || typeof html2canvas==='undefined'){
     showToast(t('toast.pdfNeedsConnection')); return;
   }
   showToast(t('cert.preparing'));
-  // Render a fresh full-size copy off-screen (not the scaled preview), so
-  // html2canvas captures it at its true 1123x794 layout.
   const host = document.createElement('div');
-  host.style.cssText = `position:fixed;left:-${CERT_W+200}px;top:0;width:${CERT_W}px;height:${CERT_H}px;overflow:hidden;z-index:-1;`;
-  host.innerHTML = buildCertificateHtml(_certData);
+  host.style.cssText = `position:fixed;left:-${CERT_W+200}px;top:0;width:${CERT_W}px;z-index:-1;`;
+  host.innerHTML = buildCertificatePages(_certData).join('');
   document.body.appendChild(host);
   try{
-    const node = host.firstElementChild;
-    await waitForImagesToLoad(node);
+    await waitForImagesToLoad(host);
     if(document.fonts && document.fonts.ready) await document.fonts.ready;
     await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-    const canvas = await html2canvas(node, {
-      scale: 2.5, useCORS: true, backgroundColor: CERT_COLORS.ivory, logging: false,
-      width: CERT_W, height: CERT_H, windowWidth: CERT_W, scrollX: 0, scrollY: 0
-    });
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation:'landscape', unit:'pt', format:'a4', compress:true });
     const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
-    doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pw, ph, undefined, 'FAST');
+    const pages = Array.from(host.children);
+    for(let i=0;i<pages.length;i++){
+      const canvas = await html2canvas(pages[i], {
+        scale: 2.5, useCORS: true, backgroundColor: CERT_COLORS.ivory, logging: false,
+        width: CERT_W, height: CERT_H, windowWidth: CERT_W, scrollX: 0, scrollY: 0
+      });
+      if(i>0) doc.addPage('a4','landscape');
+      doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pw, ph, undefined, 'FAST');
+    }
     doc.setProperties({ title: `${_certData.title} — ${_certData.name}`, subject: _certData.number, creator: 'Sail la Vie' });
     const safe = (_certData.name||'Sailor').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'') || 'Sailor';
-    await shareOrDownloadFile(doc.output('blob'), `SeaTime_Certificate_${safe}.pdf`, 'application/pdf', _certData.title, 'cert.downloaded');
+    const prefix = _certData.kind==='gps' ? 'GPS_SeaTime' : 'Sailing_Record';
+    await shareOrDownloadFile(doc.output('blob'), `${prefix}_${safe}.pdf`, 'application/pdf', _certData.title, 'cert.downloaded');
   }catch(e){
     console.error('Certificate PDF failed', e);
     showToast(t('cert.failed'));

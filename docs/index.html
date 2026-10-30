@@ -916,6 +916,27 @@
 /* Hebrew: wide tracking breaks up Hebrew letterforms, so tighten it */
 .cert-a4[dir="rtl"] .cert-brand-sub, .cert-a4[dir="rtl"] .cert-certifies, .cert-a4[dir="rtl"] .cert-stat-l, .cert-a4[dir="rtl"] .cert-foot span{ letter-spacing:.04em; }
 /* in-sheet preview: the full-size certificate, shrunk to the sheet's width */
+.cert-a4.cert-compact .cert-logo{ width:72px; height:72px; }
+.cert-a4.cert-compact .cert-title{ margin-top:12px; }
+.cert-a4.cert-compact .cert-certifies{ margin-top:12px; }
+.cert-a4.cert-compact .cert-period{ margin-top:12px; }
+.cert-a4.cert-compact .cert-stats{ margin-top:16px; }
+.cert-a4.cert-compact .cert-seal{ width:124px; height:124px; transform:scale(.83); transform-origin:50% 0; }
+.cert-a4 .cert-kind-badge{ margin-top:8px; padding:3px 12px; border-radius:20px; background:#17758F; color:#fff; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:9px; letter-spacing:.2em; text-transform:uppercase; }
+.cert-a4 .cert-kind-badge.general{ background:#C9A24B; }
+.cert-a4 .cert-skipper, .cert-a4 .cert-selfreported{ margin-top:3px; font-family:'Libre Baskerville',Georgia,serif; font-size:12px; color:#16324F; }
+.cert-a4 .cert-selfreported{ font-style:italic; color:#DE4457; }
+/* voyage log pages (certificate.js) */
+.cert-a4 .cert-log-body{ position:absolute; left:74px; right:74px; top:70px; bottom:84px; text-align:start; }
+.cert-a4 .cert-log-head{ display:flex; align-items:center; gap:14px; padding-bottom:10px; border-bottom:1.5px solid #16324F; }
+.cert-a4 .cert-log-head img{ width:46px; height:46px; border-radius:50%; box-shadow:0 0 0 2px #FBF8F1, 0 0 0 3px #C9A24B; }
+.cert-a4 .cert-log-title{ font-family:'Playfair Display',Georgia,serif; font-weight:700; font-size:24px; color:#16324F; }
+.cert-a4 .cert-log-sub{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:#17758F; margin-top:2px; }
+.cert-a4 .cert-log-table{ width:100%; border-collapse:collapse; margin-top:10px; font-size:11px; color:#142B44; }
+.cert-a4 .cert-log-table th{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; color:#DE4457; padding:7px 6px; border-bottom:1px solid #C9A24B; text-align:center; }
+.cert-a4 .cert-log-table td{ padding:6.5px 6px; border-bottom:1px dotted rgba(22,50,79,.22); text-align:center; white-space:nowrap; }
+.cert-a4 .cert-log-table .l{ text-align:start; max-width:170px; overflow:hidden; text-overflow:ellipsis; }
+.cert-a4 .cert-log-table tbody tr:nth-child(even){ background:rgba(255,255,255,.6); }
 .cert-preview-wrap{ margin-top:16px; overflow:hidden; border-radius:8px; box-shadow:0 6px 20px -8px rgba(20,43,68,.35); border:1px solid var(--border); }
 .cert-preview-scale{ width:1123px; height:794px; transform-origin:0 0; }
 [dir="rtl"] .cert-preview-scale{ transform-origin:100% 0; }
@@ -2179,6 +2200,8 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
     <div class="sheet-handle"></div>
     <h3 data-i18n="sheet.certDetails">Certificate Details</h3>
     <p style="font-size:12.5px;margin:-4px 0 10px;" data-i18n="sheet.certHint">Uses the sails in the range selected on the Resume screen.</p>
+    <div class="pdf-theme-picker" id="certKindPicker"></div>
+    <p id="certKindHint" style="font-size:12.5px;margin:-4px 0 12px;"></p>
     <div class="field"><label data-i18n="sheet.certTitle">Certificate Title</label><input type="text" id="certTitle"></div>
     <div class="field"><label data-i18n="sheet.sailorName">Sailor Name</label><input type="text" id="certName"></div>
     <button class="btn btn-primary" onclick="renderCertificate()" data-i18n="sheet.generate">Generate</button>
