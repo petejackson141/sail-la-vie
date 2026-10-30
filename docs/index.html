@@ -154,7 +154,7 @@
     max-width:480px; margin:0 auto; min-height:100vh; position:relative;
     display:flex; flex-direction:column; background:var(--bg-gradient);
   }
-  .screen{ display:none; flex:1; flex-direction:column; padding:20px 20px calc(100px + env(safe-area-inset-bottom)); animation:fadeIn .25s ease; position:relative; z-index:1; }
+  .screen{ display:none; flex:1; flex-direction:column; padding:calc(20px + env(safe-area-inset-top)) 20px calc(100px + env(safe-area-inset-bottom)); /* top inset: keeps buttons below the iPhone notch/status bar */ animation:fadeIn .25s ease; position:relative; z-index:1; }
   .screen.active{ display:flex; }
   #watermark{
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
@@ -414,7 +414,7 @@
   .post-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
   .post-chip{ font-size:12px; font-weight:600; padding:4px 10px; border-radius:999px; background:var(--bg-sunk); color:var(--ink-muted); }
   /* ---------- welcome gate (signed-out app start) ---------- */
-  .welcome-gate{ position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; padding:24px;
+  .welcome-gate{ position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
     background:rgba(10,22,34,.55); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
   .welcome-gate.show{ display:flex; }
   .wg-card{ width:100%; max-width:380px; text-align:center; background:var(--bg-elevated); border:1px solid var(--border);

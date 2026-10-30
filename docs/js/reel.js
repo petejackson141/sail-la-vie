@@ -476,7 +476,9 @@ function reelMimeType(){
 //   2. RECORDER (fallback for phones without WebCodecs): plays the reel and
 //      records the screen with MediaRecorder. Its MP4s are "fragmented", and
 //      Instagram only took the first ~3 seconds of those — the reason for 1.
-const REEL_CODECS = ['avc1.640032', 'avc1.4d0032', 'avc1.42e032', 'avc1.640028', 'avc1.4d0028', 'avc1.42e028'];
+// Baseline (42e0..) first: it never reorders frames, so the timestamps we
+// write in reelEncodeMp4 always match the frame order. High/Main are fallbacks.
+const REEL_CODECS = ['avc1.42e032', 'avc1.42e028', 'avc1.4d0032', 'avc1.4d0028', 'avc1.640032', 'avc1.640028'];
 let _reelEncoderCodec; // undefined = not checked yet, null = none works
 async function reelEncoderCodec(){
   if(_reelEncoderCodec !== undefined) return _reelEncoderCodec;
@@ -525,12 +527,22 @@ async function reelEncodeMp4(r, codec, status){
     fastStart: 'in-memory'   // length and index at the START of the file — what Instagram wants
   });
   let failure = null;
+  const us = 1e6 / REEL_FPS;
+  // We stamp every frame's time ourselves (frame n = n/30 s) instead of
+  // trusting the timing the encoder hands back: on iPhone (Safari) that timing
+  // came out wrong and the reel played at double speed (fixed 30.10.2026).
+  let outIndex = 0;
   const encoder = new VideoEncoder({
-    output: (chunk, meta)=> muxer.addVideoChunk(chunk, meta),
+    output: (chunk, meta)=>{
+      const data = new Uint8Array(chunk.byteLength);
+      chunk.copyTo(data);
+      muxer.addVideoChunkRaw(data, chunk.type, Math.round(outIndex * us), Math.round(us), meta);
+      outIndex++;
+    },
     error: e=>{ failure = e; }
   });
   encoder.configure({ codec, width: REEL_W, height: REEL_H, bitrate: 8000000, framerate: REEL_FPS, avc: { format: 'avc' } });
-  const total = REEL_SECONDS * REEL_FPS, us = 1e6 / REEL_FPS;
+  const total = REEL_SECONDS * REEL_FPS;
   for(let i = 0; i < total; i++){
     if(failure) throw failure;
     reelDrawFrame(ctx, i / REEL_FPS);
