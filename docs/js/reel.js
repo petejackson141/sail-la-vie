@@ -1,23 +1,23 @@
 // ===== reel.js =====
-// "Short reel" (30.10.2026): a 15-second vertical (9:16, 1080x1920) video of a
+// "Short reel" (30.10.2026): a 20-second vertical (9:16, 1080x1920) video of a
 // sail, made on the phone and shared to Instagram / Facebook / WhatsApp.
 //
 // How it works
 //   1. reelPrepare() gathers everything the video shows: the cover photo, up to
 //      5 more photos, a real Mapbox map picture of the sail's area, the logo.
 //      All are loaded as image data so the drawing canvas can be recorded.
-//   2. reelDrawFrame(ctx, time) draws ONE frame for any moment 0–15 s. Every
+//   2. reelDrawFrame(ctx, time) draws ONE frame for any moment 0–20 s. Every
 //      frame is worked out from the time alone, so the preview and the
 //      recording are always identical.
 //   3. reelRecord() plays it on a <canvas> and records the canvas with the
 //      browser's MediaRecorder: MP4 where the phone supports it (Instagram's
 //      favourite), otherwise WebM. Recording runs in real time, so it takes
-//      ~15 seconds. Then the phone's share sheet opens with the video.
+//      ~20 seconds. Then the phone's share sheet opens with the video.
 //
 
 // No music on purpose: Instagram/Facebook let people add licensed music there.
 
-const REEL_W = 1080, REEL_H = 1920, REEL_SECONDS = 15, REEL_FPS = 30;
+const REEL_W = 1080, REEL_H = 1920, REEL_SECONDS = 20, REEL_FPS = 30; // 20 s since 30.10.2026 (was 15)
 // Instagram/Facebook draw their buttons and caption over the bottom ~400px and
 // the top ~200px of a reel, so everything important stays between those.
 const REEL_FADE = 0.45;          // seconds of cross-fade between scenes
@@ -149,13 +149,13 @@ async function reelPrepare(trip){
 
 // Scenes with start/end times (seconds). Since 30.10.2026 (Pete's feedback:
 // too long on the map, photos flew by) there are three:
-//   Opening (cover photo + title) — 2.4 s
+//   Opening (cover photo + title) — 2.8 s
 //   The sail — the map as a faint full-screen background, the track drawing
 //              itself the WHOLE time, and the photos shown one by one on top as
 //              framed cards (whole photo, nothing cropped), ~2 s each or more
-//   Ending (totals + logo) — 2.4 s
+//   Ending (totals + logo) — 2.8 s
 function reelTimeline(trip, a){
-  const open = 2.4, end = 2.4;
+  const open = 2.8, end = 2.8;
   return [
     { kind:'open', start:0, end:open },
     { kind:'main', start:open, end:REEL_SECONDS - end },
@@ -314,7 +314,7 @@ function reelTrack(ctx, a, k){
 // shown (never cropped), with a white border, gently growing while it's on.
 function reelPhotoCard(ctx, img, p, alpha){
   if(!img || alpha <= 0) return;
-  const maxW = 760, maxH = 820, s0 = Math.min(maxW/img.width, maxH/img.height); // not too big, so the track shows around it
+  const maxW = 940, maxH = 1000, s0 = Math.min(maxW/img.width, maxH/img.height); // big (30.10.2026), between the title and the numbers
   const sc = s0 * (0.96 + 0.06*p);
   const w = img.width*sc, h = img.height*sc, cx = REEL_W/2, cy = 900;
   const b = 16; // border
