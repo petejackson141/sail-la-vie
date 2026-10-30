@@ -403,6 +403,7 @@ async function beginJourney(){
   document.getElementById('liveStatsBlock').style.display = 'block';
   document.getElementById('pastStatsBlock').style.display = 'none';
   document.getElementById('endJourneyBtnLabel').textContent = t('active.endJourney');
+  refreshEditModeButtons();
   resetActiveFormFields();
   // BUG FIX: the boat chosen in the Start Journey sheet never used to carry
   // over to the log form's own boat select — it silently sat on whatever the
@@ -471,6 +472,7 @@ function editTrip(){
   document.getElementById('liveStatsBlock').style.display = 'none';
   document.getElementById('pastStatsBlock').style.display = 'block';
   document.getElementById('endJourneyBtnLabel').textContent = t('active.saveChanges');
+  refreshEditModeButtons();
 
   document.getElementById('tripTitle').value = trip._customTitle ? trip.title : '';
   document.getElementById('tripPlace').value = trip.place || '';
@@ -534,6 +536,7 @@ async function resumeActiveTripIfAny(){
   document.getElementById('liveStatsBlock').style.display = isLive ? 'block' : 'none';
   document.getElementById('pastStatsBlock').style.display = isLive ? 'none' : 'block';
   document.getElementById('endJourneyBtnLabel').textContent = currentTrip.isEditing ? t('active.saveChanges') : currentTrip.isManual ? t('active.saveLogEntry') : t('active.endJourney');
+  refreshEditModeButtons();
 
   document.getElementById('tripTitle').value = currentTrip._customTitle ? currentTrip.title : '';
   document.getElementById('tripPlace').value = currentTrip.place || '';
@@ -610,6 +613,7 @@ async function beginManualJourney(){
   document.getElementById('liveStatsBlock').style.display = 'none';
   document.getElementById('pastStatsBlock').style.display = 'block';
   document.getElementById('endJourneyBtnLabel').textContent = t('active.saveLogEntry');
+  refreshEditModeButtons();
   resetActiveFormFields();
   refreshLogUnitsUI();
   // default the date/time picker to now, in local time, formatted for datetime-local
@@ -1001,6 +1005,28 @@ function confirmLeaveActive(){
   // background. The journey only ends when "End Journey" / "Save Log Entry" / "Save Changes" is pressed.
   nav('home');
   showToast(currentTrip.isEditing ? t('toast.editsKept') : currentTrip.isManual ? t('toast.draftKept') : t('toast.stillRecording'));
+}
+// Editing a saved log entry (30.10.2026): a clear "Cancel — discard changes"
+// button under Save changes, and the bin icon at the top is hidden (it looked
+// like "delete this log", but in edit mode it only ever discarded the changes).
+function refreshEditModeButtons(){
+  const editing = !!(currentTrip && currentTrip.isEditing);
+  const cancel = document.getElementById('discardEditsBtn'); if(cancel) cancel.style.display = editing ? '' : 'none';
+  const del = document.getElementById('deleteFromEditBtn'); if(del) del.style.display = editing ? '' : 'none';
+  const bin = document.getElementById('activeDiscardIcon'); if(bin) bin.style.visibility = editing ? 'hidden' : '';
+  const title = document.getElementById('activeScreenTitle'); if(title) title.textContent = editing ? t('active.editTitle') : t('active.title');
+}
+// "Delete this log entry" at the bottom of the edit screen: drops the edit and
+// deletes the saved sail itself (after the same warning as on the sail's page).
+async function deleteTripFromEdit(){
+  if(!currentTrip || !currentTrip.isEditing) return;
+  if(!(await confirmDialog('deleteTrip', {danger:true, icon:'trash'}))) return;
+  const id = currentTrip.id;
+  currentTrip = null;
+  clearActiveTripCheckpoint();
+  document.getElementById('recordingBanner').classList.remove('show');
+  await deleteTripById(id);
+  nav('history'); renderHistory(); renderHomeStats();
 }
 async function discardJourney(){
   const which = currentTrip.isEditing ? 'discardEdits' : currentTrip.isManual ? 'discardManual' : 'discardJourney';

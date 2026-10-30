@@ -1271,8 +1271,8 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
   <section class="screen" id="screen-active">
     <div class="backrow">
       <div class="iconbtn back-icon" onclick="confirmLeaveActive()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></div>
-      <h2 data-i18n="active.title">Active Journey Log</h2>
-      <div class="iconbtn" onclick="discardJourney()" title="Discard journey" data-i18n-title="active.discardTitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
+      <h2 id="activeScreenTitle" data-i18n="active.title">Active Journey Log</h2>
+      <div class="iconbtn" id="activeDiscardIcon" onclick="discardJourney()" title="Discard journey" data-i18n-title="active.discardTitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></svg></div>
     </div>
 
     <div id="liveStatsBlock">
@@ -1519,6 +1519,9 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
       <span id="endJourneyBtnLabel">End Journey</span>
     </button>
+    <!-- only while editing a saved log entry (journey.js refreshEditModeButtons) -->
+    <button class="btn btn-outline" id="discardEditsBtn" style="display:none;margin-top:10px;" onclick="discardJourney()" data-i18n="active.discardEditsBtn">Cancel — discard changes</button>
+    <div class="link-plain" id="deleteFromEditBtn" style="display:none;margin-top:18px;text-align:center;color:#DE4457;" onclick="deleteTripFromEdit()" data-i18n="active.deleteEntry">Delete this log entry</div>
   </section>
 
   <!-- ============ HISTORY ============ -->

@@ -774,14 +774,17 @@ function renderLiveTrack(){
 async function deleteTripPrompt(){
   if(!openTripId) return;
   if(!(await confirmDialog('deleteTrip', {danger:true, icon:'trash'}))) return;
-  const deletedId = openTripId;
-  await storeDelete('trip:'+openTripId);
-  state.tripIndex = state.tripIndex.filter(t=>t.id!==openTripId);
+  await deleteTripById(openTripId);
+  nav(detailReturnTo); renderHomeStats();
+}
+// Removes a sail everywhere: this device, the cloud, and its photos in cloud storage.
+async function deleteTripById(deletedId){
+  await storeDelete('trip:'+deletedId);
+  state.tripIndex = state.tripIndex.filter(t=>t.id!==deletedId);
   await storeSet(KEYS.INDEX, state.tripIndex);
   showToast(t('toast.tripDeleted'));
   syncTripDeleteIfSignedIn(deletedId);
-  deleteTripPhotoFolder(deletedId); // and its photos in cloud storage
-  nav(detailReturnTo); renderHomeStats();
+  deleteTripPhotoFolder(deletedId);
 }
 // Native share sheet if the browser supports it (navigator.share), otherwise
 // falls back to copying a text summary to the clipboard.
