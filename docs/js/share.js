@@ -163,7 +163,59 @@ async function loadIncomingSails(){
     incomingSails = [];
   }
   renderIncomingSails();
+  announceNewIncomingSails();
 }
+
+/* ---------- telling the person a sail has arrived (30.10.2026) ----------
+   Each incoming sail is announced once:
+     * app open on screen → a pop-up saying who sent what and where to find it
+       (top of History), with a "Show me" button
+     * app in the background → a phone notification; tapping it opens History
+       (the pop-up then shows when they come back to the app)
+   Which ones were already announced is remembered on this device.
+   Note: a notification when the app is fully CLOSED needs real push
+   notifications (Firebase) — a later step. */
+const SEEN_SHARES_KEY = 'seenSailShares';
+function seenShareIds(){ try{ return JSON.parse(localStorage.getItem(SEEN_SHARES_KEY) || '[]'); }catch(e){ return []; } }
+function rememberSharesSeen(ids){
+  try{ localStorage.setItem(SEEN_SHARES_KEY, JSON.stringify([...new Set([...seenShareIds(), ...ids])].slice(-200))); }catch(e){}
+}
+let _notifiedShareIds = new Set(); // phone notification already sent this session
+async function announceNewIncomingSails(){
+  const seen = new Set(seenShareIds());
+  const fresh = incomingSails.filter(s=>!seen.has(s.id));
+  if(!fresh.length) return;
+  if(document.visibilityState === 'hidden'){ notifyIncomingSails(fresh.filter(s=>!_notifiedShareIds.has(s.id))); return; }
+  if(currentTrip) return; // don't interrupt a recording or a log being written — they'll see it later
+  if(announceNewIncomingSails._open) return;
+  announceNewIncomingSails._open = true;
+  rememberSharesSeen(fresh.map(s=>s.id));
+  const first = fresh[0], name = first.sender_name || t('default.sailorName');
+  const body = fresh.length === 1
+    ? t('share.popupOne', {name, title: (first.data && first.data.title) || ''})
+    : t('share.popupMany', {n: fresh.length});
+  const show = await showConfirm(body, { title: t('share.popupTitle'), okLabel: t('share.popupShow'), cancelLabel: t('share.popupLater'), icon:'check' });
+  announceNewIncomingSails._open = false;
+  if(show) nav('history');
+  if(typeof ensureNotificationPermission === 'function') ensureNotificationPermission(true).catch(()=>{}); // so next time it can notify
+}
+async function notifyIncomingSails(list){
+  const LN = typeof getLocalNotifications === 'function' ? getLocalNotifications() : null;
+  if(!LN || !list.length) return;
+  if(!(await ensureNotificationPermission(false))) return;
+  try{ await LN.createChannel({ id:'sail-shares', name: t('share.channelName'), importance: 4, visibility: 1 }); }catch(e){}
+  list.forEach(s=>_notifiedShareIds.add(s.id));
+  const first = list[0];
+  await LN.schedule({ notifications: [{
+    id: (Date.now() % 2000000000) | 0,
+    title: t('share.popupTitle'),
+    body: list.length === 1 ? t('share.popupOne', {name: first.sender_name || t('default.sailorName'), title: (first.data && first.data.title) || ''}) : t('share.popupMany', {n: list.length}),
+    channelId: 'sail-shares', schedule: { at: new Date(Date.now() + 1000), allowWhileIdle: true },
+    extra: { sailShare: true }
+  }] });
+}
+// coming back to the app → show the pop-up for anything that arrived meanwhile
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible' && incomingSails.length) announceNewIncomingSails(); });
 function renderIncomingSails(){
   const el = document.getElementById('incomingSails');
   if(!el) return;

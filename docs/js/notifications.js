@@ -89,7 +89,8 @@ async function syncNoticeboardRemindersImpl({ask}){
   // "pending but not wanted" always means stale.
   const pending = ((await LN.getPending()).notifications) || [];
   const wantedIds = new Set(wanted.map(w=>w.id));
-  const stale = pending.filter(n=>!wantedIds.has(n.id)).map(n=>({id: n.id}));
+  // only Noticeboard reminders are tidied up here (a "friend sent you a sail" notice is left alone)
+  const stale = pending.filter(n=>!wantedIds.has(n.id) && !(n.extra && n.extra.sailShare)).map(n=>({id: n.id}));
   if(stale.length) await LN.cancel({notifications: stale});
   if(!wanted.length) return;
 
@@ -112,7 +113,9 @@ function initNoticeboardNotificationTap(){
   const LN = getLocalNotifications();
   if(!LN || !LN.addListener) return;
   LN.addListener('localNotificationActionPerformed', ev=>{
-    const planId = ev && ev.notification && ev.notification.extra && ev.notification.extra.noticeboardId;
+    const extra = (ev && ev.notification && ev.notification.extra) || {};
+    if(extra.sailShare){ nav('history'); return; } // "a friend sent you a sail" (share.js)
+    const planId = extra.noticeboardId;
     nav('noticeboard');
     if(planId && state.noticeboard.some(p=>p.id === planId)) openNoticeboardSheet(planId);
   });

@@ -129,9 +129,10 @@ async function openTripDetail(id, from, friendView){
   document.getElementById('detailDeleteBtn').style.display = friendView ? 'none' : '';
   const boat = friendView ? (trip.boatName ? {name: trip.boatName} : null) : (state.boats.find(b=>b.id===trip.boatId) || (trip.boatName ? {name: trip.boatName} : null));
   document.getElementById('detailTitle').textContent = trip.title||t('detail.tripFallback');
-  const tripCrew = friendView ? [] : (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
+  // A sail a friend sent (share.js) carries skipper and crew as plain names
+  const tripCrew = friendView ? [] : trip.receivedFrom ? (trip.sharedCrew||[]).map(n=>({name:n, photo:''})) : (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
   const crewNames = tripCrew.map(c=>c.name); // still used by shareTrip()'s plain-text summary
-  const tripSkipper = (!friendView && trip.skipperId) ? skipperById(trip.skipperId) : null;
+  const tripSkipper = friendView ? null : trip.skipperId ? skipperById(trip.skipperId) : (trip.receivedFrom && trip.sharedSkipper ? {name: trip.sharedSkipper, photo:''} : null);
   // Top line: who shared it (friend's sail), or who can see it (your own, when signed in).
   const topLine = friendView
     ? `<div class="friend-shared-by">${escapeHtml(t('friends.sharedBy', {name: friendView.ownerName}))}</div>`
@@ -158,8 +159,7 @@ async function openTripDetail(id, from, friendView){
     </div>
 
     ${trip.receivedFrom
-      ? `<div class="gps-badge manual">⛵ ${t('detail.sentBy', {name: escapeHtml(trip.receivedFrom.name || t('default.sailorName'))})}</div>
-         ${trip.sharedSkipper || (trip.sharedCrew||[]).length ? `<p style="font-size:12.5px;margin-top:6px;">${trip.sharedSkipper ? escapeHtml(t('active.skipper'))+': '+escapeHtml(trip.sharedSkipper) : ''}${trip.sharedSkipper && (trip.sharedCrew||[]).length ? ' · ' : ''}${(trip.sharedCrew||[]).length ? escapeHtml(t('nav.crew'))+': '+trip.sharedCrew.map(escapeHtml).join(', ') : ''}</p>` : ''}`
+      ? `<div class="gps-badge manual">⛵ ${t('detail.sentBy', {name: escapeHtml(trip.receivedFrom.name || t('default.sailorName'))})}</div>`
       : tripGpsVerified(trip) ? `<div class="gps-badge">🔒 ${t('detail.gpsVerified')}</div>`
       : trip.importedTrack ? `<div class="gps-badge manual">📥 ${t('detail.importedTrack')}</div>`
       : `<div class="gps-badge manual">✍️ ${t('detail.loggedByHand')}</div>`}
@@ -338,7 +338,10 @@ function startTrackReplay(){
     const k = span>0 ? (f - r.times[idx]) / span : 1;
     const pos = [a[0] + (b[0]-a[0])*k, a[1] + (b[1]-a[1])*k];
     r.drawn = r.coords.slice(0, idx+1).concat([pos]);
-    setTrackCoords(r.map, r.drawn);
+    // The boat moves every frame, but the line is only redrawn ~10 times a second:
+    // redrawing it 60 times a second overloaded slower tablets (blank, flickering
+    // map and no line until the end — seen 30.10.2026).
+    if(!r.lastDraw || now - r.lastDraw > 100){ setTrackCoords(r.map, r.drawn); r.lastDraw = now; }
     r.boat.setLngLat(pos);
     r.raf = requestAnimationFrame(frame);
   };
