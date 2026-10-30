@@ -160,7 +160,9 @@ async function openTripDetail(id, from, friendView){
     ${trip.receivedFrom
       ? `<div class="gps-badge manual">⛵ ${t('detail.sentBy', {name: escapeHtml(trip.receivedFrom.name || t('default.sailorName'))})}</div>
          ${trip.sharedSkipper || (trip.sharedCrew||[]).length ? `<p style="font-size:12.5px;margin-top:6px;">${trip.sharedSkipper ? escapeHtml(t('active.skipper'))+': '+escapeHtml(trip.sharedSkipper) : ''}${trip.sharedSkipper && (trip.sharedCrew||[]).length ? ' · ' : ''}${(trip.sharedCrew||[]).length ? escapeHtml(t('nav.crew'))+': '+trip.sharedCrew.map(escapeHtml).join(', ') : ''}</p>` : ''}`
-      : tripGpsVerified(trip) ? `<div class="gps-badge">🔒 ${t('detail.gpsVerified')}</div>` : `<div class="gps-badge manual">✍️ ${t('detail.loggedByHand')}</div>`}
+      : tripGpsVerified(trip) ? `<div class="gps-badge">🔒 ${t('detail.gpsVerified')}</div>`
+      : trip.importedTrack ? `<div class="gps-badge manual">📥 ${t('detail.importedTrack')}</div>`
+      : `<div class="gps-badge manual">✍️ ${t('detail.loggedByHand')}</div>`}
 
     <div id="detailMapArea"></div>
 
@@ -192,11 +194,7 @@ async function openTripDetail(id, from, friendView){
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
       ${t('detail.shareCrewSocial')}
     </button>
-    <div style="height:10px;"></div>
-    <button class="btn btn-outline${FEATURES_IN_DEVELOPMENT.pdfExport ? ' btn-soon' : ''}" onclick="openTripPdfPreview()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
-      ${t('detail.exportPdf')}${comingSoonTag('pdfExport')}
-    </button>`}
+    `}
   `;
   window._detailTrip = trip;
   nav('detail');

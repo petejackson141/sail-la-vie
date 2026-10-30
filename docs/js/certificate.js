@@ -221,7 +221,8 @@ async function collectCertificateData(trips, kind){
     rows.push({
       id: full.id, date: full.date, start, end: new Date(start.getTime() + (full.elapsedSeconds||0)*1000),
       boat: (state.boats.find(b=>b.id===full.boatId)||{}).name || full.boatName || '',
-      role: certRole(full), secs: full.elapsedSeconds||0, nm: full.distanceNm||0, avg: full.avgSpeed||0, gps
+      role: certRole(full), secs: full.elapsedSeconds||0, nm: full.distanceNm||0, avg: full.avgSpeed||0, gps,
+      imported: !!full.importedTrack, received: !!full.receivedFrom
     });
   }
   rows.sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -336,7 +337,7 @@ function buildCertLogPagesHtml(d){
       <td>${p*CERT_LOG_ROWS+i+1}</td><td>${dFmt(r.start)}</td><td dir="ltr">${tFmt(r.start)}–${tFmt(r.end)}</td>
       <td class="l">${escapeHtml(r.boat)||'—'}</td><td>${roleTxt(r.role)}</td><td>${fmtDuration(r.secs)}</td>
       <td>${fmtDistance(r.nm)}</td><td>${fmtSpeed(r.avg)}</td>
-      ${gps ? '' : `<td>${r.gps ? '🔒 GPS' : t('cert.byHand')}</td>`}</tr>`).join('');
+      ${gps ? '' : `<td>${r.gps ? '🔒 GPS' : r.imported ? t('cert.imported') : r.received ? t('cert.received') : t('cert.byHand')}</td>`}</tr>`).join('');
     pages.push(`<div class="cert-a4 cert-log" dir="${rtl?'rtl':'ltr'}" style="width:${CERT_W}px;height:${CERT_H}px;">
       ${certContourSvg(CERT_W, CERT_H)}
       ${certFrameSvg(CERT_W, CERT_H)}

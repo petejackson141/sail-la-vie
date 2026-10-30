@@ -430,7 +430,8 @@ async function beginJourney(){
    kept in trip.gpsLock; if a recording ended with a typed-in distance (the GPS
    track was missing), gpsLock.overridden is set and the sail no longer counts
    as GPS-verified. */
-function tripIsGpsRecorded(trip){ return !!trip && (trip.gpsRecorded===true || (!!trip.path && trip.path.length>1)); }
+// (a track imported from a GPX file — gpx-import.js — is never "recorded by GPS" here)
+function tripIsGpsRecorded(trip){ return !!trip && !trip.importedTrack && (trip.gpsRecorded===true || (!!trip.path && trip.path.length>1)); }
 // A sail a friend sent you (share.js) was recorded on THEIR phone, so it never counts as yours here.
 function tripGpsVerified(trip){ return tripIsGpsRecorded(trip) && !trip.receivedFrom && !(trip.gpsLock && trip.gpsLock.overridden); }
 function gpsLockFrom(trip, overridden){
@@ -445,6 +446,7 @@ function setGpsFieldsLocked(locked){
   });
   document.querySelectorAll('#pastStatsBlock .when-pill').forEach(b=>{ b.disabled = locked; b.classList.toggle('gps-locked', locked); });
   const note = document.getElementById('gpsLockNote'); if(note) note.style.display = locked ? 'block' : 'none';
+  if(typeof showGpxImportCard === 'function') showGpxImportCard(!locked); // GPX import only on manual logs
 }
 // MODE 3: editing an existing trip. Deep-clones it into currentTrip (so
 // discarding never touches the saved copy) and pre-fills every field, reusing

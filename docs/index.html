@@ -1329,6 +1329,15 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
     <div id="pastStatsBlock" style="display:none;">
       <div id="gpsLockNote" class="gps-lock-note" style="display:none;" data-i18n="active.gpsLocked">🔒 Recorded by GPS. Date, time, duration, distance and speeds are locked. You can still change everything else.</div>
 
+      <!-- Import a GPX track (js/gpx-import.js) — fills in the fields below from the file -->
+      <div class="form-card" id="gpxImportCard" style="display:none;">
+        <div class="form-card-head"><span class="fc-icon teal" aria-hidden="true">📥</span><span class="fc-title" data-i18n="gpx.cardTitle">Have a track from another app?</span></div>
+        <p style="font-size:12.5px;margin:0 0 10px;" data-i18n="gpx.cardHint">Import a GPX file and the date, time, duration, distance and speeds are filled in for you.</p>
+        <button type="button" class="btn btn-outline" onclick="openGpxImport()" data-i18n="gpx.importBtn">Import GPX track</button>
+        <input type="file" id="gpxFileInput" accept=".gpx,application/gpx+xml,application/xml,text/xml,application/octet-stream" style="display:none;" onchange="handleGpxFile(event)">
+        <div id="gpxImportStatus" style="font-size:12.5px;margin-top:8px;"></div>
+      </div>
+
       <!-- WHEN: two big tap targets that open the themed date/time sheet (#sheetDateTime).
            #pastDate is still the single source of truth (the save code reads it), it is
            just hidden now — the sheet writes into it, refreshPastDateDisplay() reads it. -->
@@ -2384,5 +2393,6 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
 <script src="js/units.js"></script>
 <script src="js/about.js"></script>
 <script src="js/share.js"></script>
+<script src="js/gpx-import.js"></script>
 </body>
 </html>
