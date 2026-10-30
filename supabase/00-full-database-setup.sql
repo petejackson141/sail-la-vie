@@ -7,7 +7,7 @@
 --   the sign-up trigger, photo storage and live updates. It matches the live
 --   database as it was on 1 October 2026 (after fix-profiles-privacy.sql,
 --   harden-functions.sql and fix-advisor-warnings.sql were run), plus
---   profile-photos.sql (20.10.2026). Checked against the live Tokyo database
+--   profile-photos.sql (20.10.2026) and sail-shares.sql (30.10.2026). Checked against the live Tokyo database
 --   on 28.10.2026: everything matched.
 --
 --   28.10.2026: added section 1b (GRANTS). Since Supabase's change of
@@ -129,6 +129,17 @@ create table if not exists public.feedback (          -- the About page's "Conta
   created_at   timestamptz not null default now()
 );
 
+create table if not exists public.sail_shares (       -- "send a sail to a friend" (share.js), added 30.10.2026
+  id            uuid primary key default gen_random_uuid(),
+  sender_id     uuid not null references auth.users(id) on delete cascade,
+  recipient_id  uuid not null references auth.users(id) on delete cascade,
+  trip_id       text not null,                 -- the sender's sail id (its photo folder)
+  sender_name   text,
+  data          jsonb not null,                -- the copy of the sail
+  created_at    timestamptz not null default now(),
+  constraint sail_shares_not_self check (sender_id <> recipient_id)
+);
+
 -- indexes: let the database find "this user's rows" quickly
 create index if not exists trips_user_id_idx             on public.trips (user_id);
 create index if not exists boats_user_id_idx             on public.boats (user_id);
@@ -136,6 +147,8 @@ create index if not exists crew_user_id_idx              on public.crew (user_id
 create index if not exists noticeboard_user_id_idx       on public.noticeboard (user_id);
 create index if not exists friendships_requester_id_idx  on public.friendships (requester_id);
 create index if not exists friendships_addressee_id_idx  on public.friendships (addressee_id);
+create index if not exists sail_shares_recipient_idx     on public.sail_shares (recipient_id);
+create index if not exists sail_shares_sender_idx        on public.sail_shares (sender_id);
 
 
 -- ---------------------------------------------------------------------
@@ -156,7 +169,7 @@ create index if not exists friendships_addressee_id_idx  on public.friendships (
 -- Frankfurt project 28.10.2026: REFERENCES, TRIGGER, TRUNCATE), then give
 -- back exactly what the app needs
 revoke all on public.profiles, public.public_profiles, public.boats, public.crew,
-              public.trips, public.noticeboard, public.friendships, public.feedback
+              public.trips, public.noticeboard, public.friendships, public.feedback, public.sail_shares
   from anon, authenticated;
 
 grant select, insert, update         on public.profiles        to authenticated;
@@ -167,9 +180,10 @@ grant select, insert, update, delete on public.trips           to authenticated;
 grant select, insert, update, delete on public.noticeboard     to authenticated;
 grant select, insert, delete         on public.friendships     to authenticated;  -- accepting goes through accept_friend_request()
 grant insert                         on public.feedback        to authenticated;  -- send only, never read back
+grant select, insert, delete         on public.sail_shares     to authenticated;  -- added 30.10.2026
 
 grant all on public.profiles, public.public_profiles, public.boats, public.crew,
-             public.trips, public.noticeboard, public.friendships, public.feedback
+             public.trips, public.noticeboard, public.friendships, public.feedback, public.sail_shares
   to service_role;
 
 
@@ -227,6 +241,13 @@ as $$
             or (f.addressee_id::text = auth.uid()::text and f.requester_id::text = (storage.foldername(object_name))[1])
           )
       )
+    )
+    -- a sail a friend sent me that's still waiting (sail_shares), added 30.10.2026
+    or exists (
+      select 1 from public.sail_shares s
+      where s.recipient_id = auth.uid()
+        and s.sender_id::text = (storage.foldername(object_name))[1]
+        and s.trip_id         = (storage.foldername(object_name))[2]
     );
 $$;
 
@@ -307,6 +328,7 @@ alter table public.trips           enable row level security;
 alter table public.noticeboard     enable row level security;
 alter table public.friendships     enable row level security;
 alter table public.feedback        enable row level security;
+alter table public.sail_shares     enable row level security;
 
 -- profiles: you, plus accepted friends (read-only)
 drop policy if exists "Users can read their own profile" on public.profiles;
@@ -405,6 +427,19 @@ drop policy if exists "Users can send their own feedback" on public.feedback;
 create policy "Users can send their own feedback" on public.feedback
   for insert to authenticated with check (user_id = auth.uid());
 
+-- sail_shares: friends can send each other a copy of a sail; only the
+-- sender and the receiver see it; either can remove it (added 30.10.2026)
+drop policy if exists "Send a sail to a friend" on public.sail_shares;
+create policy "Send a sail to a friend" on public.sail_shares
+  for insert to authenticated
+  with check (sender_id = auth.uid() and private.are_friends(auth.uid(), recipient_id));
+drop policy if exists "See sails sent by or to me" on public.sail_shares;
+create policy "See sails sent by or to me" on public.sail_shares
+  for select to authenticated using (auth.uid() = sender_id or auth.uid() = recipient_id);
+drop policy if exists "Remove a sent sail" on public.sail_shares;
+create policy "Remove a sent sail" on public.sail_shares
+  for delete to authenticated using (auth.uid() = sender_id or auth.uid() = recipient_id);
+
 
 -- ---------------------------------------------------------------------
 -- 4. PHOTO STORAGE
@@ -446,7 +481,7 @@ create policy "trip photos: delete own" on storage.objects
 do $$
 declare t text;
 begin
-  foreach t in array array['boats', 'crew', 'trips', 'noticeboard', 'profiles', 'friendships'] loop
+  foreach t in array array['boats', 'crew', 'trips', 'noticeboard', 'profiles', 'friendships', 'sail_shares'] loop
     begin
       execute format('alter publication supabase_realtime add table public.%I', t);
     exception when duplicate_object then
@@ -458,7 +493,7 @@ end $$;
 
 -- ---------------------------------------------------------------------
 -- 6. CHECK
---    Should list 8 tables, all with rls_enabled = true, and app_access
+--    Should list 9 tables, all with rls_enabled = true, and app_access
 --    showing the actions from section 1b (feedback = INSERT only).
 -- ---------------------------------------------------------------------
 select c.relname as table_name,

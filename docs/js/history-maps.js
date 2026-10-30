@@ -127,7 +127,7 @@ async function openTripDetail(id, from, friendView){
   window._friendDetail = friendView || null;
   document.getElementById('detailEditBtn').style.display = friendView ? 'none' : '';
   document.getElementById('detailDeleteBtn').style.display = friendView ? 'none' : '';
-  const boat = friendView ? (trip.boatName ? {name: trip.boatName} : null) : state.boats.find(b=>b.id===trip.boatId);
+  const boat = friendView ? (trip.boatName ? {name: trip.boatName} : null) : (state.boats.find(b=>b.id===trip.boatId) || (trip.boatName ? {name: trip.boatName} : null));
   document.getElementById('detailTitle').textContent = trip.title||t('detail.tripFallback');
   const tripCrew = friendView ? [] : (trip.crewIds||[]).map(cid=>crewMemberById(cid)).filter(Boolean);
   const crewNames = tripCrew.map(c=>c.name); // still used by shareTrip()'s plain-text summary
@@ -157,7 +157,10 @@ async function openTripDetail(id, from, friendView){
       <div class="cell" style="margin-top:14px;"><div class="stat-label">${t('stat.maxSpeed')}</div><div class="stat-value">${tripMaxSpeed(trip)!=null ? statWithUnit(fmtSpeed(tripMaxSpeed(trip))) : '—'}</div></div>
     </div>
 
-    ${tripGpsVerified(trip) ? `<div class="gps-badge">🔒 ${t('detail.gpsVerified')}</div>` : `<div class="gps-badge manual">✍️ ${t('detail.loggedByHand')}</div>`}
+    ${trip.receivedFrom
+      ? `<div class="gps-badge manual">⛵ ${t('detail.sentBy', {name: escapeHtml(trip.receivedFrom.name || t('default.sailorName'))})}</div>
+         ${trip.sharedSkipper || (trip.sharedCrew||[]).length ? `<p style="font-size:12.5px;margin-top:6px;">${trip.sharedSkipper ? escapeHtml(t('active.skipper'))+': '+escapeHtml(trip.sharedSkipper) : ''}${trip.sharedSkipper && (trip.sharedCrew||[]).length ? ' · ' : ''}${(trip.sharedCrew||[]).length ? escapeHtml(t('nav.crew'))+': '+trip.sharedCrew.map(escapeHtml).join(', ') : ''}</p>` : ''}`
+      : tripGpsVerified(trip) ? `<div class="gps-badge">🔒 ${t('detail.gpsVerified')}</div>` : `<div class="gps-badge manual">✍️ ${t('detail.loggedByHand')}</div>`}
 
     <div id="detailMapArea"></div>
 
@@ -185,7 +188,7 @@ async function openTripDetail(id, from, friendView){
     ${trip.photos && trip.photos.length ? `<div class="section-title">${t('active.photos')}</div><div class="photo-strip">${trip.photos.map((p,i)=>`<div class="photo-thumb" onclick="openTripPhotoLightbox(${i})"><img src="${safeSrc(p)}"></div>`).join('')}</div>` : ''}
 
     ${friendView ? '' : `<div style="height:8px;"></div>
-    <button class="btn btn-outline" onclick="shareTrip('${safeId(trip.id)}')">
+    <button class="btn btn-outline" onclick="openShareSheet()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
       ${t('detail.shareCrewSocial')}
     </button>

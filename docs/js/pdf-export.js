@@ -108,7 +108,8 @@ function waitForImagesToLoad(container){
 // off to Android's native share sheet (Save to Files, email, WhatsApp, etc.)
 // via the Share plugin. Both plugins are registered on window.Capacitor.Plugins
 // once installed + synced — no bundler/import needed for this vanilla-JS app.
-async function shareOrDownloadFile(blob, fileName, mimeType, title, downloadedToastKey){
+// `text` (optional) = a message sent with the file, e.g. the crew message from share.js
+async function shareOrDownloadFile(blob, fileName, mimeType, title, downloadedToastKey, text){
   if(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()){
     const { Filesystem, Share } = window.Capacitor.Plugins;
     const base64Data = await new Promise((resolve, reject)=>{
@@ -118,12 +119,12 @@ async function shareOrDownloadFile(blob, fileName, mimeType, title, downloadedTo
       reader.readAsDataURL(blob);
     });
     const written = await Filesystem.writeFile({ path: fileName, data: base64Data, directory: 'CACHE' });
-    await Share.share({ title: title || fileName, url: written.uri, dialogTitle: title || fileName });
+    await Share.share({ title: title || fileName, text: text || undefined, url: written.uri, dialogTitle: title || fileName });
     return;
   }
   const file = new File([blob], fileName, {type: mimeType});
   if(navigator.canShare && navigator.canShare({files:[file]})){
-    await navigator.share({files:[file], title});
+    await navigator.share(text ? {files:[file], title, text} : {files:[file], title});
   } else {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

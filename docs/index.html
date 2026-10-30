@@ -937,6 +937,18 @@
 .cert-a4 .cert-log-table td{ padding:6.5px 6px; border-bottom:1px dotted rgba(22,50,79,.22); text-align:center; white-space:nowrap; }
 .cert-a4 .cert-log-table .l{ text-align:start; max-width:170px; overflow:hidden; text-overflow:ellipsis; }
 .cert-a4 .cert-log-table tbody tr:nth-child(even){ background:rgba(255,255,255,.6); }
+/* share sheet + incoming sails (share.js) */
+.share-opt{ display:flex; align-items:center; gap:12px; padding:12px 14px; margin-bottom:8px; border:1px solid var(--border); border-radius:14px; background:rgba(255,255,255,.7); cursor:pointer; }
+.share-opt.disabled{ opacity:.5; cursor:default; }
+.share-opt-ico{ font-size:22px; width:30px; text-align:center; flex:0 0 30px; }
+.share-opt-txt{ display:flex; flex-direction:column; min-width:0; }
+.share-opt-txt b{ font-size:14.5px; color:var(--ink); }
+.share-opt-txt span{ font-size:12.5px; color:var(--muted, #5C7A8F); margin-top:2px; }
+.incoming-sail{ border:1px solid rgba(23,117,143,.35); background:rgba(23,117,143,.08); border-radius:14px; padding:12px 14px; margin-bottom:10px; }
+.incoming-sail-txt{ display:flex; flex-direction:column; }
+.incoming-sail-txt b{ font-size:14px; color:var(--ink); }
+.incoming-sail-txt span{ font-size:12.5px; margin-top:2px; }
+.incoming-sail-btns{ display:flex; gap:8px; margin-top:10px; }
 .cert-preview-wrap{ margin-top:16px; overflow:hidden; border-radius:8px; box-shadow:0 6px 20px -8px rgba(20,43,68,.35); border:1px solid var(--border); }
 .cert-preview-scale{ width:1123px; height:794px; transform-origin:0 0; }
 [dir="rtl"] .cert-preview-scale{ transform-origin:100% 0; }
@@ -1512,6 +1524,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
       <div class="chip" data-f="recent" onclick="setHistoryFilter('recent')" data-i18n="history.recent">Recent</div>
       <div class="chip" data-f="photos" onclick="setHistoryFilter('photos')" data-i18n="history.withPhotos">With Photos</div>
     </div>
+    <div id="incomingSails"></div>
     <div id="historyList"></div>
   </section>
 
@@ -2196,6 +2209,19 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
     <button class="btn btn-ghost" onclick="cancelPhotoAdjust()" data-i18n="action.cancel">Cancel</button>
   </div>
 
+  <!-- Share with Crew / Social (js/share.js) -->
+  <div class="sheet" id="sheetShare" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3 data-i18n="detail.shareCrewSocial">Share with Crew / Social</h3>
+    <div id="shareOptions"></div>
+  </div>
+  <div class="sheet" id="sheetSendFriend" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3 data-i18n="share.friendTitle">Send to a friend's app</h3>
+    <p style="font-size:12.5px;margin:-4px 0 12px;" data-i18n="share.friendHint">They get their own copy of this sail, photos included.</p>
+    <div id="sendFriendList"></div>
+  </div>
+
   <div class="sheet" id="sheetCertificate" style="display:none;">
     <div class="sheet-handle"></div>
     <h3 data-i18n="sheet.certDetails">Certificate Details</h3>
@@ -2357,5 +2383,6 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
 <script src="js/trip-pdf.js"></script>
 <script src="js/units.js"></script>
 <script src="js/about.js"></script>
+<script src="js/share.js"></script>
 </body>
 </html>

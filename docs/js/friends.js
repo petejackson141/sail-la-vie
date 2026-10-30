@@ -280,6 +280,8 @@ async function loadFriendsData(){
   if(!unchanged) refreshFriendsUI();
   // Keep the public card's name/photo in step with the local profile, quietly.
   if(friendsState.me) syncPublicProfileIfSignedIn(true);
+  // Sails friends have sent you (share.js), shown at the top of History
+  if(typeof loadIncomingSails === 'function') loadIncomingSails();
 }
 
 // Called by applySession() (auth.js) whenever the signed-in account changes.

@@ -27,6 +27,7 @@ They're kept as a record of what was changed and why.
 | `harden-functions.sql` | Tightened `are_friends` and the sign-up function |
 | `fix-advisor-warnings.sql` | Cleared the Security Advisor warnings, added indexes |
 | `profile-photos.sql` | Lets friends see profile and cover photos in photo storage (20 October 2026) |
+| `sail-shares.sql` | "Send to a friend's app": the `sail_shares` table, its rules, and letting the friend copy that sail's photos (30 October 2026) — **run this once on the live Frankfurt project** |
 
 ## Expected Security Advisor warnings (all fine)
 

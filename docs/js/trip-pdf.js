@@ -74,10 +74,12 @@ function tpLogNumber(trip){
 }
 
 function tripPdfData(trip){
-  const boat = state.boats.find(b=>b.id===trip.boatId) || null;
-  const skipper = trip.skipperId ? skipperById(trip.skipperId) : null;
+  const boat = state.boats.find(b=>b.id===trip.boatId) || (trip.boatName ? {name: trip.boatName, photo: ''} : null);
+  const skipper = trip.skipperId ? skipperById(trip.skipperId) : (trip.sharedSkipper ? {name: trip.sharedSkipper, photo: ''} : null);
+  // a sail sent by a friend (share.js) carries the crew as plain names
+  const crewList = trip.receivedFrom ? (trip.sharedCrew||[]).map(n=>({name:n, photo:''})) : (trip.crewIds||[]).map(id=>crewMemberById(id)).filter(Boolean);
   const crew = [ ...(skipper ? [{...skipper, role:t('active.skipper')}] : []),
-                 ...(trip.crewIds||[]).map(id=>crewMemberById(id)).filter(Boolean).map(c=>({...c, role:t('nav.crew')})) ];
+                 ...crewList.map(c=>({...c, role:t('nav.crew')})) ];
   const d = new Date(trip.date);
   // Every photo except the cover (which is the hero), de-duplicated, never capped.
   const seen = new Set(trip.coverPhoto ? [trip.coverPhoto] : []);
@@ -156,8 +158,8 @@ function tpStory(D, themeId){
   if(currentLang && currentLang!=='en') return { paras: D.notes.map(text=>({text, quote:false})), len: D.notesLen };
 
   const tr = D.trip, w = tr.weather || {};
-  const skipper = tr.skipperId ? (skipperById(tr.skipperId)||{}).name : '';
-  const crew = (tr.crewIds||[]).map(id=>(crewMemberById(id)||{}).name).filter(n=>n && n!==skipper);
+  const skipper = tr.skipperId ? (skipperById(tr.skipperId)||{}).name : (tr.sharedSkipper || '');
+  const crew = (tr.receivedFrom ? (tr.sharedCrew||[]) : (tr.crewIds||[]).map(id=>(crewMemberById(id)||{}).name)).filter(n=>n && n!==skipper);
   const boat = D.boat ? D.boat.name : '';
   const place = D.place;
   const hour = new Date(tr.date).getHours();
@@ -822,8 +824,10 @@ function selectPdfTheme(id){
   renderTripPdfPreview();
 }
 
-async function openTripPdfPreview(){
+// shareText (optional): message sent with the PDF — "Send the PDF to the crew" (share.js)
+async function openTripPdfPreview(shareText){
   if(featureComingSoon('pdfExport')) return;
+  window._pdfShareText = typeof shareText === 'string' ? shareText : null;
   if(!window._detailTrip){ showToast(t('toast.openTripFirst')); return; }
   renderPdfThemePicker();
   openSheet('sheetPdfPreview');
@@ -880,7 +884,7 @@ async function generateAndShareTripPdf(){
     }
     doc.setProperties({ title: trip.title || 'Sail Log', subject: tpLogNumber(trip), creator: 'Sail la Vie' });
     const fileName = (trip.title||'sail-log').replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase() + '.pdf';
-    await shareOrDownloadFile(doc.output('blob'), fileName || 'sail-log.pdf', 'application/pdf', trip.title||'Sail Log');
+    await shareOrDownloadFile(doc.output('blob'), fileName || 'sail-log.pdf', 'application/pdf', trip.title||'Sail Log', null, window._pdfShareText || null);
     closeSheets();
   }catch(e){
     if(e && e.name==='AbortError'){ /* user cancelled the native share sheet */ }

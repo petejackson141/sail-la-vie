@@ -358,6 +358,9 @@ function ensureRealtimeSync(){
       () => scheduleRealtimeResync('friends'))
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'friendships' },
       () => scheduleRealtimeResync('friends'))
+    // a friend sent you a sail (share.js / sail_shares)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sail_shares', filter: `recipient_id=eq.${state.user.id}` },
+      () => scheduleRealtimeResync('shares'))
     .subscribe((status, err) => {
       // If this ever logs CHANNEL_ERROR, the friendships table probably isn't in the
       // supabase_realtime publication — run friends-realtime.sql. Friend requests
@@ -393,6 +396,7 @@ function scheduleRealtimeResync(kind){
     if(kind === 'trips') resolveTripsSyncOnSignIn().then(()=>debugLog('[realtime] trips resync done')).catch(e => debugLog('[realtime] trips resync FAILED: ' + (e.message||e)));
     if(kind === 'noticeboard') resolveNoticeboardSyncOnSignIn().then(()=>debugLog('[realtime] noticeboard resync done')).catch(e => debugLog('[realtime] noticeboard resync FAILED: ' + (e.message||e)));
     if(kind === 'friends' && typeof loadFriendsData === 'function') loadFriendsData();
+    if(kind === 'shares' && typeof loadIncomingSails === 'function') loadIncomingSails();
     if(kind === 'profile') resolveProfileSyncOnSignIn().then(()=>debugLog('[realtime] profile resync done')).catch(e => debugLog('[realtime] profile resync FAILED: ' + (e.message||e)));
   }, 600);
 }

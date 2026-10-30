@@ -431,7 +431,8 @@ async function beginJourney(){
    track was missing), gpsLock.overridden is set and the sail no longer counts
    as GPS-verified. */
 function tripIsGpsRecorded(trip){ return !!trip && (trip.gpsRecorded===true || (!!trip.path && trip.path.length>1)); }
-function tripGpsVerified(trip){ return tripIsGpsRecorded(trip) && !(trip.gpsLock && trip.gpsLock.overridden); }
+// A sail a friend sent you (share.js) was recorded on THEIR phone, so it never counts as yours here.
+function tripGpsVerified(trip){ return tripIsGpsRecorded(trip) && !trip.receivedFrom && !(trip.gpsLock && trip.gpsLock.overridden); }
 function gpsLockFrom(trip, overridden){
   return { distanceNm: trip.distanceNm, elapsedSeconds: trip.elapsedSeconds, avgSpeed: trip.avgSpeed, maxSpeed: trip.maxSpeed,
            date: trip.date, points: (trip.path||[]).length, lockedAt: new Date().toISOString(), overridden: !!overridden };
