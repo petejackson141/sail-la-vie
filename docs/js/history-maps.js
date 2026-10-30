@@ -237,6 +237,7 @@ async function renderTripDetailMap(trip){
           <span id="detailMapLockLabel">${t('detail.locked')}</span>
         </div>
       </div>
+      <div class="speed-legend" id="detailSpeedLegend" style="display:none;"></div>
       <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:4px;">${portholeCoordsCaption(trip.path)}</div>`;
 
     const online = await checkTilesAvailable();
@@ -261,6 +262,7 @@ async function renderTripDetailMap(trip){
       // The replay (below) draws the line bit by bit, so the map is told to draw
       // whatever replay.drawn currently holds — starting with just the first point.
       const replay = { map, coords, times: replayTimeline(trip.path), drawn: [coords[0]], raf: null };
+      renderSpeedLegend('detailSpeedLegend', setTrackSpeeds(map, trip.path), appUnitSystem());
       map.on('style.load', ()=>addOurLayers(map, ()=>replay.drawn));
       map.on('error', (e)=>console.warn('[map] detail map error', e && e.error));
       new mapboxgl.Marker({element: endpointDot('#2E8B57')}).setLngLat(coords[0]).addTo(map);
@@ -437,7 +439,8 @@ function addOurLayers(map, coords){
     map.addLayer({ id:'seamarks', type:'raster', source:'seamarks', paint:{ 'raster-emissive-strength':1 } });
   }
   if(!map.getSource('track')){
-    map.addSource('track', { type:'geojson', data:trackGeoJson(coords()) });
+    // lineMetrics:true lets the line be coloured along its length (speed colours).
+    map.addSource('track', { type:'geojson', data:trackGeoJson(coords()), lineMetrics:true });
     // A soft white "halo" under the line keeps it readable on any background.
     map.addLayer({ id:'track-halo', type:'line', source:'track',
       layout:{ 'line-join':'round', 'line-cap':'round' },
@@ -448,6 +451,8 @@ function addOurLayers(map, coords){
       // line-emissive-strength:1 = the line "glows", so Standard's night lighting doesn't
       // dim it (without this, the gold came out almost black on the Dark map).
       paint:{ 'line-color': dark ? '#F2C14E' : TRACK_COLOR, 'line-width':4, 'line-emissive-strength':1 } });
+    // Re-apply the speed colours after a style switch (the switch wipes our layers).
+    applySpeedGradient(map, coords());
   }
 }
 function trackGeoJson(coords){
@@ -456,6 +461,108 @@ function trackGeoJson(coords){
 function setTrackCoords(map, coords){
   const src = map && map.getSource && map.getSource('track');
   if(src) src.setData(trackGeoJson(coords));
+  applySpeedGradient(map, coords);
+}
+
+/* ---------- speed-coloured track (30.10.2026) ----------
+   The track line shifts from blue (slowest part of THIS sail) through green and
+   yellow to red (fastest part), live and on saved sails. The colours are relative
+   to the sail itself, so a gentle 4-knot day still shows where you were quicker
+   and slower; the legend under the map gives the real speeds.
+   How it works: each GPS point gets a speed (distance ÷ time to its neighbours,
+   smoothed over a few points so GPS wobble doesn't make the line flicker), each
+   speed becomes a colour, and Mapbox paints the line with a "line-gradient" that
+   changes colour at each point along the line.
+   Sails with no timestamps on their points (very old entries) keep the plain line. */
+const SPEED_COLORS = ['#2F6FDB','#1FB5C9','#5DBE4E','#F2C14E','#E04B3A']; // slow → fast
+const SPEED_SMOOTH_POINTS = 5;    // average each point's speed over this many points
+const SPEED_MIN_RANGE_KT = 1;     // never stretch the colours over less than 1 kt (a steady sail stays mostly one colour)
+const SPEED_MAX_STOPS = 250;      // colour changes per line — plenty for the eye, light for the phone
+
+// Speed in knots at each point of `path` ({lat,lng,t} list), or null if the
+// points have no timestamps.
+function pointSpeedsKt(path){
+  const n = path.length;
+  if(n<2 || !path.every(p=>typeof p.t==='number')) return null;
+  const seg = []; // seg[i] = speed between point i and i+1
+  for(let i=0;i<n-1;i++){
+    const h = (path[i+1].t - path[i].t)/3600000;
+    seg.push(h>0 ? haversineNm(path[i], path[i+1])/h : null);
+  }
+  for(let i=0;i<seg.length;i++) if(seg[i]===null) seg[i] = i>0 ? seg[i-1] : 0; // two fixes with the same time: borrow the neighbour's speed
+  const raw = path.map((_,i)=> i===0 ? seg[0] : i===n-1 ? seg[n-2] : (seg[i-1]+seg[i])/2);
+  const half = Math.floor(SPEED_SMOOTH_POINTS/2);
+  return raw.map((_,i)=>{
+    let sum=0, cnt=0;
+    for(let j=Math.max(0,i-half); j<=Math.min(n-1,i+half); j++){ sum+=raw[j]; cnt++; }
+    return sum/cnt;
+  });
+}
+// The slow/fast ends of the colour scale. Uses the 10th and 90th percentile
+// rather than the very slowest/fastest point, so one odd GPS reading or a
+// moment tied up at the dock doesn't squash everything else into one colour.
+function speedRange(speeds){
+  const sorted = speeds.slice().sort((a,b)=>a-b);
+  const pick = q=>sorted[Math.min(sorted.length-1, Math.floor(q*(sorted.length-1)))];
+  let lo = pick(0.1), hi = pick(0.9);
+  if(hi-lo < SPEED_MIN_RANGE_KT){ const mid=(hi+lo)/2; lo = Math.max(0, mid-SPEED_MIN_RANGE_KT/2); hi = lo+SPEED_MIN_RANGE_KT; }
+  return { lo, hi };
+}
+// 0 → 1 to a colour, blending between neighbouring SPEED_COLORS.
+function speedColor(f){
+  f = Math.min(Math.max(f,0),1) * (SPEED_COLORS.length-1);
+  const i = Math.min(Math.floor(f), SPEED_COLORS.length-2), k = f-i;
+  const a = parseInt(SPEED_COLORS[i].slice(1),16), b = parseInt(SPEED_COLORS[i+1].slice(1),16);
+  const ch = sh=>Math.round(((a>>sh)&255)*(1-k) + ((b>>sh)&255)*k);
+  return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+}
+// Builds the per-map speed info from the GPS points. Stored on the map as
+// map._speed so setTrackCoords/addOurLayers can paint with it. Pass null to
+// go back to the plain line.
+function setTrackSpeeds(map, path){
+  if(!map) return null;
+  const speeds = path ? pointSpeedsKt(path) : null;
+  if(!speeds){ map._speed = null; return null; }
+  const range = speedRange(speeds);
+  map._speed = { range, colors: speeds.map(v=>speedColor((v-range.lo)/(range.hi-range.lo))) };
+  return map._speed;
+}
+// Paints the line using map._speed. `coords` is what's currently drawn — during
+// the replay that's only the first part of the sail (the first coords.length-1
+// GPS points plus where the boat is now), so its colours are the first ones too.
+function applySpeedGradient(map, coords){
+  if(!map || !map.getLayer || !map.getLayer('track-line')) return;
+  const sp = map._speed;
+  if(!sp || coords.length<2){ map.setPaintProperty('track-line','line-gradient', null); return; }
+  // How far along the drawn line (0 → 1) each point sits.
+  const dist = [0];
+  for(let i=1;i<coords.length;i++){
+    const a=coords[i-1], b=coords[i];
+    dist.push(dist[i-1] + haversineNm({lat:a[1],lng:a[0]}, {lat:b[1],lng:b[0]}));
+  }
+  const total = dist[dist.length-1];
+  if(!(total>0)){ map.setPaintProperty('track-line','line-gradient', null); return; }
+  const colorAt = i=>sp.colors[Math.min(i, sp.colors.length-1)];
+  const expr = ['interpolate',['linear'],['line-progress']];
+  let last = -1;
+  const step = Math.max(1, Math.ceil(coords.length/SPEED_MAX_STOPS));
+  for(let i=0;i<coords.length;i+=step){
+    const f = dist[i]/total;
+    if(f>last){ expr.push(f, colorAt(i)); last=f; } // stops must keep going up
+  }
+  if(last<1) expr.push(1, colorAt(coords.length-1));
+  if(expr.length<7) expr.push(1, expr[expr.length-1]); // Mapbox needs at least two stops
+  map.setPaintProperty('track-line','line-gradient', expr);
+}
+// The "Slow ▬▬▬ Fast" key under a map, with the real speeds at each end.
+function renderSpeedLegend(elId, sp, sys){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(!sp){ el.style.display='none'; return; }
+  el.style.display='flex';
+  el.innerHTML = `<span>${t('map.slow')} ${fmtSpeed(sp.range.lo, sys)}</span>`
+    + `<span class="speed-legend-bar" style="background:linear-gradient(90deg,${SPEED_COLORS.join(',')})"></span>`
+    + `<span>${fmtSpeed(sp.range.hi, sys)} ${t('map.fast')}</span>`;
 }
 function renderMapStyleMenu(which){
   const menu = document.getElementById(which==='live' ? 'liveMapStyleMenu' : 'detailMapStyleMenu');
@@ -619,6 +726,7 @@ function recenterLiveMap(){
 function updateLiveMapTrack(path){
   if(!liveMap || !path.length) return;
   liveMapCoords = path.map(p=>[p.lng,p.lat]); // Mapbox wants [lng,lat]
+  renderSpeedLegend('liveSpeedLegend', setTrackSpeeds(liveMap, path), typeof activeUnitSystem!=='undefined' ? activeUnitSystem : appUnitSystem());
   setTrackCoords(liveMap, liveMapCoords);
   const last = liveMapCoords[liveMapCoords.length-1];
   liveMapMarker.setLngLat(last);
@@ -655,6 +763,7 @@ function setLiveMapMode(online){
     text.textContent = t('map.offlineTrack');
     leafletEl.style.display='none';
     porthole.style.display='block';
+    renderSpeedLegend('liveSpeedLegend', null); // the offline drawing has no speed colours
   }
 }
 async function refreshLiveMapMode(){
@@ -665,6 +774,7 @@ function startLiveConnCheck(){
   // Fresh map instance per journey, so the previous sail's line/position never carry over.
   if(liveMap){ liveMap.remove(); liveMap=null; }
   liveMapCoords = []; liveLastLatLng = null;
+  renderSpeedLegend('liveSpeedLegend', null); // new sail: no speeds yet
   refreshLiveMapMode();
   if(liveConnCheckInterval) clearInterval(liveConnCheckInterval);
   liveConnCheckInterval = setInterval(refreshLiveMapMode, 20000);
