@@ -408,7 +408,8 @@ function reelTopShade(ctx, y1, alpha, rgb){
   ctx.fillStyle = g; ctx.fillRect(0, 0, REEL_W, y1);
 }
 // Where the photos sit in the main scene (between the title and the numbers)
-const REEL_PHOTO = { cy: 790, maxW: 840, maxH: 800 };
+const REEL_PHOTO = { cy: 790, maxW: 840, maxH: 800 };          // Nautical
+const REEL_BIG_PHOTO = { cy: 805, maxW: 920, maxH: 870 };      // Yacht Club and Memory Page (bigger, 31.10.2026)
 // Which photo is showing and how far through its turn: calls draw(img, j,
 // progress 0–1, alpha) for the one photo on screen. Same timing in every theme.
 function reelEachPhoto(a, tt, d, fade, draw){
@@ -630,10 +631,12 @@ function reelYachtLogo(ctx, img, cx, cy, rad){
 // out to the left. Never cropped.
 function reelYachtPhoto(ctx, img, alpha, inT, outT){
   if(!img || alpha <= 0) return;
-  const s0 = Math.min((REEL_PHOTO.maxW - 40)/img.width, (REEL_PHOTO.maxH - 60)/img.height);
+  // big (31.10.2026): the photo fills the space between the title rule (y ~360)
+  // and the numbers (y ~1260), up to 920 wide
+  const s0 = Math.min(REEL_BIG_PHOTO.maxW/img.width, (REEL_BIG_PHOTO.maxH - 40)/img.height);
   const w = img.width*s0, h = img.height*s0, mat = 20;
   const glide = 70*(1 - reelEase(reelClamp(inT/0.5))) - 70*(1 - reelEase(reelClamp(outT/0.5)));
-  const cx = REEL_W/2 + glide, cy = REEL_PHOTO.cy;
+  const cx = REEL_W/2 + glide, cy = REEL_BIG_PHOTO.cy;
   ctx.save(); ctx.globalAlpha *= alpha;
   ctx.shadowColor = 'rgba(22,50,79,.16)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
   ctx.fillStyle = '#FFFFFF'; ctx.fillRect(cx - w/2 - mat, cy - h/2 - mat, w + 2*mat, h + 2*mat);
@@ -712,23 +715,24 @@ function reelMemoryLogo(ctx, img, cx, cy, rad){
 function reelMemoryOpen(ctx, r, tt, d){
   const trip = r.trip, a = r.assets;
   ctx.fillStyle = RM.cream; ctx.fillRect(0, 0, REEL_W, REEL_H);
-  // the big rounded photo: from near the top right down past the bottom edge,
-  // so Instagram's name and caption always sit on a dark, readable photo
-  const hx = 50, hy = 190, hw = REEL_W - 100, hh = REEL_H - hy + 80;
+  // the big rounded photo, centred with the same cream margin all round
+  // (31.10.2026 — it used to run off the bottom edge, which looked lopsided).
+  // Its dark lower half keeps Instagram's white name and caption readable.
+  const M = 50, hx = M, hy = M, hw = REEL_W - 2*M, hh = REEL_H - 2*M;
   ctx.save(); reelRoundRect(ctx, hx, hy, hw, hh, 56); ctx.clip();
   if(a.cover) reelDrawCover(ctx, a.cover, hx, hy, hw, hh, 1.04 + 0.08*(tt/d), 0, -0.15);
   else { ctx.fillStyle = RM.teal; ctx.fillRect(hx, hy, hw, hh); }
   const g = ctx.createLinearGradient(0, hy, 0, REEL_H);
-  g.addColorStop(0, 'rgba(14,35,56,0.25)'); g.addColorStop(0.3, 'rgba(14,35,56,0)'); g.addColorStop(0.62, 'rgba(14,35,56,0.55)'); g.addColorStop(1, 'rgba(14,35,56,0.88)');
+  g.addColorStop(0, 'rgba(14,35,56,0.30)'); g.addColorStop(0.22, 'rgba(14,35,56,0)'); g.addColorStop(0.62, 'rgba(14,35,56,0.55)'); g.addColorStop(1, 'rgba(14,35,56,0.88)');
   ctx.fillStyle = g; ctx.fillRect(hx, hy, hw, hh);
   ctx.restore();
   const k = reelEase(tt/0.9), off = (1-k)*36;
   ctx.save(); ctx.globalAlpha *= k;
-  reelMemoryLogo(ctx, a.logo, hx + 100, hy + 100, 58);
+  reelMemoryLogo(ctx, a.logo, hx + 110, 250, 58);   // below Instagram's top bar
   // date bubble, top right
   const wd = reelWeekday(trip).toUpperCase(), dm = reelDayMonthYear(trip);
   ctx.font = "400 30px 'Libre Baskerville', Georgia, serif";
-  const bw = Math.max(ctx.measureText(dm).width, 180) + 56, bx = hx + hw - 36 - bw, by = hy + 48;
+  const bw = Math.max(ctx.measureText(dm).width, 180) + 56, bx = hx + hw - 40 - bw, by = 192;
   ctx.fillStyle = 'rgba(252,247,239,0.94)'; reelRoundRect(ctx, bx, by, bw, 116, 26); ctx.fill();
   reelText(ctx, wd, bx + bw/2, by + 46, "700 21px 'Space Grotesk', sans-serif", RM.coral, 'center', 5);
   reelText(ctx, dm, bx + bw/2, by + 90, "400 30px 'Libre Baskerville', Georgia, serif", RM.navy);
@@ -749,15 +753,15 @@ function reelMemoryOpen(ctx, r, tt, d){
 // little (alternating left/right), dropping in and settling with a bounce.
 function reelMemoryPolaroid(ctx, img, j, alpha, inT){
   if(!img || alpha <= 0) return;
-  const s0 = Math.min((REEL_PHOTO.maxW - 80)/img.width, (REEL_PHOTO.maxH - 110)/img.height);
+  const s0 = Math.min((REEL_BIG_PHOTO.maxW - 40)/img.width, (REEL_BIG_PHOTO.maxH - 135)/img.height); // big (31.10.2026); a bit of room left for the tilt
   const w = img.width*s0, h = img.height*s0, pad = 22, padB = 86;
   const settle = reelClamp(inT/0.7), b = reelBack(settle);
   const tilt = (j % 2 ? 1 : -1) * (2.2 + (j % 3)*0.6) * Math.PI/180;
   const rot = tilt + (j % 2 ? 1 : -1) * (1 - settle) * 7 * Math.PI/180;
   const dropY = (1 - b) * -120;
   ctx.save(); ctx.globalAlpha *= alpha;
-  ctx.translate(REEL_W/2, REEL_PHOTO.cy + dropY + (padB - pad)/2); ctx.rotate(rot);
-  const fx = -w/2 - pad, fy = -h/2 - pad - (padB - pad), fw = w + 2*pad, fh = h + pad + padB;
+  ctx.translate(REEL_W/2, REEL_BIG_PHOTO.cy + dropY); ctx.rotate(rot);
+  const fw = w + 2*pad, fh = h + pad + padB, fx = -fw/2, fy = -fh/2;
   ctx.shadowColor = 'rgba(20,43,68,.28)'; ctx.shadowBlur = 34; ctx.shadowOffsetY = 12;
   ctx.fillStyle = '#FFFFFF'; reelRoundRect(ctx, fx, fy, fw, fh, 8); ctx.fill();
   ctx.shadowColor = 'transparent';
