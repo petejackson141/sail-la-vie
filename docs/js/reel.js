@@ -228,6 +228,10 @@ async function reelPrepare(trip){
   const coverIndex = pool.findIndex(p=>p.isCover); // the opening photo (changeable in the picker)
   const photos = picked.map(i=>pool[i].img);
   const logo = await reelLoadImage('images/Logo.png');
+  // the boat on the map: the icon chosen under the maps' Settings (track-icons.js, 31.10.2026)
+  const icon = (typeof TRACK_ICONS!=='undefined') ? (TRACK_ICONS[currentTrackIcon] || TRACK_ICONS.arrow) : null;
+  const iconImg = icon ? await reelLoadImage(icon.src) : null;
+  const iconInfo = iconImg ? { img: iconImg, kind: icon.kind, scale: icon.scale } : null;
 
   let map = null, view = null, trackPx = null;
   if(hasTrack){
@@ -244,10 +248,10 @@ async function reelPrepare(trip){
     }
     // Timeline along the track: by time stamps when there are any, else by distance
     const times = (typeof replayTimeline === 'function') ? replayTimeline(path) : path.map((_,i)=>i/(path.length-1));
-    return { cover, photos, pool, picked, coverIndex, logo, map, trackPx, trackTimes: times, mapImage: null };
+    return { cover, photos, pool, picked, coverIndex, logo, icon: iconInfo, map, trackPx, trackTimes: times, mapImage: null };
   }
   const mapImage = trip.mapImage ? await reelImageFrom(trip.mapImage) : null;
-  return { cover, photos, pool, picked, coverIndex, logo, map: null, trackPx: null, trackTimes: null, mapImage };
+  return { cover, photos, pool, picked, coverIndex, logo, icon: iconInfo, map: null, trackPx: null, trackTimes: null, mapImage };
 }
 
 /* ============================================================
@@ -340,6 +344,20 @@ function reelDate(trip){
   return new Date(trip.date).toLocaleDateString(currentLocale(), {weekday:'long', day:'numeric', month:'long', year:'numeric'});
 }
 // A small sailboat (coral sail, navy hull) for the moving boat on the map
+// The chosen track icon on a soft white disc, pointing along the track:
+// arrow/kayak turn to the heading; sailboat/motorboat/windsurfer flip to face
+// left when going left (same rules as on the maps).
+function reelIcon(ctx, ic, x, y, headingDeg){
+  const size = Math.round(96 * (ic.scale || 1));
+  ctx.save(); ctx.translate(x, y);
+  ctx.beginPath(); ctx.arc(0, 0, 46, 0, Math.PI*2); ctx.fillStyle = 'rgba(255,255,255,.88)'; ctx.fill();
+  if(ic.kind === 'turn') ctx.rotate(headingDeg * Math.PI/180);
+  else if(((headingDeg % 360) + 360) % 360 > 180) ctx.scale(-1, 1);
+  ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+  ctx.drawImage(ic.img, -size/2, -size/2, size, size);
+  ctx.restore();
+}
+// The original little sailboat — still used if the icon picture can't be loaded
 function reelBoat(ctx, x, y, s){
   ctx.save(); ctx.translate(x, y);
   ctx.beginPath(); ctx.arc(0, 0, 30*s, 0, Math.PI*2); ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fill();
@@ -462,7 +480,13 @@ function reelTrack(ctx, a, k, L){
   line(8, L.line);
   ctx.beginPath(); ctx.arc(P[0].x, P[0].y, 14, 0, Math.PI*2); ctx.fillStyle = L.start; ctx.fill();
   ctx.lineWidth = 4; ctx.strokeStyle = L.startRing; ctx.stroke();
-  reelBoat(ctx, tip.x, tip.y, 1.3);
+  // heading on the picture: from this track point to the next (0° = up)
+  // (looks a few points ahead, so a wobble or a pause doesn't make it twitch)
+  let j = Math.min(i+3, P.length-1);
+  while(j < P.length-1 && P[j].x === P[i].x && P[j].y === P[i].y) j++;
+  const hd = Math.atan2(P[j].x - P[i].x, -(P[j].y - P[i].y)) * 180/Math.PI;
+  if(a.icon) reelIcon(ctx, a.icon, tip.x, tip.y, hd);
+  else reelBoat(ctx, tip.x, tip.y, 1.3);
 }
 // One photo as a framed card in the middle of the screen: the whole photo is
 // shown (never cropped), with a white border, gently growing while it's on.
