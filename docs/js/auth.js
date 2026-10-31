@@ -85,7 +85,13 @@ function withCloudSyncQueue(fn){
   return run;
 }
 
-let authMode = 'signin'; // 'signin' | 'signup' — which mode sheetAuth is currently showing
+let authMode = 'signin'; // 'signin' | 'signup' | 'reset' — which mode sheetAuth is currently showing
+
+// Web / iPhone version: a password-reset link opens the app with
+// #...type=recovery in the address. Supabase reads and clears that as soon as
+// the client starts, so note it now, before that happens.
+const _openedFromRecoveryLink = /[#&?]type=recovery\b/.test(location.hash + location.search);
+let _newPasswordShown = false;
 
 /* ---------- email-link deep link (Android app) ----------
    Supabase's confirmation email link first verifies the account on
@@ -156,7 +162,8 @@ async function handleAuthDeepLink(url, {runSync} = {runSync:true}){
     } else {
       return false; // nothing usable in the link
     }
-    closeSheets();
+    const isRecovery = params.get('type') === 'recovery';
+    if(!isRecovery) closeSheets();
     hideWelcomeGate();
     if(runSync){
       // Same first-sign-in sync as signing in by hand.
@@ -166,7 +173,8 @@ async function handleAuthDeepLink(url, {runSync} = {runSync:true}){
       await resolveTripsSyncOnSignIn();
       await resolveNoticeboardSyncOnSignIn();
     }
-    showToast(t('auth.confirmedSignedIn'));
+    if(isRecovery) openNewPasswordSheet();
+    else showToast(t('auth.confirmedSignedIn'));
     return true;
   } catch(e){
     console.error('auth deep link failed', e);
@@ -223,9 +231,11 @@ async function initAuth(){
     resolveNoticeboardSyncOnSignIn().catch(e => console.error('boot-time noticeboard sync failed', e));
   }
 
-  getSupabaseClient().auth.onAuthStateChange((_event, session) => {
+  getSupabaseClient().auth.onAuthStateChange((event, session) => {
     applySession(session);
+    if(event === 'PASSWORD_RECOVERY') openNewPasswordSheet();
   });
+  if(data.session && _openedFromRecoveryLink) openNewPasswordSheet();
 }
 
 function applySession(session){
@@ -449,17 +459,42 @@ function resetPasswordVisibility(){
 }
 
 function toggleAuthMode(){
+  // From "reset password" the bottom button goes back to signing in.
   authMode = authMode === 'signin' ? 'signup' : 'signin';
   hideAuthError();
   updateAuthSheetLabels();
 }
 
+// "Forgot password?" — same sheet, switched to asking for the email only.
+// Whatever email was already typed stays in the box.
+function openForgotPassword(){
+  authMode = 'reset';
+  hideAuthError();
+  updateAuthSheetLabels();
+  document.getElementById('authEmail').focus();
+}
+
 function updateAuthSheetLabels(){
   const isSignUp = authMode === 'signup';
-  document.getElementById('authSheetTitle').textContent = isSignUp ? t('auth.createAccount') : t('auth.signIn');
-  document.getElementById('authSheetHint').textContent = isSignUp ? t('auth.hintSignUp') : t('auth.hintSignIn');
-  document.getElementById('authSubmitBtn').textContent = isSignUp ? t('auth.createAccount') : t('auth.signIn');
-  document.getElementById('authToggleModeBtn').textContent = isSignUp ? t('auth.toSignIn') : t('auth.toSignUp');
+  const isReset = authMode === 'reset';
+  document.getElementById('authSheetTitle').textContent = isReset ? t('auth.resetTitle') : isSignUp ? t('auth.createAccount') : t('auth.signIn');
+  document.getElementById('authSheetHint').textContent = isReset ? t('auth.resetHint') : isSignUp ? t('auth.hintSignUp') : t('auth.hintSignIn');
+  document.getElementById('authSubmitBtn').textContent = isReset ? t('auth.resetSend') : isSignUp ? t('auth.createAccount') : t('auth.signIn');
+  document.getElementById('authToggleModeBtn').textContent = isReset ? t('auth.resetBack') : isSignUp ? t('auth.toSignIn') : t('auth.toSignUp');
+  // Password box hidden while resetting; "Forgot password?" only when signing in.
+  document.getElementById('authPasswordField').style.display = isReset ? 'none' : '';
+  document.getElementById('authForgotBtn').style.display = authMode === 'signin' ? '' : 'none';
+  hideAuthInfo();
+}
+
+function showAuthInfo(msg){
+  const el = document.getElementById('authInfoMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideAuthInfo(){
+  const el = document.getElementById('authInfoMsg');
+  if(el) el.style.display = 'none';
 }
 
 function showAuthError(msg){
@@ -475,6 +510,7 @@ async function submitAuthForm(){
   const email = document.getElementById('authEmail').value.trim();
   const password = document.getElementById('authPassword').value;
   hideAuthError();
+  if(authMode === 'reset') return sendPasswordReset(email);
 
   if(!email || !password){
     showAuthError(t('auth.needBoth'));
@@ -528,6 +564,84 @@ async function submitAuthForm(){
     }
   } catch(e){
     showAuthError(e.message || t('auth.genericError'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+/* ---------- forgotten password ----------
+   1. "Forgot password?" → sendPasswordReset() asks Supabase to email a reset
+      link. The message is the same whether or not that email has an account,
+      so the form can't be used to find out who uses the app.
+   2. The link (valid for 1 hour, works once) signs the person in: in the
+      Android app through the saillavie://auth-callback deep link
+      (handleAuthDeepLink, type=recovery), on the web through Supabase's
+      PASSWORD_RECOVERY event.
+   3. openNewPasswordSheet() asks for the new password; submitNewPassword()
+      saves it and signs out every other device, so the old password and any
+      old sessions stop working.
+   Supabase settings this relies on: Authentication → URL Configuration →
+   Redirect URLs must list saillavie://auth-callback and the web app address
+   (both already there for sign-up confirmation emails). */
+async function sendPasswordReset(email){
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    showAuthError(t('auth.resetNeedEmail'));
+    return;
+  }
+  const btn = document.getElementById('authSubmitBtn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = t('auth.wait');
+  try{
+    const { error } = await getSupabaseClient().auth.resetPasswordForEmail(email, { redirectTo: authRedirectUrl() });
+    if(error) throw error;
+    showAuthInfo(t('auth.resetSent', {email}));
+  } catch(e){
+    // Too many requests is the one error worth explaining; anything else
+    // shows Supabase's own message.
+    const msg = (e && e.message) || '';
+    showAuthError(/rate|seconds|too many/i.test(msg) ? t('auth.resetWait') : (msg || t('auth.genericError')));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+function openNewPasswordSheet(){
+  if(_newPasswordShown) return; // the link can trigger this twice (event + boot check)
+  _newPasswordShown = true;
+  document.getElementById('newPassword1').value = '';
+  document.getElementById('newPassword2').value = '';
+  document.getElementById('newPwErrorMsg').style.display = 'none';
+  hideWelcomeGate();
+  openSheet('sheetNewPassword');
+}
+
+async function submitNewPassword(){
+  const p1 = document.getElementById('newPassword1').value;
+  const p2 = document.getElementById('newPassword2').value;
+  const errEl = document.getElementById('newPwErrorMsg');
+  const fail = (msg) => { errEl.textContent = msg; errEl.style.display = 'block'; };
+  errEl.style.display = 'none';
+  if(p1.length < 6) return fail(t('auth.pwShort'));
+  if(p1 !== p2) return fail(t('auth.newPwMismatch'));
+
+  const btn = document.getElementById('newPwSaveBtn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = t('auth.wait');
+  try{
+    const client = getSupabaseClient();
+    const { error } = await client.auth.updateUser({ password: p1 });
+    if(error) throw error;
+    // Sign out any other phone or browser still signed in to this account.
+    try{ await client.auth.signOut({ scope: 'others' }); }catch(e){ console.error('sign out others failed', e); }
+    closeSheets();
+    showToast(t('auth.newPwSaved'));
+  } catch(e){
+    const msg = (e && e.message) || '';
+    fail(/different from the old/i.test(msg) ? t('auth.newPwSame') : (msg || t('auth.genericError')));
   } finally {
     btn.disabled = false;
     btn.textContent = originalLabel;

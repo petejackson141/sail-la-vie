@@ -526,6 +526,9 @@
   .password-toggle-btn{ position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none;
     padding:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-muted); }
   .password-toggle-btn.is-active{ color:var(--navy); }
+  .auth-forgot-btn{ display:block; margin:-6px 0 10px auto; background:none; border:none; padding:4px 2px; font:inherit; font-size:13px; font-weight:600; color:var(--navy); cursor:pointer; }
+  html[data-theme="dark"] .auth-forgot-btn{ color:var(--gold); }
+  .auth-info-msg{ font-size:13px; line-height:1.45; color:var(--ink); background:rgba(46,160,110,.12); border-radius:10px; padding:10px 12px; margin:0 0 10px; }
   html[data-theme="dark"] .password-toggle-btn.is-active{ color:var(--gold); }
   .password-toggle-btn svg{ width:19px; height:19px; }
   #authErrorMsg{ background:rgba(214,90,74,.1); border:1px solid rgba(214,90,74,.3); border-radius:var(--radius-sm);
@@ -2368,7 +2371,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
       <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
       <input type="email" id="authEmail" placeholder="you@email.com" autocomplete="email">
     </div>
-    <div class="field input-icon-field">
+    <div class="field input-icon-field" id="authPasswordField">
       <label data-i18n="auth.password">Password</label>
       <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
       <input type="password" id="authPassword" placeholder="At least 6 characters" data-i18n-ph="auth.passwordPh" autocomplete="current-password">
@@ -2376,10 +2379,37 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
     </div>
+    <button type="button" class="auth-forgot-btn" id="authForgotBtn" onclick="openForgotPassword()" data-i18n="auth.forgot">Forgot password?</button>
     <p id="authErrorMsg" style="font-size:12.5px;color:var(--coral);display:none;"></p>
+    <p id="authInfoMsg" class="auth-info-msg" style="display:none;"></p>
     <button class="btn btn-primary" id="authSubmitBtn" style="margin-top:4px;" onclick="submitAuthForm()">Sign In</button>
     <button class="btn btn-ghost" id="authToggleModeBtn" onclick="toggleAuthMode()">Don't have an account? Sign up</button>
     <button class="btn btn-ghost" onclick="closeSheets()" data-i18n="action.cancel">Cancel</button>
+  </div>
+
+  <!-- Set a new password after tapping the reset link in the email (js/auth.js → submitNewPassword). -->
+  <div class="sheet" id="sheetNewPassword" style="display:none;">
+    <div class="sheet-handle"></div>
+    <div class="auth-hero">
+      <div class="auth-hero-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      </div>
+      <h3 data-i18n="auth.newPwTitle">Choose a new password</h3>
+      <p data-i18n="auth.newPwHint">You're signed in from the reset link. Pick a new password for your account.</p>
+    </div>
+    <div class="field input-icon-field">
+      <label data-i18n="auth.newPw">New password</label>
+      <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <input type="password" id="newPassword1" placeholder="At least 6 characters" data-i18n-ph="auth.passwordPh" autocomplete="new-password">
+    </div>
+    <div class="field input-icon-field">
+      <label data-i18n="auth.newPw2">Type it again</label>
+      <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <input type="password" id="newPassword2" autocomplete="new-password">
+    </div>
+    <p id="newPwErrorMsg" style="font-size:12.5px;color:var(--coral);display:none;"></p>
+    <button class="btn btn-primary" id="newPwSaveBtn" style="margin-top:4px;" onclick="submitNewPassword()" data-i18n="auth.newPwSave">Save new password</button>
+    <button class="btn btn-ghost" onclick="closeSheets()" data-i18n="auth.newPwLater">Not now</button>
   </div>
 
   <div class="sheet" id="sheetReset" style="display:none;">
