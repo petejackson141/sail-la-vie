@@ -30,6 +30,7 @@ function renderProfileScreen(){
   profileFeedLimit = 10;
   renderProfileHeader();
   renderProfileStats();
+  renderEverywhereMap();  // everywhere-map.js — all sails on one map, replayed by time of day
   renderProfileFriends(); // friends.js
   renderProfileSailors(); // friends.js — testing-phase "sailors on the app" row
   renderProfileFeed();

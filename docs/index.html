@@ -597,14 +597,6 @@
   .map-stats-overlay div{ text-align:center; flex:1; }
   .map-stats-overlay div b{ display:block; font-family:var(--font-display); font-weight:700; font-size:15px; color:#fff; }
   .map-stats-overlay div span{ font-size:8.5px; text-transform:uppercase; letter-spacing:.03em; color:rgba(255,255,255,.75); }
-  /* Read-only history map: dragging/zoom start OFF so a scroll gesture that
-     starts on the map keeps scrolling the page instead of panning the map.
-     This little pill lets someone explicitly opt in to pan/zoom the map itself. */
-  .map-lock-toggle{ position:absolute; bottom:10px; right:10px; z-index:1100; display:flex; align-items:center; gap:5px;
-    background:rgba(20,43,68,.82); color:#fff; border-radius:999px; padding:7px 12px 7px 9px; font-size:11px; font-weight:600;
-    cursor:pointer; box-shadow:var(--shadow); }
-  .map-lock-toggle svg{ width:13px; height:13px; flex:0 0 auto; }
-  .map-lock-toggle.unlocked{ background:var(--navy-soft); }
   /* Base-layer switcher for the live/detail maps (Standard / Nautical / Satellite / Dark).
      Same pill look as .map-lock-toggle; ".left" variant is for the detail map, where the
      lock toggle already sits bottom-right. z-index is set well above Leaflet's own panes
@@ -640,6 +632,49 @@
   .speed-legend{ display:flex; align-items:center; justify-content:center; gap:8px; margin-top:6px;
     font-size:11px; font-weight:600; color:var(--ink-muted); }
   .speed-legend-bar{ width:90px; height:6px; border-radius:999px; flex:0 0 auto; }
+  /* ---------- map extras (31.10.2026) ---------- */
+  /* on/off switches at the bottom of the map style menu */
+  .map-style-sep{ height:1px; background:var(--border); margin:5px 4px; }
+  .map-opt-switch{ display:flex; align-items:center; gap:8px; }
+  .map-switch{ width:28px; height:16px; border-radius:999px; background:var(--border); position:relative; flex:0 0 auto; transition:background .15s; }
+  .map-switch::after{ content:''; position:absolute; top:2px; left:2px; width:12px; height:12px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.3); transition:left .15s; }
+  .map-opt-switch.on .map-switch{ background:var(--navy); }
+  .map-opt-switch.on .map-switch::after{ left:14px; }
+  /* animated wind: a see-through layer over the map picture, and its badge */
+  .map-wind-canvas{ position:absolute; left:0; top:0; pointer-events:none; }
+  .map-wind-badge{ position:absolute; bottom:10px; right:10px; z-index:1100; display:flex; align-items:center; gap:5px;
+    background:rgba(20,43,68,.82); color:#fff; border-radius:999px; padding:6px 11px 6px 8px; font-size:11px; font-weight:600; box-shadow:var(--shadow); pointer-events:none; }
+  .map-wind-badge svg{ width:14px; height:14px; flex:0 0 auto; }
+  /* "full screen" corner button, and the ✕ that closes full screen */
+  .map-expand-btn{ position:absolute; top:70px; right:10px; z-index:1100; width:34px; height:34px; border-radius:10px; border:none;
+    background:rgba(20,43,68,.82); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow); cursor:pointer; padding:0; }
+  .map-expand-btn svg{ width:17px; height:17px; }
+  .map-fs-close{ display:none; position:absolute; top:calc(10px + env(safe-area-inset-top)); right:10px; z-index:1300; width:42px; height:42px;
+    border-radius:50%; border:none; background:rgba(20,43,68,.9); color:#fff; align-items:center; justify-content:center; box-shadow:var(--shadow); cursor:pointer; padding:0; }
+  .map-fs-close svg{ width:18px; height:18px; }
+  /* full screen: the map's own box is pinned over the whole screen */
+  .map-fs{ position:fixed !important; inset:0; z-index:5000; background:var(--bg-sunk); margin:0; }
+  .map-fs .live-map{ height:100% !important; min-height:0 !important; margin:0; border:none; border-radius:0; box-shadow:none; }
+  .map-fs .map-fs-close{ display:flex; }
+  .map-fs .map-expand-btn{ display:none !important; }
+  .map-fs .map-stats-overlay{ top:calc(10px + env(safe-area-inset-top)); right:62px; }
+  .map-fs .map-replay-btn, .map-fs .map-style-toggle.left, .map-fs .map-wind-badge{ bottom:calc(14px + env(safe-area-inset-bottom)); }
+  .map-fs .map-style-menu.left{ bottom:calc(50px + env(safe-area-inset-bottom)); }
+  .map-fs .speed-legend{ position:absolute; z-index:1100; left:50%; transform:translateX(-50%); margin:0; white-space:nowrap;
+    bottom:calc(58px + env(safe-area-inset-bottom)); background:rgba(255,255,255,.92); color:var(--navy); border-radius:999px; padding:5px 12px; box-shadow:var(--shadow); }
+  .map-fs .ew-clock{ top:calc(10px + env(safe-area-inset-top)); }
+  body.map-fs-open{ overflow:hidden; }
+  /* .screen is its own layer (z-index:1), so lift the open screen above the bottom bar while a map is full screen */
+  body.map-fs-open .screen.active{ z-index:6000; animation:none; }
+  body.map-fs-open .bottombar-wrap{ display:none; }
+  #detailLeaflet{ cursor:pointer; }
+  .map-fs #detailLeaflet{ cursor:grab; }
+  /* Profile: "Everywhere I've sailed" */
+  .ew-map{ height:340px; min-height:0; }
+  .ew-clock{ position:absolute; top:10px; left:10px; z-index:1100; display:flex; align-items:center; gap:6px;
+    background:rgba(20,43,68,.85); color:#fff; border-radius:999px; padding:6px 12px 6px 10px; font-size:13px; font-weight:700;
+    font-variant-numeric:tabular-nums; box-shadow:var(--shadow); pointer-events:none; }
+  .ew-caption{ text-align:center; font-size:11.5px; color:var(--ink-muted); margin-top:2px; }
   /* Mapbox's logo + attribution sit bottom-left/right; keep them clear of our pills. */
   #liveTrackLeaflet .mapboxgl-ctrl-bottom-right{ margin-right:56px; }
   #detailLeaflet .mapboxgl-ctrl-bottom-left, #detailLeaflet .mapboxgl-ctrl-bottom-right{ margin-bottom:44px; }
@@ -1650,6 +1685,26 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
     <div class="section-divider pf"><span data-i18n="profile.lifetimeStats">Lifetime Stats</span></div>
     <div id="profileStats" class="profile-stats"></div>
 
+    <!-- 3b. Everywhere I've sailed (js/everywhere-map.js): all tracked sails replayed on one time-of-day clock -->
+    <div id="everywhereOuter" style="display:none;">
+      <div class="section-divider pf"><span data-i18n="profile.everywhere">Everywhere I've sailed</span></div>
+      <div class="map-fs-wrap" id="everywhereWrap" style="position:relative;">
+        <div class="live-map ew-map" id="everywhereMap"></div>
+        <div class="ew-clock" id="everywhereClock"></div>
+        <button type="button" class="map-replay-btn" id="everywherePlayBtn" style="display:none;" onclick="everywherePlay()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <span data-i18n="detail.replay">Replay</span>
+        </button>
+        <button type="button" class="map-expand-btn" style="top:10px;" onclick="openEverywhereFullscreen()" aria-label="Full screen" data-i18n-title="map.fullscreen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+        <button type="button" class="map-fs-close" onclick="closeMapFullscreen()" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="ew-caption" data-i18n="profile.everywhereHint">Every sail sets off at the time of day it really did.</div>
+    </div>
+
     <!-- 4. Friends: summary card, tap for the Friends screen (js/friends.js) -->
     <div class="section-divider pf"><span data-i18n="friends.title">Friends</span></div>
     <div id="profileFriends"></div>
@@ -2416,6 +2471,8 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
 <script src="js/state-core.js"></script>
 <script src="js/journey.js"></script>
 <script src="js/history-maps.js"></script>
+<script src="js/map-wind.js"></script>
+<script src="js/everywhere-map.js"></script>
 <script src="js/sail-weather.js"></script>
 <script src="js/boats-crew.js"></script>
 <script src="js/noticeboard.js"></script>

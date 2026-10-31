@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '31.10.2026.1600';
+const APP_VERSION = '31.10.2026.1624';
 
 /* ============================================================
    CONFIRM DIALOG (shared across all screens)
@@ -417,6 +417,8 @@ function openSheet(id){
 let ignoreNextPopState = false;
 window.addEventListener('popstate', (event)=>{
   if(ignoreNextPopState){ ignoreNextPopState = false; return; }
+  // A full-screen map (history-maps.js) closes first, back to the page it was on.
+  if(typeof mapFs!=='undefined' && mapFs){ closeMapFullscreen(true); return; }
   // The photo viewer sits above everything (it can even be opened from a sheet), so it closes first.
   const lightboxEl = document.getElementById('photoLightbox');
   if(lightboxEl && lightboxEl.classList.contains('show')){ closeLightbox(true); return; }

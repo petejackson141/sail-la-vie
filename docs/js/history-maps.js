@@ -209,13 +209,14 @@ async function renderTripDetailMap(trip){
   if(!area) return; // navigated away before this finished loading
   if(detailMap){ try{ detailMap.remove(); }catch(e){} } // free the old map's memory before building a new one
   if(detailReplay && detailReplay.raf) cancelAnimationFrame(detailReplay.raf);
+  if(detailReplay && detailReplay.wind) detailReplay.wind.destroy();
   detailReplay = null;
-  detailMap = null; detailMapLocked = true; // fresh state per trip — rebuilt below if this trip has a GPS track
+  detailMap = null; // fresh state per trip — rebuilt below if this trip has a GPS track
 
   if(trip.path && trip.path.length>1){
     area.innerHTML = `
       <div class="stat-label" style="text-align:center;margin-top:16px;">${t('detail.track')}</div>
-      <div style="position:relative;">
+      <div class="map-fs-wrap" id="detailMapWrap" style="position:relative;">
         <div class="live-map" id="detailLeaflet" style="display:none;"></div>
         <div class="porthole" id="detailPorthole"></div>
         <div class="map-stats-overlay" id="detailMapStatsOverlay" style="display:none;">
@@ -232,10 +233,13 @@ async function renderTripDetailMap(trip){
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           <span>${t('detail.replay')}</span>
         </button>
-        <div class="map-lock-toggle" id="detailMapLockToggle" style="display:none;" onclick="toggleDetailMapLock()">
-          <svg id="detailMapLockIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-          <span id="detailMapLockLabel">${t('detail.locked')}</span>
-        </div>
+        <div class="map-wind-badge" id="detailWindBadge" style="display:none;"></div>
+        <button type="button" class="map-expand-btn" id="detailMapExpandBtn" style="display:none;" onclick="openDetailMapFullscreen()" title="${t('map.fullscreen')}" aria-label="${t('map.fullscreen')}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+        <button type="button" class="map-fs-close" onclick="closeMapFullscreen()" aria-label="${t('map.close')}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
       </div>
       <div class="speed-legend" id="detailSpeedLegend" style="display:none;"></div>
       <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:4px;">${portholeCoordsCaption(trip.path)}</div>`;
@@ -248,22 +252,26 @@ async function renderTripDetailMap(trip){
       document.getElementById('detailLeaflet').style.display='block';
       document.getElementById('detailPorthole').style.display='none';
       document.getElementById('detailMapStatsOverlay').style.display='flex';
-      // Starts fully non-interactive: this is a read-only history view (there's
-      // nothing here to edit), so a touch that lands on the map should keep
-      // scrolling the page, not pan the map out from under it. The lock pill
-      // (bottom-right) lets someone explicitly opt in to pan/zoom it.
+      // On the page the map doesn't move under your finger (a swipe keeps
+      // scrolling the page); tapping it opens it full screen, where pan and zoom
+      // work and the replay plays (31.10.2026 — replaces the lock/unlock pill).
+      // Its height follows the shape of the track, so a long north–south sail
+      // gets a tall map and an east–west one a shorter, wider one.
       const coords = trip.path.map(p=>[p.lng,p.lat]); // Mapbox wants [lng,lat] — the opposite order to Leaflet
       const bounds = coords.reduce((b,c)=>b.extend(c), new mapboxgl.LngLatBounds(coords[0], coords[0]));
       const startMs = replayClockMs(trip, null, 0);
+      const mapEl = document.getElementById('detailLeaflet');
+      mapEl.style.height = trackMapHeight(coords, mapEl.clientWidth || area.clientWidth || 360) + 'px';
+      mapEl.style.minHeight = '0';
       const map = createMapboxMap('detailLeaflet', {
-        bounds, fitBoundsOptions:{ padding:{top:80, bottom:50, left:30, right:30}, maxZoom:15 },
+        bounds, fitBoundsOptions:{ padding: DETAIL_MAP_PAD, maxZoom:15 },
         interactive:true,
         lightPreset: lightPresetFor(new Date(startMs), trip.path[0].lat, trip.path[0].lng)
       });
       DETAIL_MAP_HANDLERS.forEach(h=>{ if(map[h]) map[h].disable(); });
       // The replay (below) draws the line bit by bit, so the map is told to draw
       // whatever replay.drawn currently holds — starting with just the first point.
-      const replay = { map, coords, trip, times: replayTimeline(trip.path), drawn: [coords[0]], raf: null };
+      const replay = { map, coords, bounds, trip, times: replayTimeline(trip.path), drawn: [coords[0]], raf: null, wind: null };
       renderSpeedLegend('detailSpeedLegend', setTrackSpeeds(map, trip.path), appUnitSystem());
       map.on('style.load', ()=>addOurLayers(map, ()=>replay.drawn));
       map.on('error', (e)=>console.warn('[map] detail map error', e && e.error));
@@ -271,16 +279,25 @@ async function renderTripDetailMap(trip){
       replay.endDot = new mapboxgl.Marker({element: endpointDot('#D65A4A')}).setLngLat(coords[coords.length-1]);
       replay.boat = new mapboxgl.Marker({element: yachtMarkerEl(48)}).setLngLat(coords[0]).addTo(map);
       detailReplay = replay;
-      // Tapping the map skips straight to the end (only while it's playing).
-      map.getContainer().addEventListener('click', ()=>{ if(detailReplay===replay && replay.raf) finishTrackReplay(replay); });
+      // Tap on the page → full screen. Tap in full screen while it's playing → skip to the end.
+      map.on('click', ()=>{
+        if(detailReplay!==replay) return;
+        if(!mapFs) openDetailMapFullscreen();
+        else if(replay.raf) finishTrackReplay(replay);
+      });
+      // Animated wind (31.10.2026), from the sail's weather report
+      const windSeries = tripWindSeries(trip);
+      if(windSeries){
+        replay.wind = new MapWind(map, windSeries, 'detailWindBadge');
+        replay.wind.setTime(startMs);
+      }
       map.once('load', ()=>setTimeout(()=>{ if(detailReplay===replay) startTrackReplay(); }, 400));
       const styleToggle = document.getElementById('detailMapStyleToggle');
       if(styleToggle){ styleToggle.style.display = 'flex'; renderMapStyleMenu('detail'); }
       setTimeout(()=>map.resize(), 50);
       detailMap = map;
-      detailMapLocked = true;
-      const toggle = document.getElementById('detailMapLockToggle');
-      if(toggle) toggle.style.display = 'flex';
+      const expand = document.getElementById('detailMapExpandBtn');
+      if(expand) expand.style.display = 'flex';
     } else {
       document.getElementById('detailPorthole').innerHTML = buildPortholeSvg(trip.path, false, appUnitSystem());
     }
@@ -296,9 +313,70 @@ async function renderTripDetailMap(trip){
     // shown in the box just above anyway.
   }
 }
-let detailMap = null, detailMapLocked = true;
-// The touch/mouse handlers we switch off while the history map is "locked".
+let detailMap = null;
+// The touch/mouse handlers that are off on the page and on in full screen.
 const DETAIL_MAP_HANDLERS = ['dragPan','scrollZoom','boxZoom','keyboard','doubleClickZoom','touchZoomRotate'];
+const DETAIL_MAP_PAD    = { top:80,  bottom:50, left:30, right:30 };   // room for the numbers bar and the pills
+const DETAIL_MAP_PAD_FS = { top:100, bottom:110, left:40, right:40 };  // full screen (+ the speed key at the bottom)
+
+// Map height (px) that fits the track's shape at this width (31.10.2026).
+// Works out how tall the track is compared with how wide, in the map's own
+// projection (Web Mercator), then adds the padding. Kept between 260 px and
+// about two thirds of the screen.
+function trackMapHeight(coords, width){
+  const mercY = lat=>{ const s = Math.sin(lat*Math.PI/180); return Math.log((1+s)/(1-s))/(4*Math.PI); };
+  let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+  coords.forEach(([lng,lat])=>{ const x=lng/360, y=mercY(lat); if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; });
+  const w = maxX-minX, h = maxY-minY;
+  const innerW = width - DETAIL_MAP_PAD.left - DETAIL_MAP_PAD.right;
+  const aspect = w > 1e-9 ? h/w : 1.4;
+  const max = Math.min(560, Math.round((window.innerHeight||800)*0.66));
+  return Math.round(Math.max(260, Math.min(max, innerW*aspect + DETAIL_MAP_PAD.top + DETAIL_MAP_PAD.bottom)));
+}
+
+/* ---------- full-screen map (31.10.2026) ----------
+   Tapping a map on the page opens it full screen: the map's own box is
+   pinned over the whole screen (no second map is built, so it costs no extra
+   Mapbox load), pan/zoom are switched on, and it's refitted to the track.
+   The ✕ button, the phone's Back button or a back swipe close it again.
+   Used by the saved-sail map and the Profile "Everywhere I've sailed" map.
+   opts: { refit(fs), onEnter(), onExit() } */
+let mapFs = null;
+function openMapFullscreen(wrap, map, opts){
+  if(mapFs || !wrap || !map) return;
+  opts = opts || {};
+  mapFs = { wrap, map, opts };
+  wrap.classList.add('map-fs');
+  document.body.classList.add('map-fs-open');
+  DETAIL_MAP_HANDLERS.forEach(h=>{ if(map[h]) map[h].enable(); });
+  try{ history.pushState({type:'mapfs'}, ''); }catch(e){}
+  setTimeout(()=>{ map.resize(); if(opts.refit) opts.refit(true); if(opts.onEnter) opts.onEnter(); }, 60);
+}
+// fromPop = closed by Back (the history entry is already gone)
+function closeMapFullscreen(fromPop){
+  if(!mapFs) return;
+  const { wrap, map, opts } = mapFs;
+  mapFs = null;
+  wrap.classList.remove('map-fs');
+  document.body.classList.remove('map-fs-open');
+  DETAIL_MAP_HANDLERS.forEach(h=>{ if(map[h]) map[h].disable(); });
+  document.querySelectorAll('.map-style-menu').forEach(m=>m.classList.remove('open'));
+  if(opts.onExit) opts.onExit();
+  setTimeout(()=>{ map.resize(); if(opts.refit) opts.refit(false); }, 60);
+  if(!fromPop){ ignoreNextPopState = true; history.back(); }
+}
+function openDetailMapFullscreen(){
+  const r = detailReplay;
+  if(!r || detailMap!==r.map) return;
+  const wrap = document.getElementById('detailMapWrap');
+  const legend = document.getElementById('detailSpeedLegend');
+  openMapFullscreen(wrap, r.map, {
+    refit: (fs)=> r.map.fitBounds(r.bounds, { padding: fs ? DETAIL_MAP_PAD_FS : DETAIL_MAP_PAD, maxZoom:15, duration:0 }),
+    // the speed key moves onto the map while it's full screen, and back under it after
+    onEnter: ()=>{ if(legend) wrap.appendChild(legend); startTrackReplay(); },
+    onExit:  ()=>{ if(legend) wrap.after(legend); }
+  });
+}
 /* ---------- end-of-sail replay ----------
    The yacht sails along the saved track and the line draws in behind it, ending at
    the finish. Always takes REPLAY_MS no matter how long the sail was; within that,
@@ -344,6 +422,7 @@ function startTrackReplay(){
   if(r.raf) cancelAnimationFrame(r.raf);
   r.endDot.remove();
   replayLightAt(r, 0);
+  if(r.wind) r.wind.setTime(replayClockMs(r.trip, r.times, 0));
   const btn = document.getElementById('detailMapReplayBtn');
   if(btn) btn.style.display = 'none';
   let idx = 0; // segment we're currently on — only ever moves forward, so no searching needed
@@ -360,6 +439,7 @@ function startTrackReplay(){
     const k = span>0 ? (f - r.times[idx]) / span : 1;
     const pos = [a[0] + (b[0]-a[0])*k, a[1] + (b[1]-a[1])*k];
     r.drawn = r.coords.slice(0, idx+1).concat([pos]);
+    if(r.wind){ const a0 = replayClockMs(r.trip, r.times, idx), a1 = replayClockMs(r.trip, r.times, idx+1); r.wind.setTime(a0 + (a1-a0)*k); }
     // The boat moves every frame, but the line is only redrawn ~10 times a second:
     // redrawing it 60 times a second overloaded slower tablets (blank, flickering
     // map and no line until the end — seen 30.10.2026).
@@ -375,6 +455,7 @@ function finishTrackReplay(r){
   r.drawn = r.coords;
   setTrackCoords(r.map, r.drawn);
   replayLightAt(r, r.coords.length-1); // finish on the lighting at the end of the sail
+  if(r.wind) r.wind.setTime(replayClockMs(r.trip, r.times, r.coords.length-1));
   r.endDot.addTo(r.map);
   r.boat.setLngLat(r.coords[r.coords.length-1]);
   const btn = document.getElementById('detailMapReplayBtn');
@@ -563,6 +644,9 @@ const SPEED_COLORS = ['#2F6FDB','#1FB5C9','#5DBE4E','#F2C14E','#E04B3A']; // slo
 const SPEED_SMOOTH_POINTS = 5;    // average each point's speed over this many points
 const SPEED_MIN_RANGE_KT = 1;     // never stretch the colours over less than 1 kt (a steady sail stays mostly one colour)
 const SPEED_MAX_STOPS = 250;      // colour changes per line — plenty for the eye, light for the phone
+// On/off switch for the speed colours (31.10.2026), in the map's style menu.
+// Off = the plain line (navy by day, gold at night). Remembered on this phone.
+let trackSpeedColors = (()=>{ try{ return localStorage.getItem('trackSpeedColors') !== '0'; }catch(e){ return true; } })();
 
 // Speed in knots at each point of `path` ({lat,lng,t} list), or null if the
 // points have no timestamps.
@@ -617,7 +701,7 @@ function setTrackSpeeds(map, path){
 // GPS points plus where the boat is now), so its colours are the first ones too.
 function applySpeedGradient(map, coords){
   if(!map || !map.getLayer || !map.getLayer('track-line')) return;
-  const sp = map._speed;
+  const sp = trackSpeedColors ? map._speed : null;
   if(!sp || coords.length<2){ map.setPaintProperty('track-line','line-gradient', null); return; }
   // How far along the drawn line (0 → 1) each point sits.
   const dist = [0];
@@ -643,7 +727,7 @@ function applySpeedGradient(map, coords){
 function renderSpeedLegend(elId, sp, sys){
   const el = document.getElementById(elId);
   if(!el) return;
-  if(!sp){ el.style.display='none'; return; }
+  if(!sp || !trackSpeedColors){ el.style.display='none'; return; }
   el.style.display='flex';
   el.innerHTML = `<span>${t('map.slow')} ${fmtSpeed(sp.range.lo, sys)}</span>`
     + `<span class="speed-legend-bar" style="background:linear-gradient(90deg,${SPEED_COLORS.join(',')})"></span>`
@@ -654,7 +738,12 @@ function renderMapStyleMenu(which){
   if(!menu) return;
   menu.innerHTML = Object.keys(MAP_STYLES).map(id=>
     `<div class="map-style-opt${id===currentMapStyle?' active':''}" onclick="selectMapStyle('${which}','${id}')">${t(MAP_STYLES[id].labelKey)}</div>`
-  ).join('');
+  ).join('')
+    // on/off switches under the styles (31.10.2026): speed colours on every map,
+    // wind on the saved-sail map (it needs the sail's weather report)
+    + `<div class="map-style-sep"></div>`
+    + `<div class="map-style-opt map-opt-switch${trackSpeedColors?' on':''}" onclick="toggleTrackSpeedColors()"><span class="map-switch"></span>${t('map.speedColours')}</div>`
+    + (which==='detail' && detailReplay && detailReplay.wind ? `<div class="map-style-opt map-opt-switch${mapWindOn?' on':''}" onclick="toggleMapWind()"><span class="map-switch"></span>${t('map.wind')}</div>` : '');
   const label = document.getElementById(which==='live' ? 'liveMapStyleLabel' : 'detailMapStyleLabel');
   if(label) label.textContent = t(MAP_STYLES[currentMapStyle].labelKey);
 }
@@ -684,6 +773,20 @@ function selectMapStyle(which, id){
   const liveLabel = document.getElementById('liveMapStyleLabel'); if(liveLabel) liveLabel.textContent = t(MAP_STYLES[id].labelKey);
   const detailLabel = document.getElementById('detailMapStyleLabel'); if(detailLabel) detailLabel.textContent = t(MAP_STYLES[id].labelKey);
 }
+// Speed colours on/off: repaint whichever maps are open and redraw the menus.
+function toggleTrackSpeedColors(){
+  trackSpeedColors = !trackSpeedColors;
+  try{ localStorage.setItem('trackSpeedColors', trackSpeedColors ? '1' : '0'); }catch(e){}
+  if(liveMap){
+    setTrackCoords(liveMap, liveMapCoords);
+    renderSpeedLegend('liveSpeedLegend', liveMap._speed, typeof activeUnitSystem!=='undefined' ? activeUnitSystem : appUnitSystem());
+  }
+  if(detailMap && detailReplay){
+    setTrackCoords(detailMap, detailReplay.drawn);
+    renderSpeedLegend('detailSpeedLegend', detailMap._speed, appUnitSystem());
+  }
+  ['live','detail'].forEach(w=>{ const m = document.getElementById(w==='live' ? 'liveMapStyleMenu' : 'detailMapStyleMenu'); if(m && m.classList.contains('open')) renderMapStyleMenu(w); });
+}
 // Closes an open style menu on any outside tap, same pattern as sheets/dropdowns elsewhere.
 document.addEventListener('click', (e)=>{
   if(e.target.closest('.map-style-toggle') || e.target.closest('.map-style-menu')) return;
@@ -691,25 +794,6 @@ document.addEventListener('click', (e)=>{
 });
 
 
-// Flips the read-only history map between "locked" (page scroll wins, map
-// ignores touches) and "unlocked" (map handles its own pan/zoom) — see the
-// dragging:false etc. set when the map is first created above.
-function toggleDetailMapLock(){
-  if(!detailMap) return;
-  detailMapLocked = !detailMapLocked;
-  DETAIL_MAP_HANDLERS.forEach(h=>{
-    if(!detailMap[h]) return;
-    detailMapLocked ? detailMap[h].disable() : detailMap[h].enable();
-  });
-  const toggle = document.getElementById('detailMapLockToggle');
-  const icon = document.getElementById('detailMapLockIcon');
-  const label = document.getElementById('detailMapLockLabel');
-  if(toggle) toggle.classList.toggle('unlocked', !detailMapLocked);
-  if(label) label.textContent = detailMapLocked ? t('detail.locked') : t('detail.unlocked');
-  if(icon) icon.innerHTML = detailMapLocked
-    ? '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'
-    : '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-1"/>';
-}
 // Draws the little circular "porthole" track map — an abstract line drawing
 // scaled to fit the path's own bounding box, NOT a real map (no coastline/
 // tiles — this app works fully offline, see the conversation history for why).
