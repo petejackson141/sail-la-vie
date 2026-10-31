@@ -274,7 +274,7 @@ function wxSummarise(samples, departure){
     windRange: `${Math.round(wxSpdVal(low.wind))}–${wxSpd(peak.wind)}`,
     maxGust: maxGust!=null ? wxSpd(maxGust) : '—',
     shift: bigShift ? `${wxCompass(first.dir)} → ${wxCompass(last.dir)}` : t('wx.steadyDir', {dir:wxCompass(first.dir)}),
-    pressure: presDiff==null ? '—' : (Math.abs(presDiff)<1.5 ? '→ ' : presDiff<0 ? '↘ ' : '↗ ') + (presDiff>0?'+':'') + Math.round(presDiff) + ' hPa',
+    pressure: presDiff==null ? '—' : (Math.abs(presDiff)<1.5 ? '→ ' + t('wx.steady') : (presDiff<0 ? '↘ ' : '↗ ') + (presDiff>0?'+':'') + Math.round(presDiff) + ' hPa'),
     waves: waves.length ? Math.max(...waves).toFixed(1)+' m' : '—',
     temp: temps.length ? `${Math.round(Math.min(...temps))}–${Math.round(Math.max(...temps))}°C` : '—',
   };
