@@ -40,7 +40,7 @@ function renderHistory(){
               ${trip.place ? `<div class="trip-cover-place">📍 ${escapeHtml(trip.place)}</div>` : ''}
             </div>
           </div>`
-        : `<div class="trip-cover placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18l9-15 9 15z"/></svg></div>`}
+        : `<div class="trip-cover placeholder" data-thumb="${safeId(trip.id)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18l9-15 9 15z"/></svg></div>`}
       <div class="trip-body">
         <div class="trip-title">${escapeHtml(trip.title)}</div>
         <div class="trip-meta">${trip.coverPhoto ? '' : `<span>📅 ${dateStr}</span>`}${trip.place && !trip.coverPhoto ? `<span>📍 ${escapeHtml(trip.place)}</span>` : ''}<span>⏱ ${dur}</span></div>
@@ -48,7 +48,98 @@ function renderHistory(){
       </div>
     </div>`;
   }).join('');
+  watchHistoryThumbs(el);
 }
+/* ---------- map thumbnails on History cards (31.10.2026) ----------
+   A sail with no cover photo shows a small map instead of the grey box.
+   What goes in it, in this order:
+     1. its track (GPS-recorded or an imported GPX) on a real Mapbox map
+     2. the map picture uploaded with the sail
+     3. otherwise the grey box stays
+   The Mapbox picture is fetched once per sail at card size, shrunk to a
+   small JPEG and kept on the phone ("thumb:<id>"), so History stays quick
+   and works offline afterwards. It's fetched again only if the sail's track
+   or the map style changes. With no signal and nothing saved yet, the track
+   is drawn as a simple line on a sea-blue background instead.
+   Cards are only filled as they scroll near the screen, so a long History
+   doesn't ask for every map at once. */
+const THUMB_W = 400, THUMB_H = 150;
+let thumbObserver = null;
+function watchHistoryThumbs(listEl){
+  const slots = [...listEl.querySelectorAll('[data-thumb]')];
+  if(thumbObserver) thumbObserver.disconnect();
+  if(!slots.length) return;
+  if(!('IntersectionObserver' in window)){ slots.forEach(fillHistoryThumb); return; }
+  thumbObserver = new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting){ thumbObserver.unobserve(e.target); fillHistoryThumb(e.target); } });
+  }, { rootMargin:'300px 0px' });
+  slots.forEach(s=>thumbObserver.observe(s));
+}
+async function fillHistoryThumb(slot){
+  const id = slot.dataset.thumb;
+  const trip = await storeGet('trip:'+id);
+  if(!trip || !slot.isConnected) return;
+  let src = null;
+  try{
+    if(trip.path && trip.path.length > 1) src = await historyTrackThumb(trip);
+    else if(trip.mapImage) src = (typeof isPhotoRef==='function' && isPhotoRef(trip.mapImage)) ? await photoToDataUrl(trip.mapImage) : trip.mapImage;
+  }catch(e){ console.warn('[thumb]', id, e); }
+  if(!src || !safeSrc(src) || !slot.isConnected) return; // safeSrc: only picture data / our own storage, never anything else
+  const img = document.createElement('img');
+  img.className = 'trip-cover trip-thumb'; img.alt = ''; img.src = src;  // set directly (not as HTML), so no escaping needed
+  slot.replaceWith(img);
+}
+async function historyTrackThumb(trip){
+  const style = (typeof tpStaticStyle==='function') ? tpStaticStyle() : 'standard';
+  const key = [trip.updatedAt || trip.date, trip.path.length, style].join('|');
+  const cached = await storeGet('thumb:'+trip.id);
+  if(cached && cached.v === key && cached.src) return cached.src;
+  if(navigator.onLine && typeof MAPBOX_TOKEN!=='undefined' && typeof tpStaticMapUrl==='function'){
+    const pal = { track:'#16324F', start:'#2E8B57', end:'#DE4457' };
+    let data = await thumbFetchJpeg(tpStaticMapUrl(trip.path, style, pal, THUMB_W, THUMB_H));
+    if(!data && style==='standard') data = await thumbFetchJpeg(tpStaticMapUrl(trip.path, 'streets-v12', pal, THUMB_W, THUMB_H));
+    if(data){
+      // only kept when the phone's proper storage is in use (not the small fallback)
+      if(typeof storageTier==='undefined' || storageTier==='idb') storeSet('thumb:'+trip.id, { v:key, src:data });
+      return data;
+    }
+  }
+  return historyTrackSvg(trip.path);                     // offline and nothing saved yet: a plain line drawing
+}
+// Mapbox picture → small JPEG data (about 40 KB instead of ~250 KB)
+async function thumbFetchJpeg(url){
+  try{
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    const blobUrl = URL.createObjectURL(await res.blob());
+    const img = await new Promise((ok, bad)=>{ const im = new Image(); im.onload = ()=>ok(im); im.onerror = bad; im.src = blobUrl; });
+    const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    c.getContext('2d').drawImage(img, 0, 0);
+    URL.revokeObjectURL(blobUrl);
+    return c.toDataURL('image/jpeg', 0.8);
+  }catch(e){ return null; }
+}
+// No map available: the track as a navy line on sea blue, fitted to the card
+function historyTrackSvg(path){
+  const mercY = lat=>{ const s = Math.sin(lat*Math.PI/180); return -Math.log((1+s)/(1-s))/(4*Math.PI); };
+  const xs = path.map(p=>p.lng/360), ys = path.map(p=>mercY(p.lat));
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const pad = 18, w = THUMB_W, h = THUMB_H;
+  const sc = Math.min((w-2*pad)/Math.max(maxX-minX, 1e-9), (h-2*pad)/Math.max(maxY-minY, 1e-9));
+  const ox = (w - (maxX-minX)*sc)/2, oy = (h - (maxY-minY)*sc)/2;
+  const step = Math.max(1, Math.ceil(path.length/200));
+  const pts = path.map((_,i)=>i).filter(i=> i%step===0 || i===path.length-1)
+    .map(i=>`${(ox + (xs[i]-minX)*sc).toFixed(1)},${(oy + (ys[i]-minY)*sc).toFixed(1)}`);
+  const [sx, sy] = pts[0].split(','), [ex, ey] = pts[pts.length-1].split(',');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice">`
+    + `<rect width="${w}" height="${h}" fill="#CFE6EE"/>`
+    + `<polyline points="${pts.join(' ')}" fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>`
+    + `<polyline points="${pts.join(' ')}" fill="none" stroke="#16324F" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>`
+    + `<circle cx="${sx}" cy="${sy}" r="5" fill="#2E8B57" stroke="#fff" stroke-width="2"/>`
+    + `<circle cx="${ex}" cy="${ey}" r="5" fill="#DE4457" stroke="#fff" stroke-width="2"/></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
 function fmtDuration(secs){
   secs = secs||0;
   const h = Math.floor(secs/3600), m = Math.floor((secs%3600)/60);
@@ -1069,6 +1160,7 @@ async function deleteTripPrompt(){
 // Removes a sail everywhere: this device, the cloud, and its photos in cloud storage.
 async function deleteTripById(deletedId){
   await storeDelete('trip:'+deletedId);
+  storeDelete('thumb:'+deletedId); // its History map thumbnail, if one was saved
   state.tripIndex = state.tripIndex.filter(t=>t.id!==deletedId);
   await storeSet(KEYS.INDEX, state.tripIndex);
   showToast(t('toast.tripDeleted'));
