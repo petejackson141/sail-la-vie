@@ -226,7 +226,7 @@ async function renderTripDetailMap(trip){
         </div>
         <div class="map-style-toggle left" id="detailMapStyleToggle" style="display:none;" onclick="toggleMapStyleMenu('detail')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
-          <span id="detailMapStyleLabel">Minimal</span>
+          <span id="detailMapStyleLabel">${t('map.settings')}</span>
         </div>
         <div class="map-style-menu left" id="detailMapStyleMenu"></div>
         <button type="button" class="map-replay-btn" id="detailMapReplayBtn" style="display:none;" onclick="startTrackReplay()">
@@ -500,8 +500,10 @@ const TRACK_COLOR = '#16324F';
 // New storage key, so everyone (including you) lands on the new Standard look once,
 // instead of staying on whatever they'd picked for the old CARTO maps.
 // Anyone who hasn't picked a style yet gets Auto.
-let currentMapStyle = localStorage.getItem('mapStyleV2') || 'auto';
-if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'auto';
+// Default changed to Colorful (31.10.2026): new key mapStyleV3, so everyone,
+// including phones that already had Auto saved, starts on Colorful once.
+let currentMapStyle = (()=>{ try{ return localStorage.getItem('mapStyleV3'); }catch(e){ return null; } })() || 'voyager';
+if(!MAP_STYLES[currentMapStyle]) currentMapStyle = 'voyager';
 
 // Extra options for a style: Standard's day/night lighting is a setting on the style,
 // not a separate style, so Dark passes it in here.
@@ -646,7 +648,8 @@ const SPEED_MIN_RANGE_KT = 1;     // never stretch the colours over less than 1 
 const SPEED_MAX_STOPS = 250;      // colour changes per line — plenty for the eye, light for the phone
 // On/off switch for the speed colours (31.10.2026), in the map's style menu.
 // Off = the plain line (navy by day, gold at night). Remembered on this phone.
-let trackSpeedColors = (()=>{ try{ return localStorage.getItem('trackSpeedColors') !== '0'; }catch(e){ return true; } })();
+// Off until switched on (31.10.2026 — new key, so everyone starts from the new default once).
+let trackSpeedColors = (()=>{ try{ return localStorage.getItem('trackSpeedColorsV2') === '1'; }catch(e){ return false; } })();
 
 // Speed in knots at each point of `path` ({lat,lng,t} list), or null if the
 // points have no timestamps.
@@ -736,7 +739,7 @@ function renderSpeedLegend(elId, sp, sys){
 function renderMapStyleMenu(which){
   const menu = document.getElementById(which==='live' ? 'liveMapStyleMenu' : 'detailMapStyleMenu');
   if(!menu) return;
-  menu.innerHTML = Object.keys(MAP_STYLES).map(id=>
+  menu.innerHTML = `<div class="map-menu-head">${t('map.style')}</div>` + Object.keys(MAP_STYLES).map(id=>
     `<div class="map-style-opt${id===currentMapStyle?' active':''}" onclick="selectMapStyle('${which}','${id}')">${t(MAP_STYLES[id].labelKey)}</div>`
   ).join('')
     // on/off switches under the styles (31.10.2026): speed colours on every map,
@@ -744,8 +747,9 @@ function renderMapStyleMenu(which){
     + `<div class="map-style-sep"></div>`
     + `<div class="map-style-opt map-opt-switch${trackSpeedColors?' on':''}" onclick="toggleTrackSpeedColors()"><span class="map-switch"></span>${t('map.speedColours')}</div>`
     + (which==='detail' && detailReplay && detailReplay.wind ? `<div class="map-style-opt map-opt-switch${mapWindOn?' on':''}" onclick="toggleMapWind()"><span class="map-switch"></span>${t('map.wind')}</div>` : '');
+  // the pill always says "Settings" (31.10.2026 — showing the style name, e.g. "Auto", was misleading)
   const label = document.getElementById(which==='live' ? 'liveMapStyleLabel' : 'detailMapStyleLabel');
-  if(label) label.textContent = t(MAP_STYLES[currentMapStyle].labelKey);
+  if(label) label.textContent = t('map.settings');
 }
 function toggleMapStyleMenu(which){
   const menu = document.getElementById(which==='live' ? 'liveMapStyleMenu' : 'detailMapStyleMenu');
@@ -761,7 +765,7 @@ function toggleMapStyleMenu(which){
 function selectMapStyle(which, id){
   if(!MAP_STYLES[id]) return;
   currentMapStyle = id;
-  try { localStorage.setItem('mapStyleV2', id); } catch(e){}
+  try { localStorage.setItem('mapStyleV3', id); } catch(e){}
   // diff:false forces a clean reload, which guarantees 'style.load' fires and our
   // track gets re-added (a "diff" update can quietly drop our layers without firing it).
   [liveMap, detailMap].forEach(m=>{
@@ -770,13 +774,13 @@ function selectMapStyle(which, id){
     m.setStyle(MAP_STYLES[id].url, Object.assign({diff:false}, styleOptions(id, m._autoPreset)));
   });
   document.querySelectorAll('.map-style-menu').forEach(m=>m.classList.remove('open'));
-  const liveLabel = document.getElementById('liveMapStyleLabel'); if(liveLabel) liveLabel.textContent = t(MAP_STYLES[id].labelKey);
-  const detailLabel = document.getElementById('detailMapStyleLabel'); if(detailLabel) detailLabel.textContent = t(MAP_STYLES[id].labelKey);
+  const liveLabel = document.getElementById('liveMapStyleLabel'); if(liveLabel) liveLabel.textContent = t('map.settings');
+  const detailLabel = document.getElementById('detailMapStyleLabel'); if(detailLabel) detailLabel.textContent = t('map.settings');
 }
 // Speed colours on/off: repaint whichever maps are open and redraw the menus.
 function toggleTrackSpeedColors(){
   trackSpeedColors = !trackSpeedColors;
-  try{ localStorage.setItem('trackSpeedColors', trackSpeedColors ? '1' : '0'); }catch(e){}
+  try{ localStorage.setItem('trackSpeedColorsV2', trackSpeedColors ? '1' : '0'); }catch(e){}
   if(liveMap){
     setTrackCoords(liveMap, liveMapCoords);
     renderSpeedLegend('liveSpeedLegend', liveMap._speed, typeof activeUnitSystem!=='undefined' ? activeUnitSystem : appUnitSystem());

@@ -38,7 +38,8 @@ async function renderEverywhereMap(){
       const sails = [];
       for(const tr of idx){
         const trip = await storeGet('trip:' + tr.id);
-        if(trip && trip.path && trip.path.length > 1) sails.push(ewPrepareSail(trip));
+        const s = trip && ewPrepareSail(trip);
+        if(s) sails.push(s);
       }
       if(!sails.length){ outer.style.display = 'none'; return; }
       ewSig = sig; ewSails = sails;
@@ -51,18 +52,25 @@ async function renderEverywhereMap(){
 
 // One sail → what the replay needs: its points, and for each point how many
 // minutes after the start it was reached; plus the start as minutes after
-// midnight (phone's own time zone).
+// midnight (phone's own time zone). Returns null for sails that aren't a real
+// moving track (31.10.2026): only tracks where every point has its own time
+// (recorded by GPS, or an imported GPX with times) and that last at least
+// 3 minutes. Hand-drawn or time-less tracks would only appear in one go as a
+// still picture, so they're left off this map.
+const EW_MIN_MINUTES = 3;
+const EW_STALE_GAP_MS = 20*60000; // a lone fix 20+ min before/after the rest is an old GPS position, not the sail
 function ewPrepareSail(trip){
-  const step = Math.max(1, Math.ceil(trip.path.length / EW_MAX_POINTS));
-  const path = trip.path.filter((p,i)=> i % step === 0 || i === trip.path.length-1);
-  const hasTimes = path.every(p=>typeof p.t === 'number');
-  const startMs = hasTimes ? path[0].t : (Date.parse(trip.date) || 0);
-  let mins;
-  if(hasTimes) mins = path.map(p=>(p.t - startMs)/60000);
-  else {
-    const frac = replayTimeline(path), dur = (trip.elapsedSeconds || 3600)/60; // no timestamps: spread over the logged duration
-    mins = frac.map(f=>f*dur);
-  }
+  if(!trip || !trip.path || trip.path.length < 2) return null;
+  let pts = trip.path.filter(p=>p && typeof p.t === 'number' && isFinite(p.lat) && isFinite(p.lng));
+  if(pts.length < trip.path.length || pts.length < 2) return null;
+  pts = pts.slice().sort((a,b)=>a.t - b.t);
+  while(pts.length > 2 && pts[1].t - pts[0].t > EW_STALE_GAP_MS) pts.shift();
+  while(pts.length > 2 && pts[pts.length-1].t - pts[pts.length-2].t > EW_STALE_GAP_MS) pts.pop();
+  if((pts[pts.length-1].t - pts[0].t)/60000 < EW_MIN_MINUTES) return null;
+  const step = Math.max(1, Math.ceil(pts.length / EW_MAX_POINTS));
+  const path = pts.filter((p,i)=> i % step === 0 || i === pts.length-1);
+  const startMs = path[0].t;
+  const mins = path.map(p=>(p.t - startMs)/60000);
   const d = new Date(startMs);
   return {
     id: trip.id,
@@ -178,13 +186,16 @@ function everywherePlay(){
   ewStop();
   ewPlayed = true;
   const btn = document.getElementById('everywherePlayBtn'); if(btn) btn.style.display = 'none';
+  const src0 = ewMap.getSource('ew'); if(src0) src0.setData(ewGeo(ewSails.from)); // clear the lines from last time
   ewSails.forEach(s=>{ if(s.marker){ s.marker.remove(); s.marker = null; } });
   const t0 = performance.now(), from = ewSails.from, to = ewSails.to;
   let lastDraw = 0;
   const frame = (now)=>{
     if(!ewMap) return;
+    // Profile closed → stop (plays again next time). Not offsetParent: that is
+    // also empty while the map is full screen, which froze it there (31.10.2026).
     const wrap = document.getElementById('everywhereWrap');
-    if(!wrap || !wrap.offsetParent){ ewStop(); ewPlayed = false; return; } // Profile closed — plays again next time
+    if(!wrap || !wrap.getClientRects().length){ ewStop(); ewPlayed = false; return; }
     const f = Math.min(1, (now - t0)/EW_PLAY_MS);
     const clock = from + (to - from)*f;
     ewSetPreset(ewPresetAt(clock));
@@ -207,7 +218,11 @@ function everywherePlay(){
   };
   ewRaf = requestAnimationFrame(frame);
 }
-function ewStop(){ if(ewRaf) cancelAnimationFrame(ewRaf); ewRaf = null; }
+// Stops the day; the Replay button comes back so it can always be run again.
+function ewStop(){
+  if(ewRaf) cancelAnimationFrame(ewRaf); ewRaf = null;
+  const btn = document.getElementById('everywherePlayBtn'); if(btn && ewMap) btn.style.display = 'flex';
+}
 
 function openEverywhereFullscreen(){
   if(!ewMap) return;

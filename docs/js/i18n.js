@@ -234,6 +234,8 @@ const TRANSLATIONS = {
   'map.slow': 'Slow',
   'map.fast': 'Fast',
   'map.speedColours': 'Speed colours',
+  'map.settings': 'Settings',
+  'map.style': 'Map style',
   'map.wind': 'Wind',
   'map.fullscreen': 'Full screen',
   'map.close': 'Close',

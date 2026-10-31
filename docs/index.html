@@ -635,6 +635,7 @@
   /* ---------- map extras (31.10.2026) ---------- */
   /* on/off switches at the bottom of the map style menu */
   .map-style-sep{ height:1px; background:var(--border); margin:5px 4px; }
+  .map-menu-head{ padding:6px 10px 4px; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-muted); }
   .map-opt-switch{ display:flex; align-items:center; gap:8px; }
   .map-switch{ width:28px; height:16px; border-radius:999px; background:var(--border); position:relative; flex:0 0 auto; transition:background .15s; }
   .map-switch::after{ content:''; position:absolute; top:2px; left:2px; width:12px; height:12px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.3); transition:left .15s; }
@@ -1362,7 +1363,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
           <div class="live-map" id="liveTrackLeaflet" style="display:none;"></div>
           <div class="map-style-toggle" id="liveMapStyleToggle" style="display:none;" onclick="toggleMapStyleMenu('live')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
-            <span id="liveMapStyleLabel">Minimal</span>
+            <span id="liveMapStyleLabel">Settings</span>
           </div>
           <div class="map-style-menu" id="liveMapStyleMenu"></div>
           <button type="button" class="map-recenter-btn" id="liveMapRecenterBtn" onclick="recenterLiveMap()" aria-label="Re-center on boat">

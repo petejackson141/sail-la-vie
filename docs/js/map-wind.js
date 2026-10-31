@@ -16,7 +16,8 @@
 //
 // Switched on/off in the map's style menu ("Wind"); remembered on this phone.
 
-let mapWindOn = (()=>{ try{ return localStorage.getItem('mapWind') !== '0'; }catch(e){ return true; } })();
+// Off until switched on (31.10.2026 — new key, so everyone starts from the new default once)
+let mapWindOn = (()=>{ try{ return localStorage.getItem('mapWindV2') === '1'; }catch(e){ return false; } })();
 
 const WIND_COMPASS_DEG = { N:0, NE:45, E:90, SE:135, S:180, SW:225, W:270, NW:315 };
 
@@ -108,7 +109,7 @@ class MapWind {
       if(this.dead) return;
       this.raf = requestAnimationFrame(tick);
       if(!this.canvas.isConnected){ this.destroy(); return; }
-      if(!this.canvas.offsetParent) return;           // screen not showing — skip drawing
+      if(!this.canvas.getClientRects().length) return; // screen not showing — skip drawing (works in full screen too)
       this.frame();
     };
     this.raf = requestAnimationFrame(tick);
@@ -152,7 +153,7 @@ class MapWind {
 // Wind on/off from the map's style menu
 function toggleMapWind(){
   mapWindOn = !mapWindOn;
-  try{ localStorage.setItem('mapWind', mapWindOn ? '1' : '0'); }catch(e){}
+  try{ localStorage.setItem('mapWindV2', mapWindOn ? '1' : '0'); }catch(e){}
   if(typeof detailReplay!=='undefined' && detailReplay && detailReplay.wind) detailReplay.wind.apply();
   const m = document.getElementById('detailMapStyleMenu');
   if(m && m.classList.contains('open')) renderMapStyleMenu('detail');
