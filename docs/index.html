@@ -635,6 +635,12 @@
   /* ---------- map extras (31.10.2026) ---------- */
   /* on/off switches at the bottom of the map style menu */
   .map-style-sep{ height:1px; background:var(--border); margin:5px 4px; }
+  .track-icon-grid{ display:grid; grid-template-columns:repeat(5, 1fr); gap:4px; padding:2px 4px 4px; }
+  .track-icon-opt{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:5px 2px; border-radius:8px; cursor:pointer;
+    font-size:9.5px; font-weight:600; color:var(--ink-muted); text-align:center; line-height:1.15; }
+  .track-icon-opt img{ width:28px; height:28px; display:block; }
+  .track-icon-opt.active{ background:var(--navy-soft); color:var(--navy); }
+  .map-style-menu{ max-height:70vh; overflow-y:auto; min-width:236px; }
   .map-menu-head{ padding:6px 10px 4px; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-muted); }
   .map-opt-switch{ display:flex; align-items:center; gap:8px; }
   .map-switch{ width:28px; height:16px; border-radius:999px; background:var(--border); position:relative; flex:0 0 auto; transition:background .15s; }
@@ -2484,6 +2490,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
 <script src="js/journey.js"></script>
 <script src="js/history-maps.js"></script>
 <script src="js/map-wind.js"></script>
+<script src="js/track-icons.js"></script>
 <script src="js/everywhere-map.js"></script>
 <script src="js/sail-weather.js"></script>
 <script src="js/boats-crew.js"></script>

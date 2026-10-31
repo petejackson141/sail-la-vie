@@ -152,12 +152,12 @@ function ewGeo(clock){
 // Where sail s is `local` minutes after its start: the points so far + the boat's position
 function ewTip(s, local){
   const m = s.mins, n = m.length;
-  if(local >= m[n-1]) return { drawn: s.coords, pos: s.coords[n-1], done: true };
+  if(local >= m[n-1]) return { drawn: s.coords, pos: s.coords[n-1], done: true, dir: null };
   let i = 0; while(i < n-2 && m[i+1] <= local) i++;
   const span = m[i+1] - m[i], k = span > 0 ? Math.min(1, Math.max(0, (local - m[i])/span)) : 1;
   const a = s.coords[i], b = s.coords[i+1];
   const pos = [a[0] + (b[0]-a[0])*k, a[1] + (b[1]-a[1])*k];
-  return { drawn: s.coords.slice(0, i+1).concat([pos]), pos, done: false };
+  return { drawn: s.coords.slice(0, i+1).concat([pos]), pos, done: false, dir: trackIconBearing(a, b) };
 }
 
 // Lighting at clock minute `clock`: today's date at that time of day, where the sails are
@@ -208,6 +208,7 @@ function everywherePlay(){
       if(tip.done){ if(s.marker){ s.marker.remove(); s.marker = null; } continue; }
       if(!s.marker) s.marker = new mapboxgl.Marker({ element: yachtMarkerEl(30) }).setLngLat(tip.pos).addTo(ewMap);
       else s.marker.setLngLat(tip.pos);
+      trackIconTurn(s.marker.getElement(), tip.dir);
     }
     if(now - lastDraw > 100 || f >= 1){
       const src = ewMap.getSource('ew'); if(src) src.setData(ewGeo(clock));

@@ -906,10 +906,12 @@ function onFix(pos){
 // sailing-appropriate ceiling: 30kt comfortably covers even a foiling dinghy
 // or fast catamaran while still catching genuine GPS jump glitches, which
 // the old car-tuned 100kt ceiling let straight through.
-const MAX_PLAUSIBLE_SPEED_KT = 30;
+// Since 31.10.2026 the ceiling follows the chosen map icon (track-icons.js):
+// 60 kt for the motorboat, 30 kt for sailboat, kayak, surfboard and arrow.
+// See maxPlausibleSpeedKt().
 // Actually commits a fix to the trip: sanity-checks it against the previous
 // accepted point and only THEN adds it to the path. A fix implying an
-// impossible speed (see MAX_PLAUSIBLE_SPEED_KT above) is almost certainly a
+// impossible speed (see maxPlausibleSpeedKt(), track-icons.js) is almost certainly a
 // glitch, not real movement — but a plain "reject and wait" isn't enough on
 // its own: the longer fixes keep getting rejected, the more elapsed time
 // stacks up against that same stale last-good point, and distance÷time
@@ -940,7 +942,7 @@ function acceptFix(point){
   const dtHours = (point.t - prev.t)/3600000;
   const instSpeed = dtHours>0 ? segNm/dtHours : Infinity;
 
-  if(instSpeed < MAX_PLAUSIBLE_SPEED_KT && !pendingJumpCandidate){
+  if(instSpeed < maxPlausibleSpeedKt() && !pendingJumpCandidate){
     commitFix(point, true);
     return;
   }
@@ -949,7 +951,7 @@ function acceptFix(point){
     const confirmNm = haversineNm(pendingJumpCandidate, point);
     const confirmDtHours = (point.t - pendingJumpCandidate.t)/3600000;
     const confirmSpeed = confirmDtHours>0 ? confirmNm/confirmDtHours : Infinity;
-    if(confirmSpeed < MAX_PLAUSIBLE_SPEED_KT/4){ // much stricter — this is checking that TWO consecutive fixes agree with each other, not just against a stale anchor
+    if(confirmSpeed < maxPlausibleSpeedKt()/4){ // much stricter — this is checking that TWO consecutive fixes agree with each other, not just against a stale anchor
       pendingJumpCandidate = null;
       commitFix(point, false); // confirmed relocation, but skip stats — the true path across the disputed gap is unknown
       return;
