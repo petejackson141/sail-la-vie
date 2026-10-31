@@ -241,7 +241,7 @@ const TRANSLATIONS = {
   'icon.sail': 'Sailboat',
   'icon.motor': 'Motorboat',
   'icon.kayak': 'Kayak',
-  'icon.surf': 'Surfboard',
+  'icon.windsurf': 'Windsurfer',
   'map.wind': 'Wind',
   'map.fullscreen': 'Full screen',
   'map.close': 'Close',

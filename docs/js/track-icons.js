@@ -4,16 +4,16 @@
 // map: the live recording map, a saved sail's replay and "Everywhere I've sailed".
 //
 // Two kinds of icon:
-//   • "side" (sailboat, motorboat) — drawn side-on facing right; flipped to
+//   • "side" (sailboat, motorboat, windsurfer) — drawn side-on facing right; flipped to
 //     face left when heading west, so it's never upside down.
-//   • "turn" (arrow, kayak, surfboard) — drawn from above pointing up (north);
+//   • "turn" (arrow, kayak) — drawn from above pointing up (north);
 //     turned to point exactly where the boat is going.
 // All drawn in the same style as the original sailboat: thick dark outline,
 // coral and cream.
 //
 // The icon also sets the GPS jump filter while recording (journey.js): a fix
-// implying more than maxKt is treated as a GPS glitch. 30 kt suits sailing,
-// paddling and surfing; a motorboat can genuinely go faster, so 60 kt.
+// implying more than maxKt is treated as a GPS glitch. 30 kt suits sailing
+// and paddling; a motorboat or a windsurfer can genuinely go faster, so 60 kt.
 
 const TI_INK = '#1E1E1E', TI_CORAL = '#EF5A63', TI_CREAM = '#F6E3C9';
 const tiSvg = body => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
@@ -36,13 +36,18 @@ const TRACK_ICONS = {
                 <ellipse cx="53" cy="44" rx="3.5" ry="6.5" transform="rotate(-62 53 44)" fill="${TI_CREAM}" stroke="${TI_INK}" stroke-width="2"/>
                 <path d="M32 2 C41 16 41 48 32 62 C23 48 23 16 32 2 Z" fill="${TI_CORAL}" stroke="${TI_INK}" stroke-width="3" stroke-linejoin="round"/>
                 <ellipse cx="32" cy="34" rx="4.5" ry="8" fill="${TI_INK}"/>`) },
-  surf:  { label:'icon.surf', kind:'turn', scale:0.85, maxKt:30,
-    src: tiSvg(`<path d="M32 3 C43 15 43 45 37 60 H27 C21 45 21 15 32 3 Z" fill="${TI_CREAM}" stroke="${TI_INK}" stroke-width="3" stroke-linejoin="round"/>
-                <path d="M32 10 V54" stroke="${TI_CORAL}" stroke-width="4" stroke-linecap="round"/>
-                <path d="M29.5 53 L32 60 L34.5 53" fill="${TI_INK}"/>`) }
+  // windsurfer (31.10.2026, replaced the plain surfboard): side-on, facing right —
+  // mast at the front, sail swept back, sailor holding the boom
+  windsurf: { label:'icon.windsurf', kind:'side', scale:0.9, maxKt:60,
+    src: tiSvg(`<path d="M5 51 H54 L61 47.5 L57 56 H9 Z" fill="${TI_CREAM}" stroke="${TI_INK}" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M37 50 L34 5 Q13 20 15 42 Z" fill="${TI_CORAL}" stroke="${TI_INK}" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M34 30 L17 35" stroke="${TI_INK}" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="21" cy="20" r="3.6" fill="${TI_INK}"/>
+                <path d="M21 24 L23.5 39 M23.5 39 L19 50 M23.5 39 L28 50 M21.5 28 L31 31" stroke="${TI_INK}" stroke-width="3" stroke-linecap="round" fill="none"/>`) }
 };
 // Default: the arrow. New phones start on it; the choice is kept after that.
 let currentTrackIcon = (()=>{ try{ return localStorage.getItem('trackIconV1'); }catch(e){ return null; } })() || 'arrow';
+if(currentTrackIcon === 'surf') currentTrackIcon = 'windsurf'; // the surfboard became the windsurfer (31.10.2026)
 if(!TRACK_ICONS[currentTrackIcon]) currentTrackIcon = 'arrow';
 
 // GPS jump filter ceiling for the chosen icon (used by journey.js)

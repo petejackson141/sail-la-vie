@@ -907,7 +907,7 @@ function onFix(pos){
 // or fast catamaran while still catching genuine GPS jump glitches, which
 // the old car-tuned 100kt ceiling let straight through.
 // Since 31.10.2026 the ceiling follows the chosen map icon (track-icons.js):
-// 60 kt for the motorboat, 30 kt for sailboat, kayak, surfboard and arrow.
+// 60 kt for the motorboat and windsurfer, 30 kt for sailboat, kayak and arrow.
 // See maxPlausibleSpeedKt().
 // Actually commits a fix to the trip: sanity-checks it against the previous
 // accepted point and only THEN adds it to the path. A fix implying an
