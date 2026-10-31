@@ -150,11 +150,54 @@ class MapWind {
   }
 }
 
-// Wind on/off from the map's style menu
+// Wind on/off from the map's style menu (saved-sail map and live map)
 function toggleMapWind(){
   mapWindOn = !mapWindOn;
   try{ localStorage.setItem('mapWindV2', mapWindOn ? '1' : '0'); }catch(e){}
   if(typeof detailReplay!=='undefined' && detailReplay && detailReplay.wind) detailReplay.wind.apply();
-  const m = document.getElementById('detailMapStyleMenu');
-  if(m && m.classList.contains('open')) renderMapStyleMenu('detail');
+  if(liveWind) liveWind.apply();
+  if(mapWindOn) liveWindFetch();          // live map: get a fresh reading straight away
+  ['detail','live'].forEach(w=>{ const m = document.getElementById(w+'MapStyleMenu'); if(m && m.classList.contains('open')) renderMapStyleMenu(w); });
+}
+
+/* ---------- wind on the LIVE map, while recording (31.10.2026) ----------
+   Starts from the departure weather filled in at Cast Off, then, while Wind is
+   switched on and there's signal, asks Open-Meteo (the same free service as the
+   weather reports) for the wind where the boat is now, every 30 minutes. That's
+   about 2 small requests an hour — and none at all while Wind is off. */
+const LIVE_WIND_EVERY_MS = 30*60000;
+let liveWind = null, liveWindSeries = [], liveWindTimer = null, liveWindLast = 0;
+function startLiveWind(){
+  stopLiveWind();
+  liveWindSeries = [];
+  const w = (typeof currentTrip!=='undefined' && currentTrip && currentTrip.weather) || null;
+  if(w && w.windSpeed!=null && w.windSpeed!=='' && WIND_COMPASS_DEG[w.windDir]!=null)
+    liveWindSeries.push({ t: Date.now(), kt: Number(w.windSpeed)||0, dir: WIND_COMPASS_DEG[w.windDir] });
+  if(liveWindSeries.length) liveWindAttach();
+  liveWindTimer = setInterval(liveWindFetch, 60000);   // checks each minute; fetches only when 30 min have passed
+  setTimeout(liveWindFetch, 4000);                     // and once soon after the map opens
+}
+function liveWindAttach(){
+  if(liveWind || typeof liveMap==='undefined' || !liveMap) return;
+  liveWind = new MapWind(liveMap, liveWindSeries, 'liveWindBadge');
+  liveWind.setTime(Date.now());
+}
+async function liveWindFetch(){
+  if(!mapWindOn || !navigator.onLine || !liveMap || !liveLastLatLng) return;
+  if(Date.now() - liveWindLast < LIVE_WIND_EVERY_MS) return;
+  liveWindLast = Date.now();
+  const [lng, lat] = liveLastLatLng;
+  try{
+    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=kn`, {cache:'no-store'});
+    if(!r.ok) return;
+    const j = await r.json(), c = j && j.current;
+    if(!c || c.wind_speed_10m==null || c.wind_direction_10m==null) return;
+    liveWindSeries.push({ t: Date.now(), kt: Number(c.wind_speed_10m)||0, dir: Number(c.wind_direction_10m)||0 });
+    if(!liveWind) liveWindAttach(); else liveWind.setTime(Date.now());
+  }catch(e){ liveWindLast = 0; } // no signal after all — try again next minute
+}
+function stopLiveWind(){
+  if(liveWindTimer){ clearInterval(liveWindTimer); liveWindTimer = null; }
+  if(liveWind){ liveWind.destroy(); liveWind = null; }
+  liveWindLast = 0;
 }

@@ -677,7 +677,11 @@
     font-variant-numeric:tabular-nums; box-shadow:var(--shadow); pointer-events:none; }
   .ew-caption{ text-align:center; font-size:11.5px; color:var(--ink-muted); margin-top:2px; }
   /* Mapbox's logo + attribution sit bottom-left/right; keep them clear of our pills. */
-  #liveTrackLeaflet .mapboxgl-ctrl-bottom-right{ margin-right:56px; }
+  #liveTrackLeaflet .mapboxgl-ctrl-bottom-left, #liveTrackLeaflet .mapboxgl-ctrl-bottom-right{ margin-bottom:44px; }
+  /* live map (31.10.2026): the re-center button sits above the wind badge */
+  #liveMapWrap .map-recenter-btn{ bottom:50px; }
+  .map-fs #liveMapRecenterBtn{ bottom:calc(100px + env(safe-area-inset-bottom)); }
+  #liveTrackLeaflet{ cursor:pointer; }
   #detailLeaflet .mapboxgl-ctrl-bottom-left, #detailLeaflet .mapboxgl-ctrl-bottom-right{ margin-bottom:44px; }
 
   /* ---------- list rows (boats/crew) ---------- */
@@ -1359,15 +1363,22 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
       <div class="stat-label" style="text-align:center;margin-top:16px;" data-i18n="active.liveTrack">Live Track</div>
       <div id="liveTrackWrap">
         <div class="map-mode-badge offline" id="liveMapModeBadge"><span class="dot"></span><span id="liveMapModeText" data-i18n="active.checkingConnection">Checking connection…</span></div>
-        <div style="position:relative;">
+        <div class="map-fs-wrap" id="liveMapWrap" style="position:relative;">
           <div class="live-map" id="liveTrackLeaflet" style="display:none;"></div>
-          <div class="map-style-toggle" id="liveMapStyleToggle" style="display:none;" onclick="toggleMapStyleMenu('live')">
+          <div class="map-style-toggle left" id="liveMapStyleToggle" style="display:none;" onclick="toggleMapStyleMenu('live')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
             <span id="liveMapStyleLabel">Settings</span>
           </div>
-          <div class="map-style-menu" id="liveMapStyleMenu"></div>
+          <div class="map-style-menu left" id="liveMapStyleMenu"></div>
           <button type="button" class="map-recenter-btn" id="liveMapRecenterBtn" onclick="recenterLiveMap()" aria-label="Re-center on boat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          </button>
+          <div class="map-wind-badge" id="liveWindBadge" style="display:none;"></div>
+          <button type="button" class="map-expand-btn" id="liveMapExpandBtn" style="display:none;top:10px;" onclick="openLiveMapFullscreen()" aria-label="Full screen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          </button>
+          <button type="button" class="map-fs-close" onclick="closeMapFullscreen()" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
         </div>
         <div class="speed-legend" id="liveSpeedLegend" style="display:none;"></div>

@@ -837,7 +837,7 @@ function renderMapStyleMenu(which){
     // wind on the saved-sail map (it needs the sail's weather report)
     + `<div class="map-style-sep"></div>`
     + `<div class="map-style-opt map-opt-switch${trackSpeedColors?' on':''}" onclick="toggleTrackSpeedColors()"><span class="map-switch"></span>${t('map.speedColours')}</div>`
-    + (which==='detail' && detailReplay && detailReplay.wind ? `<div class="map-style-opt map-opt-switch${mapWindOn?' on':''}" onclick="toggleMapWind()"><span class="map-switch"></span>${t('map.wind')}</div>` : '');
+    + ((which==='live' || (detailReplay && detailReplay.wind)) ? `<div class="map-style-opt map-opt-switch${mapWindOn?' on':''}" onclick="toggleMapWind()"><span class="map-switch"></span>${t('map.wind')}</div>` : '');
   // the pill always says "Settings" (31.10.2026 — showing the style name, e.g. "Auto", was misleading)
   const label = document.getElementById(which==='live' ? 'liveMapStyleLabel' : 'detailMapStyleLabel');
   if(label) label.textContent = t('map.settings');
@@ -975,8 +975,29 @@ function initLiveMap(){
   // pinch apart from our auto-follow. Only theirs pauses auto-follow.
   liveMap.on('dragstart', (e)=>{ if(e.originalEvent) pauseLiveFollow(); });
   liveMap.on('zoomstart', (e)=>{ if(e.originalEvent) pauseLiveFollow(); });
+  // Locked on the page (31.10.2026), like a saved sail's map: a finger on it
+  // scrolls the page instead of moving the map, and the map follows the boat
+  // and zooms to the track by itself. Tap it for full screen, where you can
+  // pan and zoom (the re-center button then brings it back to the boat).
+  DETAIL_MAP_HANDLERS.forEach(h=>{ if(liveMap[h]) liveMap[h].disable(); });
+  liveMap.on('click', ()=>{ if(!mapFs) openLiveMapFullscreen(); });
   const toggle = document.getElementById('liveMapStyleToggle');
   if(toggle){ toggle.style.display = 'flex'; renderMapStyleMenu('live'); }
+  const expand = document.getElementById('liveMapExpandBtn');
+  if(expand) expand.style.display = 'flex';
+  startLiveWind();
+}
+function openLiveMapFullscreen(){
+  if(!liveMap) return;
+  const wrap = document.getElementById('liveMapWrap');
+  const legend = document.getElementById('liveSpeedLegend');
+  const map = liveMap;
+  openMapFullscreen(wrap, map, {
+    refit: ()=>{ if(liveMapFollowing && liveLastLatLng) map.jumpTo({ center: liveLastLatLng, zoom: Math.max(map.getZoom(), 14) }); },
+    onEnter: ()=>{ if(legend) wrap.appendChild(legend); },
+    // back on the page: the map can't be moved there, so it goes back to following the boat
+    onExit: ()=>{ if(legend) wrap.after(legend); setTimeout(recenterLiveMap, 120); }
+  });
 }
 function pauseLiveFollow(){
   liveMapFollowing = false;
@@ -1042,6 +1063,7 @@ async function refreshLiveMapMode(){
 }
 function startLiveConnCheck(){
   // Fresh map instance per journey, so the previous sail's line/position never carry over.
+  stopLiveWind();
   if(liveMap){ liveMap.remove(); liveMap=null; }
   liveMapCoords = []; liveLastLatLng = null;
   renderSpeedLegend('liveSpeedLegend', null); // new sail: no speeds yet
@@ -1051,6 +1073,7 @@ function startLiveConnCheck(){
 }
 function stopLiveConnCheck(){
   if(liveConnCheckInterval){ clearInterval(liveConnCheckInterval); liveConnCheckInterval=null; }
+  stopLiveWind();
 }
 
 function buildPortholeSvg(path, live, sys, boxW, boxH){
