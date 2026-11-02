@@ -140,6 +140,24 @@ create table if not exists public.sail_shares (       -- "send a sail to a frien
   constraint sail_shares_not_self check (sender_id <> recipient_id)
 );
 
+create table if not exists public.error_reports (     -- crash / error reporting (js/error-report.js), added 02.11.2026
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid default auth.uid() references auth.users(id) on delete cascade,
+  created_at   timestamptz not null default now(),
+  happened_at  timestamptz,
+  kind         text not null default 'error'
+               constraint error_reports_kind_check check (kind in ('error', 'promise', 'logged')),
+  message      text not null
+               constraint error_reports_message_check check (char_length(message) between 1 and 1000),
+  source       text  constraint error_reports_source_check check (source is null or char_length(source) <= 300),
+  stack        text  constraint error_reports_stack_check  check (stack  is null or char_length(stack)  <= 4000),
+  screen       text  constraint error_reports_screen_check check (screen is null or char_length(screen) <= 60),
+  app_version  text  constraint error_reports_version_check check (app_version is null or char_length(app_version) <= 40),
+  platform     text  constraint error_reports_platform_check check (platform is null or char_length(platform) <= 20),
+  device       text  constraint error_reports_device_check check (device is null or char_length(device) <= 200),
+  repeats      integer not null default 1 check (repeats between 1 and 1000)
+);
+
 -- indexes: let the database find "this user's rows" quickly
 create index if not exists trips_user_id_idx             on public.trips (user_id);
 create index if not exists boats_user_id_idx             on public.boats (user_id);
@@ -149,6 +167,8 @@ create index if not exists friendships_requester_id_idx  on public.friendships (
 create index if not exists friendships_addressee_id_idx  on public.friendships (addressee_id);
 create index if not exists sail_shares_recipient_idx     on public.sail_shares (recipient_id);
 create index if not exists sail_shares_sender_idx        on public.sail_shares (sender_id);
+create index if not exists error_reports_created_idx     on public.error_reports (created_at desc);
+create index if not exists error_reports_user_id_idx     on public.error_reports (user_id);
 
 
 -- ---------------------------------------------------------------------
@@ -169,7 +189,8 @@ create index if not exists sail_shares_sender_idx        on public.sail_shares (
 -- Frankfurt project 28.10.2026: REFERENCES, TRIGGER, TRUNCATE), then give
 -- back exactly what the app needs
 revoke all on public.profiles, public.public_profiles, public.boats, public.crew,
-              public.trips, public.noticeboard, public.friendships, public.feedback, public.sail_shares
+              public.trips, public.noticeboard, public.friendships, public.feedback, public.sail_shares,
+              public.error_reports
   from anon, authenticated;
 
 grant select, insert, update         on public.profiles        to authenticated;
@@ -181,9 +202,11 @@ grant select, insert, update, delete on public.noticeboard     to authenticated;
 grant select, insert, delete         on public.friendships     to authenticated;  -- accepting goes through accept_friend_request()
 grant insert                         on public.feedback        to authenticated;  -- send only, never read back
 grant select, insert, delete         on public.sail_shares     to authenticated;  -- added 30.10.2026
+grant insert                         on public.error_reports   to authenticated;  -- send only, never read back (02.11.2026)
 
 grant all on public.profiles, public.public_profiles, public.boats, public.crew,
-             public.trips, public.noticeboard, public.friendships, public.feedback, public.sail_shares
+             public.trips, public.noticeboard, public.friendships, public.feedback, public.sail_shares,
+             public.error_reports
   to service_role;
 
 
@@ -457,6 +480,26 @@ drop policy if exists "Remove a sent sail" on public.sail_shares;
 create policy "Remove a sent sail" on public.sail_shares
   for delete to authenticated using (auth.uid() = sender_id or auth.uid() = recipient_id);
 
+-- error_reports: you can send your own, nobody can read them back through the app (02.11.2026)
+alter table public.error_reports enable row level security;
+drop policy if exists "Users can send their own error reports" on public.error_reports;
+create policy "Users can send their own error reports" on public.error_reports
+  for insert to authenticated with check (user_id = auth.uid());
+
+-- keep only the last 90 days of error reports: every new report removes anything older
+create or replace function private.trim_old_error_reports()
+returns trigger language plpgsql security definer set search_path = ''
+as $$
+begin
+  delete from public.error_reports where created_at < now() - interval '90 days';
+  return null;
+end;
+$$;
+revoke all on function private.trim_old_error_reports() from public, anon, authenticated;
+drop trigger if exists error_reports_trim on public.error_reports;
+create trigger error_reports_trim after insert on public.error_reports
+  for each statement execute function private.trim_old_error_reports();
+
 
 -- ---------------------------------------------------------------------
 -- 4. PHOTO STORAGE
@@ -510,8 +553,8 @@ end $$;
 
 -- ---------------------------------------------------------------------
 -- 6. CHECK
---    Should list 9 tables, all with rls_enabled = true, and app_access
---    showing the actions from section 1b (feedback = INSERT only).
+--    Should list 10 tables, all with rls_enabled = true, and app_access
+--    showing the actions from section 1b (feedback and error_reports = INSERT only).
 -- ---------------------------------------------------------------------
 select c.relname as table_name,
        c.relrowsecurity as rls_enabled,

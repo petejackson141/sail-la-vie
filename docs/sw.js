@@ -39,7 +39,7 @@
   sees it. Supabase (and any other live API traffic) is now explicitly
   excluded from caching entirely, further down.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v71';
+const CACHE_NAME = 'sail-la-vie-shell-v72';
 
 const APP_SHELL = [
   './',
@@ -50,6 +50,7 @@ const APP_SHELL = [
   './images/icon-512-maskable.png',
   './images/Logo.png',
   './js/vendor-supabase.js',
+  './js/error-report.js',
   './js/i18n.js',
   './js/auth.js',
   './js/storage.js',
