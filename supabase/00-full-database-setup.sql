@@ -303,7 +303,24 @@ begin
 end;
 $$;
 
+-- Friends search: a full email address finds that sailor's public card (exact
+-- match only; the email itself is never returned). Added 02.11.2026 (find-by-email.sql).
+create or replace function public.find_sailor_by_email(p_email text)
+returns table (user_id uuid, username text, display_name text, avatar_url text)
+language sql stable security definer set search_path = ''
+as $$
+  select p.user_id, p.username, p.display_name, p.avatar_url
+  from public.public_profiles p
+  join auth.users u on u.id = p.user_id
+  where auth.uid() is not null
+    and u.id <> auth.uid()
+    and lower(u.email) = lower(trim(p_email))
+  limit 1;
+$$;
+
 -- who may call what
+revoke all on function public.find_sailor_by_email(text)    from public, anon;
+grant execute on function public.find_sailor_by_email(text)  to authenticated;
 revoke all on function private.are_friends(uuid, uuid)      from public, anon;
 revoke all on function private.can_view_trip_photo(text)    from public, anon;
 revoke all on function private.handle_new_user()            from public, anon, authenticated;

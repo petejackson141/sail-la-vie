@@ -29,8 +29,10 @@ They're kept as a record of what was changed and why.
 | `profile-photos.sql` | Lets friends see profile and cover photos in photo storage (20 October 2026) |
 | `sail-shares.sql` | "Send to a friend's app": the `sail_shares` table, its rules, and letting the friend copy that sail's photos (30 October 2026) — **run this once on the live Frankfurt project** |
 
+| `find-by-email.sql` | Friends search by full email address: the `find_sailor_by_email` function (2 November 2026) — **run this once on the live Frankfurt project** |
+
 ## Expected Security Advisor warnings (all fine)
 
-- `accept_friend_request`, `delete_my_account`: signed-in users must be able to
-  call these (the Accept and Delete account buttons).
+- `accept_friend_request`, `delete_my_account`, `find_sailor_by_email`: signed-in
+  users must be able to call these (the Accept, Delete account and Friends search).
 - Leaked password protection: Supabase Pro plan only.

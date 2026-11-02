@@ -23,7 +23,7 @@
 // card (i.e. has chosen a username) — at the bottom of the Friends screen and as a
 // sideways-scrolling row on the Profile screen — so testers can find each other
 // without knowing usernames. Set it to false before a wider release.
-const SHOW_ALL_SAILORS_FOR_TESTING = true;
+const SHOW_ALL_SAILORS_FOR_TESTING = false; // switched off 02.11.2026 for the Google Play release: find friends by username, name or email
 
 // SAFETY NET for live updates. Friend requests normally arrive instantly through
 // Supabase Realtime (the friends channel in auth.js). If that ever misses one —
@@ -54,11 +54,12 @@ Object.assign(TRANSLATIONS.en, {
   'ugate.ph': 'e.g. Pete Jackson',
   'ugate.rules': '3–20 characters. Letters, numbers and spaces are fine.',
   'ugate.save': 'Save and continue',
-  'ugate.public': 'During testing, your username, name and profile photo can be seen by everyone using Sail la Vie. Your sails stay private unless you share them with friends.',
+  'ugate.public': 'Your username, name and profile photo let other sailors find you and add you as a friend. Your sails stay private unless you share them with friends.',
   'ugate.signOut': 'Sign out',
   'friends.taken': 'That username is already taken.',
   'friends.saved': 'Username saved ⚓',
-  'friends.searchPh': 'Find sailors by username or name…',
+  'friends.searchPh': 'Find sailors by username, name or email…',
+  'friends.emailNotFound': 'No sailor with that email. Check it, or ask them for their username.',
   'friends.searchHint': 'Type at least 2 letters.',
   'friends.noResults': 'No sailors found.',
   'friends.requests': 'Friend requests',
@@ -140,11 +141,11 @@ Object.assign(TRANSLATIONS.he, {
   'ugate.ph': 'לדוגמה: דני כהן',
   'ugate.rules': '3–20 תווים. אותיות, מספרים ורווחים.',
   'ugate.save': 'שמירה והמשך',
-  'ugate.public': 'בתקופת הניסיון, שם המשתמש, השם ותמונת הפרופיל שלכם גלויים לכל משתמשי Sail la Vie. ההפלגות שלכם נשארות פרטיות אלא אם תשתפו אותן עם חברים.',
+  'ugate.public': 'שם המשתמש, השם ותמונת הפרופיל שלכם מאפשרים לשייטים אחרים למצוא אתכם ולהוסיף אתכם כחברים. ההפלגות שלכם נשארות פרטיות אלא אם תשתפו אותן עם חברים.',
   'ugate.signOut': 'התנתקות',
   'friends.taken': 'שם המשתמש הזה כבר תפוס.',
   'friends.saved': 'שם המשתמש נשמר ⚓',
-  'friends.searchPh': 'חיפוש שייטים לפי שם משתמש או שם…',
+  'friends.searchPh': 'חיפוש שייטים לפי שם משתמש, שם או אימייל…',
   'friends.searchHint': 'הקלידו לפחות 2 אותיות.',
   'friends.noResults': 'לא נמצאו שייטים.',
   'friends.requests': 'בקשות חברות',
@@ -491,6 +492,22 @@ async function runFriendSearch(){
   if(!box || !input || !state.user) return;
   const q = input.value.trim().replace(/^@/, '');
   if(q.length < 2){ _friendSearchResults = null; box.innerHTML = q.length ? `<div class="fr-hint">${t('friends.searchHint')}</div>` : ''; return; }
+  // A full email address: look it up exactly (find_sailor_by_email, supabase/find-by-email.sql).
+  // Emails stay private — only an exact match returns that sailor's public card, never the email.
+  if(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(q)){
+    try{
+      const { data, error } = await getSupabaseClient().rpc('find_sailor_by_email', { p_email: q });
+      if(error) throw error;
+      if(input.value.trim().replace(/^@/, '') !== q) return;
+      _friendSearchResults = data || [];
+      if(!_friendSearchResults.length){ box.innerHTML = `<div class="fr-hint">${t('friends.emailNotFound')}</div>`; return; }
+      rerenderFriendSearch();
+    }catch(e){
+      console.error('email search failed', e);
+      box.innerHTML = `<div class="fr-hint">${t('friends.actionFailed')}</div>`;
+    }
+    return;
+  }
   const like = '%' + q.replace(/[\\%_]/g, m=>'\\'+m) + '%'; // treat _ and % as plain characters
   const sb = getSupabaseClient();
   const cols = 'user_id,username,display_name,avatar_url';
