@@ -208,16 +208,17 @@ function showInfoPage(kind){
     html = `
       <h3>Maps</h3>
       <ul>
-        <li>Map data © OpenStreetMap contributors (ODbL)</li>
-        <li>Map tiles © CARTO</li>
+        <li>Maps © Mapbox</li>
+        <li>Map data and place names © OpenStreetMap contributors (ODbL)</li>
         <li>Sea marks © OpenSeaMap</li>
       </ul>
       <h3>Weather</h3>
-      <ul><li>Weather and marine data by Open-Meteo.com (CC BY 4.0)</li></ul>
-      <h3>Open-source software</h3>
+      <ul><li>Weather, marine and place data by Open-Meteo.com (CC BY 4.0)</li></ul>
+      <h3>Software</h3>
       <ul>
-        <li>Leaflet (BSD-2-Clause)</li>
+        <li>Mapbox GL JS (Mapbox Terms of Service)</li>
         <li>Capacitor (MIT)</li>
+        <li>mp4-muxer (MIT)</li>
         <li>Supabase JavaScript client (MIT)</li>
         <li>jsPDF (MIT)</li>
         <li>html2canvas (MIT)</li>
