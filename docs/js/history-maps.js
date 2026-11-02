@@ -573,11 +573,15 @@ function endpointDot(color){
      nautical ("Nautical") → Mapbox Outdoors + OpenSeaMap sea marks (buoys, lights) on top.
 
    MAPBOX_TOKEN is a PUBLIC token (starts with pk.) — it's designed to sit in app
-   code like this, so it's fine in the GitHub repo. Before real release, add URL
-   restrictions to it in your Mapbox account so nobody else can use it.
+   code like this, so it's fine in the GitHub repo.
+   Since 02.11.2026 this is the "Sail la Vie app" token, locked (URL restrictions)
+   to petejackson141.github.io (web version) and https://localhost (the Android app),
+   so it only works from those. The old unrestricted default token stays alive until
+   every Android tester has an APK with this one, then it can be deleted in Mapbox.
+   A future iPhone app will need capacitor://localhost added to the token.
    Free tier: 50,000 map loads/month; one "load" = one map being created, no matter
    how much you zoom or pan it afterwards. */
-const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2FpbGFwcDE0MSIsImEiOiJjbXZrczUxb28wZW9nMndzOXo2eW5vZjhzIn0.dTms--Rqu3jbnotppYIDaQ';
+const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2FpbGFwcDE0MSIsImEiOiJjbXZ6MWR5aDkwaW15MnhzOXB6eWczdm9hIn0.SgOxdTBxf-UyGWaQmYtfcA';
 const MAP_STYLES = {
   // "Auto" (30.10.2026): the same Mapbox Standard map, but its lighting follows the
   // sun where the boat is — day, dawn, dusk or night. Live: the time right now.
