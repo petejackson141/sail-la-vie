@@ -257,7 +257,7 @@ async function openTripDetail(id, from, friendView){
 
     <div id="detailMapArea"></div>
 
-    <div class="section-title">${wxHasTrack(trip) ? t('wx.departureTitle') : t('detail.weather')}</div>
+    <div class="section-title">${wxCanReport(trip) ? t('wx.departureTitle') : t('detail.weather')}</div>
     <div class="card" style="padding:16px;">
       <div class="trip-meta">
         <span>${trip.weather?.sky?`${skyIcon(trip.weather.sky)} ${escapeHtml(skyLabel(trip.weather.sky))}`:''}</span>

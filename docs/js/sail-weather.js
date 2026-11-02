@@ -44,6 +44,82 @@ window.addEventListener('load', ()=> setTimeout(processWeatherPending, 5000)); /
 
 // Called from finalizeSaveTrip() for a newly recorded (GPS) sail.
 function wxHasTrack(trip){ return !!(trip && trip.path && trip.path.length>1 && trip.path[0].t); }
+
+/* ---------- manually logged sails (02.11.2026) ----------
+   Every sail can now get the same report, whatever it has to go on:
+     'track'       — GPS points with times (recorded, or an imported GPX with times)
+     'spreadTrack' — an imported GPX without times: the points are spread evenly
+                     over the logged start time and duration, so it still follows the route
+     'place'       — no track: the Place name is looked up on the map and the
+                     weather is taken there, hour by hour over the logged duration
+     'needPlace'   — no track and no Place name: the sailor is asked to add one
+   (null = nothing to go on, e.g. no date.) */
+Object.assign(TRANSLATIONS.en, {
+  'wx.olderSailPlace': 'Get a report of the wind, waves and pressure at {place} during this sail.',
+  'wx.fetchingPlace': 'Getting the weather at {place}…',
+  'wx.needPlace': 'Add the place you sailed from (tap Edit, then Place) and the weather for this sail will be added automatically.',
+  'wx.placeNotFound': 'We couldn\'t find "{place}" on the map. Try a fuller name, e.g. "Herzliya Marina, Israel" (tap Edit, then Place).',
+  'wx.sourcePlace': 'Reported conditions from weather-model data at {place} over the time of your sail (Open-Meteo). Local gusts and sea breezes may differ from what you saw on the water.',
+  'wx.hourlyPlace': 'Hourly readings during the sail',
+  'wx.askPlaceTitle': 'Where did you sail from?',
+  'wx.askPlaceBody': 'Add a place name (e.g. "Herzliya Marina") and the app will look up the wind, waves and pressure for this sail.',
+  'wx.askPlaceOk': 'Add a place',
+  'wx.askPlaceSkip': 'Save without weather',
+});
+function wxSourceFor(trip){
+  if(!trip) return null;
+  if(wxHasTrack(trip)) return 'track';
+  const start = trip.date ? new Date(trip.date).getTime() : NaN;
+  if(!isFinite(start) || start > Date.now()) return null;   // no date, or a sail still to come
+  if(trip.path && trip.path.length>1 && trip.elapsedSeconds>0) return 'spreadTrack';
+  return (trip.place||'').trim() ? 'place' : 'needPlace';
+}
+function wxCanReport(trip){ return ['track','spreadTrack','place'].includes(wxSourceFor(trip)); }
+// What the report was worked out from — if the date, duration or place is
+// edited later, the report is fetched again.
+function wxBasisKey(trip){
+  const src = wxSourceFor(trip);
+  if(src==='track') return 'track';
+  return [src, trip.date, trip.elapsedSeconds||0, src==='place' ? (trip.place||'').trim().toLowerCase() : (trip.path||[]).length].join('|');
+}
+function wxNeedsReport(trip){
+  if(!wxCanReport(trip)) return false;
+  const rep = trip.weatherReport;
+  if(!rep) return true;
+  if(rep.status==='pending') return true;
+  if(rep.basis) return rep.basis !== wxBasisKey(trip);       // changed since → fetch again
+  return rep.status !== 'ready';                              // older reports (no basis) stay as they are once ready
+}
+// Place name → position. OpenStreetMap first (knows marinas and clubs), then
+// Open-Meteo's town list as a fallback. Same rules as lookupPlaceName() in journey.js.
+async function wxGeocodePlace(place){
+  const q = encodeURIComponent(place.trim());
+  try{
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${q}&accept-language=${encodeURIComponent(currentLang||'en')}&email=${encodeURIComponent(typeof PLACE_LOOKUP_EMAIL!=='undefined' ? PLACE_LOOKUP_EMAIL : 'sailapp141@gmail.com')}`);
+    if(r.ok){ const j = await r.json(); if(j && j[0]) return { lat:+(+j[0].lat).toFixed(3), lng:+(+j[0].lon).toFixed(3) }; }
+  }catch(e){ if(!navigator.onLine) throw e; }
+  const r2 = await fetch(`https://geocoding-api.open-meteo.com/v1/search?count=1&name=${q}`);
+  if(r2.ok){ const j = await r2.json(); if(j && j.results && j.results[0]) return { lat:+j.results[0].latitude.toFixed(3), lng:+j.results[0].longitude.toFixed(3) }; }
+  return null;
+}
+// The points (with times) the weather is sampled from, for any kind of sail.
+// Returns {path} or {notFound:true}.
+async function wxPathFor(trip){
+  const src = wxSourceFor(trip);
+  if(src==='track') return { path: trip.path };
+  const start = new Date(trip.date).getTime();
+  const dur = Math.max(0, (trip.elapsedSeconds||0)*1000);
+  if(src==='spreadTrack'){
+    const n = trip.path.length;
+    return { path: trip.path.map((p,i)=>({ lat:p.lat, lng:p.lng, t: start + (n>1 ? dur*i/(n-1) : 0) })) };
+  }
+  if(src==='place'){
+    const pos = await wxGeocodePlace(trip.place);
+    if(!pos) return { notFound:true };
+    return { path: [{...pos, t:start}, {...pos, t:start+dur}], location: { ...pos, place: trip.place.trim() } };
+  }
+  return { path: [] };
+}
 async function queueSailWeather(id){
   await wxAddPending(id);
   fillSailWeather(id);
@@ -105,8 +181,10 @@ async function fetchSailWeatherSamples(path){
   const start = wxDay(samples[0].t), end = wxDay(samples[samples.length-1].t);
   const ageDays = (Date.now()-samples[0].t)/86400000;
   // The normal forecast service keeps roughly the last three months; older
-  // sails use Open-Meteo's archive of past forecasts instead.
-  const base = ageDays>85 ? 'https://historical-forecast-api.open-meteo.com/v1/forecast' : 'https://api.open-meteo.com/v1/forecast';
+  // sails use Open-Meteo's archive of past forecasts instead (from 2022), and
+  // sails before that its long-term climate archive (back to 1940).
+  const base = samples[0].t < Date.UTC(2022,0,1) ? 'https://archive-api.open-meteo.com/v1/archive'
+    : ageDays>85 ? 'https://historical-forecast-api.open-meteo.com/v1/forecast' : 'https://api.open-meteo.com/v1/forecast';
   const coords = s => `latitude=${s.map(x=>x.lat).join(',')}&longitude=${s.map(x=>x.lng).join(',')}`;
   const wxUrl = s => `${base}?${coords(s)}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,pressure_msl,weather_code&wind_speed_unit=kn&timezone=GMT&start_date=${start}&end_date=${end}`;
   const seaUrl = s => `https://marine-api.open-meteo.com/v1/marine?${coords(s)}&hourly=wave_height,wave_direction&timezone=GMT&start_date=${start}&end_date=${end}`;
@@ -136,24 +214,32 @@ function fillSailWeather(id){
   if(wxInFlight[id]) return wxInFlight[id];
   wxInFlight[id] = (async()=>{
     let trip = await storeGet('trip:'+id);
-    if(!trip || !wxHasTrack(trip)){ await wxRemovePending(id); return; }
-    if(trip.weatherReport && trip.weatherReport.status==='ready'){ await wxRemovePending(id); return; }
+    if(!trip || !wxCanReport(trip)){ await wxRemovePending(id); return; }
+    if(trip.weatherReport && trip.weatherReport.status==='ready' && !wxNeedsReport(trip)){ await wxRemovePending(id); return; }
     if(!navigator.onLine) return; // stays pending — the 'online' listener retries
 
     let report;
+    const basis = wxBasisKey(trip);
+    const src = wxSourceFor(trip);
     try{
-      const samples = await fetchSailWeatherSamples(trip.path);
-      report = samples.length
-        ? { status:'ready', source:'Open-Meteo', fetchedAt:new Date().toISOString(), samples }
-        : { status:'unavailable', fetchedAt:new Date().toISOString() };
+      const where = await wxPathFor(trip);
+      if(where.notFound){
+        report = { status:'placeNotFound', place: trip.place, basis, fetchedAt:new Date().toISOString() };
+      } else {
+        const samples = await fetchSailWeatherSamples(where.path);
+        report = samples.length
+          ? { status:'ready', source:'Open-Meteo', from: src, location: where.location || null, basis, fetchedAt:new Date().toISOString(), samples }
+          : { status:'unavailable', basis, fetchedAt:new Date().toISOString() };
+      }
     }catch(e){
       if(!e.http) return; // no connection after all — stays pending, tried again later
-      report = { status:'unavailable', fetchedAt:new Date().toISOString() };
+      report = { status:'unavailable', basis, fetchedAt:new Date().toISOString() };
     }
 
     // Re-read in case the sail was edited while we were fetching, so nothing else gets overwritten.
     trip = await storeGet('trip:'+id);
     if(!trip) { await wxRemovePending(id); return; }
+    if(wxBasisKey(trip) !== basis){ fillSailWeather._again = id; return; } // date/place edited meanwhile — fetch again below
     trip.weatherReport = report;
     trip.updatedAt = new Date().toISOString();
     await storeSet('trip:'+id, trip);
@@ -166,7 +252,10 @@ function fillSailWeather(id){
       window._detailTrip.updatedAt = trip.updatedAt;
       rerenderSailWeatherCard();
     }
-  })().finally(()=>{ delete wxInFlight[id]; });
+  })().finally(()=>{
+    delete wxInFlight[id];
+    if(fillSailWeather._again===id){ fillSailWeather._again = null; fillSailWeather(id); }
+  });
   return wxInFlight[id];
 }
 // "Get weather report" button on an older sail, and "Try again" on an unavailable one.
@@ -317,24 +406,40 @@ function wxChartSvg(samples){
 /* ---------- the card ---------- */
 function sailWeatherSectionHtml(trip, readOnly){
   const rep = trip.weatherReport;
-  if(!wxHasTrack(trip)) return '';
+  const src = wxSourceFor(trip);
+  if(!src) return '';
   if(readOnly && !(rep && rep.status==='ready')) return ''; // a friend's sail: only show a finished report
+  if(trip.receivedFrom && !(rep && rep.status==='ready')) return ''; // a sail a friend sent you: their report or nothing
   return `<div id="sailWeatherCard">${sailWeatherInnerHtml(trip, readOnly)}</div>`;
 }
 function sailWeatherInnerHtml(trip, readOnly){
   const rep = trip.weatherReport;
+  const src = wxSourceFor(trip);
+  const placeName = escapeHtml((trip.place||'').trim());
   const title = (tag, cls)=>`<div class="section-title wx-title">${t('wx.title')}${tag?`<span class="wx-tag${cls?' '+cls:''}">${tag}</span>`:''}</div>`;
 
-  if(!rep){
+  // No track and no place name yet: tell them what to add.
+  if(src==='needPlace' && !(rep && rep.status==='ready')){
+    return `${title()}
+      <div class="card wx-card wx-empty"><p>${t('wx.needPlace')}</p></div>`;
+  }
+  if(!rep || (rep.basis && rep.basis!==wxBasisKey(trip) && rep.status!=='pending')){
     return `${title()}
       <div class="card wx-card wx-empty">
-        <p>${t('wx.olderSail')}</p>
+        <p>${src==='place' ? t('wx.olderSailPlace', {place: placeName}) : t('wx.olderSail')}</p>
         <button class="btn btn-outline" onclick="requestSailWeather()">${t('wx.getReport')}</button>
       </div>`;
   }
   if(rep.status==='pending'){
     return `${title(t('wx.waiting'), 'coral')}
-      <div class="card wx-card wx-pending"><div class="wx-spin"></div><div>${navigator.onLine ? t('wx.fetching') : t('wx.pendingOffline')}</div></div>`;
+      <div class="card wx-card wx-pending"><div class="wx-spin"></div><div>${navigator.onLine ? (src==='place' ? t('wx.fetchingPlace', {place: placeName}) : t('wx.fetching')) : t('wx.pendingOffline')}</div></div>`;
+  }
+  if(rep.status==='placeNotFound'){
+    return `${title()}
+      <div class="card wx-card wx-empty">
+        <p>${t('wx.placeNotFound', {place: escapeHtml(rep.place||'')})}</p>
+        ${readOnly ? '' : `<button class="btn btn-outline" onclick="requestSailWeather()">${t('wx.tryAgain')}</button>`}
+      </div>`;
   }
   if(rep.status!=='ready' || !rep.samples || !rep.samples.length){
     return `${title()}
@@ -370,10 +475,10 @@ function sailWeatherInnerHtml(trip, readOnly){
       ${sum.vs ? `<div class="wx-vs ${sum.vs.kind}"><span>⚑</span><span>${escapeHtml(sum.vs.text)}</span></div>` : ''}
       ${obsHtml}
       <details class="wx-hourly">
-        <summary>${t('wx.hourly')}</summary>
+        <summary>${rep.from==='place' ? t('wx.hourlyPlace') : t('wx.hourly')}</summary>
         <table><tr><th>${t('wx.colTime')}</th><th>${t('wx.wind')}</th><th>${t('wx.gustsShort')}</th><th>${t('wx.colDir')}</th><th>${t('wx.colWaves')}</th></tr>${rows}</table>
       </details>
-      <div class="wx-source">${t('wx.source')}</div>
+      <div class="wx-source">${rep.from==='place' ? t('wx.sourcePlace', {place: escapeHtml((rep.location && rep.location.place) || trip.place || '')}) : t('wx.source')}</div>
     </div>`;
 }
 function rerenderSailWeatherCard(){
@@ -384,6 +489,6 @@ function rerenderSailWeatherCard(){
 // Called at the end of openTripDetail(): if this sail's report is still
 // waiting and we're online, go and get it now.
 function maybeFillSailWeatherOnOpen(trip){
-  if(window._friendDetail || !trip || !wxHasTrack(trip)) return;
+  if(window._friendDetail || !trip || !wxCanReport(trip)) return;
   if(trip.weatherReport && trip.weatherReport.status==='pending' && navigator.onLine) fillSailWeather(trip.id);
 }

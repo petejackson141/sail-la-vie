@@ -1175,6 +1175,18 @@ function removeActivePhoto(i){
 // into currentTrip, converting distance to canonical NM if the log was in metric.
 // Then either prompts for a cover photo (if any were added) or saves straight away.
 async function endJourney(){
+  // A sail logged by hand with no track and no Place: the weather report needs
+  // a place name, so suggest adding one first (02.11.2026). They can still save without.
+  const placeField = document.getElementById('tripPlace');
+  if(currentTrip.isManual && !currentTrip.receivedFrom && !(currentTrip.path && currentTrip.path.length>1)
+     && placeField && !placeField.value.trim()){
+    const addPlace = await showConfirm(t('wx.askPlaceBody'), { title: t('wx.askPlaceTitle'), okLabel: t('wx.askPlaceOk'), cancelLabel: t('wx.askPlaceSkip'), icon: 'question' });
+    if(addPlace){
+      placeField.scrollIntoView({behavior:'smooth', block:'center'});
+      setTimeout(()=>placeField.focus(), 350);
+      return;
+    }
+  }
   const which = currentTrip.isEditing ? 'saveChanges' : currentTrip.isManual ? 'savePastSail' : 'endJourney';
   if(!(await confirmDialog(which, {icon: currentTrip.isEditing || currentTrip.isManual ? 'check' : 'flag'}))) return;
 
@@ -1306,9 +1318,11 @@ async function finalizeSaveTrip(){
   if(!currentTrip.isEditing && !currentTrip.visibility){
     currentTrip.visibility = state.user ? await askTripVisibility() : 'private';
   }
-  // A newly recorded GPS sail gets an automatic "Weather on the water" report
-  // (see sail-weather.js) — marked waiting now, filled in once online.
-  const needsWeatherReport = !currentTrip.isEditing && !currentTrip.isManual && wxHasTrack(currentTrip) && !currentTrip.weatherReport;
+  // Every sail gets an automatic "Weather on the water" report (sail-weather.js):
+  // a recorded or imported track, or for a sail logged by hand, its Place name.
+  // Marked waiting now, filled in once online. An edit that changes the date,
+  // duration or place fetches it again.
+  const needsWeatherReport = !currentTrip.receivedFrom && wxNeedsReport(currentTrip);
   if(needsWeatherReport) currentTrip.weatherReport = {status:'pending'};
   // GPS lock: a newly finished recording is locked now; an edited GPS sail goes
   // back to being a recorded sail (editing used to leave it marked "manual").
