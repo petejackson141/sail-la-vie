@@ -1018,6 +1018,12 @@
 .incoming-sail-txt b{ font-size:14px; color:var(--ink); }
 .incoming-sail-txt span{ font-size:12.5px; margin-top:2px; }
 .incoming-sail-btns{ display:flex; gap:8px; margin-top:10px; }
+.incoming-sail.incoming-bulk{ border-style:dashed; }
+/* crew card linked to a friend (crew-friends.js) */
+.cf-box{ border:1px solid var(--border); border-radius:14px; padding:12px; margin:4px 0 14px; }
+.cf-label{ font-size:12.5px; color:var(--ink-muted); margin-bottom:8px; }
+.cf-box .row-card{ margin-bottom:0; }
+.cf-badge{ display:inline-block; font-size:10.5px; font-weight:600; color:var(--teal); background:rgba(23,117,143,.1); border-radius:999px; padding:1px 7px; margin-left:4px; vertical-align:middle; }
 .cert-preview-wrap{ margin-top:16px; overflow:hidden; border-radius:8px; box-shadow:0 6px 20px -8px rgba(20,43,68,.35); border:1px solid var(--border); }
 .cert-preview-scale{ width:1123px; height:794px; transform-origin:0 0; }
 [dir="rtl"] .cert-preview-scale{ transform-origin:100% 0; }
@@ -2259,8 +2265,17 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
     </div>
     <div class="field"><label data-i18n="profile.social">Social / Website</label><input type="text" id="crewSocial" placeholder="e.g. @alex or instagram.com/alex" data-i18n-ph="sheet.crewSocialPh"></div>
     <div class="field"><label data-i18n="sheet.note">Note</label><textarea id="crewNote" placeholder="How you know them, role aboard…" data-i18n-ph="sheet.crewNotePh"></textarea></div>
+    <!-- Linked friend / "Link to a friend" (js/crew-friends.js) -->
+    <div id="crewFriendLink"></div>
     <button class="btn btn-primary" onclick="saveCrewForm()" data-i18n="action.save">Save</button>
     <button class="btn btn-ghost" id="deleteCrewBtn" style="display:none;color:var(--coral);" onclick="deleteCrewForm()" data-i18n="action.remove">Remove</button>
+  </div>
+
+  <!-- Pick which friend a crew card is, or which crew card a friend is (js/crew-friends.js) -->
+  <div class="sheet" id="sheetLinkCrew" style="display:none;">
+    <div class="sheet-handle"></div>
+    <h3 id="linkCrewTitle">Link</h3>
+    <div id="linkCrewList"></div>
   </div>
 
   <div class="sheet" id="sheetCoverPick" style="display:none;">
@@ -2535,6 +2550,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
 <script src="js/units.js"></script>
 <script src="js/about.js"></script>
 <script src="js/share.js"></script>
+<script src="js/crew-friends.js"></script>
 <script src="js/gpx-import.js"></script>
 <script src="js/vendor-mp4-muxer.js"></script>
 <script src="js/reel.js"></script>

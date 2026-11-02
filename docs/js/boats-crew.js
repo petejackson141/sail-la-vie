@@ -158,6 +158,7 @@ function openCrewSheet(member){
   document.getElementById('crewNote').value = member ? member.note : '';
   document.getElementById('crewPhotoPreview').src = pendingCrewPhoto || placeholderAvatar();
   document.getElementById('deleteCrewBtn').style.display = member ? 'flex' : 'none';
+  if(typeof renderCrewFriendLink === 'function') renderCrewFriendLink(editingCrewId); // linked friend (crew-friends.js)
   openSheet('sheetCrew');
 }
 // Photos here go through the crop/zoom adjuster (openPhotoAdjuster), not a
@@ -234,7 +235,7 @@ function renderCrew(){
     return `
     <div class="${cardClass}" onclick='openCrewSheet(${JSON.stringify(c).replace(/'/g,"&apos;")})'>
       <img class="row-photo round" src="${safeSrc(c.photo||placeholderAvatar())}">
-      <div class="row-info"><div class="name">${escapeHtml(c.name)}</div><div class="sub">${escapeHtml(contactBits || c.note || '')}</div></div>
+      <div class="row-info"><div class="name">${escapeHtml(c.name)}${c.friendUserId ? ` <span class="cf-badge">${t('cf.friendBadge')}</span>` : ''}</div><div class="sub">${escapeHtml(contactBits || c.note || '')}</div></div>
     </div>`;
   }).join('');
   updateViewToggleBtn('crew');

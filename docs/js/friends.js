@@ -282,6 +282,8 @@ async function loadFriendsData(){
   if(friendsState.me) syncPublicProfileIfSignedIn(true);
   // Sails friends have sent you (share.js), shown at the top of History
   if(typeof loadIncomingSails === 'function') loadIncomingSails();
+  // Crew card that looks like a friend? Ask "Same person?" (crew-friends.js)
+  if(typeof checkCrewFriendMatches === 'function') setTimeout(checkCrewFriendMatches, 1500);
 }
 
 // Called by applySession() (auth.js) whenever the signed-in account changes.
@@ -887,6 +889,7 @@ function renderFriendPage(){
     ${plans}
     <div class="section-divider pf"><span>${t('friends.sharedSails')}</span></div>
     ${sails}
+    ${isFriend && typeof crewLinkOnFriendPageHtml === 'function' ? crewLinkOnFriendPageHtml(openFriendId) : ''}
     ${isFriend ? `<div class="link-plain" style="color:var(--coral);text-align:center;margin-top:22px;" onclick="removeFriendPrompt('${safeId(openFriendId)}')">${t('friends.remove')}</div>` : ''}`;
 }
 async function openFriendTrip(tripId){

@@ -219,7 +219,21 @@ document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState 
 function renderIncomingSails(){
   const el = document.getElementById('incomingSails');
   if(!el) return;
-  el.innerHTML = incomingSails.map(s=>{
+  // Several sails from the same friend (e.g. after linking a crew card, crew-friends.js)?
+  // Offer "Add all" / "Decline all" for that friend above their sails.
+  const bySender = {};
+  incomingSails.forEach(s=>{ (bySender[s.sender_id] = bySender[s.sender_id] || []).push(s); });
+  const bulk = Object.entries(bySender).filter(([,list])=>list.length > 1).map(([sid, list])=>{
+    const name = escapeHtml(list[0].sender_name || t('default.sailorName'));
+    return `<div class="incoming-sail incoming-bulk">
+      <div class="incoming-sail-txt"><b>${t('share.fromHeading', {n: list.length, name})}</b></div>
+      <div class="incoming-sail-btns">
+        <button class="btn btn-primary btn-sm" onclick="acceptAllIncomingFrom('${safeId(sid)}')">${t('share.addAll', {n: list.length})}</button>
+        <button class="btn btn-outline btn-sm" onclick="declineAllIncomingFrom('${safeId(sid)}')">${t('share.declineAll')}</button>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML = bulk + incomingSails.map(s=>{
     const d = s.data || {};
     const date = d.date ? new Date(d.date).toLocaleDateString(currentLocale(), {day:'numeric', month:'short', year:'numeric'}) : '';
     return `<div class="incoming-sail">
@@ -235,9 +249,9 @@ function renderIncomingSails(){
 // Makes the sail your own: new id, photos copied into YOUR photo storage
 // (while the share exists you're allowed to read the sender's), saved to
 // History and synced like any other sail, then the share is removed.
-async function acceptIncomingSail(shareId){
-  const s = incomingSails.find(x=>x.id===shareId); if(!s) return;
-  showToast(t('share.adding'));
+async function acceptIncomingSail(shareId, quiet){
+  const s = incomingSails.find(x=>x.id===shareId); if(!s) return false;
+  if(!quiet) showToast(t('share.adding'));
   try{
     const src = s.data || {};
     const copyImg = async (ref)=> ref ? ((await photoToDataUrl(ref)) || null) : null;
@@ -259,11 +273,31 @@ async function acceptIncomingSail(shareId){
     incomingSails = incomingSails.filter(x=>x.id!==shareId);
     renderIncomingSails(); renderHistory(); renderHomeStats();
     syncTripIfSignedIn(trip); // uploads the copied photos to your own storage
-    showToast(t('share.added'));
+    if(!quiet) showToast(t('share.added'));
+    return true;
   }catch(e){
     console.error('accept sail failed', e);
     showToast(t('share.failed'));
+    return false;
   }
+}
+// "Add all" / "Decline all" for one sender (02.11.2026)
+async function acceptAllIncomingFrom(senderId){
+  const ids = incomingSails.filter(s=>s.sender_id===senderId).map(s=>s.id);
+  showToast(t('share.adding'));
+  let added = 0;
+  for(const id of ids){ if(await acceptIncomingSail(id, true)) added++; else break; }
+  if(added) showToast(added===1 ? t('share.added') : t('share.addedMany', {n: added}));
+}
+async function declineAllIncomingFrom(senderId){
+  const list = incomingSails.filter(s=>s.sender_id===senderId);
+  if(!list.length) return;
+  const name = list[0].sender_name || t('default.sailorName');
+  if(!(await showConfirm(t('share.declineAllConfirm', {n: list.length, name}), {title: t('share.declineAll'), okLabel: t('share.declineAll'), icon:'trash'}))) return;
+  try{ await getSupabaseClient().from('sail_shares').delete().in('id', list.map(s=>s.id)); }catch(e){}
+  const gone = new Set(list.map(s=>s.id));
+  incomingSails = incomingSails.filter(x=>!gone.has(x.id));
+  renderIncomingSails();
 }
 async function declineIncomingSail(shareId){
   if(!(await showConfirm(t('share.declineConfirm'), {title: t('share.decline'), okLabel: t('share.decline'), icon:'trash'}))) return;
