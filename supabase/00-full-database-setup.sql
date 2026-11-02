@@ -169,6 +169,7 @@ create index if not exists sail_shares_recipient_idx     on public.sail_shares (
 create index if not exists sail_shares_sender_idx        on public.sail_shares (sender_id);
 create index if not exists error_reports_created_idx     on public.error_reports (created_at desc);
 create index if not exists error_reports_user_id_idx     on public.error_reports (user_id);
+create index if not exists feedback_user_id_idx          on public.feedback (user_id);
 
 
 -- ---------------------------------------------------------------------
@@ -370,121 +371,111 @@ alter table public.friendships     enable row level security;
 alter table public.feedback        enable row level security;
 alter table public.sail_shares     enable row level security;
 
--- profiles: you, plus accepted friends (read-only)
-drop policy if exists "Users can read their own profile" on public.profiles;
-create policy "Users can read their own profile" on public.profiles
-  for select to authenticated using (auth.uid() = id);
-drop policy if exists "Users can insert their own profile" on public.profiles;
-create policy "Users can insert their own profile" on public.profiles
-  for insert to authenticated with check (auth.uid() = id);
-drop policy if exists "Users can update their own profile" on public.profiles;
-create policy "Users can update their own profile" on public.profiles
-  for update to authenticated using (auth.uid() = id) with check (auth.uid() = id);
-drop policy if exists "Friends can read profile" on public.profiles;
-create policy "Friends can read profile" on public.profiles
+alter table public.error_reports enable row level security;
+
+-- Rules written as (select auth.uid()) and one read rule per table, as the
+-- Performance Advisor asks (02.11.2026, advisor-tidy-up.sql). First remove any
+-- existing rules on these tables, so running this file again is safe.
+do $$
+declare p record;
+begin
+  for p in
+    select policyname, tablename from pg_policies
+    where schemaname = 'public'
+      and tablename in ('profiles','public_profiles','boats','crew','trips','noticeboard',
+                        'friendships','feedback','sail_shares','error_reports')
+  loop
+    execute format('drop policy %I on public.%I', p.policyname, p.tablename);
+  end loop;
+end $$;
+
+-- profiles: you, plus accepted friends can read
+create policy profiles_select on public.profiles
   for select to authenticated using (
-    exists (
+    id = (select auth.uid())
+    or exists (
       select 1 from public.friendships f
       where f.status = 'accepted'
-        and ((f.requester_id = auth.uid() and f.addressee_id = profiles.id)
-          or (f.addressee_id = auth.uid() and f.requester_id = profiles.id))
+        and ((f.requester_id = (select auth.uid()) and f.addressee_id = profiles.id)
+          or (f.addressee_id = (select auth.uid()) and f.requester_id = profiles.id))
     )
   );
+create policy profiles_insert on public.profiles
+  for insert to authenticated with check (id = (select auth.uid()));
+create policy profiles_update on public.profiles
+  for update to authenticated using (id = (select auth.uid())) with check (id = (select auth.uid()));
 
 -- public_profiles: every signed-in user can see name / username / small photo
-drop policy if exists "Signed-in users can view public profiles" on public.public_profiles;
-create policy "Signed-in users can view public profiles" on public.public_profiles
+create policy public_profiles_select on public.public_profiles
   for select to authenticated using (true);
-drop policy if exists "Users create their own public profile" on public.public_profiles;
-create policy "Users create their own public profile" on public.public_profiles
-  for insert to authenticated with check (user_id = auth.uid());
-drop policy if exists "Users update their own public profile" on public.public_profiles;
-create policy "Users update their own public profile" on public.public_profiles
-  for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy public_profiles_insert on public.public_profiles
+  for insert to authenticated with check (user_id = (select auth.uid()));
+create policy public_profiles_update on public.public_profiles
+  for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
 
 -- boats: owner only
-drop policy if exists boats_owner_full_access on public.boats;
 create policy boats_owner_full_access on public.boats
-  for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  for all to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
 
 -- crew: owner only
-drop policy if exists crew_select_own on public.crew;
-create policy crew_select_own on public.crew for select to authenticated using (auth.uid() = user_id);
-drop policy if exists crew_insert_own on public.crew;
-create policy crew_insert_own on public.crew for insert to authenticated with check (auth.uid() = user_id);
-drop policy if exists crew_update_own on public.crew;
-create policy crew_update_own on public.crew for update to authenticated using (auth.uid() = user_id);
-drop policy if exists crew_delete_own on public.crew;
-create policy crew_delete_own on public.crew for delete to authenticated using (auth.uid() = user_id);
+create policy crew_select_own on public.crew for select to authenticated using (user_id = (select auth.uid()));
+create policy crew_insert_own on public.crew for insert to authenticated with check (user_id = (select auth.uid()));
+create policy crew_update_own on public.crew for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+create policy crew_delete_own on public.crew for delete to authenticated using (user_id = (select auth.uid()));
 
 -- trips: owner does everything; friends can read sails marked "friends"
-drop policy if exists trips_owner_full_access on public.trips;
-create policy trips_owner_full_access on public.trips
-  for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
-drop policy if exists "Friends can view shared trips" on public.trips;
-create policy "Friends can view shared trips" on public.trips
+create policy trips_select on public.trips
   for select to authenticated using (
-    deleted_at is null
-    and (visibility = 'public'
-         or (visibility = 'friends' and private.are_friends(auth.uid(), user_id)))
+    user_id = (select auth.uid())
+    or (deleted_at is null
+        and (visibility = 'public'
+             or (visibility = 'friends' and private.are_friends((select auth.uid()), user_id))))
   );
+create policy trips_insert on public.trips for insert to authenticated with check (user_id = (select auth.uid()));
+create policy trips_update on public.trips for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+create policy trips_delete on public.trips for delete to authenticated using (user_id = (select auth.uid()));
 
 -- noticeboard: owner does everything; friends can read plans marked "friends"
-drop policy if exists "noticeboard select own" on public.noticeboard;
-create policy "noticeboard select own" on public.noticeboard for select to authenticated using (auth.uid() = user_id);
-drop policy if exists "noticeboard insert own" on public.noticeboard;
-create policy "noticeboard insert own" on public.noticeboard for insert to authenticated with check (auth.uid() = user_id);
-drop policy if exists "noticeboard update own" on public.noticeboard;
-create policy "noticeboard update own" on public.noticeboard for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
-drop policy if exists "noticeboard delete own" on public.noticeboard;
-create policy "noticeboard delete own" on public.noticeboard for delete to authenticated using (auth.uid() = user_id);
-drop policy if exists "Friends can read shared plans" on public.noticeboard;
-create policy "Friends can read shared plans" on public.noticeboard
+create policy noticeboard_select on public.noticeboard
   for select to authenticated using (
-    visibility = 'friends'
-    and deleted_at is null
-    and exists (
-      select 1 from public.friendships f
-      where f.status = 'accepted'
-        and ((f.requester_id = auth.uid() and f.addressee_id = noticeboard.user_id)
-          or (f.addressee_id = auth.uid() and f.requester_id = noticeboard.user_id))
-    )
+    user_id = (select auth.uid())
+    or (visibility = 'friends'
+        and deleted_at is null
+        and exists (
+          select 1 from public.friendships f
+          where f.status = 'accepted'
+            and ((f.requester_id = (select auth.uid()) and f.addressee_id = noticeboard.user_id)
+              or (f.addressee_id = (select auth.uid()) and f.requester_id = noticeboard.user_id))
+        ))
   );
+create policy noticeboard_insert on public.noticeboard for insert to authenticated with check (user_id = (select auth.uid()));
+create policy noticeboard_update on public.noticeboard for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+create policy noticeboard_delete on public.noticeboard for delete to authenticated using (user_id = (select auth.uid()));
 
 -- friendships: only the two people involved; accepting goes through accept_friend_request()
-drop policy if exists "See my own friendships" on public.friendships;
-create policy "See my own friendships" on public.friendships
-  for select to authenticated using (auth.uid() = requester_id or auth.uid() = addressee_id);
-drop policy if exists "Send a friend request" on public.friendships;
-create policy "Send a friend request" on public.friendships
-  for insert to authenticated with check (requester_id = auth.uid() and status = 'pending');
-drop policy if exists "Remove a friendship" on public.friendships;
-create policy "Remove a friendship" on public.friendships
-  for delete to authenticated using (auth.uid() = requester_id or auth.uid() = addressee_id);
+create policy friendships_select on public.friendships
+  for select to authenticated using ((select auth.uid()) in (requester_id, addressee_id));
+create policy friendships_insert on public.friendships
+  for insert to authenticated with check (requester_id = (select auth.uid()) and status = 'pending');
+create policy friendships_delete on public.friendships
+  for delete to authenticated using ((select auth.uid()) in (requester_id, addressee_id));
 
 -- feedback: you can send it, nobody can read it back through the app
-drop policy if exists "Users can send their own feedback" on public.feedback;
-create policy "Users can send their own feedback" on public.feedback
-  for insert to authenticated with check (user_id = auth.uid());
+create policy feedback_insert on public.feedback
+  for insert to authenticated with check (user_id = (select auth.uid()));
 
--- sail_shares: friends can send each other a copy of a sail; only the
--- sender and the receiver see it; either can remove it (added 30.10.2026)
-drop policy if exists "Send a sail to a friend" on public.sail_shares;
-create policy "Send a sail to a friend" on public.sail_shares
+-- sail_shares: friends send each other a copy of a sail; only sender and receiver see it
+create policy sail_shares_insert on public.sail_shares
   for insert to authenticated
-  with check (sender_id = auth.uid() and private.are_friends(auth.uid(), recipient_id));
-drop policy if exists "See sails sent by or to me" on public.sail_shares;
-create policy "See sails sent by or to me" on public.sail_shares
-  for select to authenticated using (auth.uid() = sender_id or auth.uid() = recipient_id);
-drop policy if exists "Remove a sent sail" on public.sail_shares;
-create policy "Remove a sent sail" on public.sail_shares
-  for delete to authenticated using (auth.uid() = sender_id or auth.uid() = recipient_id);
+  with check (sender_id = (select auth.uid()) and private.are_friends((select auth.uid()), recipient_id));
+create policy sail_shares_select on public.sail_shares
+  for select to authenticated using ((select auth.uid()) in (sender_id, recipient_id));
+create policy sail_shares_delete on public.sail_shares
+  for delete to authenticated using ((select auth.uid()) in (sender_id, recipient_id));
 
--- error_reports: you can send your own, nobody can read them back through the app (02.11.2026)
-alter table public.error_reports enable row level security;
-drop policy if exists "Users can send their own error reports" on public.error_reports;
-create policy "Users can send their own error reports" on public.error_reports
-  for insert to authenticated with check (user_id = auth.uid());
+-- error_reports: you can send your own, nobody can read them back through the app
+create policy error_reports_insert on public.error_reports
+  for insert to authenticated with check (user_id = (select auth.uid()));
 
 -- keep only the last 90 days of error reports: every new report removes anything older
 create or replace function private.trim_old_error_reports()
@@ -522,15 +513,15 @@ create policy "trip photos: view own or friends" on storage.objects
 drop policy if exists "trip photos: upload own" on storage.objects;
 create policy "trip photos: upload own" on storage.objects
   for insert to authenticated
-  with check (bucket_id = 'trip-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+  with check (bucket_id = 'trip-photos' and (storage.foldername(name))[1] = (select auth.uid())::text);
 drop policy if exists "trip photos: update own" on storage.objects;
 create policy "trip photos: update own" on storage.objects
   for update to authenticated
-  using (bucket_id = 'trip-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+  using (bucket_id = 'trip-photos' and (storage.foldername(name))[1] = (select auth.uid())::text);
 drop policy if exists "trip photos: delete own" on storage.objects;
 create policy "trip photos: delete own" on storage.objects
   for delete to authenticated
-  using (bucket_id = 'trip-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+  using (bucket_id = 'trip-photos' and (storage.foldername(name))[1] = (select auth.uid())::text);
 
 
 -- ---------------------------------------------------------------------

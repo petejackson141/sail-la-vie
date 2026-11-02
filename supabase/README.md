@@ -28,6 +28,7 @@ They're kept as a record of what was changed and why.
 | `fix-advisor-warnings.sql` | Cleared the Security Advisor warnings, added indexes |
 | `profile-photos.sql` | Lets friends see profile and cover photos in photo storage (20 October 2026) |
 | `sail-shares.sql` | "Send to a friend's app": the `sail_shares` table, its rules, and letting the friend copy that sail's photos (30 October 2026) — **run this once on the live Frankfurt project** |
+| `advisor-tidy-up.sql` | Performance Advisor tidy-up: rules rewritten with (select auth.uid()), one read rule per table, feedback index. Who can see what is unchanged (2 November 2026) — **run this once on the live Frankfurt project** |
 | `error-reports.sql` | Crash / error reporting: the `error_reports` table the app writes problems to, kept 90 days (2 November 2026) — **run this once on the live Frankfurt project** |
 | `find-by-email.sql` | Friends search by full email address: the `find_sailor_by_email` function (2 November 2026) — **run this once on the live Frankfurt project** |
 
