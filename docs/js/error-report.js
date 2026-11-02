@@ -126,9 +126,13 @@
     }catch(e){}
   };
 
-  // 3. send what's waiting: on start-up, when back online, every few minutes
+  // 3. send what's waiting: on start-up, when back online, when the app comes
+  // back on screen, and every minute while anything is waiting. (Android's
+  // in-app browser doesn't always announce "back online", so the regular
+  // check matters — it only reads the phone's own list, so it costs nothing.)
   window.addEventListener('online', ()=>setTimeout(flush, 3000));
   window.addEventListener('load', ()=>setTimeout(flush, 8000));
-  setInterval(flush, 5 * 60 * 1000);
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') setTimeout(flush, 3000); });
+  setInterval(()=>{ if(readQueue().length) flush(); }, 60 * 1000);
   window.flushErrorReports = flush; // e.g. after signing in
 })();
