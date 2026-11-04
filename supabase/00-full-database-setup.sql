@@ -8,7 +8,8 @@
 --   database as it was on 1 October 2026 (after fix-profiles-privacy.sql,
 --   harden-functions.sql and fix-advisor-warnings.sql were run), plus
 --   profile-photos.sql (20.10.2026), sail-shares.sql (30.10.2026), advisor-tidy-up.sql,
---   error-reports.sql and find-by-email.sql (02.11.2026). Checked against the live
+--   error-reports.sql and find-by-email.sql (02.11.2026), and email-alerts.sql
+--   (04.11.2026, section 5b). Checked against the live
 --   Frankfurt database on 04.11.2026: all tables, columns, grants, policies,
 --   functions, triggers, realtime and the photo bucket matched.
 --
@@ -30,6 +31,11 @@
 --   2. Authentication -> Sign In / Providers -> Email: "Confirm email" on/off.
 --   3. Put the new project's URL + publishable key in docs/js/auth.js.
 --   4. Copy the data across (users, rows and photos) - ask Claude for that step.
+--   5. Email alerts (section 5b): BEFORE running this file, change the
+--      notify_url address in section 5b to the new project. Afterwards deploy
+--      the notify-email Edge Function (supabase/functions/notify-email/index.ts,
+--      "Verify JWT" off) and set its secrets RESEND_API_KEY and NOTIFY_SECRET
+--      (NOTIFY_SECRET = the value section 5b shows; see email-alerts.sql).
 --
 -- RULE FOR THE FUTURE: whenever a database change is made, update this file
 -- too, so it always describes the real database.
@@ -543,6 +549,84 @@ begin
     end;
   end loop;
 end $$;
+
+
+-- ---------------------------------------------------------------------
+-- 5b. EMAIL ALERTS  - added 04.11.2026 (same as email-alerts.sql)
+--    New "Contact us" feedback is emailed straight away; a daily job at
+--    06:00 UTC emails a summary of the last 24 hours of error_reports.
+--    Both go through the notify-email Edge Function (Resend). See the
+--    top of email-alerts.sql for how it works and how to check it.
+--    The secret it makes can be shown with:
+--      select decrypted_secret from vault.decrypted_secrets where name = 'notify_secret';
+-- ---------------------------------------------------------------------
+
+-- 1. the two tools: pg_net (database can call a web address) and pg_cron (timed jobs)
+create extension if not exists pg_net with schema extensions;
+create extension if not exists pg_cron;
+
+-- 2. the Vault secrets (made only if they don't exist yet)
+--    NEW PROJECT: change the address below to the new project's
+--    https://<project-ref>.supabase.co/functions/v1/notify-email
+do $$
+begin
+  if not exists (select 1 from vault.secrets where name = 'notify_url') then
+    perform vault.create_secret(
+      'https://lccwbkarqjohunofsghd.supabase.co/functions/v1/notify-email',
+      'notify_url', 'Address of the notify-email Edge Function');
+  end if;
+  if not exists (select 1 from vault.secrets where name = 'notify_secret') then
+    perform vault.create_secret(
+      encode(extensions.gen_random_bytes(24), 'hex'),
+      'notify_secret', 'Shared secret: must match NOTIFY_SECRET in Edge Functions -> Secrets');
+  end if;
+end $$;
+
+-- 3. one helper that sends a message to notify-email
+create or replace function private.call_notify(payload jsonb)
+returns void language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_url    text;
+  v_secret text;
+begin
+  select decrypted_secret into v_url    from vault.decrypted_secrets where name = 'notify_url';
+  select decrypted_secret into v_secret from vault.decrypted_secrets where name = 'notify_secret';
+  if v_url is null or v_secret is null then
+    return;  -- not set up: do nothing
+  end if;
+  perform net.http_post(
+    url     := v_url,
+    body    := payload,
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-notify-secret', v_secret),
+    timeout_milliseconds := 10000
+  );
+end;
+$$;
+revoke all on function private.call_notify(jsonb) from public, anon, authenticated;
+
+-- 4. new feedback -> email straight away (only the id is sent; the
+--    function reads the message and screenshot itself)
+create or replace function private.notify_new_feedback()
+returns trigger language plpgsql security definer set search_path = ''
+as $$
+begin
+  perform private.call_notify(jsonb_build_object('type', 'feedback', 'id', new.id));
+  return null;
+exception when others then
+  return null;  -- never let an email problem block saving the feedback
+end;
+$$;
+revoke all on function private.notify_new_feedback() from public, anon, authenticated;
+drop trigger if exists feedback_email on public.feedback;
+create trigger feedback_email after insert on public.feedback
+  for each row execute function private.notify_new_feedback();
+
+-- 5. daily error summary at 06:00 UTC
+select cron.unschedule('daily-error-summary')
+where exists (select 1 from cron.job where jobname = 'daily-error-summary');
+select cron.schedule('daily-error-summary', '0 6 * * *',
+  $job$ select private.call_notify('{"type":"daily-errors"}'::jsonb) $job$);
 
 
 -- ---------------------------------------------------------------------
