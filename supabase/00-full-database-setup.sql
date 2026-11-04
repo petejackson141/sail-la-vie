@@ -7,8 +7,10 @@
 --   the sign-up trigger, photo storage and live updates. It matches the live
 --   database as it was on 1 October 2026 (after fix-profiles-privacy.sql,
 --   harden-functions.sql and fix-advisor-warnings.sql were run), plus
---   profile-photos.sql (20.10.2026) and sail-shares.sql (30.10.2026). Checked against the live Tokyo database
---   on 28.10.2026: everything matched.
+--   profile-photos.sql (20.10.2026), sail-shares.sql (30.10.2026), advisor-tidy-up.sql,
+--   error-reports.sql and find-by-email.sql (02.11.2026). Checked against the live
+--   Frankfurt database on 04.11.2026: all tables, columns, grants, policies,
+--   functions, triggers, realtime and the photo bucket matched.
 --
 --   28.10.2026: added section 1b (GRANTS). Since Supabase's change of
 --   30 October 2026 (discussion #45329) a NEW project gives the app no access

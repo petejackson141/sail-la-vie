@@ -12,8 +12,8 @@ sign-up trigger, photo storage and live updates.
   as RLS + policies. Since Supabase's change on 30 October 2026, a table without
   a grant gives the app "permission denied".
 
-Last checked against the live Tokyo database: **28 October 2026** — all tables,
-columns, policies, functions, the sign-up trigger, realtime and the photo bucket matched.
+Last checked against the live Frankfurt database: **4 November 2026** — all tables,
+columns, grants, policies, functions, triggers, realtime and the photo bucket matched.
 
 ## The other files here
 
