@@ -18,7 +18,8 @@
 //   1. Accounts: re-creates every account with the SAME id and email, marked
 //      as confirmed. Passwords are NOT in the backup (Supabase never gives
 //      them out), so every user must use "Forgot password" once.
-//   2. Tables: puts every row back (profiles, sails, boats, crew, friends...).
+//   2. Tables: puts every row back (profiles, sails, boats, crew, friends,
+//      sails waiting to be accepted by a friend...).
 //   3. Photos: uploads every photo back into the same folders.
 //   4. Check: counts what's now in the project and compares it with the backup.
 //
@@ -33,7 +34,7 @@ const LIVE_URL    = 'https://lccwbkarqjohunofsghd.supabase.co';   // the current
 const KEY_FILE    = 'C:\\Users\\Pete\\SailLaVie-keys\\restore-target-secret-key.txt';
 const BACKUP_ROOT = process.env.SLV_BACKUP_ROOT || 'C:\\Users\\Pete\\SailLaVie-backups';
 // Order matters: accounts first, then tables that point at them.
-const TABLES      = ['profiles', 'public_profiles', 'boats', 'crew', 'trips', 'noticeboard', 'friendships', 'feedback'];
+const TABLES      = ['profiles', 'public_profiles', 'boats', 'crew', 'trips', 'noticeboard', 'friendships', 'sail_shares', 'feedback'];   // sail_shares added 04.11.2026
 const BUCKET      = 'trip-photos';
 const MIME        = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
 

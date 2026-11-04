@@ -4,7 +4,8 @@
 //
 // What it saves, in C:\Users\Pete\SailLaVie-backups\<date-time>\ :
 //   tables\<table>.json   every row of every table (all users' profiles, sails,
-//                         boats, crew, noticeboard, friends, feedback)
+//                         boats, crew, noticeboard, friends, sails waiting
+//                         to be accepted by a friend (sail_shares), feedback)
 //   auth-users.json       the list of accounts (email, id, sign-up date).
 //                         Passwords are NOT included - Supabase never gives them out.
 //   photos\...            every file in photo storage, same folders as in Supabase
@@ -20,7 +21,7 @@ import path from 'node:path';
 const SUPABASE_URL = 'https://lccwbkarqjohunofsghd.supabase.co';   // Frankfurt (sail-la-vie-eu), live since 29.10.2026
 const KEY_FILE     = 'C:\\Users\\Pete\\SailLaVie-keys\\supabase-secret-key.txt';
 const BACKUP_ROOT  = 'C:\\Users\\Pete\\SailLaVie-backups';
-const TABLES       = ['profiles', 'public_profiles', 'boats', 'crew', 'trips', 'noticeboard', 'friendships', 'feedback'];
+const TABLES       = ['profiles', 'public_profiles', 'boats', 'crew', 'trips', 'noticeboard', 'friendships', 'sail_shares', 'feedback'];   // sail_shares added 04.11.2026
 const BUCKETS      = ['trip-photos'];
 
 function fail(msg){ console.error('\nSTOP: ' + msg + '\n'); process.exit(1); }
