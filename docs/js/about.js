@@ -27,8 +27,15 @@ const ANDROID_APK_URL  = 'https://github.com/petejackson141/sail-la-vie/releases
 
 // Newest first. Add a line here with each release worth telling people about.
 const WHATS_NEW = [
-  { version: '24.10.2026', items: [
-    'Hebrew is back: choose עברית in Settings → Language. The whole app switches to right-to-left.'
+  { version: '04.11.2026', items: [
+    'New Mapbox maps, with an animated wind layer.',
+    '"Everywhere I\'ve sailed" map on your Profile.',
+    'Import a GPX track for a sail you log by hand.',
+    'Choose your tracking icon in Settings.',
+    'Merge a crew member with a friend, and share your past sails with them.',
+    'Automatic weather for sails you log by hand.',
+    'Short video reels of your sails.',
+    'Automatic error reporting, so problems get fixed faster.'
   ]},
   { version: '21.10.2026', items: [
     'Your profile, cover, boat and crew photos are now backed up to the cloud and stay in sync across your devices.',

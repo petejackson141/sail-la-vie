@@ -12,6 +12,11 @@
 // the general Sailing Record, never on the GPS Sea Time Record.
 
 const GPX_MAX_POINTS = 4000; // very long tracks are thinned to this many points (invisible on a map)
+// GPS "jumps": a point that would need more than this speed to reach is
+// skipped. Same 30 kt limit as live tracking. Kept here in this file since
+// 04.11.2026: it used to borrow a speed limit from journey.js that no longer
+// exists there, so every GPX import failed with "is not defined".
+const GPX_MAX_PLAUSIBLE_SPEED_KT = 30;
 
 function openGpxImport(){
   if(!currentTrip || !currentTrip.isManual){ return; }
@@ -38,7 +43,7 @@ function parseGpx(text){
 }
 
 // Works out the numbers from the points.
-//   GPS "jumps" (a point that would need more than MAX_PLAUSIBLE_SPEED_KT to
+//   GPS "jumps" (a point that would need more than GPX_MAX_PLAUSIBLE_SPEED_KT to
 //   reach) are left out first, the same rule live tracking uses
 //   distance — sum of the legs between the remaining points
 //   duration — first to last time stamp
@@ -50,7 +55,7 @@ function gpxCleanPoints(points){
     const prev = out[out.length-1];
     if(prev && prev.t!=null && p.t!=null && p.t > prev.t){
       const kt = haversineNm(prev, p) / ((p.t - prev.t)/3600000);
-      if(kt >= MAX_PLAUSIBLE_SPEED_KT) continue; // a jump — skip this point
+      if(kt >= GPX_MAX_PLAUSIBLE_SPEED_KT) continue; // a jump — skip this point
     }
     out.push(p);
   }
@@ -71,7 +76,7 @@ function gpxStats(points){
     if(dt <= 0) continue;
     let d = 0; for(let k=i+1;k<=j;k++) d += haversineNm(timed[k-1], timed[k]);
     const kt = d/dt;
-    if(kt < MAX_PLAUSIBLE_SPEED_KT) maxKt = Math.max(maxKt, kt);
+    if(kt < GPX_MAX_PLAUSIBLE_SPEED_KT) maxKt = Math.max(maxKt, kt);
   }
   return { nm, secs, avgKt: secs>0 ? nm/(secs/3600) : 0, maxKt, start: timed.length ? timed[0].t : null, points: pts };
 }
