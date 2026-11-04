@@ -17,7 +17,7 @@ columns, policies, functions, the sign-up trigger, realtime and the photo bucket
 
 ## The other files here
 
-One-off fixes that have **already been run** on the live database (1 October 2026).
+One-off fixes that have **all been run** on the live database (the last four checked on Frankfurt, 4 November 2026).
 Their changes are already included in the master file, so they never need running again.
 They're kept as a record of what was changed and why.
 
@@ -27,10 +27,10 @@ They're kept as a record of what was changed and why.
 | `harden-functions.sql` | Tightened `are_friends` and the sign-up function |
 | `fix-advisor-warnings.sql` | Cleared the Security Advisor warnings, added indexes |
 | `profile-photos.sql` | Lets friends see profile and cover photos in photo storage (20 October 2026) |
-| `sail-shares.sql` | "Send to a friend's app": the `sail_shares` table, its rules, and letting the friend copy that sail's photos (30 October 2026) — **run this once on the live Frankfurt project** |
-| `advisor-tidy-up.sql` | Performance Advisor tidy-up: rules rewritten with (select auth.uid()), one read rule per table, feedback index. Who can see what is unchanged (2 November 2026) — **run this once on the live Frankfurt project** |
-| `error-reports.sql` | Crash / error reporting: the `error_reports` table the app writes problems to, kept 90 days (2 November 2026) — **run this once on the live Frankfurt project** |
-| `find-by-email.sql` | Friends search by full email address: the `find_sailor_by_email` function (2 November 2026) — **run this once on the live Frankfurt project** |
+| `sail-shares.sql` | "Send to a friend's app": the `sail_shares` table, its rules, and letting the friend copy that sail's photos (30 October 2026) — run on Frankfurt (checked 4 November 2026) |
+| `advisor-tidy-up.sql` | Performance Advisor tidy-up: rules rewritten with (select auth.uid()), one read rule per table, feedback index. Who can see what is unchanged (2 November 2026) — run on Frankfurt (checked 4 November 2026) |
+| `error-reports.sql` | Crash / error reporting: the `error_reports` table the app writes problems to, kept 90 days (2 November 2026) — run on Frankfurt (checked 4 November 2026) |
+| `find-by-email.sql` | Friends search by full email address: the `find_sailor_by_email` function (2 November 2026) — run on Frankfurt (checked 4 November 2026) |
 
 ## Expected Security Advisor warnings (all fine)
 
