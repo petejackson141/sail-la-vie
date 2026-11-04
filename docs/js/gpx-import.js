@@ -17,6 +17,7 @@ const GPX_MAX_POINTS = 4000; // very long tracks are thinned to this many points
 // 04.11.2026: it used to borrow a speed limit from journey.js that no longer
 // exists there, so every GPX import failed with "is not defined".
 const GPX_MAX_PLAUSIBLE_SPEED_KT = 30;
+const GPX_EARLIEST_TIME = Date.UTC(2000, 0, 1); // time stamps before this are ignored
 
 function openGpxImport(){
   if(!currentTrip || !currentTrip.isManual){ return; }
@@ -36,7 +37,12 @@ function parseGpx(text){
     const lat = parseFloat(n.getAttribute('lat')), lng = parseFloat(n.getAttribute('lon'));
     const tEl = n.getElementsByTagName('time')[0];
     const t = tEl ? Date.parse(tEl.textContent.trim()) : NaN;
-    return { lat, lng, t: isNaN(t) ? null : t };
+    // Some apps write a "zero" time (1 Jan 1970) or a nonsense date on a few
+    // points. Treat anything before 2000 or more than a day in the future as
+    // "no time", or it gets used as the start and the duration comes out as
+    // decades (seen 04.11.2026: 489517 hours from a SeaPeople file).
+    const okTime = !isNaN(t) && t >= GPX_EARLIEST_TIME && t <= Date.now() + 86400000;
+    return { lat, lng, t: okTime ? t : null };
   }).filter(p=>isFinite(p.lat) && isFinite(p.lng) && Math.abs(p.lat)<=90 && Math.abs(p.lng)<=180);
   const nameEl = xml.querySelector('trk > name') || xml.querySelector('metadata > name');
   return { points: pts, name: nameEl ? nameEl.textContent.trim() : '' };
@@ -62,8 +68,10 @@ function gpxCleanPoints(points){
   return out;
 }
 function gpxStats(points){
-  const timedAll = points.some(p=>p.t!=null);
-  const pts = timedAll ? gpxCleanPoints(points.slice().sort((a,b)=>(a.t??0)-(b.t??0))) : points;
+  // Use the points that have a (sensible) time, in time order. If fewer than
+  // two have one, use every point in file order instead (distance only).
+  const timedIn = points.filter(p=>p.t!=null);
+  const pts = timedIn.length >= 2 ? gpxCleanPoints(timedIn.sort((a,b)=>a.t-b.t)) : points;
   let nm = 0;
   for(let i=1;i<pts.length;i++) nm += haversineNm(pts[i-1], pts[i]);
   const timed = pts.filter(p=>p.t!=null);
@@ -96,7 +104,7 @@ async function handleGpxFile(ev){
 
     // fill in the form (the person can still change anything before saving)
     const sys = activeUnitSystem;
-    if(s.start){
+    if(s.start != null){
       const d = new Date(s.start); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
       document.getElementById('pastDate').value = d.toISOString().slice(0,16);
       refreshPastDateDisplay();
@@ -130,6 +138,9 @@ function removeImportedGpx(){
 // The little line under the button: "Imported: harbour.gpx · 1,240 points · Remove"
 function renderGpxImportStatus(){
   const el = document.getElementById('gpxImportStatus'); if(!el) return;
+  // long file names with no spaces (SeaPeople's are ~100 characters) must wrap,
+  // or they push the whole screen sideways
+  el.style.overflowWrap = 'anywhere'; el.style.wordBreak = 'break-word';
   const it = currentTrip && currentTrip.importedTrack;
   el.innerHTML = it && currentTrip.path && currentTrip.path.length > 1
     ? `${t('gpx.status', {file: escapeHtml(it.fileName||'GPX'), n: (it.points||currentTrip.path.length).toLocaleString()})} · <a href="#" onclick="event.preventDefault();removeImportedGpx()">${t('gpx.remove')}</a>`
