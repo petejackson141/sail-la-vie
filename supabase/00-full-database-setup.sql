@@ -216,7 +216,8 @@ grant all on public.profiles, public.public_profiles, public.boats, public.crew,
 -- ---------------------------------------------------------------------
 -- 2. HELPER FUNCTIONS
 --    "private" = internal helpers the internet can't call directly.
---    "public"  = the two the app's buttons call (Accept friend, Delete account).
+--    "public"  = the three the app calls (Accept friend, Delete account,
+--                Friends search by email).
 -- ---------------------------------------------------------------------
 
 create schema if not exists private;
