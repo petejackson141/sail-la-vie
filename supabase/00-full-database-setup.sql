@@ -9,7 +9,8 @@
 --   harden-functions.sql and fix-advisor-warnings.sql were run), plus
 --   profile-photos.sql (20.10.2026), sail-shares.sql (30.10.2026), advisor-tidy-up.sql,
 --   error-reports.sql and find-by-email.sql (02.11.2026), and email-alerts.sql
---   (04.11.2026, section 5b). Checked against the live
+--   (04.11.2026, section 5b), and push-notifications.sql (05.11.2026, section 5c).
+--   Checked against the live
 --   Frankfurt database on 04.11.2026: all tables, columns, grants, policies,
 --   functions, triggers, realtime and the photo bucket matched.
 --
@@ -36,6 +37,11 @@
 --      the notify-email Edge Function (supabase/functions/notify-email/index.ts,
 --      "Verify JWT" off) and set its secrets RESEND_API_KEY and NOTIFY_SECRET
 --      (NOTIFY_SECRET = the value section 5b shows; see email-alerts.sql).
+--   6. Push notifications (section 5c): change the push_url address in
+--      section 5c to the new project too. Deploy the send-push Edge Function
+--      (supabase/functions/send-push/index.ts, "Verify JWT" off) and set its
+--      secret FIREBASE_SERVICE_ACCOUNT (the whole firebase-service-account.json,
+--      kept in C:\Users\Pete\SailLaVie-keys and Google Drive).
 --
 -- RULE FOR THE FUTURE: whenever a database change is made, update this file
 -- too, so it always describes the real database.
@@ -630,9 +636,130 @@ select cron.schedule('daily-error-summary', '0 6 * * *',
 
 
 -- ---------------------------------------------------------------------
+-- 5c. PUSH NOTIFICATIONS  - added 05.11.2026 (same as push-notifications.sql)
+--    Each phone's FCM push address lives in push_tokens; triggers on
+--    sail_shares and friendships ask the send-push Edge Function to send a
+--    push (friend sent you a sail / friend request / request accepted).
+--    See the top of push-notifications.sql for how to add an event later.
+-- ---------------------------------------------------------------------
+
+-- 1. the table
+create table if not exists public.push_tokens (
+  token       text primary key,                         -- the phone's FCM push address
+  user_id     uuid not null references auth.users(id) on delete cascade,
+  platform    text not null default 'android'
+              constraint push_tokens_platform_check check (platform in ('android', 'ios', 'web')),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists push_tokens_user_id_idx on public.push_tokens (user_id);
+
+-- access (since Supabase's 30 October 2026 change every table needs a grant):
+-- the app reads/removes only through the two functions below, never directly
+revoke all on public.push_tokens from anon, authenticated;
+grant all on public.push_tokens to service_role;
+alter table public.push_tokens enable row level security;
+-- no policies on purpose: with RLS on and no policy, the app can't touch the
+-- table directly; only the two functions (and the service role) can.
+
+-- 2. the two calls the app makes
+create or replace function public.register_push_token(p_token text, p_platform text default 'android')
+returns void language plpgsql security definer set search_path = ''
+as $$
+begin
+  if auth.uid() is null then raise exception 'Not signed in'; end if;
+  if p_token is null or char_length(p_token) not between 10 and 4096 then raise exception 'Bad token'; end if;
+  insert into public.push_tokens (token, user_id, platform, updated_at)
+  values (p_token, auth.uid(), coalesce(p_platform, 'android'), now())
+  on conflict (token) do update
+    set user_id = excluded.user_id, platform = excluded.platform, updated_at = now();
+end;
+$$;
+
+create or replace function public.unregister_push_token(p_token text)
+returns void language sql security definer set search_path = ''
+as $$
+  delete from public.push_tokens where token = p_token and user_id = auth.uid();
+$$;
+
+revoke all on function public.register_push_token(text, text) from public, anon;
+revoke all on function public.unregister_push_token(text)     from public, anon;
+grant execute on function public.register_push_token(text, text) to authenticated;
+grant execute on function public.unregister_push_token(text)     to authenticated;
+
+-- 3. where send-push lives (made only if it doesn't exist yet)
+--    NEW PROJECT: change the address to the new project's
+--    https://<project-ref>.supabase.co/functions/v1/send-push
+do $$
+begin
+  if not exists (select 1 from vault.secrets where name = 'push_url') then
+    perform vault.create_secret(
+      'https://lccwbkarqjohunofsghd.supabase.co/functions/v1/send-push',
+      'push_url', 'Address of the send-push Edge Function');
+  end if;
+end $$;
+
+-- 4. one helper that hands a message to send-push (same secret as email alerts)
+create or replace function private.call_push(payload jsonb)
+returns void language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_url    text;
+  v_secret text;
+begin
+  select decrypted_secret into v_url    from vault.decrypted_secrets where name = 'push_url';
+  select decrypted_secret into v_secret from vault.decrypted_secrets where name = 'notify_secret';
+  if v_url is null or v_secret is null then return; end if;  -- not set up: do nothing
+  perform net.http_post(
+    url     := v_url,
+    body    := payload,
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-notify-secret', v_secret),
+    timeout_milliseconds := 10000
+  );
+end;
+$$;
+revoke all on function private.call_push(jsonb) from public, anon, authenticated;
+
+-- 5. the three events
+-- 5a. a friend sends you a sail
+create or replace function private.push_on_sail_share()
+returns trigger language plpgsql security definer set search_path = ''
+as $$
+begin
+  perform private.call_push(jsonb_build_object('type', 'sail_share', 'id', new.id));
+  return null;
+exception when others then return null;   -- never block the share
+end;
+$$;
+revoke all on function private.push_on_sail_share() from public, anon, authenticated;
+drop trigger if exists sail_shares_push on public.sail_shares;
+create trigger sail_shares_push after insert on public.sail_shares
+  for each row execute function private.push_on_sail_share();
+
+-- 5b. a friend request arrives / 5c. your request is accepted
+create or replace function private.push_on_friendship()
+returns trigger language plpgsql security definer set search_path = ''
+as $$
+begin
+  if tg_op = 'INSERT' and new.status = 'pending' then
+    perform private.call_push(jsonb_build_object('type', 'friend_request', 'to', new.addressee_id, 'from', new.requester_id));
+  elsif tg_op = 'UPDATE' and old.status = 'pending' and new.status = 'accepted' then
+    perform private.call_push(jsonb_build_object('type', 'friend_accepted', 'to', new.requester_id, 'from', new.addressee_id));
+  end if;
+  return null;
+exception when others then return null;   -- never block the friend request
+end;
+$$;
+revoke all on function private.push_on_friendship() from public, anon, authenticated;
+drop trigger if exists friendships_push on public.friendships;
+create trigger friendships_push after insert or update on public.friendships
+  for each row execute function private.push_on_friendship();
+
+
+-- ---------------------------------------------------------------------
 -- 6. CHECK
---    Should list 10 tables, all with rls_enabled = true, and app_access
---    showing the actions from section 1b (feedback and error_reports = INSERT only).
+--    Should list 11 tables, all with rls_enabled = true, and app_access
+--    showing the actions from section 1b (feedback and error_reports = INSERT only;
+--    push_tokens = empty, the app uses register_push_token / unregister_push_token).
 -- ---------------------------------------------------------------------
 select c.relname as table_name,
        c.relrowsecurity as rls_enabled,

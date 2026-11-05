@@ -173,8 +173,9 @@ async function loadIncomingSails(){
      * app in the background → a phone notification; tapping it opens History
        (the pop-up then shows when they come back to the app)
    Which ones were already announced is remembered on this device.
-   Note: a notification when the app is fully CLOSED needs real push
-   notifications (Firebase) — a later step. */
+   When the app is fully CLOSED, a real push notification arrives instead
+   (push.js + the send-push Edge Function, 05.11.2026); once this phone is
+   registered for pushes, the local notification above is skipped. */
 const SEEN_SHARES_KEY = 'seenSailShares';
 function seenShareIds(){ try{ return JSON.parse(localStorage.getItem(SEEN_SHARES_KEY) || '[]'); }catch(e){ return []; } }
 function rememberSharesSeen(ids){
@@ -202,6 +203,7 @@ async function announceNewIncomingSails(){
 async function notifyIncomingSails(list){
   const LN = typeof getLocalNotifications === 'function' ? getLocalNotifications() : null;
   if(!LN || !list.length) return;
+  if(window.pushRegistered) return; // a real push (push.js / send-push) already notifies, so no second one
   if(!(await ensureNotificationPermission(false))) return;
   try{ await LN.createChannel({ id:'sail-shares', name: t('share.channelName'), importance: 4, visibility: 1 }); }catch(e){}
   list.forEach(s=>_notifiedShareIds.add(s.id));

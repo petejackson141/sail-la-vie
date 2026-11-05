@@ -243,6 +243,7 @@ function applySession(session){
   renderAccountUI();
   ensureRealtimeSync();
   if(typeof onFriendsSessionChanged === 'function') onFriendsSessionChanged(); // friends.js
+  if(typeof onPushSessionChanged === 'function') onPushSessionChanged();       // push.js: register this phone for pushes
   if(session) hideWelcomeGate(); // signed in (from the gate or otherwise) — nothing left to ask
   else if(_welcomeGateArmed) showWelcomeGateIfSignedOut(); // signed out after start-up → back to the gate
 }
@@ -650,6 +651,7 @@ async function submitNewPassword(){
 
 async function signOutUser(){
   if(!(await confirmDialog('signOut', {icon:'logout'}))) return;
+  if(typeof removePushToken === 'function') await removePushToken(); // push.js: stop pushes to this phone (needs the session, so before signOut)
   await getSupabaseClient().auth.signOut();
   showToast(t('acct.signedOut'));
 }

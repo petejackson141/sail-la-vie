@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "363349365811",
+    "project_id": "sail-la-vie-38260",
+    "storage_bucket": "sail-la-vie-38260.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:363349365811:android:0fac88acf577c3b9427f46",
+        "android_client_info": {
+          "package_name": "com.saillavie.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQxjCIV2aLR7KmuF2P6lYY4M2RIeLPkuw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

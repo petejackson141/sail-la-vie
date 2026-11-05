@@ -42,6 +42,15 @@
             android:exported="false"
             android:foregroundServiceType="location" />
 
+        <!-- Push notifications (05.11.2026, js/push.js): the small white sailboat icon
+             and the channel used when the app hasn't created one yet. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_sail" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="social" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

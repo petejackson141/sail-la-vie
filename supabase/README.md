@@ -17,7 +17,7 @@ columns, grants, policies, functions, triggers, realtime and the photo bucket ma
 
 ## The other files here
 
-One-off fixes for the live database. All have been run (the last four checked on Frankfurt, 4 November 2026), except `email-alerts.sql`, which is new.
+One-off fixes for the live database. All have been run (the last four checked on Frankfurt, 4 November 2026), except `push-notifications.sql`, which is new.
 Their changes are already included in the master file, so they never need running again.
 They're kept as a record of what was changed and why.
 
@@ -31,7 +31,8 @@ They're kept as a record of what was changed and why.
 | `advisor-tidy-up.sql` | Performance Advisor tidy-up: rules rewritten with (select auth.uid()), one read rule per table, feedback index. Who can see what is unchanged (2 November 2026) — run on Frankfurt (checked 4 November 2026) |
 | `error-reports.sql` | Crash / error reporting: the `error_reports` table the app writes problems to, kept 90 days (2 November 2026) — run on Frankfurt (checked 4 November 2026) |
 | `find-by-email.sql` | Friends search by full email address: the `find_sailor_by_email` function (2 November 2026) — run on Frankfurt (checked 4 November 2026) |
-| `email-alerts.sql` | Email alerts: new Contact us feedback emailed straight away, daily error summary at 06:00 UTC, through the `notify-email` Edge Function and Resend (4 November 2026) — **to run on Frankfurt** |
+| `email-alerts.sql` | Email alerts: new Contact us feedback emailed straight away, daily error summary at 06:00 UTC, through the `notify-email` Edge Function and Resend (4 November 2026) — run on Frankfurt (4 November 2026) |
+| `push-notifications.sql` | Push notifications: the `push_tokens` table, `register_push_token` / `unregister_push_token`, and triggers on `sail_shares` and `friendships` that call the `send-push` Edge Function (5 November 2026) — **to run on Frankfurt** |
 
 ## Expected Security Advisor warnings (all fine)
 
@@ -47,3 +48,4 @@ pasting the file into Supabase → Edge Functions (no command line needed).
 | Function | What it does | Settings |
 |---|---|---|
 | `notify-email` | Emails sailapp141@gmail.com: each new Contact us message (with screenshot), and the daily error summary. Only the database calls it (`email-alerts.sql`). | "Verify JWT" **off**. Secrets: `RESEND_API_KEY` (Resend, in Bitwarden), `NOTIFY_SECRET` (shown by `email-alerts.sql`) |
+| `send-push` | Sends phone push notifications through Firebase (project sail-la-vie-38260): a friend sent you a sail, a friend request, a request accepted. Only the database calls it (`push-notifications.sql`). | "Verify JWT" **off**. Secrets: `FIREBASE_SERVICE_ACCOUNT` (whole firebase-service-account.json), `NOTIFY_SECRET` (shared with notify-email) |
