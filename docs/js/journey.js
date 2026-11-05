@@ -789,6 +789,15 @@ async function drainSailTrackerFixes(){
     drainingSailFixes = false;
   }
 }
+// End Journey: collect any GPS points still waiting in the recorder BEFORE it
+// stops, so the last seconds of the track aren't lost (05.11.2026). If a
+// collection is already running, wait for it (up to 2 s) and then collect once
+// more, to pick up anything that arrived in the meantime.
+async function drainSailTrackerBeforeStop(){
+  if(!(nativeGpsActive && useSailTracker())) return;
+  for(let i=0; i<20 && drainingSailFixes; i++) await new Promise(r=>setTimeout(r,100));
+  try{ await drainSailTrackerFixes(); }catch(e){ /* not fatal: save what we have */ }
+}
 async function startSailTracker(){
   const tracker = getSailTracker();
   try{
@@ -1215,6 +1224,7 @@ async function endJourney(){
     currentTrip.maxSpeed = !isNaN(maxInput) && maxInput>0 ? (activeUnitSystem==='metric' ? maxInput/KT_TO_KMH : maxInput) : null;
     currentTrip.date = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
   } else {
+    await drainSailTrackerBeforeStop(); // last waiting GPS points first, then stop
     stopGPS();
     const manualInput = parseFloat(document.getElementById('manualDistance').value);
     if(!isNaN(manualInput) && (!currentTrip.path.length || currentTrip.distanceNm===0)){
