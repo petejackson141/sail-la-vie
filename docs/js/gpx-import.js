@@ -49,33 +49,44 @@ function parseGpx(text){
 }
 
 // Works out the numbers from the points.
+//   The points are always used IN FILE ORDER: a GPX file lists them in the
+//   order they were recorded, even when some have no usable time. (Fixed
+//   05.11.2026: a SeaPeople file had "1970" times on its first point and on the
+//   whole way back; sorting by time or dropping those points lost the return
+//   leg.)
 //   GPS "jumps" (a point that would need more than GPX_MAX_PLAUSIBLE_SPEED_KT to
-//   reach) are left out first, the same rule live tracking uses
-//   distance — sum of the legs between the remaining points
-//   duration — first to last time stamp
+//   reach) are left out first, the same rule live tracking uses; this can
+//   only be checked between two points that both have a time
+//   distance — sum of the legs between the remaining points, all of them
+//   start / duration — earliest to latest real time stamp
 //   max speed — over stretches of at least 30 seconds, so one noisy point
 //               can't produce a silly top speed
+//   avg speed — only when every point has a time. If some don't, the file
+//               doesn't cover the whole sail, so it's left blank and the app
+//               works it out from distance ÷ duration when saving.
 function gpxCleanPoints(points){
   const out = [];
+  let lastTimed = null; // the last kept point that has a time
   for(const p of points){
-    const prev = out[out.length-1];
-    if(prev && prev.t!=null && p.t!=null && p.t > prev.t){
-      const kt = haversineNm(prev, p) / ((p.t - prev.t)/3600000);
+    if(lastTimed && p.t!=null && p.t > lastTimed.t){
+      const kt = haversineNm(lastTimed, p) / ((p.t - lastTimed.t)/3600000);
       if(kt >= GPX_MAX_PLAUSIBLE_SPEED_KT) continue; // a jump — skip this point
     }
     out.push(p);
+    if(p.t!=null) lastTimed = p;
   }
   return out;
 }
 function gpxStats(points){
-  // Use the points that have a (sensible) time, in time order. If fewer than
-  // two have one, use every point in file order instead (distance only).
-  const timedIn = points.filter(p=>p.t!=null);
-  const pts = timedIn.length >= 2 ? gpxCleanPoints(timedIn.sort((a,b)=>a.t-b.t)) : points;
+  const pts = gpxCleanPoints(points);
   let nm = 0;
   for(let i=1;i<pts.length;i++) nm += haversineNm(pts[i-1], pts[i]);
   const timed = pts.filter(p=>p.t!=null);
-  const secs = timed.length>1 ? Math.round((timed[timed.length-1].t - timed[0].t)/1000) : 0;
+  const times = timed.map(p=>p.t);
+  const start = times.length ? Math.min(...times) : null;
+  const end   = times.length ? Math.max(...times) : null;
+  const secs = times.length>1 ? Math.round((end - start)/1000) : 0;
+  const allTimed = timed.length === pts.length;
   let maxKt = 0;
   for(let i=0, j=0; i<timed.length; i++){
     if(j < i) j = i;
@@ -86,7 +97,8 @@ function gpxStats(points){
     const kt = d/dt;
     if(kt < GPX_MAX_PLAUSIBLE_SPEED_KT) maxKt = Math.max(maxKt, kt);
   }
-  return { nm, secs, avgKt: secs>0 ? nm/(secs/3600) : 0, maxKt, start: timed.length ? timed[0].t : null, points: pts };
+  return { nm, secs, avgKt: (allTimed && secs>0) ? nm/(secs/3600) : 0, maxKt, start,
+           someTimesMissing: timed.length>1 && !allTimed, points: pts };
 }
 
 async function handleGpxFile(ev){
@@ -121,7 +133,7 @@ async function handleGpxFile(ev){
     renderGpxImportStatus();
     if(currentTrip.path.length) autoFillPlaceFrom(currentTrip.path[0].lat, currentTrip.path[0].lng); // name where the track starts (only if Place is empty)
     if(typeof saveActiveTripCheckpoint === 'function') saveActiveTripCheckpoint();
-    showToast(s.secs ? t('gpx.imported') : t('gpx.importedNoTimes'));
+    showToast(!s.secs ? t('gpx.importedNoTimes') : s.someTimesMissing ? t('gpx.importedSomeTimes') : t('gpx.imported'));
   }catch(e){
     console.error('GPX import failed', e);
     showToast(t('gpx.failed'));

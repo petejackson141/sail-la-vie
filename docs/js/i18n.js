@@ -257,6 +257,7 @@ const TRANSLATIONS = {
   'gpx.noPoints': 'No track points found in that file.',
   'gpx.imported': 'Track imported. Check the details, then save.',
   'gpx.importedNoTimes': 'Track imported, but the file has no times. Please fill in the date and duration.',
+  'gpx.importedSomeTimes': 'Track imported. Part of the track has no times, so please check the duration before saving.',
   'gpx.failed': "Couldn't read that file. Is it a GPX file?",
   'gpx.status': 'Imported: {file} · {n} points',
   'gpx.remove': 'Remove',
