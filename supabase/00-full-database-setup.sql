@@ -9,7 +9,8 @@
 --   harden-functions.sql and fix-advisor-warnings.sql were run), plus
 --   profile-photos.sql (20.10.2026), sail-shares.sql (30.10.2026), advisor-tidy-up.sql,
 --   error-reports.sql and find-by-email.sql (02.11.2026), and email-alerts.sql
---   (04.11.2026, section 5b), and push-notifications.sql (05.11.2026, section 5c).
+--   (04.11.2026, section 5b), and push-notifications.sql (05.11.2026, section 5c),
+--   and keep-alive.sql (06.11.2026).
 --   Checked against the live
 --   Frankfurt database on 04.11.2026: all tables, columns, grants, policies,
 --   functions, triggers, realtime and the photo bucket matched.
@@ -172,6 +173,15 @@ create table if not exists public.error_reports (     -- crash / error reporting
   repeats      integer not null default 1 check (repeats between 1 and 1000)
 );
 
+-- keep_alive: one row, no user data. The GitHub "Supabase keep-alive" job
+-- (.github/workflows/supabase-keep-alive.yml) reads it twice a week so the
+-- free-plan project is never paused for inactivity (06.11.2026, keep-alive.sql)
+create table if not exists public.keep_alive (
+  id        int primary key,
+  pinged_at timestamptz not null default now()
+);
+insert into public.keep_alive (id) values (1) on conflict (id) do nothing;
+
 -- indexes: let the database find "this user's rows" quickly
 create index if not exists trips_user_id_idx             on public.trips (user_id);
 create index if not exists boats_user_id_idx             on public.boats (user_id);
@@ -205,7 +215,7 @@ create index if not exists feedback_user_id_idx          on public.feedback (use
 -- back exactly what the app needs
 revoke all on public.profiles, public.public_profiles, public.boats, public.crew,
               public.trips, public.noticeboard, public.friendships, public.feedback, public.sail_shares,
-              public.error_reports
+              public.error_reports, public.keep_alive
   from anon, authenticated;
 
 grant select, insert, update         on public.profiles        to authenticated;
@@ -218,10 +228,11 @@ grant select, insert, delete         on public.friendships     to authenticated;
 grant insert                         on public.feedback        to authenticated;  -- send only, never read back
 grant select, insert, delete         on public.sail_shares     to authenticated;  -- added 30.10.2026
 grant insert                         on public.error_reports   to authenticated;  -- send only, never read back (02.11.2026)
+grant select                         on public.keep_alive      to anon;           -- the ONE signed-out exception: the keep-alive job reads this empty table (06.11.2026)
 
 grant all on public.profiles, public.public_profiles, public.boats, public.crew,
              public.trips, public.noticeboard, public.friendships, public.feedback, public.sail_shares,
-             public.error_reports
+             public.error_reports, public.keep_alive
   to service_role;
 
 
@@ -387,6 +398,7 @@ alter table public.feedback        enable row level security;
 alter table public.sail_shares     enable row level security;
 
 alter table public.error_reports enable row level security;
+alter table public.keep_alive    enable row level security;
 
 -- Rules written as (select auth.uid()) and one read rule per table, as the
 -- Performance Advisor asks (02.11.2026, advisor-tidy-up.sql). First remove any
@@ -398,7 +410,7 @@ begin
     select policyname, tablename from pg_policies
     where schemaname = 'public'
       and tablename in ('profiles','public_profiles','boats','crew','trips','noticeboard',
-                        'friendships','feedback','sail_shares','error_reports')
+                        'friendships','feedback','sail_shares','error_reports','keep_alive')
   loop
     execute format('drop policy %I on public.%I', p.policyname, p.tablename);
   end loop;
@@ -491,6 +503,10 @@ create policy sail_shares_delete on public.sail_shares
 -- error_reports: you can send your own, nobody can read them back through the app
 create policy error_reports_insert on public.error_reports
   for insert to authenticated with check (user_id = (select auth.uid()));
+
+-- keep_alive: anyone may read the single row (it holds no user data), nobody may change it
+create policy keep_alive_select on public.keep_alive
+  for select to anon using (true);
 
 -- keep only the last 90 days of error reports: every new report removes anything older
 create or replace function private.trim_old_error_reports()
@@ -757,9 +773,10 @@ create trigger friendships_push after insert or update on public.friendships
 
 -- ---------------------------------------------------------------------
 -- 6. CHECK
---    Should list 11 tables, all with rls_enabled = true, and app_access
+--    Should list 12 tables, all with rls_enabled = true, and app_access
 --    showing the actions from section 1b (feedback and error_reports = INSERT only;
---    push_tokens = empty, the app uses register_push_token / unregister_push_token).
+--    push_tokens = empty, the app uses register_push_token / unregister_push_token;
+--    keep_alive = empty, only signed-out "anon" may read it).
 -- ---------------------------------------------------------------------
 select c.relname as table_name,
        c.relrowsecurity as rls_enabled,

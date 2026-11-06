@@ -33,6 +33,16 @@ They're kept as a record of what was changed and why.
 | `find-by-email.sql` | Friends search by full email address: the `find_sailor_by_email` function (2 November 2026) — run on Frankfurt (checked 4 November 2026) |
 | `email-alerts.sql` | Email alerts: new Contact us feedback emailed straight away, daily error summary at 06:00 UTC, through the `notify-email` Edge Function and Resend (4 November 2026) — run on Frankfurt (4 November 2026) |
 | `push-notifications.sql` | Push notifications: the `push_tokens` table, `register_push_token` / `unregister_push_token`, and triggers on `sail_shares` and `friendships` that call the `send-push` Edge Function (5 November 2026) — **to run on Frankfurt** |
+| `keep-alive.sql` | The one-row `keep_alive` table the GitHub keep-alive job reads twice a week, so the free-plan project is never paused for inactivity. The only table signed-out "anon" may read (no user data in it) (6 November 2026) — **to run on Frankfurt** |
+
+## Keep-alive job
+
+`.github/workflows/supabase-keep-alive.yml` runs on GitHub every Monday and Thursday
+(06:17 UTC) and reads `keep_alive`. It needs two GitHub repository secrets:
+`SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (the same as in `docs/js/auth.js`).
+GitHub only runs it from `main`. If it fails, GitHub emails you. Test it from the
+Actions tab → Supabase keep-alive → Run workflow.
+**After a project move, update both secrets to the new project.**
 
 ## Expected Security Advisor warnings (all fine)
 

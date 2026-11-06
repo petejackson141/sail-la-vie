@@ -15,4 +15,4 @@ public class MainActivity extends BridgeActivity {
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         getBridge().getWebView().clearCache(true);
     }
-}
+} 
