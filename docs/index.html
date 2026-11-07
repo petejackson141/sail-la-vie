@@ -1809,6 +1809,19 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
       </div>
     </div>
 
+    <!-- Notifications: iPhone / browser version only (js/push.js, renderWebPushUI).
+         The Android app asks at sign-in instead, so this stays hidden there.
+         On iPhone the "Allow notifications?" question can only come from a tap,
+         which is why this is a button and not asked automatically. -->
+    <div id="webPushSection" style="display:none;">
+      <div class="section-title" data-i18n="push.web.title">Notifications</div>
+      <div class="card" style="padding:16px;">
+        <p style="font-size:12.5px;" id="webPushStatus"></p>
+        <button class="btn btn-primary" id="webPushOnBtn" style="margin-top:12px;display:none;" onclick="enableWebPush()" data-i18n="push.web.turnOn">Turn on notifications</button>
+        <button class="btn btn-outline" id="webPushOffBtn" style="margin-top:12px;display:none;" onclick="disableWebPush()" data-i18n="push.web.turnOff">Turn off notifications</button>
+      </div>
+    </div>
+
     <div class="section-title" data-i18n="settings.appearance">Appearance</div>
     <p style="font-size:12px;margin-bottom:10px;" data-i18n="settings.themeHint">Choose Day, Night, or Auto to switch based on your local sunrise and sunset</p>
     <div class="chiprow" id="themeChips">

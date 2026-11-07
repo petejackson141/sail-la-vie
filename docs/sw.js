@@ -39,7 +39,7 @@
   sees it. Supabase (and any other live API traffic) is now explicitly
   excluded from caching entirely, further down.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v75';
+const CACHE_NAME = 'sail-la-vie-shell-v76';
 
 const APP_SHELL = [
   './',
@@ -166,17 +166,41 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Tapping the "Trip Recording" notification (see showRecordingNotification()
-// in journey.js) should bring the app forward rather than just dismissing
-// the notification and doing nothing.
+// ---------- Web push (iPhone / browser version, 07.11.2026) ----------
+// send-push (Supabase) sends {title, body, data:{type, ...}}. The app may not
+// be running at all, so the service worker shows the notification itself.
+// Every push MUST show a notification: Apple and Chrome cancel the
+// subscription of a site that receives pushes without showing anything.
+self.addEventListener('push', (event) => {
+  let p = {};
+  try { p = event.data ? event.data.json() : {}; }
+  catch (e) { p = { body: event.data ? event.data.text() : '' }; }
+  event.waitUntil(self.registration.showNotification(p.title || 'Sail la Vie', {
+    body: p.body || '',
+    icon: './images/icon-192.png',
+    data: p.data || {}
+  }));
+});
+
+// Tapping a notification brings the app forward rather than just dismissing
+// it. Two kinds of notification end up here:
+//   - the "Trip Recording" one (showRecordingNotification() in journey.js):
+//     no data.type, so the app just comes to the front;
+//   - a web push (above): data.type says which screen to open. An app that's
+//     already open gets a message (push.js listens for it); a closed app is
+//     opened with ?push=<type> in the address (push.js, handlePushLaunch).
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const data = event.notification.data || {};
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
-        if ('focus' in client) return client.focus();
+        if ('focus' in client) {
+          if (data.type) client.postMessage({ pushTap: data });
+          return client.focus();
+        }
       }
-      if (clients.openWindow) return clients.openWindow('./');
+      if (clients.openWindow) return clients.openWindow(data.type ? './?push=' + encodeURIComponent(data.type) : './');
     })
   );
 });

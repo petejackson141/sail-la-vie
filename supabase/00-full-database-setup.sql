@@ -653,7 +653,7 @@ select cron.schedule('daily-error-summary', '0 6 * * *',
 
 -- ---------------------------------------------------------------------
 -- 5c. PUSH NOTIFICATIONS  - added 05.11.2026 (same as push-notifications.sql)
---    Each phone's FCM push address lives in push_tokens; triggers on
+--    Each phone's push address (FCM token or web push subscription) lives in push_tokens; triggers on
 --    sail_shares and friendships ask the send-push Edge Function to send a
 --    push (friend sent you a sail / friend request / request accepted).
 --    See the top of push-notifications.sql for how to add an event later.
@@ -661,7 +661,7 @@ select cron.schedule('daily-error-summary', '0 6 * * *',
 
 -- 1. the table
 create table if not exists public.push_tokens (
-  token       text primary key,                         -- the phone's FCM push address
+  token       text primary key,                         -- the push address: FCM token (android) or web push subscription JSON (web)
   user_id     uuid not null references auth.users(id) on delete cascade,
   platform    text not null default 'android'
               constraint push_tokens_platform_check check (platform in ('android', 'ios', 'web')),

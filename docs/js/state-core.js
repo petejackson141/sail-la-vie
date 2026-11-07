@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '05.11.2026.1123';
+const APP_VERSION = '07.11.2026.0730';
 
 /* ============================================================
    CONFIRM DIALOG (shared across all screens)
@@ -208,6 +208,7 @@ async function boot(){
   const authReady = initAuth().catch(e => console.error('initAuth failed', e));
   currentLang = savedLanguage(); // English or Hebrew (the language chosen in Settings)
   applyStaticTranslations();
+  renderWebPushUI(); // push.js: Settings > Notifications card (iPhone / browser version only)
 
   await applyThemePreference();
   renderUnitsSettingUI();
@@ -233,6 +234,7 @@ async function boot(){
   renderHomeStats();
   initNoticeboardNotificationTap();
   syncNoticeboardReminders(); // re-apply this phone's Noticeboard reminders (no-op outside the native app)
+  handlePushLaunch(); // push.js: opened by tapping a web push? Go to the right screen
 }
 function greet(){
   const h = new Date().getHours();

@@ -1,8 +1,13 @@
 // =====================================================================
 // Sail la Vie: send-push (Supabase Edge Function, 05.11.2026)
 // =====================================================================
-// Sends a phone notification (push) through Firebase Cloud Messaging, so it
-// arrives even when Sail la Vie is fully closed.
+// Sends a phone notification (push), so it arrives even when Sail la Vie is
+// fully closed. Two routes, chosen by each push address's platform in the
+// push_tokens table:
+//   'android'  the Android app, through Firebase Cloud Messaging (05.11.2026)
+//   'web'      the iPhone / browser version, through web push (07.11.2026):
+//              the address is the browser's subscription (JSON), and the
+//              message is signed with our own key pair (the "VAPID" keys).
 //
 // Who calls it: never the app. Only the database, through the triggers in
 // supabase/push-notifications.sql, with one of these:
@@ -12,6 +17,10 @@
 // Every call must carry the x-notify-secret header (the same secret as the
 // email alerts), so nobody else can make it send pushes.
 //
+// The one exception: a plain GET (no secret) answers {"publicKey": "..."},
+// the PUBLIC web push key the app needs before it can subscribe (js/push.js).
+// It's public by design: it can't send anything without the private key.
+//
 // ADDING AN EVENT LATER: add a trigger in the SQL with a new "type", then
 // add a case for it in buildMessage() below.
 //
@@ -20,6 +29,11 @@
 //                             (Firebase project sail-la-vie-38260; file kept in
 //                             C:\Users\Pete\SailLaVie-keys and Google Drive)
 //   NOTIFY_SECRET             already set for notify-email; shared
+//   WEB_PUSH_PUBLIC_KEY       } the web push key pair, made once with
+//   WEB_PUSH_PRIVATE_KEY      }   npx web-push generate-vapid-keys
+//                             (private key also kept in Bitwarden; never in the project)
+//   WEB_PUSH_SUBJECT          optional: who to contact about our pushes
+//                             (default mailto:sailapp141@gmail.com; Apple requires one)
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase.
 //
 // Deploy: Supabase -> Edge Functions -> Deploy a new function -> Via editor,
@@ -28,10 +42,18 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { importPKCS8, SignJWT } from "npm:jose@5";
+import webpush from "npm:web-push@3.6.7";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
 Deno.serve(async (req) => {
+  // The app asking for the public web push key (no secret needed).
+  if (req.method === "GET" || req.method === "OPTIONS") {
+    const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, OPTIONS" };
+    if (req.method === "OPTIONS") return new Response(null, { headers: cors });
+    return new Response(JSON.stringify({ publicKey: Deno.env.get("WEB_PUSH_PUBLIC_KEY") || null }),
+      { headers: { ...cors, "Content-Type": "application/json" } });
+  }
   const secret = Deno.env.get("NOTIFY_SECRET");
   if (!secret || req.headers.get("x-notify-secret") !== secret) {
     return new Response("Not allowed", { status: 401 });
@@ -82,14 +104,30 @@ async function sailorName(userId: string): Promise<string> {
   return data?.display_name || data?.username || "A sailor";
 }
 
-// ---------- sending through Firebase ----------
+// ---------- sending: split by platform ----------
+type Payload = { title: string; body: string; data: Record<string, string> };
+
 async function sendToUser(userId: string, title: string, body: string, data: Record<string, string>) {
-  const { data: rows } = await db.from("push_tokens").select("token").eq("user_id", userId);
+  const { data: rows } = await db.from("push_tokens").select("token, platform").eq("user_id", userId);
   if (!rows?.length) return 0;
-  const sa = JSON.parse(Deno.env.get("FIREBASE_SERVICE_ACCOUNT")!);
+  const msg: Payload = { title, body, data };
+  const android = rows.filter((r) => r.platform !== "web").map((r) => r.token);
+  const web = rows.filter((r) => r.platform === "web").map((r) => r.token);
+  let sent = 0;
+  // One route failing (a missing secret, Firebase down) must not stop the other.
+  if (android.length) { try { sent += await sendFirebase(android, msg); } catch (e) { console.error("Firebase:", e); } }
+  if (web.length)     { try { sent += await sendWebPush(web, msg); }      catch (e) { console.error("web push:", e); } }
+  return sent;
+}
+
+// ---------- Android app: Firebase Cloud Messaging ----------
+async function sendFirebase(tokens: string[], { title, body, data }: Payload) {
+  const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
+  if (!raw) { console.warn("FIREBASE_SERVICE_ACCOUNT not set"); return 0; }
+  const sa = JSON.parse(raw);
   const accessToken = await googleAccessToken(sa);
   let sent = 0;
-  for (const { token } of rows) {
+  for (const token of tokens) {
     const res = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -108,6 +146,38 @@ async function sendToUser(userId: string, title: string, body: string, data: Rec
       await db.from("push_tokens").delete().eq("token", token);
     } else {
       console.error("FCM said", res.status, err);
+    }
+  }
+  return sent;
+}
+
+// ---------- iPhone / browser version: web push ----------
+// The web-push library encrypts the message for that one browser and signs it
+// with our private key; the browser's push service (Apple, Google, Mozilla)
+// then delivers it, and the app's service worker (sw.js) shows it.
+async function sendWebPush(subscriptions: string[], msg: Payload) {
+  const pub = Deno.env.get("WEB_PUSH_PUBLIC_KEY");
+  const priv = Deno.env.get("WEB_PUSH_PRIVATE_KEY");
+  if (!pub || !priv) { console.warn("WEB_PUSH keys not set"); return 0; }
+  webpush.setVapidDetails(Deno.env.get("WEB_PUSH_SUBJECT") || "mailto:sailapp141@gmail.com", pub, priv);
+  const payload = JSON.stringify(msg);
+  let sent = 0;
+  for (const token of subscriptions) {
+    let sub;
+    try { sub = JSON.parse(token); } catch { await db.from("push_tokens").delete().eq("token", token); continue; }
+    try {
+      // TTL: keep trying for a day if the phone is off; "high": deliver straight away.
+      await webpush.sendNotification(sub, payload, { TTL: 86400, urgency: "high" });
+      sent++;
+    } catch (e) {
+      const status = (e as { statusCode?: number }).statusCode;
+      // 404 / 410: the subscription has ended (app removed, notifications
+      // turned off, browser data cleared): forget this phone.
+      if (status === 404 || status === 410) {
+        await db.from("push_tokens").delete().eq("token", token);
+      } else {
+        console.error("web push said", status, (e as { body?: string }).body || e);
+      }
     }
   }
   return sent;

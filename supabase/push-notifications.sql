@@ -8,7 +8,8 @@
 -- notify_secret in the Vault).
 --
 -- What it adds:
---   * table push_tokens: each phone's "push address" (an FCM token) and
+--   * table push_tokens: each phone's "push address" (an FCM token for the
+--     Android app, or a web push subscription for the iPhone/browser version) and
 --     whose phone it is. The app saves it after sign-in (js/push.js) and
 --     removes it on sign-out. A signed-in person only ever sees their own.
 --   * register_push_token / unregister_push_token: the two calls the app
@@ -32,7 +33,7 @@
 
 -- 1. the table
 create table if not exists public.push_tokens (
-  token       text primary key,                         -- the phone's FCM push address
+  token       text primary key,                         -- the push address: FCM token (android) or web push subscription JSON (web)
   user_id     uuid not null references auth.users(id) on delete cascade,
   platform    text not null default 'android'
               constraint push_tokens_platform_check check (platform in ('android', 'ios', 'web')),
