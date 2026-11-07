@@ -27,6 +27,12 @@ const ANDROID_APK_URL  = 'https://github.com/petejackson141/sail-la-vie/releases
 
 // Newest first. Add a line here with each release worth telling people about.
 const WHATS_NEW = [
+  { version: '07.11.2026', items: [
+    'Notifications when a friend sends you a sail, sends you a friend request or accepts yours, even when the app is closed.',
+    'iPhone: turn notifications on in Settings → Notifications (add the app to your Home Screen first).',
+    'The last few seconds of a recorded sail are no longer lost when you end the journey.',
+    'GPX files from SeaPeople now import correctly.'
+  ]},
   { version: '04.11.2026', items: [
     'New Mapbox maps, with an animated wind layer.',
     '"Everywhere I\'ve sailed" map on your Profile.',
