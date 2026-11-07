@@ -5,9 +5,9 @@
       network-first with a cache fallback. This means "online → always get
       the latest push, no extra steps"; "offline → falls back to whatever
       was last successfully cached, so the app still opens with zero
-      connection." (Previously our own JS was cache-first — see the bottom
-      of this file for why that silently broke every JS-only deploy.)
-    - Third-party libraries (Leaflet, jsPDF, html2canvas, fonts): cache-first
+      connection." (Previously our own JS was cache-first — see "Why JS updates
+      used to go missing" below for why that silently broke every JS-only deploy.)
+    - Third-party libraries (Mapbox GL JS, jsPDF, html2canvas, fonts): cache-first
       once fetched, since they're version-pinned URLs and genuinely won't
       change under us — no need to hit the network for these every time.
   All of the user's actual logbook data lives in IndexedDB/localStorage,
@@ -29,7 +29,7 @@
 
   --- Why Supabase reads used to go stale forever ---
   The cache-first branch below was written for pinned third-party CDN
-  library URLs (Leaflet, jsPDF, etc.) — but it matched on "any cross-origin
+  library URLs (Mapbox GL JS, jsPDF, etc.) — but it matched on "any cross-origin
   GET request", and Supabase's API is cross-origin too. The very first
   successful boats/crew/profile fetch got cached, and every identical
   request after that (which is all of them, since the URL and query never
@@ -150,7 +150,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for third-party CDN libraries (Leaflet, jsPDF, html2canvas,
+  // Cache-first for third-party CDN libraries (Mapbox GL JS, jsPDF, html2canvas,
   // Google Fonts) — cross-origin, version-pinned URLs that won't change.
   event.respondWith(
     caches.match(req).then((cached) => {

@@ -3,21 +3,21 @@
 // sign up / sign in / sign out and keeps state.user in sync with whoever's
 // currently logged in.
 //
-// Also owns the profile <-> cloud, boats <-> cloud, crew <-> cloud and noticeboard <-> cloud sync
-// (push-on-edit, pull-and-merge on sign-in, boot-time session restore, and
-// the manual "Sync Now" button). Journeys are NOT synced yet — that's the
-// next feature to build, following the same shape as boats/crew.
+// Also owns the cloud sync for the profile, boats, crew, trips (sails) and the
+// noticeboard: push-on-edit, pull-and-merge on sign-in, boot-time session
+// restore, Realtime (changes from another device appear live) and the manual
+// "Sync Now" button. Sail photos go to Supabase Storage (photo-store.js).
 //
 // state.user is null when signed out, or { id, email } when signed in.
-// Set only by applySession() below — read it elsewhere in the app once we
-// start building features that depend on being logged in.
+// Set only by applySession() below; friends.js, share.js, push.js and the
+// sync code all read it to know whether someone is signed in.
 
 // Project keys from your Supabase dashboard (Settings → API). The
 // "publishable" key is safe to ship in frontend code — Supabase enforces
 // actual security through Row Level Security policies on the database, not
 // by keeping this key secret. Never put the "secret" key here.
 // Frankfurt project (sail-la-vie-eu), live since 29.10.2026. The old Tokyo
-// project (opejqowgcjltanvgxmxn) is read-only and kept for ~2 weeks as a fallback.
+// project (opejqowgcjltanvgxmxn) is read-only and kept as a fallback until 2 Dec 2026.
 const SUPABASE_URL = 'https://lccwbkarqjohunofsghd.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_g2YNG7qvPRB837MaQnadZQ_rdtiSyyM';
 
@@ -983,8 +983,9 @@ async function pushTripToCloudImpl(trip){
     const row = { id: trip.id, user_id: state.user.id, data, visibility: trip.visibility === 'friends' ? 'friends' : 'private',
       updated_at: trip.updatedAt || new Date().toISOString() };
     let { error } = await getSupabaseClient().from('trips').upsert(row);
-    // Safety net: if friends-supabase.sql hasn't been run yet, the visibility
-    // column doesn't exist — push without it rather than breaking trip sync.
+    // Safety net: on a database set up without the friends part (the visibility
+    // column, now in 00-full-database-setup.sql), push without it rather than
+    // breaking trip sync.
     if(error && /visibility/i.test(error.message || '')){
       delete row.visibility;
       ({ error } = await getSupabaseClient().from('trips').upsert(row));
@@ -1298,12 +1299,10 @@ async function resolveCrewSyncOnSignInImpl(){
 }
 
 /* ---------- profile → cloud sync ----------
-   One-way for now: pushes this device's local profile up to the profiles
-   table, overwriting whatever was there. Runs after every successful sign-in
-   (not on session-restore at app boot — only on an actual sign-in action),
-   so it's always this device's copy that wins. There's no pull-down yet
-   (a second device won't fetch this automatically) — that's the next piece
-   to build once this is confirmed working.
+   The "push" half: sends this device's local profile up to the profiles
+   table, overwriting whatever was there. The "pull" half, deciding which copy
+   wins when the device and the cloud differ (asking first if both have data),
+   is resolveProfileSyncOnSignIn() above.
    Uses upsert rather than update: an account whose profiles row doesn't
    exist yet (e.g. it predates the profiles table, or the create-on-signup
    trigger didn't fire for some other reason) would silently no-op under
@@ -1395,10 +1394,9 @@ async function manualSyncProfile(){
    local save, tombstoned (deleted_at) rather than really deleted, and pulled + merged
    newest-updated_at-wins on sign-in, boot, "Sync Now" and whenever Realtime reports a
    change on the table. Everything goes through the same cloud sync queue.
-   Needs the table + RLS policies + Realtime switched on — see noticeboard-supabase.sql —
-   and, for sharing plans with friends, the visibility column + friends policy from
-   noticeboard-friends.sql.
-   Until that has been run, these calls just fail quietly (logged) and the Noticeboard
+   Needs the table + RLS policies + Realtime switched on, and for sharing plans with
+   friends the visibility column + friends policy — all in 00-full-database-setup.sql.
+   If they're missing, these calls just fail quietly (logged) and the Noticeboard
    keeps working locally exactly as before. */
 function pushNoticeboardToCloud(entry){
   return withCloudSyncQueue(() => pushNoticeboardToCloudImpl(entry));
@@ -1414,8 +1412,8 @@ async function pushNoticeboardToCloudImpl(entry){
     const row = { id: entry.id, user_id: state.user.id, data, visibility: entry.visibility === 'friends' ? 'friends' : 'private',
       updated_at: entry.updatedAt || new Date().toISOString() };
     let { error } = await getSupabaseClient().from('noticeboard').upsert(row);
-    // Safety net: if noticeboard-friends.sql hasn't been run yet, the visibility column
-    // doesn't exist — push without it rather than breaking Noticeboard sync.
+    // Safety net: on a database set up without the visibility column (now in
+    // 00-full-database-setup.sql), push without it rather than breaking Noticeboard sync.
     if(error && /visibility/i.test(error.message || '')){
       delete row.visibility;
       ({ error } = await getSupabaseClient().from('noticeboard').upsert(row));

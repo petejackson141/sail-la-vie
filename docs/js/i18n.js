@@ -1,6 +1,6 @@
 // ===== i18n.js =====
 // Translations (TRANSLATIONS dict), current language state, t(), label helpers, setLanguage()
-// Extracted from the original single-file app.js, lines 1-1260, in original order.
+// Originally part of the single-file app.js; split into its own file in Sept 2026.
 
 
 /* ============================================================

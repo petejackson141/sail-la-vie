@@ -7,7 +7,7 @@
 (function(){var u=navigator.userAgent;if(/iPhone|iPad|iPod/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1))document.documentElement.classList.add("ios");})();</script>
 <!-- Critical startup CSS: must stay ABOVE every external stylesheet. It is the only
      CSS the browser needs to paint the splash, so the very first frame the WebView
-     draws is navy + logo instead of a blank white page while Google Fonts / Leaflet
+     draws is navy + logo instead of a blank white page while Google Fonts / Mapbox
      CSS download. (Those two are now loaded non-blocking further down.) -->
 <style>
   html{ background:#16324F; }
@@ -600,11 +600,11 @@
   .map-stats-overlay div{ text-align:center; flex:1; }
   .map-stats-overlay div b{ display:block; font-family:var(--font-display); font-weight:700; font-size:15px; color:#fff; }
   .map-stats-overlay div span{ font-size:8.5px; text-transform:uppercase; letter-spacing:.03em; color:rgba(255,255,255,.75); }
-  /* Base-layer switcher for the live/detail maps (Standard / Nautical / Satellite / Dark).
-     Same pill look as .map-lock-toggle; ".left" variant is for the detail map, where the
-     lock toggle already sits bottom-right. z-index is set well above Leaflet's own panes
-     and controls (which run up to z-index:1000) — without that, the map tiles themselves
-     paint over any plain sibling overlay regardless of DOM order. */
+  /* Map settings button for the live/detail maps (style: Auto / Standard / Nautical / Dark,
+     plus speed colours and wind). ".left" variant is for the detail map, where the
+     full-screen button sits on the right. z-index is set well above the map's own layers
+     and controls — without that, the map itself paints over any plain sibling overlay
+     regardless of DOM order. */
   .map-style-toggle{ position:absolute; top:10px; right:10px; z-index:1200; display:flex; align-items:center; gap:5px;
     background:rgba(20,43,68,.82); color:#fff; border-radius:999px; padding:7px 12px 7px 9px; font-size:11px; font-weight:600;
     cursor:pointer; box-shadow:var(--shadow); }
@@ -1338,8 +1338,8 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
     </div>
   </section>
 
-  <!-- ============ HOME (Nautical theme — see "TEMPORARY" comment on the CSS block
-       above for how this whole thing can be found and removed later) ============ -->
+  <!-- ============ HOME (Nautical theme, permanent since 23 Sep 2026; the old
+       Coral Reef Home was removed then) ============ -->
   
 
   <!-- ============ ACTIVE JOURNEY ============ -->
@@ -1736,8 +1736,9 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
     <div class="section-divider pf"><span data-i18n="friends.title">Friends</span></div>
     <div id="profileFriends"></div>
 
-    <!-- 4b. TESTING: every sailor on the app, as a sideways-scrolling row like "People you may know".
-         Replaces the old Crew row. Hidden while signed out / when the flag in friends.js is off. -->
+    <!-- 4b. TESTING ONLY (off since 02.11.2026): every sailor on the app, as a sideways-scrolling
+         row like "People you may know". Stays hidden while SHOW_ALL_SAILORS_FOR_TESTING in
+         friends.js is false, and while signed out. -->
     <div id="profileSailorsWrap" style="display:none;">
       <div class="section-divider pf"><span data-i18n="friends.onApp">Sailors on Sail la Vie</span></div>
       <div id="profileSailors"></div>

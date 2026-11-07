@@ -11,7 +11,7 @@
 // visibility is 'private' (only me) or 'friends', exactly like sails: asked once when a NEW
 // plan is saved while signed in, changeable afterwards from the plan's edit sheet (the
 // "Who can see this?" chip). Friends see shared plans on your page in the Friends screen —
-// the database's security rules decide that (noticeboard-friends.sql), not this file.
+// the database's security rules decide that (00-full-database-setup.sql), not this file.
 // Plans written while signed out (or before this existed) have no visibility = private.
 // Dates are plain local calendar dates (no timezone maths), so "19 Sept" stays "19 Sept".
 //

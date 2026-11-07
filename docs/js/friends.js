@@ -1,14 +1,14 @@
 // ===== friends.js =====
 // FRIENDS — mutual friendships (request + accept), like Facebook.
 //
-// Needs the friends-supabase.sql tables to exist in Supabase:
+// Needs these in Supabase (all in supabase/00-full-database-setup.sql):
 //   public_profiles  — the small, searchable "business card" (username, name, avatar)
 //                      other signed-in users may see. The full profile stays private.
 //   friendships      — one row per pair: 'pending' (request sent) or 'accepted'.
 //                      Declining, cancelling and unfriending all DELETE the row.
 //   trips.visibility — 'private' | 'friends'. Friends can read 'friends' sails only;
 //                      the database's security rules enforce that, not this file.
-//   noticeboard.visibility — the same for Noticeboard plans (noticeboard-friends.sql).
+//   noticeboard.visibility — the same for Noticeboard plans.
 //                      A friend's page shows their shared UPCOMING plans above their sails.
 //
 // Screens:
@@ -19,10 +19,10 @@
 //
 // Everything here is a no-op while signed out.
 //
-// TESTING PHASE: SHOW_ALL_SAILORS_FOR_TESTING lists every sailor who has a public
-// card (i.e. has chosen a username) — at the bottom of the Friends screen and as a
-// sideways-scrolling row on the Profile screen — so testers can find each other
-// without knowing usernames. Set it to false before a wider release.
+// SHOW_ALL_SAILORS_FOR_TESTING (switched OFF 02.11.2026): when true it lists every
+// sailor who has a public card (i.e. has chosen a username) — at the bottom of the
+// Friends screen and as a sideways-scrolling row on the Profile screen. Now friends
+// are found only by searching a username, name or full email address.
 const SHOW_ALL_SAILORS_FOR_TESTING = false; // switched off 02.11.2026 for the Google Play release: find friends by username, name or email
 
 // SAFETY NET for live updates. Friend requests normally arrive instantly through

@@ -1,6 +1,8 @@
 // ===== units.js =====
-// Unit conversion + formatting helpers (fmtSpeed, fmtDistance, unit labels) and service worker registration
-// Extracted from the original single-file app.js, lines 4515-4547, in original order.
+// Unit conversion + formatting helpers (fmtSpeed, fmtDistance, unit labels), the wake-lock
+// re-request and the native splash handoff. (The service worker is registered in push.js
+// since 07.11.2026; the registration that used to be here had gone missing.)
+// Originally part of the single-file app.js; split into its own file in Sept 2026.
 
 const KT_TO_KMH = 1.852, NM_TO_KM = 1.852;
 let activeUnitSystem = 'nautical'; // session state for the log-entry screen, seeded from the profile default each time it opens

@@ -17,7 +17,7 @@ columns, grants, policies, functions, triggers, realtime and the photo bucket ma
 
 ## The other files here
 
-One-off fixes for the live database. All have been run (the last four checked on Frankfurt, 4 November 2026), except `push-notifications.sql`, which is new.
+One-off fixes for the live database. All have been run (the last four checked on Frankfurt, 4 November 2026; push-notifications.sql on 5 November, when push was tested).
 Their changes are already included in the master file, so they never need running again.
 They're kept as a record of what was changed and why.
 
@@ -32,8 +32,8 @@ They're kept as a record of what was changed and why.
 | `error-reports.sql` | Crash / error reporting: the `error_reports` table the app writes problems to, kept 90 days (2 November 2026) — run on Frankfurt (checked 4 November 2026) |
 | `find-by-email.sql` | Friends search by full email address: the `find_sailor_by_email` function (2 November 2026) — run on Frankfurt (checked 4 November 2026) |
 | `email-alerts.sql` | Email alerts: new Contact us feedback emailed straight away, daily error summary at 06:00 UTC, through the `notify-email` Edge Function and Resend (4 November 2026) — run on Frankfurt (4 November 2026) |
-| `push-notifications.sql` | Push notifications: the `push_tokens` table, `register_push_token` / `unregister_push_token`, and triggers on `sail_shares` and `friendships` that call the `send-push` Edge Function (5 November 2026) — **to run on Frankfurt** |
-| `keep-alive.sql` | The one-row `keep_alive` table the GitHub keep-alive job reads twice a week, so the free-plan project is never paused for inactivity. The only table signed-out "anon" may read (no user data in it) (6 November 2026) — **to run on Frankfurt** |
+| `push-notifications.sql` | Push notifications: the `push_tokens` table, `register_push_token` / `unregister_push_token`, and triggers on `sail_shares` and `friendships` that call the `send-push` Edge Function (5 November 2026) — run on Frankfurt (push tested 5 November 2026; iPhone web push needed no database change, 7 November) |
+| `keep-alive.sql` | The one-row `keep_alive` table the GitHub keep-alive job reads twice a week, so the free-plan project is never paused for inactivity. The only table signed-out "anon" may read (no user data in it) (6 November 2026) — run on Frankfurt (confirmed 6 November 2026: the keep-alive job's first green run read the `keep_alive` row) |
 
 ## Keep-alive job
 

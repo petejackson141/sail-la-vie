@@ -14,7 +14,8 @@
 //      are copied into their own storage when they accept, and the sail is
 //      marked "Sent by …" — it does NOT count on their GPS Sea Time Record,
 //      because it was recorded on someone else's phone.
-//   4. 15-second reel — coming next (its own project).
+//   4. Short reel — a 20-second video of the sail for Instagram / WhatsApp
+//      (reel.js, built 30.10.2026).
 
 /* ============================================================
    THE SHARE SHEET

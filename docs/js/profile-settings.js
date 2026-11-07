@@ -1,6 +1,6 @@
 // ===== profile-settings.js =====
 // Profile screen, auto/manual theme (day/night by sun position), unit system setting, reset all data, resume/stats screen, certificate view
-// Extracted from the original single-file app.js, lines 3303-3610, in original order.
+// Originally part of the single-file app.js; split into its own file in Sept 2026.
 
 /* ============================================================
    PROFILE SCREEN — Facebook-style page, top to bottom:
@@ -8,8 +8,8 @@
      2. bio card: name, role/license tags, bio, contact details — read-only here;
         the "Edit Profile" button opens #sheetEditProfile with every field
      3. lifetime stats
-     4. friends summary card, then (while testing) a sideways-scrolling row of
-        every sailor using the app — both drawn by friends.js. The old Crew row was
+     4. friends summary card, drawn by friends.js (the testing row of every sailor
+        below it is switched off since 02.11.2026). The old Crew row was
         removed: the Crew screen already lists crew, and crew + friends are to be
         merged into one record later.
      5. posts, newest first: past sails and planned events from the Noticeboard

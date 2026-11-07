@@ -1,6 +1,6 @@
 // ===== history-maps.js =====
 // History list + filters, trip detail view, Mapbox maps (live tracking + trip detail), map styles, sharing a trip
-// Extracted from the original single-file app.js, lines 2540-3122, in original order.
+// Originally part of the single-file app.js; split into its own file in Sept 2026.
 
 let historyFilter = 'all';   // 'all' | 'recent' | 'photos' — set by the filter chips above the list
 function setHistoryFilter(f){ historyFilter=f; document.querySelectorAll('#historyChips .chip').forEach(c=>c.classList.toggle('active', c.dataset.f===f)); renderHistory(); }
@@ -348,7 +348,7 @@ async function renderTripDetailMap(trip){
       // work and the replay plays (31.10.2026 — replaces the lock/unlock pill).
       // Its height follows the shape of the track, so a long north–south sail
       // gets a tall map and an east–west one a shorter, wider one.
-      const coords = trip.path.map(p=>[p.lng,p.lat]); // Mapbox wants [lng,lat] — the opposite order to Leaflet
+      const coords = trip.path.map(p=>[p.lng,p.lat]); // Mapbox wants [lng,lat] — the opposite order to the app's own {lat, lng}
       const bounds = coords.reduce((b,c)=>b.extend(c), new mapboxgl.LngLatBounds(coords[0], coords[0]));
       const startMs = replayClockMs(trip, null, 0);
       const mapEl = document.getElementById('detailLeaflet');
@@ -913,7 +913,7 @@ function niceScaleValue(maxVal){
 // start/current coordinates as text — all computed offline from the GPS
 // points themselves, no map tiles or internet involved. sys picks which unit
 // the scale bar reads in ('nautical'|'metric'); live=true pulses the end marker.
-/* ---- live/real map: shows actual OpenStreetMap tiles when there's a
+/* ---- live/real map: shows the real Mapbox map when there's a
    connection, falls back to the offline porthole (below) when there isn't.
    Rechecked periodically during a journey so it can switch either direction
    mid-sail as signal comes and goes — no manual toggle needed. ---- */
@@ -944,8 +944,9 @@ function bearingDeg(a,b){
   return (toDeg(Math.atan2(y,x))+360)%360;
 }
 
-// The actual test: try to load one real map tile. This checks the exact thing
-// we need (can we draw a live map right now) rather than a generic "online"
+// The actual test: try to load one small map picture (an OpenStreetMap tile, used
+// only as a connection test; the maps themselves are Mapbox). This checks the exact
+// thing we need (can we draw a live map right now) rather than a generic "online"
 // flag, which browsers can report inaccurately (e.g. connected to a router
 // with no real internet).
 function checkTilesAvailable(){

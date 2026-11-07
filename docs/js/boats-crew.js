@@ -1,6 +1,6 @@
 // ===== boats-crew.js =====
 // Boat management (add/edit/delete/photos) and crew management (add/edit/delete/photos)
-// Extracted from the original single-file app.js, lines 3123-3302, in original order.
+// Originally part of the single-file app.js; split into its own file in Sept 2026.
 
 let editingBoatId = null;   // null while adding a new boat, otherwise the id being edited
 let pendingBoatPhotos = [];  // all photos for the boat currently being edited/added

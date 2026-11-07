@@ -85,8 +85,9 @@ async function syncNoticeboardRemindersImpl({ask}){
     if(at.getTime() > now + 5000) wanted.push({ plan, start, at, id: noticeboardReminderId(plan.id) });
   }
 
-  // Cancel reminders that no longer apply. Only this feature uses local notifications, so
-  // "pending but not wanted" always means stale.
+  // Cancel reminders that no longer apply. share.js also uses local notifications (a
+  // "friend sent you a sail" notice), so those are left alone; any other pending one that
+  // isn't wanted is a stale Noticeboard reminder.
   const pending = ((await LN.getPending()).notifications) || [];
   const wantedIds = new Set(wanted.map(w=>w.id));
   // only Noticeboard reminders are tidied up here (a "friend sent you a sail" notice is left alone)

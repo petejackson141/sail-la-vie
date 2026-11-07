@@ -1,6 +1,27 @@
 // ===== journey.js =====
-// Home stats, starting a journey, crew/skipper pickers, GPS tracking, live photo capture, ending + saving a journey
-// Extracted from the original single-file app.js, lines 1777-2539, in original order.
+// Everything about recording and logging a sail, from Home to the saved entry.
+//
+// One screen (#screen-active) is used three ways: a live GPS journey
+// (beginJourney), logging a past sail by hand (beginManualJourney) and editing
+// a saved sail (editTrip). currentTrip (state-core.js) holds whichever is open.
+//
+// What's in here, top to bottom:
+//   * Home: the stats tiles and the "Last Sail" card (renderHomeStats)
+//   * the log form: weather fields and their auto-fill at Cast Off (Open-Meteo),
+//     the auto place name (OpenStreetMap's Nominatim), the per-entry unit switch,
+//     the crew and skipper pickers, the date/time picker (dtOpen) and photos
+//   * GPS recording:
+//       - Android app: our own SailTracker plugin (android/.../tracking/) records
+//         with the screen off and stores every fix; drainSailTrackerFixes()
+//         collects them in batches
+//       - web / iPhone: the browser's watchPosition, only while the screen is on
+//     Every fix, from either source, goes through onFix -> acceptFix -> commitFix:
+//     accuracy check, jump filter (the speed limit set by the boat icon,
+//     track-icons.js), then distance with the haversine formula.
+//   * ending a journey (endJourney; the last waiting SailTracker fixes are
+//     collected first, 05.11.2026) and saving (finalizeSaveTrip), which also
+//     queues the "Weather on the water" report (sail-weather.js) and cloud sync.
+// How the Code Works walks through the GPS and saving parts line by line.
 
 // "Last Sail" card under the Home buttons: the most recent sail by sail date
 // (same ordering as History — not by when the entry was saved), tapping it opens

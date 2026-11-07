@@ -1,6 +1,6 @@
 // ===== storage.js =====
 // IndexedDB/localStorage abstraction layer (storeGet/Set/Delete), backup & restore to file
-// Extracted from the original single-file app.js, lines 1261-1469, in original order.
+// Originally part of the single-file app.js; split into its own file in Sept 2026.
 
 const LS_PREFIX = 'sail-la-vie:';
 const IDB_NAME = 'sail-la-vie-db';

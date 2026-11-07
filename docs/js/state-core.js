@@ -1,6 +1,6 @@
 // ===== state-core.js =====
 // Global app state object, boot(), nav()/screen switching, action sheets, wake lock, photo resize + crop/adjust tool
-// Extracted from the original single-file app.js, lines 1470-1776, in original order.
+// Originally part of the single-file app.js; split into its own file in Sept 2026.
 
 // Bumped automatically on every change Claude hands over — format is
 // DD.MM.YYYY.HHMM (the moment the fix was produced, UTC). Shown in Settings
@@ -9,7 +9,7 @@
 // caching mess a few pushes back, where nobody could tell whether an old
 // build was still stuck on someone's phone. You shouldn't need to touch
 // this yourself.
-const APP_VERSION = '07.11.2026.0757';
+const APP_VERSION = '07.11.2026.1038';
 
 /* ============================================================
    CONFIRM DIALOG (shared across all screens)
@@ -128,7 +128,7 @@ let state = {
   noticeboard: [],       // planned future sails, written on the Noticeboard screen — see noticeboard.js
   profile: { name:'', role:'', license:'', phone:'', email:'', social:'', bio:'', avatar:'', cover:'', theme:'light', unitSystem:'nautical', language:'en' },
   // Per-screen list/grid display choice for the Fleet and Crew screens — see
-  // setListView()/renderBoats()/renderCrew(). Persisted so the choice sticks
+  // toggleListView()/renderBoats()/renderCrew(). Persisted so the choice sticks
   // between app launches, same as everything else in `state`.
   viewPrefs: { boats:'list', crew:'list' },
 };
@@ -141,7 +141,7 @@ state.user = null;
 
 let currentTrip = null;   // the ONE journey/manual-entry/edit in progress right now; null when nothing's active — check this first if the active screen misbehaves
 let watchId = null;       // navigator.geolocation.watchPosition() handle, so stopGPS() can cancel it
-let nativeGpsActive = false; // true while a native recorder (SailTracker, or the Transistorsoft fallback) is running instead of watchPosition — see NATIVE_TRACKER in journey.js
+let nativeGpsActive = false; // true while a native recorder (SailTracker, Android app only) is running instead of watchPosition — see NATIVE_TRACKER in journey.js
 let timerId = null;       // setInterval() handle for the elapsed-time ticker
 let startedAt = null;     // Date.now() when the current live journey began, used to compute elapsed time
 let lastFixTime = null;   // Date.now() of the last GPS fix we RECEIVED (accepted or not) — drives the staleness watchdog in journey.js
@@ -546,8 +546,8 @@ function readFileAsDataUrl(file){
 // so the viewport starts fully covered, centered, with zoom=1.
 // opts: { shape:'circle'|'rect', vw, vh, outputW, outputH } — defaults to the
 // original 260x260 circular avatar crop if omitted, for profile/crew photos.
-// Boats and trip covers pass a wide rect instead (see openBoatPhotoAdjuster /
-// openCoverPhotoAdjuster below).
+// Boats and trip covers pass a wide rect instead (see handleBoatPhoto() in
+// boats-crew.js and openCoverPhotoAdjuster below).
 async function openPhotoAdjuster(file, target, returnSheetId, opts){
   if(!file) return;
   let dataUrl;
