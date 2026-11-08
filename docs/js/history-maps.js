@@ -308,7 +308,7 @@ async function renderTripDetailMap(trip){
     area.innerHTML = `
       <div class="stat-label" style="text-align:center;margin-top:16px;">${t('detail.track')}</div>
       <div class="map-fs-wrap" id="detailMapWrap" style="position:relative;">
-        <div class="live-map" id="detailLeaflet" style="display:none;"></div>
+        <div class="live-map" id="detailTrackMap" style="display:none;"></div>
         <div class="porthole" id="detailPorthole"></div>
         <div class="map-stats-overlay" id="detailMapStatsOverlay" style="display:none;">
           <div><b>${fmtDistance(trip.distanceNm||0)}</b><span>${t('stat.distance')}</span></div>
@@ -335,12 +335,12 @@ async function renderTripDetailMap(trip){
       <div class="speed-legend" id="detailSpeedLegend" style="display:none;"></div>
       <div style="text-align:center;font-size:11.5px;color:var(--ink-muted);margin-top:4px;">${portholeCoordsCaption(trip.path)}</div>`;
 
-    const online = await checkTilesAvailable();
+    const online = await checkMapboxReachable();
     // Bail if the person already navigated to a different trip/screen while this was checking
-    if(!document.getElementById('detailLeaflet') || window._detailTrip!==trip) return;
+    if(!document.getElementById('detailTrackMap') || window._detailTrip!==trip) return;
 
     if(online && mapboxReady()){
-      document.getElementById('detailLeaflet').style.display='block';
+      document.getElementById('detailTrackMap').style.display='block';
       document.getElementById('detailPorthole').style.display='none';
       document.getElementById('detailMapStatsOverlay').style.display='flex';
       // On the page the map doesn't move under your finger (a swipe keeps
@@ -351,10 +351,10 @@ async function renderTripDetailMap(trip){
       const coords = trip.path.map(p=>[p.lng,p.lat]); // Mapbox wants [lng,lat] — the opposite order to the app's own {lat, lng}
       const bounds = coords.reduce((b,c)=>b.extend(c), new mapboxgl.LngLatBounds(coords[0], coords[0]));
       const startMs = replayClockMs(trip, null, 0);
-      const mapEl = document.getElementById('detailLeaflet');
+      const mapEl = document.getElementById('detailTrackMap');
       mapEl.style.height = trackMapHeight(coords, mapEl.clientWidth || area.clientWidth || 360) + 'px';
       mapEl.style.minHeight = '0';
-      const map = createMapboxMap('detailLeaflet', {
+      const map = createMapboxMap('detailTrackMap', {
         bounds, fitBoundsOptions:{ padding: DETAIL_MAP_PAD, maxZoom:15 },
         interactive:true,
         lightPreset: lightPresetFor(new Date(startMs), trip.path[0].lat, trip.path[0].lng)
@@ -944,21 +944,29 @@ function bearingDeg(a,b){
   return (toDeg(Math.atan2(y,x))+360)%360;
 }
 
-// The actual test: try to load one small map picture (an OpenStreetMap tile, used
-// only as a connection test; the maps themselves are Mapbox). This checks the exact
-// thing we need (can we draw a live map right now) rather than a generic "online"
-// flag, which browsers can report inaccurately (e.g. connected to a router
-// with no real internet).
-function checkTilesAvailable(){
+// The actual test (changed 08.11.2026): ask Mapbox — the service that really
+// draws our maps — a tiny question: "is this token OK?" (api.mapbox.com/tokens/v2).
+// The answer is a few hundred bytes and isn't a billed Mapbox service, which
+// matters because the live map repeats this check every 20 seconds while
+// recording. (Until 08.11.2026 this loaded an OpenStreetMap picture instead,
+// a leftover from the old Leaflet maps, so it tested the wrong service.)
+// This checks the exact thing we need (can we reach the map service right now)
+// rather than a generic "online" flag, which browsers can report inaccurately
+// (e.g. connected to a router with no real internet).
+// mode:'no-cors' means we don't read the answer: getting ANY reply means Mapbox
+// is reachable; no reply (offline, timed out) means use the porthole drawing.
+// The service worker (sw.js) never caches Mapbox addresses, so an old saved
+// answer can't fool this check while offline.
+function checkMapboxReachable(){
   return new Promise((resolve)=>{
     if(!mapboxReady()){ resolve(false); return; } // Mapbox failed to load (offline on first-ever run, CDN blocked) or the phone can't draw it
-    const img = new Image();
     let done = false;
     const finish = (ok)=>{ if(done) return; done=true; resolve(ok); };
-    const timeout = setTimeout(()=>finish(false), 4000);
-    img.onload = ()=>{ clearTimeout(timeout); finish(true); };
-    img.onerror = ()=>{ clearTimeout(timeout); finish(false); };
-    img.src = 'https://tile.openstreetmap.org/1/1/1.png?_='+Date.now();
+    const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+    const timeout = setTimeout(()=>{ if(ctrl) ctrl.abort(); finish(false); }, 4000); // no answer in 4 seconds = treat as offline
+    fetch('https://api.mapbox.com/tokens/v2?access_token='+MAPBOX_TOKEN, { mode:'no-cors', cache:'no-store', signal: ctrl ? ctrl.signal : undefined })
+      .then(()=>{ clearTimeout(timeout); finish(true); })
+      .catch(()=>{ clearTimeout(timeout); finish(false); });
   });
 }
 function initLiveMap(){
@@ -966,7 +974,7 @@ function initLiveMap(){
   // Before the first GPS fix we don't know where the boat is, so use the last
   // known position (from the app's own day/night theme) if there is one.
   const c = (typeof cachedThemeCoords!=='undefined' && cachedThemeCoords) || null;
-  liveMap = createMapboxMap('liveTrackLeaflet', { zoom: 13, lightPreset: c ? lightPresetFor(new Date(), c.lat, c.lon) : 'day' });
+  liveMap = createMapboxMap('liveTrackMap', { zoom: 13, lightPreset: c ? lightPresetFor(new Date(), c.lat, c.lon) : 'day' });
   liveMap.on('style.load', ()=>addOurLayers(liveMap, ()=>liveMapCoords));
   liveMap.on('error', (e)=>console.warn('[map] live map error', e && e.error));
   liveMapMarker = new mapboxgl.Marker({element: yachtMarkerEl()}).setLngLat([0,0]).addTo(liveMap);
@@ -1045,13 +1053,13 @@ function setLiveMapMode(online){
   liveMapIsOnline = online;
   const badge = document.getElementById('liveMapModeBadge');
   const text = document.getElementById('liveMapModeText');
-  const leafletEl = document.getElementById('liveTrackLeaflet');
+  const liveMapEl = document.getElementById('liveTrackMap');
   const porthole = document.getElementById('liveTrackPorthole');
   if(!badge) return; // not on the active screen right now
   if(online){
     badge.className = 'map-mode-badge live';
     text.textContent = t('map.liveMap');
-    leafletEl.style.display='block';
+    liveMapEl.style.display='block';
     porthole.style.display='none';
     initLiveMap();
     setTimeout(()=>{ if(liveMap) liveMap.resize(); }, 50); // the map needs to re-measure itself after its container becomes visible
@@ -1059,13 +1067,13 @@ function setLiveMapMode(online){
   } else {
     badge.className = 'map-mode-badge offline';
     text.textContent = t('map.offlineTrack');
-    leafletEl.style.display='none';
+    liveMapEl.style.display='none';
     porthole.style.display='block';
     renderSpeedLegend('liveSpeedLegend', null); // the offline drawing has no speed colours
   }
 }
 async function refreshLiveMapMode(){
-  const online = await checkTilesAvailable();
+  const online = await checkMapboxReachable();
   setLiveMapMode(online);
 }
 function startLiveConnCheck(){

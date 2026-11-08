@@ -3,12 +3,7 @@
 // Originally part of the single-file app.js; split into its own file in Sept 2026.
 
 
-/* ============================================================
-   SAIL LA VIE — data layer (self-contained/offline)
-   Tiered storage: IndexedDB (largest quota) -> localStorage (fallback)
-   -> in-memory (last resort, session-only, shows a persistent warning)
-   ============================================================ */
-const KEYS = { INDEX:'trip-index', BOATS:'boats', CREW:'crew', PROFILE:'profile', ACTIVE_TRIP:'active-trip', VIEW_PREFS:'view-prefs', NOTICEBOARD:'noticeboard' };
+// (The KEYS list of storage names that used to sit here moved to storage.js on 08.11.2026.)
 const TRANSLATIONS = {
   en: {
   'profile.filterAll': 'All',

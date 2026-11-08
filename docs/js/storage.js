@@ -2,6 +2,17 @@
 // IndexedDB/localStorage abstraction layer (storeGet/Set/Delete), backup & restore to file
 // Originally part of the single-file app.js; split into its own file in Sept 2026.
 
+/* ============================================================
+   SAIL LA VIE — data layer (self-contained/offline)
+   Tiered storage: IndexedDB (largest quota) -> localStorage (fallback)
+   -> in-memory (last resort, session-only, shows a persistent warning)
+   ============================================================ */
+// KEYS = the names the app saves things under on the phone (the "labels on the
+// storage boxes"). Never change a value here: existing data is saved under these
+// exact names. Moved here from i18n.js on 08.11.2026; i18n.js loads just before
+// this file and only uses KEYS inside setLanguage(), so the order is still safe.
+const KEYS = { INDEX:'trip-index', BOATS:'boats', CREW:'crew', PROFILE:'profile', ACTIVE_TRIP:'active-trip', VIEW_PREFS:'view-prefs', NOTICEBOARD:'noticeboard' };
+
 const LS_PREFIX = 'sail-la-vie:';
 const IDB_NAME = 'sail-la-vie-db';
 const IDB_STORE = 'kv';
