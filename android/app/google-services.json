@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "363349365811",
-    "project_id": "sail-la-vie-38260",
-    "storage_bucket": "sail-la-vie-38260.firebasestorage.app"
+    "project_number": "264287332854",
+    "project_id": "nimosail",
+    "storage_bucket": "nimosail.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:363349365811:android:0fac88acf577c3b9427f46",
+        "mobilesdk_app_id": "1:264287332854:android:0bd8f5d0886514fbbcbfd7",
         "android_client_info": {
-          "package_name": "com.saillavie.app"
+          "package_name": "com.nimosail.app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBQxjCIV2aLR7KmuF2P6lYY4M2RIeLPkuw"
+          "current_key": "AIzaSyCscW-0KWCbPj2IaasRdB7I86ztCIy893c"
         }
       ],
       "services": {

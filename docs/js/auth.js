@@ -96,7 +96,7 @@ let _newPasswordShown = false;
 /* ---------- email-link deep link (Android app) ----------
    Supabase's confirmation email link first verifies the account on
    Supabase's servers, then redirects to `emailRedirectTo`. In the installed
-   Android app that's a custom link, saillavie://auth-callback, which Android
+   Android app that's a custom link, nimosail://auth-callback, which Android
    hands to this app thanks to the <intent-filter> on MainActivity in
    android/app/src/main/AndroidManifest.xml. The link carries the new
    session, which we hand to Supabase so the person lands signed in.
@@ -107,14 +107,14 @@ let _newPasswordShown = false;
    Both formats Supabase may use are handled: tokens in the #fragment
    (implicit flow, supabase-js's default) or ?code=… (PKCE flow).
 
-   IMPORTANT: saillavie://auth-callback must be listed under Supabase →
+   IMPORTANT: nimosail://auth-callback must be listed under Supabase →
    Authentication → URL Configuration → Redirect URLs, or Supabase ignores
    emailRedirectTo and falls back to the Site URL.
 
    TODO (iOS): when the iPhone native build is started, the same link needs
    registering on iOS too (CFBundleURLTypes in ios/App/App/Info.plist with the
-   `saillavie` scheme). The JS below already works for both platforms. */
-const AUTH_DEEP_LINK = 'saillavie://auth-callback';
+   `nimosail` scheme). The JS below already works for both platforms. */
+const AUTH_DEEP_LINK = 'nimosail://auth-callback';
 
 function isNativeAuthPlatform(){
   return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
@@ -576,14 +576,14 @@ async function submitAuthForm(){
       link. The message is the same whether or not that email has an account,
       so the form can't be used to find out who uses the app.
    2. The link (valid for 1 hour, works once) signs the person in: in the
-      Android app through the saillavie://auth-callback deep link
+      Android app through the nimosail://auth-callback deep link
       (handleAuthDeepLink, type=recovery), on the web through Supabase's
       PASSWORD_RECOVERY event.
    3. openNewPasswordSheet() asks for the new password; submitNewPassword()
       saves it and signs out every other device, so the old password and any
       old sessions stop working.
    Supabase settings this relies on: Authentication → URL Configuration →
-   Redirect URLs must list saillavie://auth-callback and the web app address
+   Redirect URLs must list nimosail://auth-callback and the web app address
    (both already there for sign-up confirmation emails). */
 async function sendPasswordReset(email){
   if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){

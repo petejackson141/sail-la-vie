@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">NimoSail</string>
     <string name="title_activity_main">NimoSail</string>
-    <string name="package_name">com.saillavie.app</string>
-    <string name="custom_url_scheme">com.saillavie.app</string>
+    <string name="package_name">com.nimosail.app</string>
+    <string name="custom_url_scheme">com.nimosail.app</string>
 </resources>

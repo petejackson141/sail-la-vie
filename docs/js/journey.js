@@ -756,7 +756,7 @@ function isNativeApp(){
 }
 
 // ---- Native tracker ----
-// 'sail' = our own free recorder (android/app/src/main/java/com/saillavie/app/tracking/).
+// 'sail' = our own free recorder (android/app/src/main/java/com/nimosail/app/tracking/).
 // The paid Transistorsoft plugin was removed on 01.10.2026 and its leftover code
 // on 19.10.2026. If SailTracker were ever missing, the app falls back to plain
 // browser GPS (works while the screen is on).

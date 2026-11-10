@@ -1,9 +1,9 @@
-package com.saillavie.app;
+package com.nimosail.app;
 
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import com.getcapacitor.BridgeActivity;
-import com.saillavie.app.tracking.SailTrackerPlugin;
+import com.nimosail.app.tracking.SailTrackerPlugin;
 
 public class MainActivity extends BridgeActivity {
     @Override

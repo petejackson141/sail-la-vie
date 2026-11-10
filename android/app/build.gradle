@@ -11,7 +11,7 @@ apply plugin: 'com.android.application'
                    (always bigger for a newer version - room for ~4000 years)
    If the file can't be read for any reason, the build stops with a clear message
    rather than quietly shipping version 1. */
-def readSailLaVieVersion = {
+def readAppVersion = {
     def f = rootProject.file('../docs/js/state-core.js')
     if (!f.exists()) throw new GradleException("Can't find ${f} to read APP_VERSION")
     def m = (f.getText('UTF-8') =~ /const APP_VERSION = '(\d{2})\.(\d{2})\.(\d{4})\.(\d{2})(\d{2})'/)
@@ -21,7 +21,7 @@ def readSailLaVieVersion = {
     def base    = java.time.LocalDateTime.of(2025, 1, 1, 0, 0).toEpochSecond(java.time.ZoneOffset.UTC).intdiv(60)
     return [code: (int) (minutes - base), name: m.group(0).replaceAll(/.*'(.*)'/, '$1')]
 }
-def sailLaVieVersion = readSailLaVieVersion()
+def appVersion = readAppVersion()
 
 /* ---------- NimoSail: release signing key ----------
    Every APK must be "signed" with a key. Android Studio's Run button uses an
@@ -31,9 +31,9 @@ def sailLaVieVersion = readSailLaVieVersion()
    The key file and its password are NEVER put in this project or on GitHub.
    They live in android/keystore.properties (ignored by Git), which says where
    the key is and what its password is:
-       storeFile=C:/Users/Pete/<your key folder>/saillavie-release.jks
+       storeFile=C:/Users/Pete/<your key folder>/nimosail-release.jks
        storePassword=...
-       keyAlias=saillavie
+       keyAlias=nimosail
        keyPassword=...
    If that file is missing, debug builds (Run) still work as normal; only
    release builds come out unsigned. */
@@ -44,14 +44,14 @@ if (keystorePropsFile.exists()) {
 }
 
 android {
-    namespace = "com.saillavie.app"
+    namespace = "com.nimosail.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.saillavie.app"
+        applicationId "com.nimosail.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode sailLaVieVersion.code   // automatic - see the top of this file
-        versionName sailLaVieVersion.name
+        versionCode appVersion.code   // automatic - see the top of this file
+        versionName appVersion.name
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
