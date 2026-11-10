@@ -1,5 +1,5 @@
 @echo off
-title Sail la Vie - go live (send dev to main)
+title NimoSail - go live (send dev to main)
 cd /d C:\Users\Pete\sail-la-vie
 for /f %%b in ('git branch --show-current') do set BR=%%b
 if /i not "%BR%"=="dev" (

@@ -6,7 +6,7 @@
 // average and max speed. The track itself is kept on the sail, so the sail
 // gets a real map, a PDF route map and can be sent on as GPX again.
 //
-// An imported track is NOT counted as GPS-recorded by Sail la Vie: a GPX file
+// An imported track is NOT counted as GPS-recorded by NimoSail: a GPX file
 // can come from anywhere and can be edited, so the app can't vouch for it.
 // The sail is marked "Imported track" (trip.importedTrack) and only counts on
 // the general Sailing Record, never on the GPS Sea Time Record.

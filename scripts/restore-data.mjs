@@ -1,4 +1,4 @@
-// Sail la Vie - put a backup BACK into a Supabase project.
+// NimoSail - put a backup BACK into a Supabase project.
 // Run it with scripts\7-restore-data.bat (double-click).
 //
 // When you'd use it:

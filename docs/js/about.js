@@ -190,7 +190,7 @@ function openLegalLink(kind){
 }
 function emailSupport(extraBody){
   if(!SUPPORT_EMAIL) return;
-  const subject = encodeURIComponent('Sail la Vie ' + APP_VERSION);
+  const subject = encodeURIComponent('NimoSail ' + APP_VERSION);
   const body = extraBody ? '&body=' + encodeURIComponent(extraBody) : '';
   location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}${body}`;
 }
@@ -208,7 +208,7 @@ function showInfoPage(kind){
     html = `
       <h3>Copyright</h3>
       <p>© ${COPYRIGHT_YEAR} ${_esc(COPYRIGHT_HOLDER)}. All rights reserved.</p>
-      <p>The Sail la Vie app, including its source code, design, graphics, text and the Sail la Vie name and logo, belongs to ${_esc(COPYRIGHT_HOLDER)}.</p>
+      <p>The NimoSail app, including its source code, design, graphics, text and the NimoSail name and logo, belongs to ${_esc(COPYRIGHT_HOLDER)}.</p>
       <h3>What you may do</h3>
       <p>You may install and use the app for your own sailing logbook.</p>
       <h3>What you may not do</h3>

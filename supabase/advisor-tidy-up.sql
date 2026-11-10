@@ -1,5 +1,5 @@
 -- =====================================================================
--- Sail la Vie: PERFORMANCE ADVISOR TIDY-UP (02.11.2026)
+-- NimoSail: PERFORMANCE ADVISOR TIDY-UP (02.11.2026)
 -- =====================================================================
 -- Run this ONCE in the live Frankfurt project:
 --   Supabase -> sail-la-vie-eu -> SQL Editor -> New query -> paste -> Run.

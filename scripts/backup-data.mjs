@@ -1,4 +1,4 @@
-// Sail la Vie - full backup of the Supabase data and photos to this laptop.
+// NimoSail - full backup of the Supabase data and photos to this laptop.
 // Run it with scripts\5-backup-data.bat (double-click). Read-only: it never
 // changes anything in Supabase.
 //
@@ -45,7 +45,7 @@ const d = new Date(), pad = n => String(n).padStart(2, '0');
 const stamp = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`; // your local time
 const outDir = path.join(BACKUP_ROOT, stamp);
 fs.mkdirSync(path.join(outDir, 'tables'), { recursive: true });
-const summary = [`Sail la Vie backup ${new Date().toString()}`, `Project: ${SUPABASE_URL}`, ''];
+const summary = [`NimoSail backup ${new Date().toString()}`, `Project: ${SUPABASE_URL}`, ''];
 
 // 1. Tables
 for(const table of TABLES){

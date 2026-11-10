@@ -132,7 +132,7 @@ async function shareLightboxPhoto(){
       const res = await fetch(url);
       blob = await res.blob();
     }
-    await shareOrDownloadFile(blob, 'sail-la-vie-photo.jpg', blob.type||'image/jpeg', 'Sail la Vie Photo', 'toast.photoDownloaded');
+    await shareOrDownloadFile(blob, 'sail-la-vie-photo.jpg', blob.type||'image/jpeg', 'NimoSail Photo', 'toast.photoDownloaded');
   }catch(e){
     if(e && e.name==='AbortError') return; // user cancelled the native share sheet
     console.error('share failed', e);

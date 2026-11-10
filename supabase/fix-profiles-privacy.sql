@@ -1,4 +1,4 @@
--- Sail la Vie: close the profile privacy leak (health check item 2).
+-- NimoSail: close the profile privacy leak (health check item 2).
 -- Run once in Supabase: SQL Editor -> New query -> paste -> Run. Safe to run again.
 --
 -- THE PROBLEM

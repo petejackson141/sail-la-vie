@@ -1,8 +1,8 @@
 -- =====================================================================
--- Sail la Vie: COMPLETE DATABASE SETUP (health check item 3)
+-- NimoSail: COMPLETE DATABASE SETUP (health check item 3)
 -- =====================================================================
 -- What this is:
---   Everything the Sail la Vie database needs, in one file, in the right
+--   Everything the NimoSail database needs, in one file, in the right
 --   order: tables, table access (grants), security rules, helper functions,
 --   the sign-up trigger, photo storage and live updates. It matches the live
 --   database as it was on 1 October 2026 (after fix-profiles-privacy.sql,

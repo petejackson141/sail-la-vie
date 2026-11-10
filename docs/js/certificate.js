@@ -171,7 +171,7 @@ function certSealSvg(size, yearLabel, bottomText){
     <circle cx="${r}" cy="${r}" r="${r-33}" fill="${C.navy}"/>
     <circle cx="${r}" cy="${r}" r="${r-33}" fill="none" stroke="${C.goldLight}" stroke-width="1"/>
     ${ticks}
-    <text font-family="Georgia,'Times New Roman',serif" font-size="10.5" font-weight="700" letter-spacing="2.4" fill="${C.navyDeep}" text-anchor="middle"><textPath href="#certSealTop" startOffset="50%">SAIL LA VIE LOGBOOK</textPath></text>
+    <text font-family="Georgia,'Times New Roman',serif" font-size="10.5" font-weight="700" letter-spacing="2.4" fill="${C.navyDeep}" text-anchor="middle"><textPath href="#certSealTop" startOffset="50%">NIMOSAIL LOGBOOK</textPath></text>
     <text font-family="Georgia,'Times New Roman',serif" font-size="10.5" font-weight="700" letter-spacing="2.4" fill="${C.navyDeep}" text-anchor="middle" dy="8"><textPath href="#certSealBot" startOffset="50%">${bottomText||'SEA TIME RECORD'}</textPath></text>
     <text x="${r-tr-2}" y="${r+3.5}" font-family="Georgia,serif" font-size="9" fill="${C.navyDeep}" text-anchor="middle">★</text>
     <text x="${r+tr+2}" y="${r+3.5}" font-family="Georgia,serif" font-size="9" fill="${C.navyDeep}" text-anchor="middle">★</text>
@@ -287,7 +287,7 @@ function buildCertificateHtml(d){
     <div class="cert-body">
       <div class="cert-head">
         <img class="cert-logo" src="images/Logo.png" alt="">
-        <div class="cert-brand">SAIL LA VIE</div>
+        <div class="cert-brand">NIMOSAIL</div>
         <div class="cert-brand-sub">${t('cert.brandSub')}</div>
         ${badge}
       </div>
@@ -443,7 +443,7 @@ async function saveCertificatePdf(){
       if(i>0) doc.addPage('a4','landscape');
       doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pw, ph, undefined, 'FAST');
     }
-    doc.setProperties({ title: `${_certData.title} — ${_certData.name}`, subject: _certData.number, creator: 'Sail la Vie' });
+    doc.setProperties({ title: `${_certData.title} — ${_certData.name}`, subject: _certData.number, creator: 'NimoSail' });
     const safe = (_certData.name||'Sailor').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'') || 'Sailor';
     const prefix = _certData.kind==='gps' ? 'GPS_SeaTime' : 'Sailing_Record';
     await shareOrDownloadFile(doc.output('blob'), `${prefix}_${safe}.pdf`, 'application/pdf', _certData.title, 'cert.downloaded');

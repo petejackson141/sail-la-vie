@@ -1,5 +1,5 @@
 /*
-  Sail la Vie — service worker
+  NimoSail — service worker
   Strategy:
     - index.html AND all of our own JS (i18n.js, history-maps.js, etc.):
       network-first with a cache fallback. This means "online → always get
@@ -39,7 +39,7 @@
   sees it. Supabase (and any other live API traffic) is now explicitly
   excluded from caching entirely, further down.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v77';
+const CACHE_NAME = 'sail-la-vie-shell-v78';
 
 const APP_SHELL = [
   './',
@@ -175,7 +175,7 @@ self.addEventListener('push', (event) => {
   let p = {};
   try { p = event.data ? event.data.json() : {}; }
   catch (e) { p = { body: event.data ? event.data.text() : '' }; }
-  event.waitUntil(self.registration.showNotification(p.title || 'Sail la Vie', {
+  event.waitUntil(self.registration.showNotification(p.title || 'NimoSail', {
     body: p.body || '',
     icon: './images/icon-192.png',
     data: p.data || {}

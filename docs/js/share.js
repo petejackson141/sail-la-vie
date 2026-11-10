@@ -7,7 +7,7 @@
 //      the crew, so you just pick the WhatsApp group / email.
 //   2. Send the track (GPX) — a standard .gpx file of the GPS track that opens
 //      in Navionics, Google Earth and most sailing apps. Only for tracked sails.
-//   3. Send to a friend's app — puts a copy of the sail in a Sail la Vie
+//   3. Send to a friend's app — puts a copy of the sail in a NimoSail
 //      friend's account. It waits in their History ("Pete sent you a sail")
 //      until they add it or decline. Uses the `sail_shares` table
 //      (supabase/sail-shares.sql). The friend gets their own copy: the photos
@@ -71,7 +71,7 @@ function tripToGpx(trip){
     return `      <trkpt lat="${Number(p.lat).toFixed(6)}" lon="${Number(p.lng).toFixed(6)}">${time}</trkpt>`;
   }).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Sail la Vie" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="NimoSail" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata>
     <name>${gpxEscape(trip.title)}</name>
     <time>${new Date(trip.date).toISOString()}</time>

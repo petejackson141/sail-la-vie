@@ -1,5 +1,5 @@
 @echo off
-title Sail la Vie - save this round to dev and sync to Android
+title NimoSail - save this round to dev and sync to Android
 cd /d C:\Users\Pete\sail-la-vie
 for /f %%b in ('git branch --show-current') do set BR=%%b
 if /i not "%BR%"=="dev" (

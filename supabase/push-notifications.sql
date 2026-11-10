@@ -1,5 +1,5 @@
 -- =====================================================================
--- Sail la Vie: PUSH NOTIFICATIONS (05.11.2026)
+-- NimoSail: PUSH NOTIFICATIONS (05.11.2026)
 -- =====================================================================
 -- Run this ONCE in the live Frankfurt project:
 --   Supabase -> sail-la-vie-eu -> SQL Editor -> New query -> paste -> Run.

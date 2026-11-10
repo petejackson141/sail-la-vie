@@ -1,5 +1,5 @@
 @echo off
-title Sail la Vie - take "Claude outputs" off GitHub (keeps it on this PC)
+title NimoSail - take "Claude outputs" off GitHub (keeps it on this PC)
 cd /d C:\Users\Pete\sail-la-vie
 for /f %%b in ('git branch --show-current') do set BR=%%b
 if /i not "%BR%"=="dev" (

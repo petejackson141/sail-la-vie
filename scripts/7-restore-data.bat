@@ -1,5 +1,5 @@
 @echo off
-title Sail la Vie - put a backup back into Supabase
+title NimoSail - put a backup back into Supabase
 cd /d C:\Users\Pete\sail-la-vie
 echo Puts a backup from C:\Users\Pete\SailLaVie-backups back into a Supabase project.
 echo It asks which backup and which project before changing anything.

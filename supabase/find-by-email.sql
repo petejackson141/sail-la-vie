@@ -1,5 +1,5 @@
 -- =====================================================================
--- Sail la Vie: FIND A SAILOR BY EMAIL (02.11.2026)
+-- NimoSail: FIND A SAILOR BY EMAIL (02.11.2026)
 -- =====================================================================
 -- Run this ONCE in the live Frankfurt project:
 --   Supabase -> sail-la-vie-eu -> SQL Editor -> New query -> paste -> Run.

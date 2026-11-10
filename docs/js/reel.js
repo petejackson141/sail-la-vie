@@ -378,7 +378,7 @@ function reelSceneOpen(ctx, r, t, d){
   const k = reelEase(t/0.9); // text slides up and fades in
   ctx.save(); ctx.globalAlpha *= k;
   reelLogo(ctx, a.logo, REEL_W/2, 210, 78);
-  reelText(ctx, 'SAIL LA VIE', REEL_W/2, 360, "700 34px 'Space Grotesk', sans-serif", RC.white, 'center', 12);
+  reelText(ctx, 'NIMOSAIL', REEL_W/2, 360, "700 34px 'Space Grotesk', sans-serif", RC.white, 'center', 12);
   const off = (1-k)*40;
   const w = reelWrap(ctx, (trip.title||'').toUpperCase(), REEL_W - 140, 104, "900 {s}px 'Playfair Display', Georgia, serif");
   const lh = w.size*1.08, top = REEL_H - 700 - (w.lines.length-1)*lh + off;
@@ -535,7 +535,7 @@ function reelSceneEnd(ctx, r, tt, d){
   const k = reelEase(tt/0.8);
   ctx.save(); ctx.globalAlpha *= k;
   reelLogo(ctx, a.logo, REEL_W/2, 440, 120);
-  reelText(ctx, 'SAIL LA VIE', REEL_W/2, 660, "700 46px 'Space Grotesk', sans-serif", RC.white, 'center', 16);
+  reelText(ctx, 'NIMOSAIL', REEL_W/2, 660, "700 46px 'Space Grotesk', sans-serif", RC.white, 'center', 16);
   ctx.fillStyle = RC.gold; ctx.fillRect(REEL_W/2 - 90, 710, 180, 4);
   const rows = [
     [fmtDistance(trip.distanceNm||0), t('stat.distance')],
@@ -613,7 +613,7 @@ function reelYachtOpen(ctx, r, tt, d){
   const k = reelEase(tt/0.9);
   // kicker above the photo
   ctx.save(); ctx.globalAlpha *= k;
-  reelText(ctx, ('SAIL LA VIE \u00B7 ' + t('pdf.logEntry')).toUpperCase(), REEL_W/2, 225, "700 26px 'Space Grotesk', sans-serif", RY.teal, 'center', 9);
+  reelText(ctx, ('NIMOSAIL \u00B7 ' + t('pdf.logEntry')).toUpperCase(), REEL_W/2, 225, "700 26px 'Space Grotesk', sans-serif", RY.teal, 'center', 9);
   ctx.restore();
   // the cover photo, square-cornered on the paper, with a slow push-in
   const px = 90, py = 255, pw = REEL_W - 180, ph = 760;
@@ -699,7 +699,7 @@ function reelYachtEnd(ctx, r, tt, d){
   const k = reelEase(tt/0.8);
   ctx.save(); ctx.globalAlpha *= k;
   reelYachtLogo(ctx, a.logo, REEL_W/2, 450, 112);
-  reelText(ctx, 'SAIL LA VIE', REEL_W/2, 668, "700 44px 'Space Grotesk', sans-serif", RY.navy, 'center', 16);
+  reelText(ctx, 'NIMOSAIL', REEL_W/2, 668, "700 44px 'Space Grotesk', sans-serif", RY.navy, 'center', 16);
   reelDiamondRule(ctx, REEL_W/2, 718, 150, RY.gold);
   const rows = [
     [fmtDistance(trip.distanceNm||0), t('stat.distance')],
@@ -822,7 +822,7 @@ function reelMemoryEnd(ctx, r, tt, d){
   const k = reelEase(tt/0.8);
   ctx.save(); ctx.globalAlpha *= k;
   reelMemoryLogo(ctx, a.logo, REEL_W/2, 420, 108);
-  reelText(ctx, 'SAIL LA VIE', REEL_W/2, 628, "700 44px 'Space Grotesk', sans-serif", RM.navy, 'center', 16);
+  reelText(ctx, 'NIMOSAIL', REEL_W/2, 628, "700 44px 'Space Grotesk', sans-serif", RM.navy, 'center', 16);
   reelHeartRule(ctx, REEL_W/2, 680, 150, RM.goldLight, RM.coral);
   const rows = [
     [fmtDistance(trip.distanceNm||0), t('stat.distance')],
@@ -998,7 +998,7 @@ async function reelShare(){
   const r = _reel; if(!r || !r.blob) return;
   const name = (r.trip.title||'sail').replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase() || 'sail';
   try{
-    await shareOrDownloadFile(r.blob, `${name}-reel.${r.ext}`, r.blob.type, r.trip.title || 'Sail la Vie', 'reel.downloaded');
+    await shareOrDownloadFile(r.blob, `${name}-reel.${r.ext}`, r.blob.type, r.trip.title || 'NimoSail', 'reel.downloaded');
   }catch(e){
     if(!(e && e.name === 'AbortError')){ console.error('reel share failed', e); showToast(t('share.failed')); }
   }

@@ -1,5 +1,5 @@
 // =====================================================================
-// Sail la Vie: copy everything from Tokyo to Frankfurt (Part 2, 29.10.2026)
+// NimoSail: copy everything from Tokyo to Frankfurt (Part 2, 29.10.2026)
 // =====================================================================
 // Run it with the .bat files in this folder, not by hand:
 //   2-check-counts.bat      -> read-only: counts in both projects, side by side

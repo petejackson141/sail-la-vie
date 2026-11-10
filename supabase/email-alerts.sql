@@ -1,5 +1,5 @@
 -- =====================================================================
--- Sail la Vie: EMAIL ALERTS (feedback + daily error summary, 04.11.2026)
+-- NimoSail: EMAIL ALERTS (feedback + daily error summary, 04.11.2026)
 -- =====================================================================
 -- Run this ONCE in the live Frankfurt project:
 --   Supabase -> sail-la-vie-eu -> SQL Editor -> New query -> paste -> Run.

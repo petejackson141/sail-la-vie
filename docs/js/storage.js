@@ -3,7 +3,7 @@
 // Originally part of the single-file app.js; split into its own file in Sept 2026.
 
 /* ============================================================
-   SAIL LA VIE — data layer (self-contained/offline)
+   NIMOSAIL — data layer (self-contained/offline)
    Tiered storage: IndexedDB (largest quota) -> localStorage (fallback)
    -> in-memory (last resort, session-only, shows a persistent warning)
    ============================================================ */
@@ -245,7 +245,7 @@ async function _backupToFileInner(){
   for(const c of (state.crew||[])) crew.push(await safe(typeof inlineItemImages === 'function' ? inlineItemImages : null, c));
 
   const payload = {
-    app:'Sail la Vie', version:1, exportedAt:new Date().toISOString(),
+    app:'NimoSail', version:1, exportedAt:new Date().toISOString(),
     profile, boats, crew, noticeboard: state.noticeboard,
     tripIndex: state.tripIndex, trips
   };
@@ -279,7 +279,7 @@ async function _backupToFileInner(){
         encoding: 'utf8'
       });
       if(window.Capacitor.Plugins.Share){
-        await window.Capacitor.Plugins.Share.share({ title: 'Sail la Vie backup', url: written.uri });
+        await window.Capacitor.Plugins.Share.share({ title: 'NimoSail backup', url: written.uri });
       }
       showToast(doneMsg);
     }catch(e){

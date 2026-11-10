@@ -1,4 +1,4 @@
-# Sail la Vie database (Supabase)
+# NimoSail database (Supabase)
 
 **`00-full-database-setup.sql`** is the master file. It builds the whole database
 from nothing, in the right order: tables, security rules, helper functions, the

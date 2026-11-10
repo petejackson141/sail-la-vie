@@ -1,5 +1,5 @@
 -- =====================================================================
--- Sail la Vie: ERROR REPORTS (crash reporting, 02.11.2026)
+-- NimoSail: ERROR REPORTS (crash reporting, 02.11.2026)
 -- =====================================================================
 -- Run this ONCE in the live Frankfurt project:
 --   Supabase -> sail-la-vie-eu -> SQL Editor -> New query -> paste -> Run.

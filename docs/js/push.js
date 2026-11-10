@@ -1,5 +1,5 @@
 // ===== push.js =====
-// Push notifications: notifications that arrive even when Sail la Vie is
+// Push notifications: notifications that arrive even when NimoSail is
 // fully closed, for:
 //   * a friend sends you a sail        (type "sail_share")
 //   * a friend request arrives          (type "friend_request")

@@ -1,4 +1,4 @@
--- Sail la Vie: tighten two database helper functions (health check item 2).
+-- NimoSail: tighten two database helper functions (health check item 2).
 -- Run once in Supabase: SQL Editor -> New query -> paste -> Run. Safe to run again.
 -- Nothing changes in how the app behaves.
 --

@@ -1,6 +1,6 @@
 apply plugin: 'com.android.application'
 
-/* ---------- Sail la Vie: version number, taken automatically from the app ----------
+/* ---------- NimoSail: version number, taken automatically from the app ----------
    Android needs two version values, and Google Play refuses an update unless
    versionCode goes UP every time. Instead of editing them by hand, both are read
    from APP_VERSION in docs/js/state-core.js (the version Claude bumps every round,
@@ -23,7 +23,7 @@ def readSailLaVieVersion = {
 }
 def sailLaVieVersion = readSailLaVieVersion()
 
-/* ---------- Sail la Vie: release signing key ----------
+/* ---------- NimoSail: release signing key ----------
    Every APK must be "signed" with a key. Android Studio's Run button uses an
    automatic debug key. Release builds (for testers and, later, Google Play)
    use OUR key, and every future update must be signed with that SAME key,

@@ -1,5 +1,5 @@
 @echo off
-title Sail la Vie - one-time setup of the dev branch
+title NimoSail - one-time setup of the dev branch
 cd /d C:\Users\Pete\sail-la-vie
 for /f %%b in ('git branch --show-current') do set BR=%%b
 if /i "%BR%"=="dev" (

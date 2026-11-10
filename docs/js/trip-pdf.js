@@ -539,7 +539,7 @@ function tpCondRows(D){
 // Footer + running header shared by all templates (styled per template in CSS).
 function tpFooter(D){
   return `<div class="tp-footer">
-    <div class="tp-foot-brand"><img src="images/Logo.png" alt=""><span>SAIL LA VIE</span> ${t('cert.brandSub')}</div>
+    <div class="tp-foot-brand"><img src="images/Logo.png" alt=""><span>NIMOSAIL</span> ${t('cert.brandSub')}</div>
     <div class="tp-foot-log">${t('pdf.logNo')} <b dir="ltr">${D.logNo}</b></div>
     <div class="tp-foot-page">${t('pdf.pageOf', {n:'<b class="tp-pg-n"></b>', total:'<b class="tp-pg-total"></b>'})}</div>
   </div>`;
@@ -580,7 +580,7 @@ function tpBlocksNautical(D){
     ${D.trip.coverPhoto ? tpImg(D.trip.coverPhoto,'n-hero-img') : `<div class="n-hero-img n-hero-noimg">${certContourSvg(714,340)}</div>`}
     <svg class="n-hero-scrim" width="714" height="340"><defs><linearGradient id="nScrim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${TP.navyDeep}" stop-opacity=".35"/><stop offset=".38" stop-color="${TP.navyDeep}" stop-opacity="0"/><stop offset=".55" stop-color="${TP.navyDeep}" stop-opacity=".15"/><stop offset="1" stop-color="${TP.navyDeep}" stop-opacity=".88"/></linearGradient></defs><rect width="714" height="340" fill="url(#nScrim)"/></svg>
     <img class="n-hero-logo" src="images/Logo.png" alt="">
-    <div class="n-hero-kicker">SAIL LA VIE · ${t('pdf.logEntry')}</div>
+    <div class="n-hero-kicker">NIMOSAIL · ${t('pdf.logEntry')}</div>
     <div class="n-hero-bottom">
       <div class="n-hero-titles">
         <h1>${escapeHtml(D.title)}</h1>
@@ -618,7 +618,7 @@ function tpBlocksYacht(D){
   B.push({ html:`<div class="y-header">
     <img class="y-logo" src="images/Logo.png" alt="">
     <div class="y-titles">
-      <div class="y-kicker">SAIL LA VIE · ${t('pdf.logEntry')}</div>
+      <div class="y-kicker">NIMOSAIL · ${t('pdf.logEntry')}</div>
       <h1${Math.max(line1.length, line2.length) > 15 ? ' style="font-size:26px"' : ''}>${escapeHtml(line1)}${line2?`<br>${escapeHtml(line2)}`:''}</h1>
       <div class="y-rule"><span></span>${pdfAnchorSvgSized(14, TP.gold, 1.3)}</div>
     </div>
@@ -882,7 +882,7 @@ async function generateAndShareTripPdf(){
       if(i>0) doc.addPage('a4','portrait');
       doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pw, ph, undefined, 'FAST');
     }
-    doc.setProperties({ title: trip.title || 'Sail Log', subject: tpLogNumber(trip), creator: 'Sail la Vie' });
+    doc.setProperties({ title: trip.title || 'Sail Log', subject: tpLogNumber(trip), creator: 'NimoSail' });
     const fileName = (trip.title||'sail-log').replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').toLowerCase() + '.pdf';
     await shareOrDownloadFile(doc.output('blob'), fileName || 'sail-log.pdf', 'application/pdf', trip.title||'Sail Log', null, window._pdfShareText || null);
     closeSheets();

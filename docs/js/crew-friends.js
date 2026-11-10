@@ -1,8 +1,8 @@
 // ===== crew-friends.js =====
 // MERGING CREW AND FRIENDS (02.11.2026)
 //
-// Your Crew cards are people you've typed in yourself. Friends are real Sail la
-// Vie accounts. Often they're the same person ("Dan" in your crew = @Dan Cohen
+// Your Crew cards are people you've typed in yourself. Friends are real NimoSail
+// accounts. Often they're the same person ("Dan" in your crew = @Dan Cohen
 // as a friend). This file links the two, always asking first:
 //
 //   1. "Same person?" — when a friend's name matches a crew card, the app asks
@@ -41,7 +41,7 @@ Object.assign(TRANSLATIONS.en, {
   'cf.unlinked': 'Unlinked',
   'cf.sendOurSails': 'Send our sails to their app',
   'cf.linkToFriend': 'Link to a friend',
-  'cf.linkToFriendHint': 'Is this person on Sail la Vie? Link their crew card to their account.',
+  'cf.linkToFriendHint': 'Is this person on NimoSail? Link their crew card to their account.',
   'cf.pickFriendTitle': 'Which friend is {crew}?',
   'cf.pickCrewTitle': 'Which crew card is {friend}?',
   'cf.noFriendsToLink': 'No friends to link yet. Add them on the Friends screen first.',

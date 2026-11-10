@@ -1,5 +1,5 @@
 // =====================================================================
-// Sail la Vie: notify-email (Supabase Edge Function, 04.11.2026)
+// NimoSail: notify-email (Supabase Edge Function, 04.11.2026)
 // =====================================================================
 // Sends Pete an email when:
 //   1. someone sends the app's "Contact us" form (straight away), and
@@ -32,7 +32,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const ALERT_EMAIL = Deno.env.get("ALERT_EMAIL") ?? "sailapp141@gmail.com";
-const FROM = "Sail la Vie <onboarding@resend.dev>";
+const FROM = "NimoSail <onboarding@resend.dev>";
 
 // The service role key can read everything (feedback, error reports, users).
 // It lives only here on Supabase's servers, never in the app.
@@ -88,7 +88,7 @@ async function sendFeedback(id: string) {
   const topic = topicLabel[fb.topic] ?? fb.topic;
 
   const html = `
-    <h2 style="font-family:sans-serif;color:#0b5c7a">${esc(topic)} from Sail la Vie</h2>
+    <h2 style="font-family:sans-serif;color:#0b5c7a">${esc(topic)} from NimoSail</h2>
     <p style="font-family:sans-serif;white-space:pre-wrap;font-size:15px">${esc(fb.message)}</p>
     <table style="font-family:sans-serif;font-size:13px;color:#555">
       <tr><td><b>From</b></td><td>${esc(who)}</td></tr>
@@ -100,7 +100,7 @@ async function sendFeedback(id: string) {
     </table>`;
 
   await sendEmail({
-    subject: `Sail la Vie ${topic}: ${fb.message.slice(0, 60)}${fb.message.length > 60 ? "…" : ""}`,
+    subject: `NimoSail ${topic}: ${fb.message.slice(0, 60)}${fb.message.length > 60 ? "…" : ""}`,
     html,
     reply_to: replyTo ?? undefined,
     attachments,
@@ -151,7 +151,7 @@ async function sendErrorSummary(isTest: boolean) {
     </tr>`).join("");
 
   const html = rows.length ? `
-    <h2 style="font-family:sans-serif;color:#0b5c7a">Sail la Vie errors - last 24 hours</h2>
+    <h2 style="font-family:sans-serif;color:#0b5c7a">NimoSail errors - last 24 hours</h2>
     <p style="font-family:sans-serif">${total} error${total === 1 ? "" : "s"}, ${list.length} different, from ${people} user${people === 1 ? "" : "s"}.</p>
     <table style="font-family:sans-serif;font-size:13px;border-collapse:collapse">
       <tr style="text-align:left;color:#555"><th style="padding:6px">Times</th><th style="padding:6px">Error / where</th><th style="padding:6px">Users</th><th style="padding:6px">Version / platform</th><th style="padding:6px">Screen</th><th style="padding:6px">Last seen</th></tr>
@@ -162,8 +162,8 @@ async function sendErrorSummary(isTest: boolean) {
 
   await sendEmail({
     subject: rows.length
-      ? `Sail la Vie: ${total} error${total === 1 ? "" : "s"} in the last 24 hours`
-      : "Sail la Vie: error summary test (no errors)",
+      ? `NimoSail: ${total} error${total === 1 ? "" : "s"} in the last 24 hours`
+      : "NimoSail: error summary test (no errors)",
     html,
   });
   return new Response("Error summary sent");

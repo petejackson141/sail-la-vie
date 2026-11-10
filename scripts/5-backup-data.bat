@@ -1,7 +1,7 @@
 @echo off
-title Sail la Vie - back up the database and photos
+title NimoSail - back up the database and photos
 cd /d C:\Users\Pete\sail-la-vie
-echo Backing up all Sail la Vie data and photos from Supabase (read-only)...
+echo Backing up all NimoSail data and photos from Supabase (read-only)...
 echo.
 node scripts\backup-data.mjs
 if errorlevel 1 goto fail

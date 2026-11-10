@@ -36,9 +36,9 @@
   #webSplash.hide{ opacity:0; pointer-events:none; }
   #webSplash.hide img, #webSplash.hide .wordmark{ opacity:0; animation:none; }
 </style>
-<title>Sail la Vie</title>
+<title>NimoSail</title>
 <!--
-  SAIL LA VIE — a self-contained sailing logbook.
+  NIMOSAIL — a self-contained sailing logbook.
   No server, no build step, no external dependencies beyond the two Google
   Fonts below (which degrade gracefully if offline). Everything — markup,
   styling, and logic — lives in this one file so it can be hosted as a
@@ -70,7 +70,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Sail la Vie">
+<meta name="apple-mobile-web-app-title" content="NimoSail">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <!-- Loaded non-blocking (media="print" then swapped to "all" once downloaded) so a
@@ -1287,7 +1287,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
      hidden by js/units.js; this one is hidden at the end of boot(). -->
 <div id="webSplash">
   <img src="images/Logo.png" alt="">
-  <div class="wordmark">Sail la Vie</div>
+  <div class="wordmark">NimoSail</div>
 </div>
 
 <div id="app" style="display:flex;">
@@ -1306,7 +1306,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
       </div>
     </div>
 
-    <div class="nt-wordmark">Sail la Vie</div>
+    <div class="nt-wordmark">NimoSail</div>
 
     <button class="nt-btn-primary" onclick="openStartJourneySheet()">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4L18 14H12Z" fill="currentColor"/><path d="M12 7.5L7.2 14H12Z" fill="currentColor"/><path d="M4.3 14h15.4c-.4 2.9-3.6 4.3-7.7 4.3s-7.3-1.4-7.7-4.3Z" fill="currentColor"/><path d="M3 19.1c1.8-1.15 3.6-1.15 5.4 0s3.6 1.15 5.4 0 3.6-1.15 5.4 0" stroke="currentColor" stroke-width="0.85" fill="none" stroke-linecap="round"/><path d="M3 21.1c1.8-1.15 3.6-1.15 5.4 0s3.6 1.15 5.4 0 3.6-1.15 5.4 0" stroke="currentColor" stroke-width="0.85" fill="none" stroke-linecap="round"/></svg>
@@ -1740,7 +1740,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
          row like "People you may know". Stays hidden while SHOW_ALL_SAILORS_FOR_TESTING in
          friends.js is false, and while signed out. -->
     <div id="profileSailorsWrap" style="display:none;">
-      <div class="section-divider pf"><span data-i18n="friends.onApp">Sailors on Sail la Vie</span></div>
+      <div class="section-divider pf"><span data-i18n="friends.onApp">Sailors on NimoSail</span></div>
       <div id="profileSailors"></div>
     </div>
 
@@ -1879,7 +1879,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
       </button>
       <button class="about-row" onclick="nav('about')">
         <span class="ab-icon mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/></svg></span>
-        <span class="ab-text"><span class="ab-title" data-i18n="about.aboutApp">About Sail la Vie</span><span class="ab-sub app-version-text"></span></span>
+        <span class="ab-text"><span class="ab-title" data-i18n="about.aboutApp">About NimoSail</span><span class="ab-sub app-version-text"></span></span>
         <svg class="ab-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
     </div>
@@ -1904,8 +1904,8 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
     </div>
 
     <div class="card about-hero">
-      <img src="images/Logo.png" alt="Sail la Vie logo">
-      <div class="app-title">Sail la Vie</div>
+      <img src="images/Logo.png" alt="NimoSail logo">
+      <div class="app-title">NimoSail</div>
       <div class="ab-tagline" data-i18n="about.tagline">Your sailing logbook</div>
       <div class="ab-version app-version-text"></div>
     </div>
@@ -2454,7 +2454,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
   <div class="sheet" id="sheetDeleteAccount" style="display:none;">
     <div class="sheet-handle"></div>
     <h3 data-i18n="del.title">Delete your account</h3>
-    <p style="margin-bottom:12px;"><span data-i18n="del.body">This permanently deletes your Sail la Vie account and everything stored with it online: your sails, photos, boats, crew, Noticeboard plans, profile, friends and any messages you’ve sent us. Friends will no longer see anything you shared.</span> <b data-i18n="del.cantUndo">This can’t be undone.</b></p>
+    <p style="margin-bottom:12px;"><span data-i18n="del.body">This permanently deletes your NimoSail account and everything stored with it online: your sails, photos, boats, crew, Noticeboard plans, profile, friends and any messages you’ve sent us. Friends will no longer see anything you shared.</span> <b data-i18n="del.cantUndo">This can’t be undone.</b></p>
     <div class="field" style="margin-bottom:12px;">
       <label data-i18n="del.localLabel">Your data on this phone</label>
       <label class="del-choice"><input type="radio" name="delLocal" value="keep" checked> <span><b data-i18n="del.keep">Keep a copy on this phone</b><br><span class="del-sub" data-i18n="del.keepSub">Your sails and photos stay here, just not backed up any more.</span></span></label>
@@ -2480,7 +2480,7 @@ html[dir="rtl"] .password-toggle-btn{ right:auto; left:6px; }
 <div class="welcome-gate" id="welcomeGate">
   <div class="wg-card">
     <div class="wg-logo"><img src="images/Logo.png" alt=""></div>
-    <h1 class="app-title wg-title">Sail la Vie</h1>
+    <h1 class="app-title wg-title">NimoSail</h1>
     <p class="wg-sub" data-i18n="welcome.subtitle">Sign in or create an account to keep your sailing safe and synced across all your devices.</p>
     <button class="btn btn-primary" onclick="welcomeSignIn()" data-i18n="welcome.signIn">Sign in</button>
     <button class="btn btn-outline" style="margin-top:10px;" onclick="welcomeSignUp()" data-i18n="welcome.signUp">Create account</button>

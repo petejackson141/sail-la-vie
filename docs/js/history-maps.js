@@ -574,7 +574,7 @@ function endpointDot(color){
 
    MAPBOX_TOKEN is a PUBLIC token (starts with pk.) — it's designed to sit in app
    code like this, so it's fine in the GitHub repo.
-   Since 02.11.2026 this is the "Sail la Vie app" token, locked (URL restrictions)
+   Since 02.11.2026 this is the "NimoSail app" token, locked (URL restrictions)
    to petejackson141.github.io (web version) and https://localhost (the Android app),
    so it only works from those. The old unrestricted default token stays alive until
    every Android tester has an APK with this one, then it can be deleted in Mapbox.

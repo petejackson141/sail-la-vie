@@ -1,4 +1,4 @@
--- Sail la Vie: let friends see profile and cover photos in photo storage.
+-- NimoSail: let friends see profile and cover photos in photo storage.
 -- Run once in Supabase: SQL Editor -> New query -> paste -> Run. Safe to run again.
 --
 -- WHY

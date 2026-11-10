@@ -1,7 +1,7 @@
 // =====================================================================
-// Sail la Vie: send-push (Supabase Edge Function, 05.11.2026)
+// NimoSail: send-push (Supabase Edge Function, 05.11.2026)
 // =====================================================================
-// Sends a phone notification (push), so it arrives even when Sail la Vie is
+// Sends a phone notification (push), so it arrives even when NimoSail is
 // fully closed. Two routes, chosen by each push address's platform in the
 // push_tokens table:
 //   'android'  the Android app, through Firebase Cloud Messaging (05.11.2026)
@@ -80,13 +80,13 @@ async function buildMessage(p: any): Promise<Msg | null> {
     const name = s.sender_name || await sailorName(s.sender_id);
     const title = s.data?.title ? `"${s.data.title}"` : "a sail";
     return { to: s.recipient_id, title: "A friend sent you a sail",
-             body: `${name} sent you ${title}. Open Sail la Vie to add it to your log.`,
+             body: `${name} sent you ${title}. Open NimoSail to add it to your log.`,
              data: { type: "sail_share", id: String(p.id) } };
   }
   if (p.type === "friend_request") {
     const name = await sailorName(p.from);
     return { to: p.to, title: "New friend request",
-             body: `${name} wants to be friends on Sail la Vie.`,
+             body: `${name} wants to be friends on NimoSail.`,
              data: { type: "friend_request" } };
   }
   if (p.type === "friend_accepted") {

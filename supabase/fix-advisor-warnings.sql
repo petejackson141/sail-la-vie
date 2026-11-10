@@ -1,4 +1,4 @@
--- Sail la Vie: clear the Security Advisor warnings + add speed-up indexes.
+-- NimoSail: clear the Security Advisor warnings + add speed-up indexes.
 -- Run once in Supabase: SQL Editor -> New query -> paste -> Run. Safe to run again.
 -- Nothing changes in how the app behaves.
 --

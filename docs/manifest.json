@@ -1,6 +1,6 @@
 {
-  "name": "Sail la Vie — Sailing Logbook",
-  "short_name": "Sail la Vie",
+  "name": "NimoSail — Sailing Logbook",
+  "short_name": "NimoSail",
   "description": "A self-contained sailing logbook for tracking journeys, crew, and boats.",
   "start_url": "./index.html",
   "scope": "./",
