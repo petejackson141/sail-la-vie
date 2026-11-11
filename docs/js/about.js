@@ -13,17 +13,17 @@ const COPYRIGHT_HOLDER = 'Pete Jackson';
 const COPYRIGHT_YEAR   = 2026;
 const SUPPORT_EMAIL    = 'sailapp141@gmail.com';
 // Always the live copy on GitHub Pages. To update the guide, replace
-// docs/Sail-la-Vie-User-Guide.pdf with the new file (same name) and push.
+// docs/NimoSail-User-Guide.pdf with the new file (same name) and push.
 // The button adds ?v=<app version> so phones fetch a fresh copy after each
 // release instead of showing one they saved earlier (GitHub Pages lets them
 // keep it for 10 minutes).
-const USER_MANUAL_URL  = 'https://petejackson141.github.io/sail-la-vie/Sail-la-Vie-User-Guide.pdf';
-const PRIVACY_URL      = 'https://petejackson141.github.io/sail-la-vie/privacy.html';
-const TERMS_URL        = 'https://petejackson141.github.io/sail-la-vie/terms.html';
+const USER_MANUAL_URL  = 'https://petejackson141.github.io/nimosail/NimoSail-User-Guide.pdf';
+const PRIVACY_URL      = 'https://petejackson141.github.io/nimosail/privacy.html';
+const TERMS_URL        = 'https://petejackson141.github.io/nimosail/terms.html';
 // Always the newest Android app. Publish each new build as a GitHub Release
-// with the APK attached and named exactly sail-la-vie.apk; this link then
+// with the APK attached and named exactly nimosail.apk; this link then
 // points at it automatically. (Don't put the APK in docs/: cap sync would pack it into the app.)
-const ANDROID_APK_URL  = 'https://github.com/petejackson141/sail-la-vie/releases/latest/download/sail-la-vie.apk';
+const ANDROID_APK_URL  = 'https://github.com/petejackson141/nimosail/releases/latest/download/nimosail.apk';
 
 // Newest first. Add a line here with each release worth telling people about.
 const WHATS_NEW = [
@@ -118,7 +118,7 @@ function downloadAndroidApp(){
    IMPORTANT when publishing: the release tag must be "v" + the APP_VERSION of
    the APK you attach (e.g. v29.09.2026.0916 — the number shown in Settings).
    "Later" hides the prompt for 24 hours; the About row keeps showing it. */
-const ANDROID_RELEASE_API = 'https://api.github.com/repos/petejackson141/sail-la-vie/releases/latest';
+const ANDROID_RELEASE_API = 'https://api.github.com/repos/petejackson141/nimosail/releases/latest';
 const UPDATE_SNOOZE_KEY   = 'sailUpdateSnooze';
 const UPDATE_SNOOZE_MS    = 24 * 60 * 60 * 1000;
 

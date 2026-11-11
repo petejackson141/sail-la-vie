@@ -2,7 +2,7 @@
 -- NimoSail: PUSH NOTIFICATIONS (05.11.2026)
 -- =====================================================================
 -- Run this ONCE in the live Frankfurt project:
---   Supabase -> sail-la-vie-eu -> SQL Editor -> New query -> paste -> Run.
+--   Supabase -> NimoSail -> SQL Editor -> New query -> paste -> Run.
 -- It is also included in 00-full-database-setup.sql (section 5c).
 -- Needs email-alerts.sql first (it uses the same pg_net tool and the same
 -- notify_secret in the Vault).

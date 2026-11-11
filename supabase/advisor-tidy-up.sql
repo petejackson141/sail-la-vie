@@ -2,7 +2,7 @@
 -- NimoSail: PERFORMANCE ADVISOR TIDY-UP (02.11.2026)
 -- =====================================================================
 -- Run this ONCE in the live Frankfurt project:
---   Supabase -> sail-la-vie-eu -> SQL Editor -> New query -> paste -> Run.
+--   Supabase -> NimoSail -> SQL Editor -> New query -> paste -> Run.
 -- The master file 00-full-database-setup.sql has the same rules, so a
 -- future new project gets them automatically.
 --

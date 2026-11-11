@@ -2,7 +2,7 @@
 -- NimoSail: SENDING A SAIL TO A FRIEND (30.10.2026)
 -- =====================================================================
 -- Run this ONCE in the live Frankfurt project:
---   Supabase -> sail-la-vie-eu -> SQL Editor -> New query -> paste -> Run.
+--   Supabase -> NimoSail -> SQL Editor -> New query -> paste -> Run.
 -- It is also included in 00-full-database-setup.sql, so a future new
 -- project gets it automatically.
 --

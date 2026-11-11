@@ -16,7 +16,7 @@
 // "publishable" key is safe to ship in frontend code — Supabase enforces
 // actual security through Row Level Security policies on the database, not
 // by keeping this key secret. Never put the "secret" key here.
-// Frankfurt project (sail-la-vie-eu), live since 29.10.2026. The old Tokyo
+// Frankfurt project (NimoSail), live since 29.10.2026. The old Tokyo
 // project (opejqowgcjltanvgxmxn) is read-only and kept as a fallback until 2 Dec 2026.
 const SUPABASE_URL = 'https://lccwbkarqjohunofsghd.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_g2YNG7qvPRB837MaQnadZQ_rdtiSyyM';

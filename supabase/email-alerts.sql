@@ -2,7 +2,7 @@
 -- NimoSail: EMAIL ALERTS (feedback + daily error summary, 04.11.2026)
 -- =====================================================================
 -- Run this ONCE in the live Frankfurt project:
---   Supabase -> sail-la-vie-eu -> SQL Editor -> New query -> paste -> Run.
+--   Supabase -> NimoSail -> SQL Editor -> New query -> paste -> Run.
 -- It is also included in 00-full-database-setup.sql (section 7).
 --
 -- What it adds:

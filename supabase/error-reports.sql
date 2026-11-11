@@ -2,7 +2,7 @@
 -- NimoSail: ERROR REPORTS (crash reporting, 02.11.2026)
 -- =====================================================================
 -- Run this ONCE in the live Frankfurt project:
---   Supabase -> sail-la-vie-eu -> SQL Editor -> New query -> paste -> Run.
+--   Supabase -> NimoSail -> SQL Editor -> New query -> paste -> Run.
 -- It is also included in 00-full-database-setup.sql, so a future new
 -- project gets it automatically.
 --
