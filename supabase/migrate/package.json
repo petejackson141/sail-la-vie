@@ -1,5 +1,5 @@
 {
-  "name": "sail-la-vie-migrate",
+  "name": "nimosail-migrate",
   "private": true,
   "description": "One-off copy of the NimoSail database from Tokyo to Frankfurt (Part 2, 29.10.2026)",
   "dependencies": {
