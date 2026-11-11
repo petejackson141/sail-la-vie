@@ -41,7 +41,7 @@
 --   6. Push notifications (section 5c): change the push_url address in
 --      section 5c to the new project too. Deploy the send-push Edge Function
 --      (supabase/functions/send-push/index.ts, "Verify JWT" off) and set its
---      secret FIREBASE_SERVICE_ACCOUNT (the whole firebase-service-account.json,
+--      secret FIREBASE_SERVICE_ACCOUNT (the whole firebase-service-account-nimosail.json,
 --      kept in C:\Users\Pete\NimoSail-keys and Google Drive).
 --
 -- RULE FOR THE FUTURE: whenever a database change is made, update this file
