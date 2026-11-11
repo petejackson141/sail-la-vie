@@ -2,7 +2,7 @@
 // Run it with scripts\5-backup-data.bat (double-click). Read-only: it never
 // changes anything in Supabase.
 //
-// What it saves, in C:\Users\Pete\SailLaVie-backups\<date-time>\ :
+// What it saves, in C:\Users\Pete\NimoSail-backups\<date-time>\ :
 //   tables\<table>.json   every row of every table (all users' profiles, sails,
 //                         boats, crew, noticeboard, friends, sails waiting
 //                         to be accepted by a friend (sail_shares), feedback)
@@ -12,15 +12,15 @@
 //   summary.txt           what was saved, with counts
 //
 // It needs the project's secret key, kept OUTSIDE the project folder so it can
-// never end up on GitHub:  C:\Users\Pete\SailLaVie-keys\supabase-secret-key.txt
+// never end up on GitHub:  C:\Users\Pete\NimoSail-keys\supabase-secret-key.txt
 // (Supabase -> Project Settings -> API Keys -> the secret / service_role key).
 
 import fs from 'node:fs';
 import path from 'node:path';
 
 const SUPABASE_URL = 'https://lccwbkarqjohunofsghd.supabase.co';   // Frankfurt (NimoSail), live since 29.10.2026
-const KEY_FILE     = 'C:\\Users\\Pete\\SailLaVie-keys\\supabase-secret-key.txt';
-const BACKUP_ROOT  = 'C:\\Users\\Pete\\SailLaVie-backups';
+const KEY_FILE     = 'C:\\Users\\Pete\\NimoSail-keys\\supabase-secret-key.txt';
+const BACKUP_ROOT  = 'C:\\Users\\Pete\\NimoSail-backups';
 const TABLES       = ['profiles', 'public_profiles', 'boats', 'crew', 'trips', 'noticeboard', 'friendships', 'sail_shares', 'feedback'];   // sail_shares added 04.11.2026
 const BUCKETS      = ['trip-photos'];
 

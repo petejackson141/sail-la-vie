@@ -1,6 +1,6 @@
 @echo off
 title NimoSail - one-time setup of the dev branch
-cd /d C:\Users\Pete\sail-la-vie
+cd /d C:\Users\Pete\nimosail
 for /f %%b in ('git branch --show-current') do set BR=%%b
 if /i "%BR%"=="dev" (
   echo You are already on dev. Nothing to do.

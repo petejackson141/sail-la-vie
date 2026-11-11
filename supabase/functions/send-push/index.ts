@@ -27,7 +27,7 @@
 // Settings (Supabase -> Edge Functions -> Secrets):
 //   FIREBASE_SERVICE_ACCOUNT  the whole contents of firebase-service-account.json
 //                             (Firebase project nimosail; file kept in
-//                             C:\Users\Pete\SailLaVie-keys and Google Drive)
+//                             C:\Users\Pete\NimoSail-keys and Google Drive)
 //   NOTIFY_SECRET             already set for notify-email; shared
 //   WEB_PUSH_PUBLIC_KEY       } the web push key pair, made once with
 //   WEB_PUSH_PRIVATE_KEY      }   npx web-push generate-vapid-keys

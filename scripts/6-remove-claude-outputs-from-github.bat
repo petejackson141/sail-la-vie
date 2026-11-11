@@ -1,6 +1,6 @@
 @echo off
 title NimoSail - take "Claude outputs" off GitHub (keeps it on this PC)
-cd /d C:\Users\Pete\sail-la-vie
+cd /d C:\Users\Pete\nimosail
 for /f %%b in ('git branch --show-current') do set BR=%%b
 if /i not "%BR%"=="dev" (
   echo STOP: you are on "%BR%", not dev. Nothing was changed.

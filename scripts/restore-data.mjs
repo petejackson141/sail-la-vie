@@ -11,7 +11,7 @@
 //   2. SQL Editor -> paste supabase\00-full-database-setup.sql -> Run
 //      (this makes the tables, security rules and the photo bucket).
 //   3. Save the NEW project's secret key, alone in a text file, here:
-//        C:\Users\Pete\SailLaVie-keys\restore-target-secret-key.txt
+//        C:\Users\Pete\NimoSail-keys\restore-target-secret-key.txt
 //      (new project -> Project Settings -> API Keys -> the secret key)
 //
 // What it does, in this order, using a backup made by 5-backup-data.bat:
@@ -31,8 +31,8 @@ import path from 'node:path';
 import readline from 'node:readline';
 
 const LIVE_URL    = 'https://lccwbkarqjohunofsghd.supabase.co';   // the current live project: Frankfurt (NimoSail) since 29.10.2026
-const KEY_FILE    = 'C:\\Users\\Pete\\SailLaVie-keys\\restore-target-secret-key.txt';
-const BACKUP_ROOT = process.env.SLV_BACKUP_ROOT || 'C:\\Users\\Pete\\SailLaVie-backups';
+const KEY_FILE    = 'C:\\Users\\Pete\\NimoSail-keys\\restore-target-secret-key.txt';
+const BACKUP_ROOT = process.env.NMS_BACKUP_ROOT || 'C:\\Users\\Pete\\NimoSail-backups';
 // Order matters: accounts first, then tables that point at them.
 const TABLES      = ['profiles', 'public_profiles', 'boats', 'crew', 'trips', 'noticeboard', 'friendships', 'sail_shares', 'feedback'];   // sail_shares added 04.11.2026
 const BUCKET      = 'trip-photos';
@@ -193,7 +193,7 @@ console.log('\n==============================================');
 console.log(allGood ? ' Restore finished and the counts match.' : ' Restore finished, but some counts are LOWER than the backup - send this to Claude.');
 console.log(' Still to do by hand (see the restore-steps doc):');
 console.log('  - Authentication -> URL Configuration (Site URL, redirect URLs');
-console.log('    including saillavie://auth-callback)');
+console.log('    including nimosail://auth-callback)');
 console.log('  - Put the new project URL + publishable key in docs\\js\\auth.js');
 console.log('  - Tell every user to sign in with "Forgot password" once');
 console.log('==============================================');

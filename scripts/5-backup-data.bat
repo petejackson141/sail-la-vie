@@ -1,6 +1,6 @@
 @echo off
 title NimoSail - back up the database and photos
-cd /d C:\Users\Pete\sail-la-vie
+cd /d C:\Users\Pete\nimosail
 echo Backing up all NimoSail data and photos from Supabase (read-only)...
 echo.
 node scripts\backup-data.mjs
@@ -8,10 +8,10 @@ if errorlevel 1 goto fail
 echo.
 echo ==============================================
 echo  Backup done. Now copy the new folder in
-echo  C:\Users\Pete\SailLaVie-backups to your USB stick
+echo  C:\Users\Pete\NimoSail-backups to your USB stick
 echo  or personal cloud storage.
 echo ==============================================
-explorer C:\Users\Pete\SailLaVie-backups
+explorer C:\Users\Pete\NimoSail-backups
 pause
 exit /b
 :fail

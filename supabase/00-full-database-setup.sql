@@ -29,7 +29,7 @@
 --
 -- After it runs on a NEW project you still need to, by hand:
 --   1. Authentication -> URL Configuration: Site URL + Redirect URLs
---      (include saillavie://auth-callback for the Android app).
+--      (include nimosail://auth-callback for the Android app).
 --   2. Authentication -> Sign In / Providers -> Email: "Confirm email" on/off.
 --   3. Put the new project's URL + publishable key in docs/js/auth.js.
 --   4. Copy the data across (users, rows and photos) - ask Claude for that step.
@@ -42,7 +42,7 @@
 --      section 5c to the new project too. Deploy the send-push Edge Function
 --      (supabase/functions/send-push/index.ts, "Verify JWT" off) and set its
 --      secret FIREBASE_SERVICE_ACCOUNT (the whole firebase-service-account.json,
---      kept in C:\Users\Pete\SailLaVie-keys and Google Drive).
+--      kept in C:\Users\Pete\NimoSail-keys and Google Drive).
 --
 -- RULE FOR THE FUTURE: whenever a database change is made, update this file
 -- too, so it always describes the real database.
