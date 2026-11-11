@@ -45,14 +45,14 @@ function certHash(str){
   for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
   return h >>> 0;
 }
-// Certificate number, e.g. "SLV-2026-7K3Q-M9F2". Derived from the holder's name,
+// Certificate number, e.g. "NMS-2026-7K3Q-M9F2". Derived from the holder's name,
 // the date range and the figures, so the same record always gets the same number,
 // and any change to the underlying sails produces a different one.
 function certNumber(d){
   const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid misreading
   const enc = n => { let s=''; for(let i=0;i<4;i++){ s += A[n % 32]; n = Math.floor(n/32); } return s; };
   const base = [d.kind||'', d.name, d.fromISO, d.toISO, d.count, d.nm.toFixed(2), d.secs].join('|');
-  return `SLV-${new Date(d.issuedISO).getFullYear()}-${enc(certHash(base))}-${enc(certHash(base+'#sea'))}`;
+  return `NMS-${new Date(d.issuedISO).getFullYear()}-${enc(certHash(base))}-${enc(certHash(base+'#sea'))}`;
 }
 // Dates on the certificate are written out in full ("26 September 2026") —
 // far more formal than 26/09/2026, and unambiguous across countries.

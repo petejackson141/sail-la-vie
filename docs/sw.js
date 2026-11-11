@@ -39,7 +39,7 @@
   sees it. Supabase (and any other live API traffic) is now explicitly
   excluded from caching entirely, further down.
 */
-const CACHE_NAME = 'sail-la-vie-shell-v79';
+const CACHE_NAME = 'nimosail-shell-v80';
 
 const APP_SHELL = [
   './',
@@ -93,7 +93,11 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((names) =>
       Promise.all(
-        names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))
+        // Only remove THIS app's old caches. Other apps on petejackson141.github.io
+        // (Interval Studio, Master GMDSS...) share the same cache storage, so
+        // deleting every other name would wipe their offline copies too.
+        names.filter((n) => n !== CACHE_NAME && (n.startsWith('nimosail-shell-') || n.startsWith('sail-la-vie-shell-')))
+             .map((n) => caches.delete(n))
       )
     ).then(() => self.clients.claim())
   );

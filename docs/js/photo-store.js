@@ -10,7 +10,7 @@
 //     bucket first, and the sail keeps only a short reference to it, like
 //     "sbimg:<your-user-id>/<sail-id>/<photo-id>.jpg". The database row stays tiny.
 //   • A copy of every uploaded/viewed photo is kept on the device
-//     (IndexedDB "sail-la-vie-photos"), so your photos still show offline.
+//     (IndexedDB "nimosail-photos"), so your photos still show offline.
 //   • Any <img> in the app whose src is one of those references is filled in
 //     automatically (see the MutationObserver at the bottom) — the rest of the
 //     app keeps treating photos as plain strings, as it always has.
@@ -75,7 +75,7 @@ function photoDb(){
   if(!_photoDbPromise){
     _photoDbPromise = new Promise((resolve)=>{
       try{
-        const req = indexedDB.open('sail-la-vie-photos', 1);
+        const req = indexedDB.open('nimosail-photos', 1);
         req.onupgradeneeded = (e)=>{
           const db = e.target.result;
           if(!db.objectStoreNames.contains('photos')) db.createObjectStore('photos');

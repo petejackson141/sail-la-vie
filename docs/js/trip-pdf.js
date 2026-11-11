@@ -63,14 +63,14 @@ function tripMaxSpeed(trip){
 
 function tpLocale(){ return currentLang==='he' ? 'he-IL' : currentLang==='en' ? 'en-GB' : currentLocale(); }
 
-// Log reference number printed in every footer, e.g. "SLV-L-2026-7K3Q".
+// Log reference number printed in every footer, e.g. "NMS-L-2026-7K3Q".
 // Derived from the trip id, so the same sail always carries the same number.
 function tpLogNumber(trip){
   const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let h = 0x811c9dc5; const s = String(trip.id||trip.date||'');
   for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
   h >>>= 0; let code=''; for(let i=0;i<6;i++){ code += A[h%32]; h = Math.floor(h/32); }
-  return `SLV-${new Date(trip.date).getFullYear()}-${code.slice(0,3)}-${code.slice(3)}`;
+  return `NMS-${new Date(trip.date).getFullYear()}-${code.slice(0,3)}-${code.slice(3)}`;
 }
 
 function tripPdfData(trip){

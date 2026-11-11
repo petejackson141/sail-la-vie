@@ -1644,7 +1644,7 @@ async function deleteMyAccount(){
   _setDeleteBusy(false);
 
   if(eraseDevice){
-    try{ indexedDB.deleteDatabase('sail-la-vie-photos'); }catch(e){}
+    try{ indexedDB.deleteDatabase('nimosail-photos'); }catch(e){}
     await resetAllData();
     showToast(t('del.doneAll'));
   } else {
