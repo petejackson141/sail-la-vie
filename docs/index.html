@@ -25,7 +25,7 @@
   }
   #webSplash .wordmark{
     position:absolute; left:0; right:0; top:calc(50% + 112px); text-align:center;
-    font-family:'Playfair Display',Georgia,serif; font-style:italic; font-weight:700;
+    font-family:'Libre Baskerville',Georgia,serif; font-style:italic; font-weight:700;
     font-size:32px; color:#fff; letter-spacing:.01em;
     opacity:0; animation:splashWordIn .45s ease .2s forwards;
     transition:opacity .15s ease;
@@ -76,8 +76,8 @@
 <!-- Loaded non-blocking (media="print" then swapped to "all" once downloaded) so a
      slow/offline font fetch can't hold up the first paint. display=swap already makes
      text show in a fallback font until these arrive. -->
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Libre+Baskerville:wght@400;700&family=Alex+Brush&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Libre+Baskerville:wght@400;700&family=Alex+Brush&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,700&family=Alex+Brush&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,700&family=Alex+Brush&display=swap" rel="stylesheet"></noscript>
 <!-- Mapbox GL JS: draws the live map and the saved-trip maps when there's a
      connection (falls back to the offline porthole drawing when there isn't).
      Version-pinned, so the service worker caches it after the first load. -->
@@ -184,7 +184,7 @@
   @media (prefers-reduced-motion: reduce){ .screen{animation:none;} }
 
   h1,h2,h3{ font-family:var(--font-display); margin:0; letter-spacing:-0.01em; color:var(--ink); }
-  .app-title{ font-family:'Playfair Display',serif; font-style:italic; font-weight:700; letter-spacing:normal; }
+  .app-title{ font-family:'Libre Baskerville',Georgia,serif; font-style:italic; font-weight:700; letter-spacing:normal; }
   .eyebrow{ font-family:var(--font-display); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-muted); }
   p{ margin:0; color:var(--ink-muted); line-height:1.5; }
 
@@ -283,7 +283,7 @@
      so nothing here needs !important. Shares the app's global background
      (#contourBg/#watermark) and the bottom nav automatically, since both already sit
      outside any single .screen. */
-  .nt-wordmark{ font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:36px; color:var(--navy); text-align:center; margin:22px 0 20px; }
+  .nt-wordmark{ font-family:'Libre Baskerville',Georgia,serif; font-style:italic; font-weight:700; font-size:36px; color:var(--navy); text-align:center; margin:22px 0 20px; }
   .nt-btn-primary{ width:100%; height:49px; border:none; border-radius:999px; display:flex; align-items:center; justify-content:center; gap:8px;
     background:linear-gradient(90deg, var(--navy) 0%, var(--teal) 100%); box-shadow:0 12px 24px -10px rgba(22,50,79,.5); color:#fff;
     font-family:var(--font-body); font-weight:600; font-size:15px; cursor:pointer; }
