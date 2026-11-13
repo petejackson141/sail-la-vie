@@ -27,6 +27,11 @@ const ANDROID_APK_URL  = 'https://github.com/petejackson141/nimosail/releases/la
 
 // Newest first. Add a line here with each release worth telling people about.
 const WHATS_NEW = [
+  { version: '13.11.2026', items: [
+    'Sail la Vie is now NimoSail: a new name and a new look. Sign in with the same email and password, and all your sails, boats, crew and photos are still there.',
+    'The NimoSail app installs as a new app. Once you have signed in and checked your sails, you can uninstall the old Sail la Vie app.',
+    'The user guide has new screenshots.'
+  ]},
   { version: '07.11.2026', items: [
     'Notifications when a friend sends you a sail, sends you a friend request or accepts yours, even when the app is closed.',
     'iPhone: turn notifications on in Settings → Notifications (add the app to your Home Screen first).',
